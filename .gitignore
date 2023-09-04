@@ -33,6 +33,8 @@
 
 .vs/
 bin/
+build/
+.vscode/
 
 *.user
 *.vcxproj
@@ -40,5 +42,3 @@ bin/
 *.vcxproj.user
 *.pdb
 *.sln
-
-build/
