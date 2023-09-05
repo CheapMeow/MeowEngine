@@ -10,8 +10,8 @@ namespace Meow
     class LIBRARY_API MeowEngine
     {
     public:
-        bool init(); /**< Init engine */
-        void run();
-        void shutdown();
+        bool Init(); /**< Init engine */
+        void Run();
+        void ShutDown();
     };
 } // namespace Meow
