@@ -5,9 +5,15 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES} ${E
 
 add_executable(${EDITOR_NAME} ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 
-target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
+target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR} ${SRC_ROOT_DIR}/editor)
 
 target_link_libraries(${EDITOR_NAME} PUBLIC ${RUNTIME_NAME})
+
+FetchContent_MakeAvailable(spdlog)
+
+target_link_libraries(${EDITOR_NAME}
+    PUBLIC
+    spdlog::spdlog)
 
 add_custom_command(
     TARGET ${EDITOR_NAME} POST_BUILD

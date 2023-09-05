@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "core/base/log.h"
 
 #include <iostream>
 
@@ -6,7 +7,8 @@ namespace Meow
 {
     bool MeowEngine::init()
     {
-        std::cout << "Hello world!" << std::endl;
+        Log::Init();
+        RUNTIME_INFO("Hello world!");
         return true;
     }
 

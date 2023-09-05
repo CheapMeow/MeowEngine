@@ -7,11 +7,11 @@ namespace Meow
     /** \class MeowEngine
      * A test class
      */
-    class MeowEngine
+    class LIBRARY_API MeowEngine
     {
     public:
-        LIBRARY_API bool init(); /**< Init engine */
-        LIBRARY_API void run();
-        LIBRARY_API void shutdown();
+        bool init(); /**< Init engine */
+        void run();
+        void shutdown();
     };
 } // namespace Meow

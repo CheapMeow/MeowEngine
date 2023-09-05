@@ -17,3 +17,9 @@ target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/WX->")
 
 target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
+
+FetchContent_MakeAvailable(spdlog)
+
+target_link_libraries(${RUNTIME_NAME}
+    PUBLIC
+    spdlog::spdlog)
