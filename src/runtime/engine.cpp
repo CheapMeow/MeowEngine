@@ -5,18 +5,18 @@
 
 namespace Meow
 {
-    bool MeowEngine::init()
+    bool MeowEngine::Init()
     {
         Log::Init();
         RUNTIME_INFO("Hello world!");
         return true;
     }
 
-    void MeowEngine::run()
+    void MeowEngine::Run()
     {
         while (1)
             ;
     }
 
-    void MeowEngine::shutdown() {}
+    void MeowEngine::ShutDown() {}
 } // namespace Meow
