@@ -31,21 +31,15 @@ execute_process(
 find_program(SPHINX_EXECUTABLE sphinx-build HINTS ${DOCS_VENV}/Scripts ${DOCS_VENV}/bin REQUIRED)
 message(STATUS "Found Sphinx: ${SPHINX_EXECUTABLE}")
 
-# Find all the public headers from runtime
-get_target_property(RUNTIME_PUBLIC_HEADER_DIR ${RUNTIME_NAME} INTERFACE_INCLUDE_DIRECTORIES)
-file(GLOB_RECURSE RUNTIME_PUBLIC_HEADERS CONFIGURE_DEPENDS ${RUNTIME_PUBLIC_HEADER_DIR}/*.h)
+# Find all the public headers from runtime and editor
+file(GLOB_RECURSE RUNTIME_PUBLIC_HEADERS CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/runtime/*.h)
+file(GLOB_RECURSE EDITOR_PUBLIC_HEADERS CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/editor/*.h)
 
-# Find all the public headers from editor
-get_target_property(EDITOR_PUBLIC_HEADER_DIR ${EDITOR_NAME} INTERFACE_INCLUDE_DIRECTORIES)
-file(GLOB_RECURSE EDITOR_PUBLIC_HEADERS CONFIGURE_DEPENDS ${EDITOR_PUBLIC_HEADER_DIR}/*.h)
-
-message(--------------)
-message(STATUS "${RUNTIME_PUBLIC_HEADERS}")
-message(STATUS "${EDITOR_PUBLIC_HEADERS}")
-message(--------------)
-
+# Variables that are used to replace "@VAR@" pattern in Doxyfile.in
 set(DOXYGEN_INPUT_DIR ${PROJECT_SOURCE_DIR}/src)
 set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/doxygen)
+set(DOXYGEN_EXCLUDE_DIR ${SRC_ROOT_DIR}/3rdparty)
+
 set(DOXYGEN_INDEX_FILE ${DOXYGEN_OUTPUT_DIR}/xml/index.xml)
 set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
 set(DOXYFILE_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
