@@ -1,3 +1,5 @@
+#pragma once
+
 #include "core/base/non_copyable.h"
 #include "core/input/input_enum.h"
 
@@ -17,9 +19,9 @@ namespace Meow
         Window(std::size_t id);
         ~Window();
 
-        void Update(float dt);
+        void Update(double dt);
 
     private:
-        GLFWwindow* m_window = nullptr;
+        GLFWwindow* m_Window = nullptr;
     };
 } // namespace Meow

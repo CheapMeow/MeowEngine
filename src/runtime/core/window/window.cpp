@@ -13,28 +13,34 @@ namespace Meow
         glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
 
         // Create a windowed mode window and its context.
-        m_window = glfwCreateWindow(1080, 720, "Test Window", NULL, NULL);
+        m_Window = glfwCreateWindow(1080, 720, "Test Window", NULL, NULL);
 
         // Gets any window errors.
-        if (!m_window)
+        if (!m_Window)
         {
             glfwTerminate();
             throw std::runtime_error("GLFW failed to create the window");
         }
 
-        glfwMakeContextCurrent(m_window);
+        glfwMakeContextCurrent(m_Window);
         glfwSwapInterval(1);
 
         // Sets the user pointer.
-        glfwSetWindowUserPointer(m_window, this);
+        glfwSetWindowUserPointer(m_Window, this);
 
         // Shows the glfw window.
-        glfwShowWindow(m_window);
+        glfwShowWindow(m_Window);
     }
 
     Window::~Window()
     {
         // Free the window callbacks and destroy the window.
-        glfwDestroyWindow(m_window);
+        glfwDestroyWindow(m_Window);
+    }
+
+    void Window::Update(double dt)
+    {
+        glfwSwapBuffers(m_Window);
+        glfwPollEvents();
     }
 } // namespace Meow
