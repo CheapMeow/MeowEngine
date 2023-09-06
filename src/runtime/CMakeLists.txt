@@ -1,5 +1,5 @@
-file(GLOB_RECURSE RUNTIME_HEADER_FILES CONFIGURE_DEPENDS "${SRC_ROOT_DIR}/runtime/*.h")
-file(GLOB_RECURSE RUNTIME_SOURCE_FILES CONFIGURE_DEPENDS "${SRC_ROOT_DIR}/runtime/*.cpp")
+file(GLOB_RECURSE RUNTIME_HEADER_FILES CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/runtime/*.h)
+file(GLOB_RECURSE RUNTIME_SOURCE_FILES CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/runtime/*.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 
@@ -18,13 +18,11 @@ target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 
 target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 
-FetchContent_MakeAvailable(spdlog)
-FetchContent_MakeAvailable(rocket)
-FetchContent_MakeAvailable(glfw)
-FetchContent_MakeAvailable(glm)
+target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
 
-target_link_libraries(${RUNTIME_NAME}
-    PUBLIC
-    spdlog::spdlog
-    glfw
-    glm::glm)
+target_link_libraries(${RUNTIME_NAME} PUBLIC glm)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
+
+target_link_libraries(${RUNTIME_NAME} PUBLIC glfw)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glfw/include)

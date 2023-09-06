@@ -1,0 +1,9 @@
+[submodule "src/3rdparty/spdlog"]
+	path = src/3rdparty/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "src/3rdparty/glfw"]
+	path = src/3rdparty/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "src/3rdparty/glm"]
+	path = src/3rdparty/glm
+	url = https://github.com/g-truc/glm.git

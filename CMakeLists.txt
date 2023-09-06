@@ -7,16 +7,16 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 # Add the cmake folder so the FindXXX module is found
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-set(ENGINE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(SRC_ROOT_DIR "${ENGINE_ROOT_DIR}/src")
+set(ENGINE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(SRC_ROOT_DIR ${ENGINE_ROOT_DIR}/src)
+set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
 
 set(RUNTIME_NAME MeowRuntime)
 set(EDITOR_NAME MeowEditor)
 
-# Download dependencies through CMake
-include(cmake/dependencies.cmake)
-
-add_subdirectory(src)
+add_subdirectory(src/3rdparty)
+add_subdirectory(src/runtime)
+add_subdirectory(src/editor)
 
 # Setup editor to be startup project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${EDITOR_NAME})

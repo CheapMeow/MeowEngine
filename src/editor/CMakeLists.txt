@@ -1,5 +1,5 @@
-file(GLOB_RECURSE EDITOR_HEADER_FILES CONFIGURE_DEPENDS "${SRC_ROOT_DIR}/editor/*.h")
-file(GLOB_RECURSE EDITOR_SOURCE_FILES CONFIGURE_DEPENDS "${SRC_ROOT_DIR}/editor/*.cpp")
+file(GLOB_RECURSE EDITOR_HEADER_FILES CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/editor/*.h)
+file(GLOB_RECURSE EDITOR_SOURCE_FILES CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/editor/*.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 
@@ -8,12 +8,10 @@ add_executable(${EDITOR_NAME} ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR} ${SRC_ROOT_DIR}/editor)
 
 target_link_libraries(${EDITOR_NAME} PUBLIC ${RUNTIME_NAME})
+target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 
-FetchContent_MakeAvailable(spdlog)
-
-target_link_libraries(${EDITOR_NAME}
-    PUBLIC
-    spdlog::spdlog)
+target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
 
 add_custom_command(
     TARGET ${EDITOR_NAME} POST_BUILD
