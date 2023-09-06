@@ -1,13 +1,12 @@
 #include "core/base/macro.h"
-
-/*! \file engine.h */
+#include "core/base/non_copyable.h"
 
 namespace Meow
 {
-    /** \class MeowEngine
-     * A test class
+    /**
+     * @brief Engine entry.
      */
-    class LIBRARY_API MeowEngine
+    class LIBRARY_API MeowEngine : NonCopyable
     {
     public:
         bool Init(); /**< Init engine */

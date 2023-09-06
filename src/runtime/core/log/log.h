@@ -12,6 +12,9 @@
 
 namespace Meow
 {
+    /**
+     * @brief Log using spdlog, sperate runtime logger from editor logger.
+     */
     class LIBRARY_API Log
     {
     public:

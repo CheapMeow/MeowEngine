@@ -7,7 +7,7 @@ namespace Meow
     /**
      * @brief Class that removes the copy constructor and operator from derived classes, while leaving move.
      */
-    class LIBRARY_EXPORTS NonCopyable
+    class LIBRARY_API NonCopyable
     {
     protected:
         NonCopyable()          = default;

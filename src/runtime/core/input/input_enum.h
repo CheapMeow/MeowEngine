@@ -137,7 +137,7 @@ namespace Meow
         Menu         = 348
     };
 
-    enum class MouseCode : int16_t
+    enum class MouseButtonCode : uint8_t
     {
         // From glfw3.h
         Button0 = 0,
@@ -155,14 +155,14 @@ namespace Meow
         ButtonMiddle = Button2
     };
 
-    enum class InputAction : int32_t
+    enum class InputAction : uint8_t
     {
         Release = 0,
         Press   = 1,
         Repeat  = 2
     };
 
-    enum class InputMod : int32_t
+    enum class InputMod : uint8_t
     {
         None     = 0,
         Shift    = 1,

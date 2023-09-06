@@ -19,7 +19,12 @@ target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 
 FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(rocket)
+FetchContent_MakeAvailable(glfw)
+FetchContent_MakeAvailable(glm)
 
 target_link_libraries(${RUNTIME_NAME}
     PUBLIC
-    spdlog::spdlog)
+    spdlog::spdlog
+    glfw
+    glm::glm)
