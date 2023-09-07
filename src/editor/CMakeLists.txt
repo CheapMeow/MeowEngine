@@ -5,6 +5,9 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES} ${E
 
 add_executable(${EDITOR_NAME} ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 
+set_target_properties(${EDITOR_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${EDITOR_NAME} PROPERTIES FOLDER "Editor")
+
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR} ${SRC_ROOT_DIR}/editor)
 
 target_link_libraries(${EDITOR_NAME} PUBLIC ${RUNTIME_NAME})

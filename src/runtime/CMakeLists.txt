@@ -21,6 +21,8 @@ target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
 
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/rocket)
+
 target_link_libraries(${RUNTIME_NAME} PUBLIC glm)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
 

@@ -11,7 +11,8 @@ namespace Meow
     {
         Log::Init();
 
-        m_Window.reset(new Window(0));
+        m_window.reset(new Window(0));
+        m_window->OnClose().connect([&]() { m_running = false; });
 
         return true;
     }
@@ -21,33 +22,33 @@ namespace Meow
         // while (m_Running)
         // {
         //     double currTime  = Time::GetTime();
-        //     double frameTime = currTime - m_LastTime;
+        //     double frameTime = currTime - m_lastTime;
         //     if (frameTime > 0.25)
         //         frameTime = 0.25;
-        //     m_LastTime = currTime;
+        //     m_lastTime = currTime;
 
-        //     m_Accumulator += frameTime;
+        //     m_accumulator += frameTime;
 
-        //     while (m_Accumulator >= m_PhyicsFixedDeltaTime)
+        //     while (m_accumulator >= m_phyics_fixed_delta_time)
         //     {
         //         previousState = currentState;
-        //         integrate(currentState, m_PhyicsTime, m_PhyicsFixedDeltaTime);
-        //         m_PhyicsTime += m_PhyicsFixedDeltaTime;
-        //         m_Accumulator -= m_PhyicsFixedDeltaTime;
+        //         integrate(currentState, m_phyics_time, m_phyics_fixed_delta_time);
+        //         m_phyics_time += m_phyics_fixed_delta_time;
+        //         m_accumulator -= m_phyics_fixed_delta_time;
         //     }
 
-        //     const double alpha = m_Accumulator / m_PhyicsFixedDeltaTime;
+        //     const double alpha = m_accumulator / m_phyics_fixed_delta_time;
 
         //     State state = currentState * alpha + previousState * (1.0 - alpha);
 
         //     render(state);
         // }
-        while (m_Running)
+        while (m_running)
         {
             double currTime  = Time::GetTime();
-            double frameTime = currTime - m_LastTime;
+            double frameTime = currTime - m_lastTime;
 
-            m_Window->Update(frameTime);
+            m_window->Update(frameTime);
         }
     }
 

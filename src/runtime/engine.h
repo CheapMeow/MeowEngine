@@ -18,13 +18,13 @@ namespace Meow
         void ShutDown();
 
     private:
-        bool m_Running = true;
+        bool m_running = true;
 
-        double m_LastTime = 0.0;
-        // double m_Accumulator          = 0.0;
-        // double m_PhyicsTime           = 0.0;
-        // double m_PhyicsFixedDeltaTime = 1.0 / 60.0;
+        double m_lastTime = 0.0;
+        // double m_accumulator          = 0.0;
+        // double m_phyics_time           = 0.0;
+        // double m_phyics_fixed_delta_time = 1.0 / 60.0;
 
-        std::unique_ptr<Window> m_Window;
+        std::unique_ptr<Window> m_window;
     };
 } // namespace Meow
