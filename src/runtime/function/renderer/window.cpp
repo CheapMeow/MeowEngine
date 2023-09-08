@@ -10,6 +10,25 @@ namespace Meow
     static_assert(GLFW_MOUSE_BUTTON_LAST == static_cast<int16_t>(MouseButtonCode::ButtonLast),
                   "GLFW mouse button count does not match our mouse button enum count.");
 
+    VkSurfaceKHR Window::CreateSurface(VkInstance instance)
+    {
+        if (instance == VK_NULL_HANDLE || !m_glfw_window)
+        {
+            return VK_NULL_HANDLE;
+        }
+
+        VkSurfaceKHR surface;
+
+        VkResult errCode = glfwCreateWindowSurface(instance, m_glfw_window, NULL, &surface);
+
+        if (errCode != VK_SUCCESS)
+        {
+            return nullptr;
+        }
+
+        return surface;
+    }
+
     void CallbackWindowPosition(GLFWwindow* glfwWindow, int32_t xpos, int32_t ypos)
     {
         auto window = static_cast<Window*>(glfwGetWindowUserPointer(glfwWindow));

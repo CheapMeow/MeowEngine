@@ -1,3 +1,5 @@
+# add_subdirectory would add 3rdparty source code into cmake build tree
+
 if(NOT TARGET glm)
     option(BUILD_STATIC_LIBS "" ON)
     option(BUILD_TESTING "" OFF)
@@ -21,4 +23,9 @@ if(NOT TARGET spdlog)
     option(SPDLOG_INSTALL "" OFF)
     add_subdirectory(spdlog)
     set_target_properties(spdlog PROPERTIES FOLDER ${third_party_folder}/spdlog)
+endif()
+
+if(NOT TARGET volk)
+    add_subdirectory(volk)
+    set_target_properties(volk PROPERTIES FOLDER ${third_party_folder}/volk)
 endif()

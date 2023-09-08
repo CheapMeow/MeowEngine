@@ -8,13 +8,15 @@ add_executable(${EDITOR_NAME} ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 set_target_properties(${EDITOR_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${EDITOR_NAME} PROPERTIES FOLDER "Editor")
 
+target_compile_definitions(${EDITOR_NAME}
+    PUBLIC
+    $<$<CONFIG:Debug>:MEOW_DEBUG>
+    $<$<CONFIG:Release>:MEOW_RELEASE>)
+
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR} ${SRC_ROOT_DIR}/editor)
 
 target_link_libraries(${EDITOR_NAME} PUBLIC ${RUNTIME_NAME})
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
-
-target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
-target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
 
 add_custom_command(
     TARGET ${EDITOR_NAME} POST_BUILD

@@ -4,8 +4,10 @@
 #include "core/input/input_enum.h"
 
 #include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
 #include <rocket.hpp>
+#include <volk.h>
 
 namespace Meow
 {
@@ -21,6 +23,8 @@ namespace Meow
         ~Window();
 
         void Update(double dt);
+
+        VkSurfaceKHR CreateSurface(VkInstance instance);
 
         /**
          * Gets the size of the window in pixels.

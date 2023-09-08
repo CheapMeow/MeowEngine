@@ -1,7 +1,7 @@
 #include "engine.h"
 #include "core/log/log.h"
 #include "core/time/time.h"
-#include "core/window/window.h"
+#include "function/renderer/window.h"
 
 #include <iostream>
 
@@ -11,8 +11,11 @@ namespace Meow
     {
         Log::Init();
 
-        m_window.reset(new Window(0));
+        m_window = std::make_shared<Window>(0);
+
         m_window->OnClose().connect([&]() { m_running = false; });
+
+        m_renderer = std::make_unique<VulkanRenderer>(m_window);
 
         return true;
     }
