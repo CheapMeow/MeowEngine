@@ -10,6 +10,18 @@ namespace vk
 {
     namespace Meow
     {
+        template<typename TargetType, typename SourceType>
+        VULKAN_HPP_INLINE TargetType checked_cast(SourceType value)
+        {
+            static_assert(sizeof(TargetType) <= sizeof(SourceType), "No need to cast from smaller to larger type!");
+            static_assert(std::numeric_limits<SourceType>::is_integer, "Only integer types supported!");
+            static_assert(!std::numeric_limits<SourceType>::is_signed, "Only unsigned types supported!");
+            static_assert(std::numeric_limits<TargetType>::is_integer, "Only integer types supported!");
+            static_assert(!std::numeric_limits<TargetType>::is_signed, "Only unsigned types supported!");
+            assert(value <= std::numeric_limits<TargetType>::max());
+            return static_cast<TargetType>(value);
+        }
+
         std::vector<const char*>
         GetRequiredInstanceExtensions(std::vector<const char*> const& required_instance_extensions_base)
         {
@@ -463,5 +475,21 @@ namespace vk
             return vk::raii::DeviceMemory(device, memory_allocate_info);
         }
 
+        vk::raii::DescriptorSetLayout MakeDescriptorSetLayout(
+            vk::raii::Device const&                                                            device,
+            std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& binding_data,
+            vk::DescriptorSetLayoutCreateFlags                                                 flags)
+        {
+            std::vector<vk::DescriptorSetLayoutBinding> bindings(binding_data.size());
+            for (size_t i = 0; i < binding_data.size(); i++)
+            {
+                bindings[i] = vk::DescriptorSetLayoutBinding(vk::Meow::checked_cast<uint32_t>(i),
+                                                             std::get<0>(binding_data[i]),
+                                                             std::get<1>(binding_data[i]),
+                                                             std::get<2>(binding_data[i]));
+            }
+            vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(flags, bindings);
+            return vk::raii::DescriptorSetLayout(device, descriptor_set_layout_create_info);
+        }
     } // namespace Meow
 } // namespace vk

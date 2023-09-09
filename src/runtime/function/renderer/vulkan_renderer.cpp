@@ -124,7 +124,7 @@ namespace Meow
     }
 
     /**
-     * @brief Create Surface and delete old surface if old surface exists
+     * @brief Create surface data and create surface in surface data ctor.
      */
     void VulkanRenderer::CreateSurface()
     {
@@ -184,6 +184,9 @@ namespace Meow
             std::move(vk::raii::CommandBuffers(*m_logical_device, command_buffer_allocate_info).front()));
     }
 
+    /**
+     * @brief Create swapchain data and create swapchain in swapchain data ctor.
+     */
     void VulkanRenderer::CreateSwapChain()
     {
         m_swapchain_data = std::make_shared<vk::Meow::SwapChainData>(*m_gpu,
@@ -197,18 +200,33 @@ namespace Meow
                                                                      m_present_queue_family_index);
     }
 
+    /**
+     * @brief Create depth buffer data and create depth buffer in depth buffer data ctor.
+     */
     void VulkanRenderer::CreateDepthBuffer()
     {
         m_depth_buffer_data = std::make_shared<vk::Meow::DepthBufferData>(
             *m_gpu, *m_logical_device, vk::Format::eD16Unorm, (*m_surface_data).extent);
     }
 
+    /**
+     * @brief Create uniform buffer data and create uniform buffer in uniform buffer data ctor.
+     */
     void VulkanRenderer::CreateUniformBuffer()
     {
         vk::Meow::BufferData uniformBufferData(
             *m_gpu, *m_logical_device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
         glm::mat4x4 mvpc_matrix = Meow::Math::CreateModelViewProjectionClipMatrix((*m_surface_data).extent);
         vk::Meow::CopyToDevice(uniformBufferData.device_memory, mvpc_matrix);
+    }
+
+    void VulkanRenderer::CreatePipelineLayout()
+    {
+        m_descriptor_set_layout = std::make_shared<vk::raii::DescriptorSetLayout>(vk::Meow::MakeDescriptorSetLayout(
+            *m_logical_device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}}));
+
+        vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, **m_descriptor_set_layout);
+        m_pipeline_layout = std::make_shared<vk::raii::PipelineLayout>(*m_logical_device, pipeline_layout_create_info);
     }
 
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
@@ -222,6 +240,7 @@ namespace Meow
         CreateSwapChain();
         CreateDepthBuffer();
         CreateUniformBuffer();
+        CreatePipelineLayout();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

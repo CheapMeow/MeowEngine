@@ -360,5 +360,10 @@ namespace vk
 #endif
         };
 
+        vk::raii::DescriptorSetLayout MakeDescriptorSetLayout(
+            vk::raii::Device const&                                                            device,
+            std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& binding_data,
+            vk::DescriptorSetLayoutCreateFlags                                                 flags = {});
+
     } // namespace Meow
 } // namespace vk
