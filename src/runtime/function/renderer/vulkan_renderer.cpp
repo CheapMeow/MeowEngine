@@ -1,6 +1,5 @@
 #include "vulkan_renderer.h"
 #include "core/log/log.h"
-#include "function/renderer/utils/vulkan_hpp_utils.hpp"
 
 #include <map>
 
@@ -144,7 +143,7 @@ namespace Meow
      * @param context A Vulkan context with an instance already set up.
      * @param required_device_extensions The required Vulkan device extensions.
      */
-    void VulkanRenderer::CreateLogicalDevice()
+    void VulkanRenderer::CreateLogicalDeviceAndQueue()
     {
         std::vector<vk::ExtensionProperties> device_extensions = m_gpu->enumerateDeviceExtensionProperties();
 
@@ -163,6 +162,44 @@ namespace Meow
         vk::DeviceCreateInfo      device_info({}, queue_info, {}, k_required_device_extensions);
 
         m_logical_device = std::make_shared<vk::raii::Device>(*m_gpu, device_info);
+
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+        volkLoadDevice(**m_logical_device);
+#endif
+
+        m_graphics_queue = std::make_shared<vk::raii::Queue>(*m_logical_device, m_graphics_queue_family_index, 0);
+        m_present_queue  = std::make_shared<vk::raii::Queue>(*m_logical_device, m_present_queue_family_index, 0);
+    }
+
+    /**
+     * @brief Create command pool and command buffer.
+     * @todo Support multi thread.
+     */
+    void VulkanRenderer::CreateCommandBuffer()
+    {
+        vk::CommandPoolCreateInfo command_pool_create_info({}, m_graphics_queue_family_index);
+        m_command_pool = std::make_shared<vk::raii::CommandPool>(*m_logical_device, command_pool_create_info);
+
+        vk::CommandBufferAllocateInfo command_buffer_allocate_info(
+            **m_command_pool, vk::CommandBufferLevel::ePrimary, 1);
+        m_command_buffer = std::make_shared<vk::raii::CommandBuffer>(
+            std::move(vk::raii::CommandBuffers(*m_logical_device, command_buffer_allocate_info).front()));
+    }
+
+    void VulkanRenderer::CreateSwapChain()
+    {
+        auto         size = m_window.lock()->GetSize();
+        vk::Extent2D extent(size.x, size.y);
+
+        m_swapchain_data = std::make_shared<vk::Meow::SwapChainData>(*m_gpu,
+                                                                     *m_logical_device,
+                                                                     *m_surface,
+                                                                     extent,
+                                                                     vk::ImageUsageFlagBits::eColorAttachment |
+                                                                         vk::ImageUsageFlagBits::eTransferSrc,
+                                                                     nullptr,
+                                                                     m_graphics_queue_family_index,
+                                                                     m_present_queue_family_index);
     }
 
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
@@ -171,7 +208,9 @@ namespace Meow
         CreateInstance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
         CreatePhysicalDevice();
         CreateSurface();
-        CreateLogicalDevice();
+        CreateLogicalDeviceAndQueue();
+        CreateCommandBuffer();
+        CreateSwapChain();
     }
 
     VulkanRenderer::~VulkanRenderer() {}
