@@ -1,5 +1,6 @@
 #include "vulkan_renderer.h"
 #include "core/log/log.h"
+#include "core/math/math.h"
 
 #include <map>
 
@@ -127,14 +128,11 @@ namespace Meow
      */
     void VulkanRenderer::CreateSurface()
     {
-        VkSurfaceKHR surface = m_window.lock()->CreateSurface((**m_vulkan_instance));
-        if (!surface)
-        {
-            throw std::runtime_error("Failed to create window surface.");
-        }
+        auto         size = m_window.lock()->GetSize();
+        vk::Extent2D extent(size.x, size.y);
 
-        // delete old surface if old surface exists
-        m_surface.reset(new vk::raii::SurfaceKHR(*m_vulkan_instance, surface));
+        m_surface_data =
+            std::make_shared<vk::Meow::SurfaceData>(*m_vulkan_instance, m_window.lock()->GetGLFWWindow(), extent);
     }
 
     /**
@@ -152,7 +150,7 @@ namespace Meow
             throw std::runtime_error("Required device extensions are missing, will try without.");
         }
 
-        auto indexs                   = vk::Meow::FindGraphicsAndPresentQueueFamilyIndex(*m_gpu, *m_surface);
+        auto indexs = vk::Meow::FindGraphicsAndPresentQueueFamilyIndex(*m_gpu, (*m_surface_data).surface);
         m_graphics_queue_family_index = indexs.first;
         m_present_queue_family_index  = indexs.second;
 
@@ -188,18 +186,29 @@ namespace Meow
 
     void VulkanRenderer::CreateSwapChain()
     {
-        auto         size = m_window.lock()->GetSize();
-        vk::Extent2D extent(size.x, size.y);
-
         m_swapchain_data = std::make_shared<vk::Meow::SwapChainData>(*m_gpu,
                                                                      *m_logical_device,
-                                                                     *m_surface,
-                                                                     extent,
+                                                                     (*m_surface_data).surface,
+                                                                     (*m_surface_data).extent,
                                                                      vk::ImageUsageFlagBits::eColorAttachment |
                                                                          vk::ImageUsageFlagBits::eTransferSrc,
                                                                      nullptr,
                                                                      m_graphics_queue_family_index,
                                                                      m_present_queue_family_index);
+    }
+
+    void VulkanRenderer::CreateDepthBuffer()
+    {
+        m_depth_buffer_data = std::make_shared<vk::Meow::DepthBufferData>(
+            *m_gpu, *m_logical_device, vk::Format::eD16Unorm, (*m_surface_data).extent);
+    }
+
+    void VulkanRenderer::CreateUniformBuffer()
+    {
+        vk::Meow::BufferData uniformBufferData(
+            *m_gpu, *m_logical_device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
+        glm::mat4x4 mvpc_matrix = Meow::Math::CreateModelViewProjectionClipMatrix((*m_surface_data).extent);
+        vk::Meow::CopyToDevice(uniformBufferData.device_memory, mvpc_matrix);
     }
 
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
@@ -211,6 +220,8 @@ namespace Meow
         CreateLogicalDeviceAndQueue();
         CreateCommandBuffer();
         CreateSwapChain();
+        CreateDepthBuffer();
+        CreateUniformBuffer();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

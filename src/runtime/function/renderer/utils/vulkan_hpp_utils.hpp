@@ -1,5 +1,9 @@
+#pragma once
+
 #define NOMINMAX
 
+#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -36,6 +40,23 @@ namespace vk
 
         uint32_t ScorePhysicalDevice(const vk::raii::PhysicalDevice& device,
                                      const std::vector<const char*>& required_device_extensions);
+
+        struct SurfaceData
+        {
+            SurfaceData(vk::raii::Instance const& instance, GLFWwindow* glfw_window, vk::Extent2D const& extent_) :
+                extent(extent_)
+            {
+                VkSurfaceKHR _surface;
+                VkResult     err =
+                    glfwCreateWindowSurface(static_cast<VkInstance>(*instance), glfw_window, nullptr, &_surface);
+                if (err != VK_SUCCESS)
+                    throw std::runtime_error("Failed to create window!");
+                surface = vk::raii::SurfaceKHR(instance, _surface);
+            }
+
+            vk::Extent2D         extent;
+            vk::raii::SurfaceKHR surface = nullptr;
+        };
 
         uint32_t FindGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queue_family_properties);
 
@@ -138,5 +159,206 @@ namespace vk
             std::vector<vk::Image>           images;
             std::vector<vk::raii::ImageView> image_views;
         };
+
+        uint32_t FindMemoryType(vk::PhysicalDeviceMemoryProperties const& memory_properties,
+                                uint32_t                                  type_bits,
+                                vk::MemoryPropertyFlags                   requirements_mask);
+
+        vk::raii::DeviceMemory AllocateDeviceMemory(vk::raii::Device const&                   device,
+                                                    vk::PhysicalDeviceMemoryProperties const& memory_properties,
+                                                    vk::MemoryRequirements const&             memory_requirements,
+                                                    vk::MemoryPropertyFlags                   memory_property_flags);
+
+        template<typename T>
+        void CopyToDevice(vk::raii::DeviceMemory const& device_memory,
+                          T const*                      p_data,
+                          size_t                        count,
+                          vk::DeviceSize                stride = sizeof(T))
+        {
+            assert(sizeof(T) <= stride);
+            uint8_t* device_data = static_cast<uint8_t*>(device_memory.mapMemory(0, count * stride));
+            if (stride == sizeof(T))
+            {
+                memcpy(device_data, p_data, count * sizeof(T));
+            }
+            else
+            {
+                for (size_t i = 0; i < count; i++)
+                {
+                    memcpy(device_data, &p_data[i], sizeof(T));
+                    device_data += stride;
+                }
+            }
+            device_memory.unmapMemory();
+        }
+
+        template<typename T>
+        void CopyToDevice(vk::raii::DeviceMemory const& device_memory, T const& data)
+        {
+            CopyToDevice<T>(device_memory, &data, 1);
+        }
+
+        struct ImageData
+        {
+            ImageData(vk::raii::PhysicalDevice const& physical_device,
+                      vk::raii::Device const&         device,
+                      vk::Format                      format_,
+                      vk::Extent2D const&             extent,
+                      vk::ImageTiling                 tiling,
+                      vk::ImageUsageFlags             usage,
+                      vk::ImageLayout                 initial_layout,
+                      vk::MemoryPropertyFlags         memory_properties,
+                      vk::ImageAspectFlags            aspect_mask) :
+                format(format_),
+                image(device,
+                      {vk::ImageCreateFlags(),
+                       vk::ImageType::e2D,
+                       format,
+                       vk::Extent3D(extent, 1),
+                       1,
+                       1,
+                       vk::SampleCountFlagBits::e1,
+                       tiling,
+                       usage | vk::ImageUsageFlagBits::eSampled,
+                       vk::SharingMode::eExclusive,
+                       {},
+                       initial_layout})
+            {
+                device_memory = vk::Meow::AllocateDeviceMemory(
+                    device, physical_device.getMemoryProperties(), image.getMemoryRequirements(), memory_properties);
+                image.bindMemory(*device_memory, 0);
+                image_view = vk::raii::ImageView(
+                    device,
+                    vk::ImageViewCreateInfo({}, *image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
+            }
+
+            ImageData(std::nullptr_t) {}
+
+            // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
+            // destructor of the ImageData, the order of DeviceMemory and Image here matters
+            vk::Format             format;
+            vk::raii::DeviceMemory device_memory = nullptr;
+            vk::raii::Image        image         = nullptr;
+            vk::raii::ImageView    image_view    = nullptr;
+        };
+
+        struct DepthBufferData : public ImageData
+        {
+            DepthBufferData(vk::raii::PhysicalDevice const& physical_device,
+                            vk::raii::Device const&         device,
+                            vk::Format                      format,
+                            vk::Extent2D const&             extent) :
+                ImageData(physical_device,
+                          device,
+                          format,
+                          extent,
+                          vk::ImageTiling::eOptimal,
+                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                          vk::ImageLayout::eUndefined,
+                          vk::MemoryPropertyFlagBits::eDeviceLocal,
+                          vk::ImageAspectFlagBits::eDepth)
+            {}
+        };
+
+        template<typename Func>
+        void OneTimeSubmit(vk::raii::Device const&      device,
+                           vk::raii::CommandPool const& command_pool,
+                           vk::raii::Queue const&       queue,
+                           Func const&                  func)
+        {
+            vk::raii::CommandBuffer command_buffer = std::move(
+                vk::raii::CommandBuffers(device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
+            command_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+            func(command_buffer);
+            command_buffer.end();
+            vk::SubmitInfo submit_info(nullptr, nullptr, *command_buffer);
+            queue.submit(submit_info, nullptr);
+            queue.waitIdle();
+        }
+
+        struct BufferData
+        {
+            BufferData(vk::raii::PhysicalDevice const& physical_device,
+                       vk::raii::Device const&         device,
+                       vk::DeviceSize                  size,
+                       vk::BufferUsageFlags            usage,
+                       vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
+                                                                vk::MemoryPropertyFlagBits::eHostCoherent) :
+                buffer(device, vk::BufferCreateInfo({}, size, usage))
+#if defined(MEOW_DEBUG)
+                ,
+                m_size(size), m_usage(usage), m_property_flags(property_flags)
+#endif
+            {
+                device_memory = vk::Meow::AllocateDeviceMemory(
+                    device, physical_device.getMemoryProperties(), buffer.getMemoryRequirements(), property_flags);
+                buffer.bindMemory(*device_memory, 0);
+            }
+
+            BufferData(std::nullptr_t) {}
+
+            template<typename DataType>
+            void Upload(DataType const& data) const
+            {
+                assert((m_property_flags & vk::MemoryPropertyFlagBits::eHostCoherent) &&
+                       (m_property_flags & vk::MemoryPropertyFlagBits::eHostVisible));
+                assert(sizeof(DataType) <= m_size);
+
+                void* data_ptr = device_memory.mapMemory(0, sizeof(DataType));
+                memcpy(data_ptr, &data, sizeof(DataType));
+                device_memory.unmapMemory();
+            }
+
+            template<typename DataType>
+            void Upload(std::vector<DataType> const& data, size_t stride = 0) const
+            {
+                assert(m_property_flags & vk::MemoryPropertyFlagBits::eHostVisible);
+
+                size_t element_size = stride ? stride : sizeof(DataType);
+                assert(sizeof(DataType) <= element_size);
+
+                vk::Meow::CopyToDevice(device_memory, data.data(), data.size(), element_size);
+            }
+
+            template<typename DataType>
+            void Upload(vk::raii::PhysicalDevice const& physical_device,
+                        vk::raii::Device const&         device,
+                        vk::raii::CommandPool const&    command_pool,
+                        vk::raii::Queue const&          queue,
+                        std::vector<DataType> const&    data,
+                        size_t                          stride) const
+            {
+                assert(m_usage & vk::BufferUsageFlagBits::eTransferDst);
+                assert(m_property_flags & vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+                size_t element_size = stride ? stride : sizeof(DataType);
+                assert(sizeof(DataType) <= element_size);
+
+                size_t dataSize = data.size() * element_size;
+                assert(dataSize <= m_size);
+
+                vk::Meow::BufferData staging_buffer(
+                    physical_device, device, dataSize, vk::BufferUsageFlagBits::eTransferSrc);
+                vk::Meow::CopyToDevice(staging_buffer.device_memory, data.data(), data.size(), element_size);
+
+                vk::Meow::OneTimeSubmit(
+                    device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
+                        command_buffer.copyBuffer(
+                            *staging_buffer.buffer, *this->buffer, vk::BufferCopy(0, 0, dataSize));
+                    });
+            }
+
+            // the DeviceMemory should be destroyed before the Buffer it is bound to; to get that order with the
+            // standard destructor of the BufferData, the order of DeviceMemory and Buffer here matters
+            vk::raii::DeviceMemory device_memory = nullptr;
+            vk::raii::Buffer       buffer        = nullptr;
+#if defined(MEOW_DEBUG)
+        private:
+            vk::DeviceSize          m_size;
+            vk::BufferUsageFlags    m_usage;
+            vk::MemoryPropertyFlags m_property_flags;
+#endif
+        };
+
     } // namespace Meow
 } // namespace vk

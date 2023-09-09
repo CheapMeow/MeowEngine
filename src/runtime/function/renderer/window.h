@@ -7,7 +7,6 @@
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
 #include <rocket.hpp>
-#include <volk.h>
 
 namespace Meow
 {
@@ -23,8 +22,6 @@ namespace Meow
         ~Window();
 
         void Update(double dt);
-
-        VkSurfaceKHR CreateSurface(VkInstance instance);
 
         /**
          * Gets the size of the window in pixels.
@@ -217,6 +214,8 @@ namespace Meow
          * @return The mouse scroll delta.
          */
         const glm::vec2& GetMouseScrollDelta() const { return m_mouse_scroll_delta; }
+
+        GLFWwindow* GetGLFWWindow() const { return m_glfw_window; }
 
         /**
          * Called when the window is resized.
