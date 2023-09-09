@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <vulkan/vulkan_raii.hpp>
 
 #include <iostream>
@@ -26,7 +28,7 @@ namespace vk
 
         vk::DebugUtilsMessengerCreateInfoEXT MakeDebugUtilsMessengerCreateInfoEXT();
 
-        void LogVulkanAPIVersion(const vk::raii::Context context);
+        void LogVulkanAPIVersion(const uint32_t api_version);
 
         void LogVulkanDevice(const VkPhysicalDeviceProperties&         physical_device_properties,
                              const std::vector<VkExtensionProperties>& extension_properties);
@@ -34,5 +36,10 @@ namespace vk
         uint32_t ScorePhysicalDevice(const vk::raii::PhysicalDevice& device,
                                      const std::vector<const char*>& required_device_extensions);
 
+        uint32_t FindGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queue_family_properties);
+
+        std::pair<uint32_t, uint32_t>
+        FindGraphicsAndPresentQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device,
+                                               vk::raii::SurfaceKHR const&     surface);
     } // namespace Meow
 } // namespace vk

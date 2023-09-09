@@ -21,8 +21,9 @@ namespace Meow
         void CreateContext();
         void CreateInstance(std::vector<const char*> const& required_instance_extensions,
                             std::vector<const char*> const& required_validation_layers);
-        void CreateDebugUtilsMessenger();
         void CreatePhysicalDevice();
+        void CreateSurface();
+        void CreateLogicalDevice();
 
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -31,7 +32,9 @@ namespace Meow
         std::shared_ptr<vk::raii::Instance>       m_vulkan_instance;
         std::shared_ptr<vk::raii::PhysicalDevice> m_gpu;
         std::shared_ptr<vk::raii::SurfaceKHR>     m_surface;
-        uint32_t                                  m_graphics_queue_index;
+        uint32_t                                  m_graphics_queue_family_index;
+        uint32_t                                  m_present_queue_family_index;
+        std::shared_ptr<vk::raii::Device>         m_logical_device;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debug_utils_messenger;

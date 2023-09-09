@@ -1,6 +1,6 @@
 #include "vulkan_renderer.h"
 #include "core/log/log.h"
-#include "function/renderer/utils/utils.h"
+#include "function/renderer/utils/vulkan_hpp_utils.hpp"
 
 #include <map>
 
@@ -123,11 +123,55 @@ namespace Meow
             m_gpu = std::make_shared<vk::raii::PhysicalDevice>(ranked_devices.rbegin()->second);
     }
 
+    /**
+     * @brief Create Surface and delete old surface if old surface exists
+     */
+    void VulkanRenderer::CreateSurface()
+    {
+        VkSurfaceKHR surface = m_window.lock()->CreateSurface((**m_vulkan_instance));
+        if (!surface)
+        {
+            throw std::runtime_error("Failed to create window surface.");
+        }
+
+        // delete old surface if old surface exists
+        m_surface.reset(new vk::raii::SurfaceKHR(*m_vulkan_instance, surface));
+    }
+
+    /**
+     * @brief Create the Vulkan physical device and logical device.
+     *
+     * @param context A Vulkan context with an instance already set up.
+     * @param required_device_extensions The required Vulkan device extensions.
+     */
+    void VulkanRenderer::CreateLogicalDevice()
+    {
+        std::vector<vk::ExtensionProperties> device_extensions = m_gpu->enumerateDeviceExtensionProperties();
+
+        if (!vk::Meow::ValidateExtensions(k_required_device_extensions, device_extensions))
+        {
+            throw std::runtime_error("Required device extensions are missing, will try without.");
+        }
+
+        auto indexs                   = vk::Meow::FindGraphicsAndPresentQueueFamilyIndex(*m_gpu, *m_surface);
+        m_graphics_queue_family_index = indexs.first;
+        m_present_queue_family_index  = indexs.second;
+
+        // Create a device with one queue
+        float                     queue_priority = 1.0f;
+        vk::DeviceQueueCreateInfo queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
+        vk::DeviceCreateInfo      device_info({}, queue_info, {}, k_required_device_extensions);
+
+        m_logical_device = std::make_shared<vk::raii::Device>(*m_gpu, device_info);
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
         CreateInstance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
         CreatePhysicalDevice();
+        CreateSurface();
+        CreateLogicalDevice();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

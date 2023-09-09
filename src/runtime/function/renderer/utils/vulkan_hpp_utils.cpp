@@ -1,7 +1,10 @@
-#include "utils.h"
+#include "vulkan_hpp_utils.hpp"
 #include "core/log/log.h"
 
+#include <cassert>
 #include <iomanip>
+#include <limits>
+#include <numeric>
 
 namespace vk
 {
@@ -188,7 +191,7 @@ namespace vk
                 }
             }
 
-            RUNTIME_ERROR(error_str);
+            RUNTIME_ERROR(error_str.str());
 
             return VK_FALSE;
         }
@@ -318,6 +321,57 @@ namespace vk
             // Gives a higher score to devices with a higher maximum texture size.
             score += physical_device_properties.limits.maxImageDimension2D;
             return score;
+        }
+
+        uint32_t FindGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queue_family_properties)
+        {
+            // get the first index into queueFamiliyProperties which supports graphics
+            std::vector<vk::QueueFamilyProperties>::const_iterator graphics_queue_family_property = std::find_if(
+                queue_family_properties.begin(),
+                queue_family_properties.end(),
+                [](vk::QueueFamilyProperties const& qfp) { return qfp.queueFlags & vk::QueueFlagBits::eGraphics; });
+            assert(graphics_queue_family_property != queue_family_properties.end());
+            return static_cast<uint32_t>(
+                std::distance(queue_family_properties.begin(), graphics_queue_family_property));
+        }
+
+        std::pair<uint32_t, uint32_t>
+        FindGraphicsAndPresentQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device,
+                                               vk::raii::SurfaceKHR const&     surface)
+        {
+            std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
+            assert(queue_family_properties.size() < std::numeric_limits<uint32_t>::max());
+
+            uint32_t graphics_queue_family_index = vk::Meow::FindGraphicsQueueFamilyIndex(queue_family_properties);
+            if (physical_device.getSurfaceSupportKHR(graphics_queue_family_index, *surface))
+            {
+                return {
+                    graphics_queue_family_index,
+                    graphics_queue_family_index}; // the first graphics_queue_family_index does also support presents
+            }
+
+            // the graphics_queue_family_index doesn't support present -> look for an other family index that supports
+            // both graphics and present
+            for (size_t i = 0; i < queue_family_properties.size(); i++)
+            {
+                if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
+                    physical_device.getSurfaceSupportKHR(static_cast<uint32_t>(i), *surface))
+                {
+                    return {static_cast<uint32_t>(i), static_cast<uint32_t>(i)};
+                }
+            }
+
+            // there's nothing like a single family index that supports both graphics and present -> look for an other
+            // family index that supports present
+            for (size_t i = 0; i < queue_family_properties.size(); i++)
+            {
+                if (physical_device.getSurfaceSupportKHR(static_cast<uint32_t>(i), *surface))
+                {
+                    return {graphics_queue_family_index, static_cast<uint32_t>(i)};
+                }
+            }
+
+            throw std::runtime_error("Could not find queues for both graphics or present -> terminating");
         }
 
     } // namespace Meow

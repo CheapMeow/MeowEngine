@@ -160,6 +160,7 @@ namespace Meow
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         // Create a windowed mode window and its context.
         m_glfw_window = glfwCreateWindow(1080, 720, "Test Window", NULL, NULL);
