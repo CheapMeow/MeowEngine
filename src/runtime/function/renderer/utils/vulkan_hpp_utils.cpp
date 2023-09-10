@@ -491,5 +491,228 @@ namespace vk
             vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(flags, bindings);
             return vk::raii::DescriptorSetLayout(device, descriptor_set_layout_create_info);
         }
+
+        void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,
+                            vk::Image                      image,
+                            vk::Format                     format,
+                            vk::ImageLayout                old_image_layout,
+                            vk::ImageLayout                new_image_layout)
+        {
+            vk::AccessFlags source_access_mask;
+            switch (old_image_layout)
+            {
+                case vk::ImageLayout::eTransferDstOptimal:
+                    source_access_mask = vk::AccessFlagBits::eTransferWrite;
+                    break;
+                case vk::ImageLayout::ePreinitialized:
+                    source_access_mask = vk::AccessFlagBits::eHostWrite;
+                    break;
+                case vk::ImageLayout::eGeneral: // source_access_mask is empty
+                case vk::ImageLayout::eUndefined:
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
+
+            vk::PipelineStageFlags source_stage;
+            switch (old_image_layout)
+            {
+                case vk::ImageLayout::eGeneral:
+                case vk::ImageLayout::ePreinitialized:
+                    source_stage = vk::PipelineStageFlagBits::eHost;
+                    break;
+                case vk::ImageLayout::eTransferDstOptimal:
+                    source_stage = vk::PipelineStageFlagBits::eTransfer;
+                    break;
+                case vk::ImageLayout::eUndefined:
+                    source_stage = vk::PipelineStageFlagBits::eTopOfPipe;
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
+
+            vk::AccessFlags destination_access_mask;
+            switch (new_image_layout)
+            {
+                case vk::ImageLayout::eColorAttachmentOptimal:
+                    destination_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
+                    break;
+                case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+                    destination_access_mask = vk::AccessFlagBits::eDepthStencilAttachmentRead |
+                                              vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+                    break;
+                case vk::ImageLayout::eGeneral: // empty destination_access_mask
+                case vk::ImageLayout::ePresentSrcKHR:
+                    break;
+                case vk::ImageLayout::eShaderReadOnlyOptimal:
+                    destination_access_mask = vk::AccessFlagBits::eShaderRead;
+                    break;
+                case vk::ImageLayout::eTransferSrcOptimal:
+                    destination_access_mask = vk::AccessFlagBits::eTransferRead;
+                    break;
+                case vk::ImageLayout::eTransferDstOptimal:
+                    destination_access_mask = vk::AccessFlagBits::eTransferWrite;
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
+
+            vk::PipelineStageFlags destination_stage;
+            switch (new_image_layout)
+            {
+                case vk::ImageLayout::eColorAttachmentOptimal:
+                    destination_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+                    break;
+                case vk::ImageLayout::eDepthStencilAttachmentOptimal:
+                    destination_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+                    break;
+                case vk::ImageLayout::eGeneral:
+                    destination_stage = vk::PipelineStageFlagBits::eHost;
+                    break;
+                case vk::ImageLayout::ePresentSrcKHR:
+                    destination_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
+                    break;
+                case vk::ImageLayout::eShaderReadOnlyOptimal:
+                    destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
+                    break;
+                case vk::ImageLayout::eTransferDstOptimal:
+                case vk::ImageLayout::eTransferSrcOptimal:
+                    destination_stage = vk::PipelineStageFlagBits::eTransfer;
+                    break;
+                default:
+                    assert(false);
+                    break;
+            }
+
+            vk::ImageAspectFlags aspect_mask;
+            if (new_image_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+            {
+                aspect_mask = vk::ImageAspectFlagBits::eDepth;
+                if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint)
+                {
+                    aspect_mask |= vk::ImageAspectFlagBits::eStencil;
+                }
+            }
+            else
+            {
+                aspect_mask = vk::ImageAspectFlagBits::eColor;
+            }
+
+            vk::ImageSubresourceRange image_subresource_range(aspect_mask, 0, 1, 0, 1);
+            vk::ImageMemoryBarrier    image_memory_barrier(source_access_mask,
+                                                        destination_access_mask,
+                                                        old_image_layout,
+                                                        new_image_layout,
+                                                        VK_QUEUE_FAMILY_IGNORED,
+                                                        VK_QUEUE_FAMILY_IGNORED,
+                                                        image,
+                                                        image_subresource_range);
+            return command_buffer.pipelineBarrier(
+                source_stage, destination_stage, {}, nullptr, nullptr, image_memory_barrier);
+        }
+
+        void UpdateDescriptorSets(vk::raii::Device const&                                     device,
+                                  vk::raii::DescriptorSet const&                              descriptor_set,
+                                  std::vector<std::tuple<vk::DescriptorType,
+                                                         vk::raii::Buffer const&,
+                                                         vk::DeviceSize,
+                                                         vk::raii::BufferView const*>> const& buffer_data,
+                                  vk::Meow::TextureData const&                                texture_data,
+                                  uint32_t                                                    binding_offset)
+        {
+            std::vector<vk::DescriptorBufferInfo> buffer_infos;
+            buffer_infos.reserve(buffer_data.size());
+
+            std::vector<vk::WriteDescriptorSet> write_descriptor_sets;
+            write_descriptor_sets.reserve(buffer_data.size() + 1);
+            uint32_t dst_binding = binding_offset;
+            for (auto const& bd : buffer_data)
+            {
+                buffer_infos.emplace_back(*std::get<1>(bd), 0, std::get<2>(bd));
+                vk::BufferView buffer_view;
+                if (std::get<3>(bd))
+                {
+                    buffer_view = **std::get<3>(bd);
+                }
+                write_descriptor_sets.emplace_back(*descriptor_set,
+                                                   dst_binding++,
+                                                   0,
+                                                   1,
+                                                   std::get<0>(bd),
+                                                   nullptr,
+                                                   &buffer_infos.back(),
+                                                   std::get<3>(bd) ? &buffer_view : nullptr);
+            }
+
+            vk::DescriptorImageInfo imageInfo(
+                *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
+            write_descriptor_sets.emplace_back(*descriptor_set,
+                                               dst_binding,
+                                               0,
+                                               vk::DescriptorType::eCombinedImageSampler,
+                                               imageInfo,
+                                               nullptr,
+                                               nullptr);
+
+            device.updateDescriptorSets(write_descriptor_sets, nullptr);
+        }
+
+        void UpdateDescriptorSets(vk::raii::Device const&                                     device,
+                                  vk::raii::DescriptorSet const&                              descriptor_set,
+                                  std::vector<std::tuple<vk::DescriptorType,
+                                                         vk::raii::Buffer const&,
+                                                         vk::DeviceSize,
+                                                         vk::raii::BufferView const*>> const& buffer_data,
+                                  std::vector<vk::Meow::TextureData> const&                   texture_data,
+                                  uint32_t                                                    binding_offset)
+        {
+            std::vector<vk::DescriptorBufferInfo> buffer_infos;
+            buffer_infos.reserve(buffer_data.size());
+
+            std::vector<vk::WriteDescriptorSet> write_descriptor_sets;
+            write_descriptor_sets.reserve(buffer_data.size() + (texture_data.empty() ? 0 : 1));
+            uint32_t dst_binding = binding_offset;
+            for (auto const& bd : buffer_data)
+            {
+                buffer_infos.emplace_back(*std::get<1>(bd), 0, std::get<2>(bd));
+                vk::BufferView buffer_view;
+                if (std::get<3>(bd))
+                {
+                    buffer_view = **std::get<3>(bd);
+                }
+                write_descriptor_sets.emplace_back(*descriptor_set,
+                                                   dst_binding++,
+                                                   0,
+                                                   1,
+                                                   std::get<0>(bd),
+                                                   nullptr,
+                                                   &buffer_infos.back(),
+                                                   std::get<3>(bd) ? &buffer_view : nullptr);
+            }
+
+            std::vector<vk::DescriptorImageInfo> image_infos;
+            if (!texture_data.empty())
+            {
+                image_infos.reserve(texture_data.size());
+                for (auto const& thd : texture_data)
+                {
+                    image_infos.emplace_back(
+                        *thd.sampler, *thd.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
+                }
+                write_descriptor_sets.emplace_back(*descriptor_set,
+                                                   dst_binding,
+                                                   0,
+                                                   vk::Meow::checked_cast<uint32_t>(image_infos.size()),
+                                                   vk::DescriptorType::eCombinedImageSampler,
+                                                   image_infos.data(),
+                                                   nullptr,
+                                                   nullptr);
+            }
+
+            device.updateDescriptorSets(write_descriptor_sets, nullptr);
+        }
     } // namespace Meow
 } // namespace vk

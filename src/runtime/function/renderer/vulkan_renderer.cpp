@@ -214,12 +214,15 @@ namespace Meow
      */
     void VulkanRenderer::CreateUniformBuffer()
     {
-        vk::Meow::BufferData uniformBufferData(
+        m_uniform_buffer_data = std::make_shared<vk::Meow::BufferData>(
             *m_gpu, *m_logical_device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
         glm::mat4x4 mvpc_matrix = Meow::Math::CreateModelViewProjectionClipMatrix((*m_surface_data).extent);
-        vk::Meow::CopyToDevice(uniformBufferData.device_memory, mvpc_matrix);
+        vk::Meow::CopyToDevice((*m_uniform_buffer_data).device_memory, mvpc_matrix);
     }
 
+    /**
+     * @brief Create descriptor set layout and pipeline layout
+     */
     void VulkanRenderer::CreatePipelineLayout()
     {
         m_descriptor_set_layout = std::make_shared<vk::raii::DescriptorSetLayout>(vk::Meow::MakeDescriptorSetLayout(
@@ -227,6 +230,26 @@ namespace Meow
 
         vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, **m_descriptor_set_layout);
         m_pipeline_layout = std::make_shared<vk::raii::PipelineLayout>(*m_logical_device, pipeline_layout_create_info);
+    }
+
+    void VulkanRenderer::CreateDescriptorSet()
+    {
+        // create a descriptor pool
+        vk::DescriptorPoolSize       pool_size(vk::DescriptorType::eUniformBuffer, 1);
+        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1, pool_size);
+        m_descriptor_pool = std::make_shared<vk::raii::DescriptorPool>(*m_logical_device, descriptor_pool_create_info);
+
+        // allocate a descriptor set
+        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(**m_descriptor_pool, **m_descriptor_set_layout);
+        m_descriptor_set = std::make_shared<vk::raii::DescriptorSet>(
+            std::move(vk::raii::DescriptorSets(*m_logical_device, descriptor_set_allocate_info).front()));
+
+        vk::Meow::UpdateDescriptorSets(
+            *m_logical_device,
+            *m_descriptor_set,
+            {{vk::DescriptorType::eUniformBuffer, (*m_uniform_buffer_data).buffer, VK_WHOLE_SIZE, nullptr}},
+            {});
     }
 
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
@@ -241,6 +264,7 @@ namespace Meow
         CreateDepthBuffer();
         CreateUniformBuffer();
         CreatePipelineLayout();
+        CreateDescriptorSet();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

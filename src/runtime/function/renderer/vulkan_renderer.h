@@ -32,6 +32,7 @@ namespace Meow
         void CreateDepthBuffer();
         void CreateUniformBuffer();
         void CreatePipelineLayout();
+        void CreateDescriptorSet();
 
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -49,8 +50,11 @@ namespace Meow
         std::shared_ptr<vk::raii::CommandBuffer>       m_command_buffer;
         std::shared_ptr<vk::Meow::SwapChainData>       m_swapchain_data;
         std::shared_ptr<vk::Meow::DepthBufferData>     m_depth_buffer_data;
+        std::shared_ptr<vk::Meow::BufferData>          m_uniform_buffer_data;
         std::shared_ptr<vk::raii::DescriptorSetLayout> m_descriptor_set_layout;
         std::shared_ptr<vk::raii::PipelineLayout>      m_pipeline_layout;
+        std::shared_ptr<vk::raii::DescriptorPool>      m_descriptor_pool;
+        std::shared_ptr<vk::raii::DescriptorSet>       m_descriptor_set;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debug_utils_messenger;
