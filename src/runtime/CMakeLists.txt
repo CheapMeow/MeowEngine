@@ -42,7 +42,6 @@ target_link_libraries(${RUNTIME_NAME} PUBLIC volk)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/volk)
 target_compile_definitions(${RUNTIME_NAME} PUBLIC VK_NO_PROTOTYPES)
 
-find_package(Vulkan)
 if(Vulkan_FOUND)
     # for vulkan hpp
     target_include_directories(${RUNTIME_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})

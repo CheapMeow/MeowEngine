@@ -14,6 +14,8 @@ set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
 set(RUNTIME_NAME MeowRuntime)
 set(EDITOR_NAME MeowEditor)
 
+include(cmake/Utils.cmake)
+
 add_subdirectory(src/3rdparty)
 add_subdirectory(src/runtime)
 add_subdirectory(src/editor)
@@ -29,3 +31,27 @@ if(Doxygen_FOUND)
 else()
     message(STATUS "Doxygen not found, not building docs")
 endif()
+
+# Set all 3rd party project to one folder
+get_all_targets(ALL_TAR_LIST)
+foreach(TAR ${ALL_TAR_LIST})
+    if("${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
+        continue()
+    endif()
+
+    # alias target can not call set_target_properties
+    # interface library doesn't have folder property
+    # so exclude them
+    get_property(ALIAS TARGET "${TAR}" PROPERTY ALIASED_TARGET)
+    if(NOT ("${ALIAS}" STREQUAL ""))
+        continue()
+    endif()
+    get_target_property(3RD_PARTY_LIB_TYPE ${TAR} TYPE)
+    if("${3RD_PARTY_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+        continue()
+    endif()
+
+    message(STATUS "Found target: ${TAR}")
+    get_property(OLD_FOLDER TARGET "${TAR}" PROPERTY FOLDER)
+    set_target_properties(${TAR} PROPERTIES FOLDER "3rdparty/${OLD_FOLDER}")
+endforeach()
