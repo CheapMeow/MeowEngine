@@ -13,3 +13,6 @@
 [submodule "src/3rdparty/volk"]
 	path = src/3rdparty/volk
 	url = https://github.com/zeux/volk.git
+[submodule "src/3rdparty/glslang"]
+	path = src/3rdparty/glslang
+	url = https://github.com/KhronosGroup/glslang.git

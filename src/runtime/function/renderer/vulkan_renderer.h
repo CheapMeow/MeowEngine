@@ -34,6 +34,7 @@ namespace Meow
         void CreatePipelineLayout();
         void CreateDescriptorSet();
         void CreateRenderPass();
+        void CreateShaders();
 
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -57,6 +58,8 @@ namespace Meow
         std::shared_ptr<vk::raii::DescriptorPool>      m_descriptor_pool;
         std::shared_ptr<vk::raii::DescriptorSet>       m_descriptor_set;
         std::shared_ptr<vk::raii::RenderPass>          m_render_pass;
+        std::shared_ptr<vk::raii::ShaderModule>        m_vertex_shader_module;
+        std::shared_ptr<vk::raii::ShaderModule>        m_fragment_shader_module;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debug_utils_messenger;

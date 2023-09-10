@@ -1,7 +1,9 @@
 #include "vulkan_renderer.h"
 #include "core/log/log.h"
-#include "core/math/math.h"
+#include "function/renderer/utils/vulkan_math_utils.hpp"
+#include "function/renderer/utils/vulkan_shader_utils.hpp"
 
+#include "SPIRV/GlslangToSpv.h"
 #include <map>
 
 namespace Meow
@@ -216,7 +218,7 @@ namespace Meow
     {
         m_uniform_buffer_data = std::make_shared<vk::Meow::BufferData>(
             *m_gpu, *m_logical_device, sizeof(glm::mat4x4), vk::BufferUsageFlagBits::eUniformBuffer);
-        glm::mat4x4 mvpc_matrix = Meow::Math::CreateModelViewProjectionClipMatrix((*m_surface_data).extent);
+        glm::mat4x4 mvpc_matrix = vk::Meow::CreateModelViewProjectionClipMatrix((*m_surface_data).extent);
         vk::Meow::CopyToDevice((*m_uniform_buffer_data).device_memory, mvpc_matrix);
     }
 
@@ -266,6 +268,19 @@ namespace Meow
             std::move(vk::Meow::MakeRenderPass(*m_logical_device, color_format, (*m_depth_buffer_data).format)));
     }
 
+    /**
+     * @brief Create shaders using glslang, from glsl to spv.
+     */
+    void VulkanRenderer::CreateShaders()
+    {
+        glslang::InitializeProcess();
+        m_vertex_shader_module   = std::make_shared<vk::raii::ShaderModule>(std::move(
+            vk::Meow::MakeShaderModule(*m_logical_device, vk::ShaderStageFlagBits::eVertex, vertexShaderText_PC_C)));
+        m_fragment_shader_module = std::make_shared<vk::raii::ShaderModule>(std::move(
+            vk::Meow::MakeShaderModule(*m_logical_device, vk::ShaderStageFlagBits::eFragment, fragmentShaderText_C_C)));
+        glslang::FinalizeProcess();
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
@@ -280,6 +295,7 @@ namespace Meow
         CreatePipelineLayout();
         CreateDescriptorSet();
         CreateRenderPass();
+        CreateShaders();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

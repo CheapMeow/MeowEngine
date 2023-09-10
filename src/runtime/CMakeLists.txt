@@ -48,3 +48,9 @@ if(Vulkan_FOUND)
     target_include_directories(${RUNTIME_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
     # don't link to vulkan static lib
 endif()
+
+target_link_libraries(${RUNTIME_NAME} PUBLIC 
+    glslang
+    glslang-default-resource-limits
+    SPIRV)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glslang)
