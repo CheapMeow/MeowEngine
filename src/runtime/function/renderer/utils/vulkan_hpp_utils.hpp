@@ -505,5 +505,11 @@ namespace vk
                                                          vk::raii::BufferView const*>> const& buffer_data,
                                   std::vector<vk::Meow::TextureData> const&                   texture_data,
                                   uint32_t                                                    binding_offset = 0);
+
+        vk::raii::RenderPass MakeRenderPass(vk::raii::Device const& device,
+                                            vk::Format              color_format,
+                                            vk::Format              depth_format,
+                                            vk::AttachmentLoadOp    load_op    = vk::AttachmentLoadOp::eClear,
+                                            vk::ImageLayout color_final_layout = vk::ImageLayout::ePresentSrcKHR);
     } // namespace Meow
 } // namespace vk

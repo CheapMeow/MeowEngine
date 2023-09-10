@@ -714,5 +714,48 @@ namespace vk
 
             device.updateDescriptorSets(write_descriptor_sets, nullptr);
         }
+
+        vk::raii::RenderPass MakeRenderPass(vk::raii::Device const& device,
+                                            vk::Format              color_format,
+                                            vk::Format              depth_format,
+                                            vk::AttachmentLoadOp    load_op,
+                                            vk::ImageLayout         color_final_layout)
+        {
+            std::vector<vk::AttachmentDescription> attachment_descriptions;
+            assert(color_format != vk::Format::eUndefined);
+            attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),
+                                                 color_format,
+                                                 vk::SampleCountFlagBits::e1,
+                                                 load_op,
+                                                 vk::AttachmentStoreOp::eStore,
+                                                 vk::AttachmentLoadOp::eDontCare,
+                                                 vk::AttachmentStoreOp::eDontCare,
+                                                 vk::ImageLayout::eUndefined,
+                                                 color_final_layout);
+            if (depth_format != vk::Format::eUndefined)
+            {
+                attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),
+                                                     depth_format,
+                                                     vk::SampleCountFlagBits::e1,
+                                                     load_op,
+                                                     vk::AttachmentStoreOp::eDontCare,
+                                                     vk::AttachmentLoadOp::eDontCare,
+                                                     vk::AttachmentStoreOp::eDontCare,
+                                                     vk::ImageLayout::eUndefined,
+                                                     vk::ImageLayout::eDepthStencilAttachmentOptimal);
+            }
+            vk::AttachmentReference  color_attachment(0, vk::ImageLayout::eColorAttachmentOptimal);
+            vk::AttachmentReference  depth_attachment(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+            vk::SubpassDescription   subpass_description(vk::SubpassDescriptionFlags(),
+                                                       vk::PipelineBindPoint::eGraphics,
+                                                         {},
+                                                       color_attachment,
+                                                         {},
+                                                       (depth_format != vk::Format::eUndefined) ? &depth_attachment :
+                                                                                                    nullptr);
+            vk::RenderPassCreateInfo render_pass_create_info(
+                vk::RenderPassCreateFlags(), attachment_descriptions, subpass_description);
+            return vk::raii::RenderPass(device, render_pass_create_info);
+        }
     } // namespace Meow
 } // namespace vk

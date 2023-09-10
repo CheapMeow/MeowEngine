@@ -232,6 +232,9 @@ namespace Meow
         m_pipeline_layout = std::make_shared<vk::raii::PipelineLayout>(*m_logical_device, pipeline_layout_create_info);
     }
 
+    /**
+     * @brief Create descriptor pool and descriptor set.
+     */
     void VulkanRenderer::CreateDescriptorSet()
     {
         // create a descriptor pool
@@ -252,6 +255,17 @@ namespace Meow
             {});
     }
 
+    /**
+     * @brief Create render pass.
+     */
+    void VulkanRenderer::CreateRenderPass()
+    {
+        vk::Format color_format =
+            vk::Meow::PickSurfaceFormat((*m_gpu).getSurfaceFormatsKHR(*(*m_surface_data).surface)).format;
+        m_render_pass = std::make_shared<vk::raii::RenderPass>(
+            std::move(vk::Meow::MakeRenderPass(*m_logical_device, color_format, (*m_depth_buffer_data).format)));
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
@@ -265,6 +279,7 @@ namespace Meow
         CreateUniformBuffer();
         CreatePipelineLayout();
         CreateDescriptorSet();
+        CreateRenderPass();
     }
 
     VulkanRenderer::~VulkanRenderer() {}
