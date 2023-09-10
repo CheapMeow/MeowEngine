@@ -281,6 +281,19 @@ namespace Meow
         glslang::FinalizeProcess();
     }
 
+    /**
+     * @brief Create framebuffer.
+     */
+    void VulkanRenderer::CreateFrameBuffer()
+    {
+        m_framebuffers = std::make_shared<std::vector<vk::raii::Framebuffer>>(
+            std::move(vk::Meow::MakeFramebuffers(*m_logical_device,
+                                                 *m_render_pass,
+                                                 (*m_swapchain_data).image_views,
+                                                 &(*m_depth_buffer_data).image_view,
+                                                 (*m_surface_data).extent)));
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
@@ -296,6 +309,7 @@ namespace Meow
         CreateDescriptorSet();
         CreateRenderPass();
         CreateShaders();
+        CreateFrameBuffer();
     }
 
     VulkanRenderer::~VulkanRenderer() {}
