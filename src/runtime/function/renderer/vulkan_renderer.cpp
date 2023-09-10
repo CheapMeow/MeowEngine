@@ -1,5 +1,6 @@
 #include "vulkan_renderer.h"
 #include "core/log/log.h"
+#include "function/renderer/utils/geometries.hpp"
 #include "function/renderer/utils/vulkan_math_utils.hpp"
 #include "function/renderer/utils/vulkan_shader_utils.hpp"
 
@@ -294,6 +295,19 @@ namespace Meow
                                                  (*m_surface_data).extent)));
     }
 
+    /**
+     * @brief Create vertex buffer.
+     */
+    void VulkanRenderer::CreateVertexBuffer()
+    {
+        // TODO: Remove temp vertex data
+        m_vertex_buffer_data = std::make_shared<vk::Meow::BufferData>(
+            *m_gpu, *m_logical_device, sizeof(ColoredCubeData), vk::BufferUsageFlagBits::eVertexBuffer);
+        vk::Meow::CopyToDevice((*m_vertex_buffer_data).device_memory,
+                               ColoredCubeData,
+                               sizeof(ColoredCubeData) / sizeof(ColoredCubeData[0]));
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
@@ -310,6 +324,7 @@ namespace Meow
         CreateRenderPass();
         CreateShaders();
         CreateFrameBuffer();
+        CreateVertexBuffer();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

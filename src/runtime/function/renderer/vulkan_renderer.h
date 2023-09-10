@@ -36,6 +36,7 @@ namespace Meow
         void CreateRenderPass();
         void CreateShaders();
         void CreateFrameBuffer();
+        void CreateVertexBuffer();
 
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -62,6 +63,7 @@ namespace Meow
         std::shared_ptr<vk::raii::ShaderModule>             m_vertex_shader_module;
         std::shared_ptr<vk::raii::ShaderModule>             m_fragment_shader_module;
         std::shared_ptr<std::vector<vk::raii::Framebuffer>> m_framebuffers;
+        std::shared_ptr<vk::Meow::BufferData>               m_vertex_buffer_data;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debug_utils_messenger;
