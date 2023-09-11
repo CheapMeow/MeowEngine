@@ -13,6 +13,20 @@ namespace vk
 {
     namespace Meow
     {
+        const uint64_t FenceTimeout = 100000000;
+
+        template<typename TargetType, typename SourceType>
+        VULKAN_HPP_INLINE TargetType checked_cast(SourceType value)
+        {
+            static_assert(sizeof(TargetType) <= sizeof(SourceType), "No need to cast from smaller to larger type!");
+            static_assert(std::numeric_limits<SourceType>::is_integer, "Only integer types supported!");
+            static_assert(!std::numeric_limits<SourceType>::is_signed, "Only unsigned types supported!");
+            static_assert(std::numeric_limits<TargetType>::is_integer, "Only integer types supported!");
+            static_assert(!std::numeric_limits<TargetType>::is_signed, "Only unsigned types supported!");
+            assert(value <= std::numeric_limits<TargetType>::max());
+            return static_cast<TargetType>(value);
+        }
+
         std::vector<const char*>
         GetRequiredInstanceExtensions(std::vector<const char*> const& required_instance_extensions);
 
@@ -517,5 +531,19 @@ namespace vk
                                                             std::vector<vk::raii::ImageView> const& image_views,
                                                             vk::raii::ImageView const*              p_depth_image_view,
                                                             vk::Extent2D const&                     extent);
+
+        vk::raii::Pipeline
+        MakeGraphicsPipeline(vk::raii::Device const&                             device,
+                             vk::raii::PipelineCache const&                      pipeline_cache,
+                             vk::raii::ShaderModule const&                       vertex_shader_module,
+                             vk::SpecializationInfo const*                       vertex_shader_specialization_info,
+                             vk::raii::ShaderModule const&                       fragment_shader_module,
+                             vk::SpecializationInfo const*                       fragment_shader_specialization_info,
+                             uint32_t                                            vertex_stride,
+                             std::vector<std::pair<vk::Format, uint32_t>> const& vertex_input_attribute_format_offset,
+                             vk::FrontFace                                       front_face,
+                             bool                                                depth_buffered,
+                             vk::raii::PipelineLayout const&                     pipeline_layout,
+                             vk::raii::RenderPass const&                         render_pass);
     } // namespace Meow
 } // namespace vk

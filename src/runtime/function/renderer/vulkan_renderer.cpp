@@ -178,7 +178,9 @@ namespace Meow
      */
     void VulkanRenderer::CreateCommandBuffer()
     {
-        vk::CommandPoolCreateInfo command_pool_create_info({}, m_graphics_queue_family_index);
+        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
+                                                               vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                           m_graphics_queue_family_index);
         m_command_pool = std::make_shared<vk::raii::CommandPool>(*m_logical_device, command_pool_create_info);
 
         vk::CommandBufferAllocateInfo command_buffer_allocate_info(
@@ -308,6 +310,118 @@ namespace Meow
                                sizeof(ColoredCubeData) / sizeof(ColoredCubeData[0]));
     }
 
+    /**
+     * @brief Cerate pipeline.
+     */
+    void VulkanRenderer::CreatePipeline()
+    {
+        vk::raii::PipelineCache pipeline_cache(*m_logical_device, vk::PipelineCacheCreateInfo());
+        m_graphics_pipeline = std::make_shared<vk::raii::Pipeline>(std::move(vk::Meow::MakeGraphicsPipeline(
+            *m_logical_device,
+            pipeline_cache,
+            *m_vertex_shader_module,
+            nullptr,
+            *m_fragment_shader_module,
+            nullptr,
+            vk::Meow::checked_cast<uint32_t>(sizeof(ColoredCubeData[0])),
+            {{vk::Format::eR32G32B32A32Sfloat, 0}, {vk::Format::eR32G32B32A32Sfloat, 16}},
+            vk::FrontFace::eClockwise,
+            true,
+            *m_pipeline_layout,
+            *m_render_pass)));
+    }
+
+    /**
+     * @brief Create semaphores and fences.
+     */
+    void VulkanRenderer::CreateSyncObjects()
+    {
+        m_image_acquired_semaphore =
+            std::make_shared<vk::raii::Semaphore>(*m_logical_device, vk::SemaphoreCreateInfo());
+        m_draw_fence = std::make_shared<vk::raii::Fence>(*m_logical_device, vk::FenceCreateInfo());
+    }
+
+    /**
+     * @brief Begin command buffer and render pass. Set viewport and scissor.
+     */
+    bool VulkanRenderer::StartRenderpass(uint32_t& image_index)
+    {
+        vk::Result result;
+        std::tie(result, image_index) =
+            (*m_swapchain_data).swap_chain.acquireNextImage(vk::Meow::FenceTimeout, **m_image_acquired_semaphore);
+        assert(result == vk::Result::eSuccess);
+        assert(image_index < (*m_swapchain_data).images.size());
+
+        m_command_buffer->reset();
+        m_command_buffer->begin({});
+
+        m_command_buffer->setViewport(0,
+                                      vk::Viewport(0.0f,
+                                                   0.0f,
+                                                   static_cast<float>((*m_surface_data).extent.width),
+                                                   static_cast<float>((*m_surface_data).extent.height),
+                                                   0.0f,
+                                                   1.0f));
+        m_command_buffer->setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), (*m_surface_data).extent));
+
+        std::array<vk::ClearValue, 2> clear_values;
+        clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
+        clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+        vk::RenderPassBeginInfo render_pass_begin_info(**m_render_pass,
+                                                       *(*m_framebuffers)[image_index],
+                                                       vk::Rect2D(vk::Offset2D(0, 0), (*m_surface_data).extent),
+                                                       clear_values);
+        m_command_buffer->beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+        return true;
+    }
+
+    /**
+     * @brief End render pass and command buffer. Submit graphics queue. Present.
+     */
+    void VulkanRenderer::EndRenderpass(uint32_t& image_index)
+    {
+        m_command_buffer->endRenderPass();
+        m_command_buffer->end();
+
+        vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
+        vk::SubmitInfo submit_info(**m_image_acquired_semaphore, wait_destination_stage_mask, *(*m_command_buffer));
+        (*m_graphics_queue).submit(submit_info, **m_draw_fence);
+
+        while (vk::Result::eTimeout ==
+               m_logical_device->waitForFences({**m_draw_fence}, VK_TRUE, vk::Meow::FenceTimeout))
+            ;
+        m_logical_device->resetFences({**m_draw_fence});
+
+        vk::PresentInfoKHR present_info(nullptr, *(*m_swapchain_data).swap_chain, image_index);
+        vk::Result         result = (*m_present_queue).presentKHR(present_info);
+        switch (result)
+        {
+            case vk::Result::eSuccess:
+                break;
+            case vk::Result::eSuboptimalKHR:
+                std::cout << "vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n";
+                break;
+            default:
+                assert(false); // an unexpected result is returned !
+        }
+    }
+
+    void VulkanRenderer::Update()
+    {
+        uint32_t image_index;
+        StartRenderpass(image_index);
+
+        m_command_buffer->bindPipeline(vk::PipelineBindPoint::eGraphics, **m_graphics_pipeline);
+        (*m_command_buffer)
+            .bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics, **m_pipeline_layout, 0, {**m_descriptor_set}, nullptr);
+        m_command_buffer->bindVertexBuffers(0, {*(*m_vertex_buffer_data).buffer}, {0});
+        m_command_buffer->draw(12 * 3, 1, 0, 0);
+
+        EndRenderpass(image_index);
+    }
+
     VulkanRenderer::VulkanRenderer(std::shared_ptr<Window> window) : m_window(window)
     {
         CreateContext();
@@ -325,6 +439,8 @@ namespace Meow
         CreateShaders();
         CreateFrameBuffer();
         CreateVertexBuffer();
+        CreatePipeline();
+        CreateSyncObjects();
     }
 
     VulkanRenderer::~VulkanRenderer() {}

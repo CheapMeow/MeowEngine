@@ -52,6 +52,7 @@ namespace Meow
             double frameTime = currTime - m_lastTime;
 
             m_window->Update(frameTime);
+            m_renderer->Update();
         }
     }
 

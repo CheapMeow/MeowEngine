@@ -20,6 +20,8 @@ namespace Meow
 
         ~VulkanRenderer();
 
+        void Update();
+
     private:
         void CreateContext();
         void CreateInstance(std::vector<const char*> const& required_instance_extensions,
@@ -37,6 +39,10 @@ namespace Meow
         void CreateShaders();
         void CreateFrameBuffer();
         void CreateVertexBuffer();
+        void CreatePipeline();
+        void CreateSyncObjects();
+        bool StartRenderpass(uint32_t& image_index);
+        void EndRenderpass(uint32_t& image_index);
 
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -64,6 +70,9 @@ namespace Meow
         std::shared_ptr<vk::raii::ShaderModule>             m_fragment_shader_module;
         std::shared_ptr<std::vector<vk::raii::Framebuffer>> m_framebuffers;
         std::shared_ptr<vk::Meow::BufferData>               m_vertex_buffer_data;
+        std::shared_ptr<vk::raii::Pipeline>                 m_graphics_pipeline;
+        std::shared_ptr<vk::raii::Semaphore>                m_image_acquired_semaphore;
+        std::shared_ptr<vk::raii::Fence>                    m_draw_fence;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::shared_ptr<vk::raii::DebugUtilsMessengerEXT> m_debug_utils_messenger;

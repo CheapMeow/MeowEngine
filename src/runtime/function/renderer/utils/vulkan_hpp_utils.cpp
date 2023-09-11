@@ -10,18 +10,6 @@ namespace vk
 {
     namespace Meow
     {
-        template<typename TargetType, typename SourceType>
-        VULKAN_HPP_INLINE TargetType checked_cast(SourceType value)
-        {
-            static_assert(sizeof(TargetType) <= sizeof(SourceType), "No need to cast from smaller to larger type!");
-            static_assert(std::numeric_limits<SourceType>::is_integer, "Only integer types supported!");
-            static_assert(!std::numeric_limits<SourceType>::is_signed, "Only unsigned types supported!");
-            static_assert(std::numeric_limits<TargetType>::is_integer, "Only integer types supported!");
-            static_assert(!std::numeric_limits<TargetType>::is_signed, "Only unsigned types supported!");
-            assert(value <= std::numeric_limits<TargetType>::max());
-            return static_cast<TargetType>(value);
-        }
-
         std::vector<const char*>
         GetRequiredInstanceExtensions(std::vector<const char*> const& required_instance_extensions_base)
         {
@@ -783,6 +771,124 @@ namespace vk
             }
 
             return framebuffers;
+        }
+
+        vk::raii::Pipeline
+        MakeGraphicsPipeline(vk::raii::Device const&                             device,
+                             vk::raii::PipelineCache const&                      pipeline_cache,
+                             vk::raii::ShaderModule const&                       vertex_shader_module,
+                             vk::SpecializationInfo const*                       vertex_shader_specialization_info,
+                             vk::raii::ShaderModule const&                       fragment_shader_module,
+                             vk::SpecializationInfo const*                       fragment_shader_specialization_info,
+                             uint32_t                                            vertex_stride,
+                             std::vector<std::pair<vk::Format, uint32_t>> const& vertex_input_attribute_format_offset,
+                             vk::FrontFace                                       front_face,
+                             bool                                                depth_buffered,
+                             vk::raii::PipelineLayout const&                     pipeline_layout,
+                             vk::raii::RenderPass const&                         render_pass)
+        {
+            std::array<vk::PipelineShaderStageCreateInfo, 2> pipeline_shader_stage_create_infos = {
+                vk::PipelineShaderStageCreateInfo({},
+                                                  vk::ShaderStageFlagBits::eVertex,
+                                                  *vertex_shader_module,
+                                                  "main",
+                                                  vertex_shader_specialization_info),
+                vk::PipelineShaderStageCreateInfo({},
+                                                  vk::ShaderStageFlagBits::eFragment,
+                                                  *fragment_shader_module,
+                                                  "main",
+                                                  fragment_shader_specialization_info)};
+
+            std::vector<vk::VertexInputAttributeDescription> vertex_input_attribute_descriptions;
+            vk::PipelineVertexInputStateCreateInfo           pipeline_vertex_input_state_create_info;
+            vk::VertexInputBindingDescription                vertex_input_binding_description(0, vertex_stride);
+
+            if (0 < vertex_stride)
+            {
+                vertex_input_attribute_descriptions.reserve(vertex_input_attribute_format_offset.size());
+                for (uint32_t i = 0; i < vertex_input_attribute_format_offset.size(); i++)
+                {
+                    vertex_input_attribute_descriptions.emplace_back(i,
+                                                                     0,
+                                                                     vertex_input_attribute_format_offset[i].first,
+                                                                     vertex_input_attribute_format_offset[i].second);
+                }
+                pipeline_vertex_input_state_create_info.setVertexBindingDescriptions(vertex_input_binding_description);
+                pipeline_vertex_input_state_create_info.setVertexAttributeDescriptions(
+                    vertex_input_attribute_descriptions);
+            }
+
+            vk::PipelineInputAssemblyStateCreateInfo pipeline_input_assembly_state_create_info(
+                vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::eTriangleList);
+
+            vk::PipelineViewportStateCreateInfo pipeline_viewport_state_create_info(
+                vk::PipelineViewportStateCreateFlags(), 1, nullptr, 1, nullptr);
+
+            vk::PipelineRasterizationStateCreateInfo pipeline_rasterization_state_create_info(
+                vk::PipelineRasterizationStateCreateFlags(),
+                false,
+                false,
+                vk::PolygonMode::eFill,
+                vk::CullModeFlagBits::eBack,
+                front_face,
+                false,
+                0.0f,
+                0.0f,
+                0.0f,
+                1.0f);
+
+            vk::PipelineMultisampleStateCreateInfo pipeline_multisample_state_create_info({},
+                                                                                          vk::SampleCountFlagBits::e1);
+
+            vk::StencilOpState stencil_op_state(
+                vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
+            vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info(
+                vk::PipelineDepthStencilStateCreateFlags(),
+                depth_buffered,
+                depth_buffered,
+                vk::CompareOp::eLessOrEqual,
+                false,
+                false,
+                stencil_op_state,
+                stencil_op_state);
+
+            vk::ColorComponentFlags color_component_flags(
+                vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
+                vk::ColorComponentFlagBits::eA);
+            vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(false,
+                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendOp::eAdd,
+                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendOp::eAdd,
+                                                                                        color_component_flags);
+            vk::PipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_info(
+                vk::PipelineColorBlendStateCreateFlags(),
+                false,
+                vk::LogicOp::eNoOp,
+                pipeline_color_blend_attachment_state,
+                {{1.0f, 1.0f, 1.0f, 1.0f}});
+
+            std::array<vk::DynamicState, 2> dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+            vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(vk::PipelineDynamicStateCreateFlags(),
+                                                                                  dynamic_states);
+
+            vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info(vk::PipelineCreateFlags(),
+                                                                         pipeline_shader_stage_create_infos,
+                                                                         &pipeline_vertex_input_state_create_info,
+                                                                         &pipeline_input_assembly_state_create_info,
+                                                                         nullptr,
+                                                                         &pipeline_viewport_state_create_info,
+                                                                         &pipeline_rasterization_state_create_info,
+                                                                         &pipeline_multisample_state_create_info,
+                                                                         &pipeline_depth_stencil_state_create_info,
+                                                                         &pipeline_color_blend_state_create_info,
+                                                                         &pipeline_dynamic_state_create_info,
+                                                                         *pipeline_layout,
+                                                                         *render_pass);
+
+            return vk::raii::Pipeline(device, pipeline_cache, graphics_pipeline_create_info);
         }
 
     } // namespace Meow
