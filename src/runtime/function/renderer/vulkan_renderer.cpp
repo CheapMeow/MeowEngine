@@ -338,6 +338,8 @@ namespace Meow
     {
         m_image_acquired_semaphore =
             std::make_shared<vk::raii::Semaphore>(*m_logical_device, vk::SemaphoreCreateInfo());
+        m_render_finished_semaphore =
+            std::make_shared<vk::raii::Semaphore>(*m_logical_device, vk::SemaphoreCreateInfo());
         m_draw_fence = std::make_shared<vk::raii::Fence>(*m_logical_device, vk::FenceCreateInfo());
     }
 
@@ -385,7 +387,10 @@ namespace Meow
         m_command_buffer->end();
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-        vk::SubmitInfo submit_info(**m_image_acquired_semaphore, wait_destination_stage_mask, *(*m_command_buffer));
+        vk::SubmitInfo         submit_info(**m_image_acquired_semaphore,
+                                   wait_destination_stage_mask,
+                                   *(*m_command_buffer),
+                                   **m_render_finished_semaphore);
         (*m_graphics_queue).submit(submit_info, **m_draw_fence);
 
         while (vk::Result::eTimeout ==
@@ -393,7 +398,7 @@ namespace Meow
             ;
         m_logical_device->resetFences({**m_draw_fence});
 
-        vk::PresentInfoKHR present_info(nullptr, *(*m_swapchain_data).swap_chain, image_index);
+        vk::PresentInfoKHR present_info(**m_render_finished_semaphore, *(*m_swapchain_data).swap_chain, image_index);
         vk::Result         result = (*m_present_queue).presentKHR(present_info);
         switch (result)
         {

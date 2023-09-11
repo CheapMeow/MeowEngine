@@ -72,6 +72,7 @@ namespace Meow
         std::shared_ptr<vk::Meow::BufferData>               m_vertex_buffer_data;
         std::shared_ptr<vk::raii::Pipeline>                 m_graphics_pipeline;
         std::shared_ptr<vk::raii::Semaphore>                m_image_acquired_semaphore;
+        std::shared_ptr<vk::raii::Semaphore>                m_render_finished_semaphore;
         std::shared_ptr<vk::raii::Fence>                    m_draw_fence;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
