@@ -59,6 +59,9 @@ namespace Meow
 #endif
     {}
 
+    /**
+     * @brief In order to support move ctor.
+     */
     VulkanRenderer::VulkanRenderer(VulkanRenderer&& rhs) VULKAN_HPP_NOEXCEPT
         : m_window(rhs.m_window),
           m_vulkan_context(std::move(rhs.m_vulkan_context)),
@@ -96,6 +99,21 @@ namespace Meow
 
     VulkanRenderer::~VulkanRenderer() {}
 
+    /**
+     * @brief Factory mode of creating instance of VulkanRenderer.
+     *
+     * Use factory mode because VulkanRenderer has many members that don't have default ctor,
+     * so VulkanRenderer itself can't call default ctor, which will call all members' default ctor.
+     *
+     * One solution is using pointer to these class members, other is initializer list in ctor.
+     *
+     * To use initializer list in ctor, a custom ctor receiving initial members' values should be defined.
+     * And where to call the custom ctor? You can call it as you like, but put it into VulkanRenderer class seems more
+     * clear.
+     *
+     * After that, move ctor should be defined to support usage like: p =
+     * make_unique<VulkanRenderer>(CreateVulkanRenderer(...));
+     */
     VulkanRenderer VulkanRenderer::CreateRenderer(std::shared_ptr<Window> window)
     {
         // --------------Create Context--------------
@@ -364,6 +382,10 @@ namespace Meow
         };
     }
 
+    /**
+     * @brief Initialize sync object.
+     * Because they have no default ctor, so they can't be T of vector<T>, but vector<pointer<T>> is allowed.
+     */
     void VulkanRenderer::Init()
     {
         // --------------Create Sync Objects--------------
@@ -452,6 +474,8 @@ namespace Meow
             default:
                 assert(false); // an unexpected result is returned !
         }
+
+        m_current_frame_index = (m_current_frame_index + 1) % vk::Meow::k_max_frames_in_flight;
     }
 
     void VulkanRenderer::Update()
