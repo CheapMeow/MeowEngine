@@ -9,13 +9,16 @@ set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")
 
 target_compile_definitions(${RUNTIME_NAME}
-    PUBLIC
+    PRIVATE
     LIBRARY_EXPORTS
     $<$<CONFIG:Debug>:MEOW_DEBUG>
     $<$<CONFIG:Release>:MEOW_RELEASE>
     $<$<CONFIG:Debug>:VKB_DEBUG>
     $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
-    VK_USE_PLATFORM_WIN32_KHR) # TODO: Config vulkan platform preprocesser according to cmake build platform
+    VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser according to cmake build platform
+    VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
+    VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from vulkan hpp
+    )
 
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")

@@ -9,9 +9,11 @@ set_target_properties(${EDITOR_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${EDITOR_NAME} PROPERTIES FOLDER "Editor")
 
 target_compile_definitions(${EDITOR_NAME}
-    PUBLIC
+    PRIVATE
     $<$<CONFIG:Debug>:MEOW_DEBUG>
-    $<$<CONFIG:Release>:MEOW_RELEASE>)
+    $<$<CONFIG:Release>:MEOW_RELEASE>
+    VULKAN_HPP_STORAGE_SHARED # using dll compiled from vulkan hpp. Only one preprocessor is enough for representing importing.
+    )
 
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR} ${SRC_ROOT_DIR}/editor)
 

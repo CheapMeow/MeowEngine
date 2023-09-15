@@ -12,10 +12,10 @@ namespace Meow
         Log::Init();
 
         m_window = std::make_shared<Window>(0);
-
         m_window->OnClose().connect([&]() { m_running = false; });
-
-        m_renderer = std::make_unique<VulkanRenderer>(m_window);
+        VulkanRenderer::CreateRenderer(m_window);
+        m_renderer = std::make_unique<VulkanRenderer>(std::move(VulkanRenderer::CreateRenderer(m_window)));
+        m_renderer->Init();
 
         return true;
     }
