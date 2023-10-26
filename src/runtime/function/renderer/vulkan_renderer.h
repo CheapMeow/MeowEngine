@@ -4,6 +4,9 @@
 #include "function/renderer/utils/vulkan_hpp_utils.hpp"
 #include "function/renderer/window.h"
 
+// TODO: temp
+#include "function/renderer/structs/model.h"
+
 #include <volk.h>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -16,54 +19,42 @@ namespace Meow
     class VulkanRenderer : NonCopyable
     {
     public:
-        VulkanRenderer() = delete;
-
-        VulkanRenderer(std::shared_ptr<Window>               window,
-                       vk::raii::Context&                    vulkan_context,
-                       vk::raii::Instance&                   vulkan_instance,
-                       vk::raii::PhysicalDevice&             gpu,
-                       vk::Meow::SurfaceData&                surface_data,
-                       uint32_t                              graphics_queue_family_index,
-                       uint32_t                              present_queue_family_index,
-                       vk::raii::Device&                     logical_device,
-                       vk::raii::Queue&                      graphics_queue,
-                       vk::raii::Queue&                      present_queue,
-                       vk::raii::CommandPool&                command_pool,
-                       std::vector<vk::raii::CommandBuffer>& command_buffers,
-                       vk::Meow::SwapChainData&              swapchain_data,
-                       vk::Meow::DepthBufferData&            depth_buffer_data,
-                       vk::Meow::BufferData&                 uniform_buffer_data,
-                       vk::raii::DescriptorSetLayout&        descriptor_set_layout,
-                       vk::raii::PipelineLayout&             pipeline_layout,
-                       vk::raii::DescriptorPool&             descriptor_pool,
-                       vk::raii::DescriptorSet&              descriptor_set,
-                       vk::raii::RenderPass&                 render_pass,
-                       vk::raii::ShaderModule&               vertex_shader_module,
-                       vk::raii::ShaderModule&               fragment_shader_module,
-                       std::vector<vk::raii::Framebuffer>&   framebuffers,
-                       vk::Meow::BufferData&                 vertex_buffer_data,
-                       vk::raii::Pipeline&                   graphics_pipeline
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-                       ,
-                       vk::raii::DebugUtilsMessengerEXT& debug_utils_messenger
-#endif
-        );
+        VulkanRenderer();
 
         VulkanRenderer(VulkanRenderer&& rhs) VULKAN_HPP_NOEXCEPT;
 
-        ~VulkanRenderer();
+        ~VulkanRenderer() = default;
 
-        static VulkanRenderer CreateRenderer(std::shared_ptr<Window> window);
-
-        void Init();
-
-        void Update();
+        void Update(float frame_time);
 
     private:
+        vk::raii::Context                    CreateVulkanContent();
+        vk::raii::Instance                   CreateVulkanInstance();
+        vk::raii::PhysicalDevice             CreatePhysicalDevice();
+        vk::Meow::SurfaceData                CreateSurface();
+        vk::raii::Device                     CreateLogicalDevice();
+        vk::raii::CommandPool                CreateCommandPool();
+        std::vector<vk::raii::CommandBuffer> CreateCommandBuffers();
+        vk::Meow::SwapChainData              CreateSwapChian();
+        vk::Meow::DepthBufferData            CreateDepthBuffer();
+        vk::Meow::BufferData                 CreateUniformBuffer();
+        vk::raii::DescriptorSetLayout        CreateDescriptorSetLayout();
+        vk::raii::PipelineLayout             CreatePipelineLayout();
+        vk::raii::DescriptorPool             CreateDescriptorPool();
+        vk::raii::DescriptorSet              CreateDescriptorSet();
+        vk::raii::RenderPass                 CreateRenderPass();
+        std::vector<vk::raii::Framebuffer>   CreateFramebuffers();
+        vk::Meow::BufferData                 CreateVertexBuffer();
+        vk::raii::Pipeline                   CreatePipeline();
+        void                                 CreateSyncObjects();
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        vk::raii::DebugUtilsMessengerEXT CreateDebugUtilsMessengerEXT();
+#endif
+
         bool StartRenderpass(uint32_t& image_index);
         void EndRenderpass(uint32_t& image_index);
 
-        std::weak_ptr<Window>                             m_window;
         vk::raii::Context                                 m_vulkan_context;
         vk::raii::Instance                                m_vulkan_instance;
         vk::raii::PhysicalDevice                          m_gpu;
@@ -83,8 +74,6 @@ namespace Meow
         vk::raii::DescriptorPool                          m_descriptor_pool;
         vk::raii::DescriptorSet                           m_descriptor_set;
         vk::raii::RenderPass                              m_render_pass;
-        vk::raii::ShaderModule                            m_vertex_shader_module;
-        vk::raii::ShaderModule                            m_fragment_shader_module;
         std::vector<vk::raii::Framebuffer>                m_framebuffers;
         vk::Meow::BufferData                              m_vertex_buffer_data;
         vk::raii::Pipeline                                m_graphics_pipeline;
@@ -92,6 +81,12 @@ namespace Meow
         std::vector<std::shared_ptr<vk::raii::Semaphore>> m_render_finished_semaphores;
         std::vector<std::shared_ptr<vk::raii::Fence>>     m_in_flight_fences;
         uint32_t                                          m_current_frame_index = 0;
+
+        // TODO: temp
+        Model* m_model;
+
+        // TODO: temp
+        glm::vec3 m_camera_position = glm::vec3(1.0f);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger;

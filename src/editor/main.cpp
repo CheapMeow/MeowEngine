@@ -5,14 +5,13 @@ using namespace Meow;
 
 int main()
 {
-    MeowEngine engine;
-    if (!engine.Init())
+    if (!MeowEngine::GetEngine().Init())
     {
         return 1;
     }
 
     EDITOR_INFO("Editor is running!");
-    engine.Run();
+    MeowEngine::GetEngine().Run();
 
-    engine.ShutDown();
+    MeowEngine::GetEngine().ShutDown();
 }

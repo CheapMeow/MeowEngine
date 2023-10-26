@@ -2,10 +2,11 @@
 
 #include "core/base/macro.h"
 #include "core/base/non_copyable.h"
-#include "function/renderer/vulkan_renderer.h"
-#include "function/renderer/window.h"
+#include "function/ecs/system.h"
 
 #include <memory>
+#include <vector>
+
 namespace Meow
 {
     /**
@@ -18,15 +19,20 @@ namespace Meow
         void Run();
         void ShutDown();
 
+        static MeowEngine& GetEngine()
+        {
+            static MeowEngine instance;
+            return instance;
+        }
+
+        void SetRunning(bool running) { m_running = running; }
+
     private:
         bool m_running = true;
 
-        double m_lastTime = 0.0;
+        double m_last_time = 0.0;
         // double m_accumulator          = 0.0;
         // double m_phyics_time           = 0.0;
         // double m_phyics_fixed_delta_time = 1.0 / 60.0;
-
-        std::shared_ptr<Window>         m_window;
-        std::unique_ptr<VulkanRenderer> m_renderer;
     };
 } // namespace Meow

@@ -1,7 +1,5 @@
 #pragma once
 
-#define NOMINMAX
-
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
@@ -28,6 +26,12 @@ namespace vk
             static_assert(!std::numeric_limits<TargetType>::is_signed, "Only unsigned types supported!");
             assert(value <= std::numeric_limits<TargetType>::max());
             return static_cast<TargetType>(value);
+        }
+
+        template<typename T>
+        uint64_t GetVulkanHandle(T const& cpp_handle)
+        {
+            return reinterpret_cast<uint64_t>(static_cast<const T::CType>(cpp_handle));
         }
 
         std::vector<const char*>
@@ -60,8 +64,8 @@ namespace vk
 
         struct SurfaceData
         {
-            SurfaceData(vk::raii::Instance const& instance, GLFWwindow* glfw_window, vk::Extent2D const& extent_) :
-                extent(extent_)
+            SurfaceData(vk::raii::Instance const& instance, GLFWwindow* glfw_window, vk::Extent2D const& extent_)
+                : extent(extent_)
             {
                 VkSurfaceKHR _surface;
                 VkResult     err =
@@ -225,21 +229,21 @@ namespace vk
                       vk::ImageUsageFlags             usage,
                       vk::ImageLayout                 initial_layout,
                       vk::MemoryPropertyFlags         memory_properties,
-                      vk::ImageAspectFlags            aspect_mask) :
-                format(format_),
-                image(device,
-                      {vk::ImageCreateFlags(),
-                       vk::ImageType::e2D,
-                       format,
-                       vk::Extent3D(extent, 1),
-                       1,
-                       1,
-                       vk::SampleCountFlagBits::e1,
-                       tiling,
-                       usage | vk::ImageUsageFlagBits::eSampled,
-                       vk::SharingMode::eExclusive,
-                       {},
-                       initial_layout})
+                      vk::ImageAspectFlags            aspect_mask)
+                : format(format_)
+                , image(device,
+                        {vk::ImageCreateFlags(),
+                         vk::ImageType::e2D,
+                         format,
+                         vk::Extent3D(extent, 1),
+                         1,
+                         1,
+                         vk::SampleCountFlagBits::e1,
+                         tiling,
+                         usage | vk::ImageUsageFlagBits::eSampled,
+                         vk::SharingMode::eExclusive,
+                         {},
+                         initial_layout})
             {
                 device_memory = vk::Meow::AllocateDeviceMemory(
                     device, physical_device.getMemoryProperties(), image.getMemoryRequirements(), memory_properties);
@@ -264,16 +268,16 @@ namespace vk
             DepthBufferData(vk::raii::PhysicalDevice const& physical_device,
                             vk::raii::Device const&         device,
                             vk::Format                      format,
-                            vk::Extent2D const&             extent) :
-                ImageData(physical_device,
-                          device,
-                          format,
-                          extent,
-                          vk::ImageTiling::eOptimal,
-                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
-                          vk::ImageLayout::eUndefined,
-                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-                          vk::ImageAspectFlagBits::eDepth)
+                            vk::Extent2D const&             extent)
+                : ImageData(physical_device,
+                            device,
+                            format,
+                            extent,
+                            vk::ImageTiling::eOptimal,
+                            vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                            vk::ImageLayout::eUndefined,
+                            vk::MemoryPropertyFlagBits::eDeviceLocal,
+                            vk::ImageAspectFlagBits::eDepth)
             {}
         };
 
@@ -300,11 +304,12 @@ namespace vk
                        vk::DeviceSize                  size,
                        vk::BufferUsageFlags            usage,
                        vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
-                                                                vk::MemoryPropertyFlagBits::eHostCoherent) :
-                buffer(device, vk::BufferCreateInfo({}, size, usage))
+                                                                vk::MemoryPropertyFlagBits::eHostCoherent)
+                : buffer(device, vk::BufferCreateInfo({}, size, usage))
 #if defined(MEOW_DEBUG)
-                ,
-                m_size(size), m_usage(usage), m_property_flags(property_flags)
+                , m_size(size)
+                , m_usage(usage)
+                , m_property_flags(property_flags)
 #endif
             {
                 device_memory = vk::Meow::AllocateDeviceMemory(
@@ -391,24 +396,25 @@ namespace vk
                         vk::ImageUsageFlags             usage_flags          = {},
                         vk::FormatFeatureFlags          format_feature_flags = {},
                         bool                            anisotropy_enable    = false,
-                        bool                            force_staging        = false) :
-                format(vk::Format::eR8G8B8A8Unorm),
-                extent(extent_), sampler(device,
-                                         {{},
-                                          vk::Filter::eLinear,
-                                          vk::Filter::eLinear,
-                                          vk::SamplerMipmapMode::eLinear,
-                                          vk::SamplerAddressMode::eRepeat,
-                                          vk::SamplerAddressMode::eRepeat,
-                                          vk::SamplerAddressMode::eRepeat,
-                                          0.0f,
-                                          anisotropy_enable,
-                                          16.0f,
-                                          false,
-                                          vk::CompareOp::eNever,
-                                          0.0f,
-                                          0.0f,
-                                          vk::BorderColor::eFloatOpaqueBlack})
+                        bool                            force_staging        = false)
+                : format(vk::Format::eR8G8B8A8Unorm)
+                , extent(extent_)
+                , sampler(device,
+                          {{},
+                           vk::Filter::eLinear,
+                           vk::Filter::eLinear,
+                           vk::SamplerMipmapMode::eLinear,
+                           vk::SamplerAddressMode::eRepeat,
+                           vk::SamplerAddressMode::eRepeat,
+                           vk::SamplerAddressMode::eRepeat,
+                           0.0f,
+                           anisotropy_enable,
+                           16.0f,
+                           false,
+                           vk::CompareOp::eNever,
+                           0.0f,
+                           0.0f,
+                           vk::BorderColor::eFloatOpaqueBlack})
             {
                 vk::FormatProperties format_properties = physical_device.getFormatProperties(format);
 

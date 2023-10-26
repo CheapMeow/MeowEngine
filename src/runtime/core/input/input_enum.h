@@ -6,6 +6,8 @@ namespace Meow
 {
     enum class KeyCode : int16_t
     {
+        Unknown = -1,
+
         // From glfw3.h
         Space      = 32,
         Apostrophe = 39, /* ' */

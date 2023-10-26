@@ -133,8 +133,12 @@ namespace Meow
         return 0.0;
     }
 
-    Window::Window(std::size_t id) :
-        m_glfw_window_id(id), m_size(1080, 720), m_title("Acid Window"), m_resizable(true), m_focused(true)
+    Window::Window(std::size_t id)
+        : m_glfw_window_id(id)
+        , m_size(1080, 720)
+        , m_title("Acid Window")
+        , m_resizable(true)
+        , m_focused(true)
     {
         glfwInit();
 
@@ -200,17 +204,17 @@ namespace Meow
         m_closed = true;
     }
 
-    void Window::Update(double dt)
+    void Window::Update(float dt)
     {
         glfwSwapBuffers(m_glfw_window);
         glfwPollEvents();
 
         // Updates the position delta.
-        m_mouse_position_delta = (float)dt * (m_mouse_last_position - m_mouse_position);
+        m_mouse_position_delta = dt * (m_mouse_last_position - m_mouse_position);
         m_mouse_last_position  = m_mouse_position;
 
         // Updates the scroll delta.
-        m_mouse_scroll_delta = (float)dt * (m_mouse_last_scroll - m_mouse_scroll);
+        m_mouse_scroll_delta = dt * (m_mouse_last_scroll - m_mouse_scroll);
         m_mouse_last_scroll  = m_mouse_scroll;
     }
 
@@ -290,6 +294,12 @@ namespace Meow
         }
 
         m_cursor_hidden = hidden;
+    }
+
+    InputAction Window::GetKeyAction(KeyCode key) const
+    {
+        auto state = glfwGetKey(m_glfw_window, static_cast<int32_t>(key));
+        return static_cast<InputAction>(state);
     }
 
     InputAction Window::GetMouseButtonAction(MouseButtonCode mouseButton) const

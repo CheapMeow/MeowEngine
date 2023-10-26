@@ -625,25 +625,27 @@ namespace vk
                 {
                     buffer_view = **std::get<3>(bd);
                 }
-                write_descriptor_sets.emplace_back(*descriptor_set,
-                                                   dst_binding++,
-                                                   0,
-                                                   1,
-                                                   std::get<0>(bd),
-                                                   nullptr,
-                                                   &buffer_infos.back(),
-                                                   std::get<3>(bd) ? &buffer_view : nullptr);
+                write_descriptor_sets.emplace_back(*descriptor_set,                         // dstSet
+                                                   dst_binding++,                           // dstBinding
+                                                   0,                                       // dstArrayElement
+                                                   1,                                       // descriptorCount
+                                                   std::get<0>(bd),                         // descriptorType
+                                                   nullptr,                                 // pImageInfo
+                                                   &buffer_infos.back(),                    // pBufferInfo
+                                                   std::get<3>(bd) ? &buffer_view : nullptr // pTexelBufferView
+                );
             }
 
             vk::DescriptorImageInfo imageInfo(
                 *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
-            write_descriptor_sets.emplace_back(*descriptor_set,
-                                               dst_binding,
-                                               0,
-                                               vk::DescriptorType::eCombinedImageSampler,
-                                               imageInfo,
-                                               nullptr,
-                                               nullptr);
+            write_descriptor_sets.emplace_back(*descriptor_set,                           // dstSet
+                                               dst_binding,                               // dstBinding
+                                               0,                                         // dstArrayElement
+                                               vk::DescriptorType::eCombinedImageSampler, // descriptorType
+                                               imageInfo,                                 // pImageInfo
+                                               nullptr,                                   // pBufferInfo
+                                               nullptr                                    // pTexelBufferView
+            );
 
             device.updateDescriptorSets(write_descriptor_sets, nullptr);
         }
@@ -671,14 +673,15 @@ namespace vk
                 {
                     buffer_view = **std::get<3>(bd);
                 }
-                write_descriptor_sets.emplace_back(*descriptor_set,
-                                                   dst_binding++,
-                                                   0,
-                                                   1,
-                                                   std::get<0>(bd),
-                                                   nullptr,
-                                                   &buffer_infos.back(),
-                                                   std::get<3>(bd) ? &buffer_view : nullptr);
+                write_descriptor_sets.emplace_back(*descriptor_set,                         // dstSet
+                                                   dst_binding++,                           // dstBinding
+                                                   0,                                       // dstArrayElement
+                                                   1,                                       // descriptorCount
+                                                   std::get<0>(bd),                         // descriptorType
+                                                   nullptr,                                 // pImageInfo
+                                                   &buffer_infos.back(),                    // pBufferInfo
+                                                   std::get<3>(bd) ? &buffer_view : nullptr // pTexelBufferView
+                );
             }
 
             std::vector<vk::DescriptorImageInfo> image_infos;
@@ -690,14 +693,16 @@ namespace vk
                     image_infos.emplace_back(
                         *thd.sampler, *thd.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
                 }
-                write_descriptor_sets.emplace_back(*descriptor_set,
-                                                   dst_binding,
-                                                   0,
-                                                   vk::Meow::checked_cast<uint32_t>(image_infos.size()),
-                                                   vk::DescriptorType::eCombinedImageSampler,
-                                                   image_infos.data(),
-                                                   nullptr,
-                                                   nullptr);
+                write_descriptor_sets.emplace_back(
+                    *descriptor_set,                                      // dstSet
+                    dst_binding,                                          // dstBinding
+                    0,                                                    // dstArrayElement
+                    vk::Meow::checked_cast<uint32_t>(image_infos.size()), // descriptorCount
+                    vk::DescriptorType::eCombinedImageSampler,            // descriptorType
+                    image_infos.data(),                                   // pImageInfo
+                    nullptr,                                              // pBufferInfo
+                    nullptr                                               // pTexelBufferView
+                );
             }
 
             device.updateDescriptorSets(write_descriptor_sets, nullptr);

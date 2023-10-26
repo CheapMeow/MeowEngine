@@ -1,7 +1,7 @@
 #include "engine.h"
 #include "core/log/log.h"
 #include "core/time/time.h"
-#include "function/renderer/window.h"
+#include "function/global/runtime_global_context.h"
 
 #include <iostream>
 
@@ -11,11 +11,7 @@ namespace Meow
     {
         Log::Init();
 
-        m_window = std::make_shared<Window>(0);
-        m_window->OnClose().connect([&]() { m_running = false; });
-        VulkanRenderer::CreateRenderer(m_window);
-        m_renderer = std::make_unique<VulkanRenderer>(std::move(VulkanRenderer::CreateRenderer(m_window)));
-        m_renderer->Init();
+        g_runtime_global_context.StartSystems();
 
         return true;
     }
@@ -46,15 +42,15 @@ namespace Meow
 
         //     render(state);
         // }
-        while (m_running)
+        while (g_runtime_global_context.IsRunning())
         {
-            double currTime  = Time::GetTime();
-            double frameTime = currTime - m_lastTime;
+            float curr_time  = Time::GetTime();
+            float frame_time = curr_time - m_last_time;
 
-            m_window->Update(frameTime);
-            m_renderer->Update();
+            g_runtime_global_context.m_window->Update(frame_time);
+            g_runtime_global_context.m_render_system->Update(frame_time);
         }
     }
 
-    void MeowEngine::ShutDown() {}
+    void MeowEngine::ShutDown() { g_runtime_global_context.ShutDownSystems(); }
 } // namespace Meow

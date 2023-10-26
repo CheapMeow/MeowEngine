@@ -207,7 +207,6 @@ namespace vk
             return true;
         }
 
-        template<typename Dispatcher = VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>
         vk::raii::ShaderModule MakeShaderModule(vk::raii::Device const& device,
                                                 vk::ShaderStageFlagBits shader_stage,
                                                 std::string const&      shader_text)

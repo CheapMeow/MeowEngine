@@ -22,7 +22,7 @@ if(NOT TARGET spdlog)
 endif()
 
 # need have installed Vulkan SDK
-find_package(Vulkan)
+find_package(Vulkan REQUIRED)
 
 if(NOT TARGET volk)
     add_subdirectory(volk)
@@ -30,4 +30,14 @@ endif()
 
 if(NOT TARGET glslang)
     add_subdirectory(glslang)
+endif()
+
+if(NOT TARGET assimp)
+    # assimp may have warning
+    option(ASSIMP_WARNINGS_AS_ERRORS "Don't treat all warnings as errors." OFF)
+    add_subdirectory(assimp)
+endif()
+
+if(NOT TARGET EnTT::EnTT)
+    add_subdirectory(entt)
 endif()

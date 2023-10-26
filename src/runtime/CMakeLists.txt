@@ -18,6 +18,7 @@ target_compile_definitions(${RUNTIME_NAME}
     VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser according to cmake build platform
     VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
     VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from vulkan hpp
+    NOMINMAX # for std::numeric_limits<double>::min() and max()
     )
 
 # being a cross-platform target, we enforce standards conformance on MSVC
@@ -56,3 +57,9 @@ target_link_libraries(${RUNTIME_NAME} PUBLIC
     glslang-default-resource-limits
     SPIRV)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glslang)
+
+target_link_libraries(${RUNTIME_NAME} PUBLIC assimp)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/assimp/include)
+
+target_link_libraries(${RUNTIME_NAME} PUBLIC EnTT::EnTT)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/entt/src)
