@@ -21,8 +21,6 @@ namespace Meow
     public:
         VulkanRenderer();
 
-        VulkanRenderer(VulkanRenderer&& rhs) VULKAN_HPP_NOEXCEPT;
-
         ~VulkanRenderer() = default;
 
         void Update(float frame_time);

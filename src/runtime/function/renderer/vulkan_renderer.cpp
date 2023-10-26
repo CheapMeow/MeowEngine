@@ -367,28 +367,28 @@ namespace Meow
     }
 
     VulkanRenderer::VulkanRenderer()
-        : m_vulkan_context(std::move(CreateVulkanContent()))
-        , m_vulkan_instance(std::move(CreateVulkanInstance()))
-        , m_gpu(std::move(CreatePhysicalDevice()))
-        , m_surface_data(std::move(CreateSurface()))
-        , m_logical_device(std::move(CreateLogicalDevice()))
+        : m_vulkan_context(CreateVulkanContent())
+        , m_vulkan_instance(CreateVulkanInstance())
+        , m_gpu(CreatePhysicalDevice())
+        , m_surface_data(CreateSurface())
+        , m_logical_device(CreateLogicalDevice())
         , m_graphics_queue(m_logical_device, m_graphics_queue_family_index, 0)
         , m_present_queue(m_logical_device, m_present_queue_family_index, 0)
-        , m_command_pool(std::move(CreateCommandPool()))
+        , m_command_pool(CreateCommandPool())
         , m_command_buffers(CreateCommandBuffers())
-        , m_swapchain_data(std::move(CreateSwapChian()))
-        , m_depth_buffer_data(std::move(CreateDepthBuffer()))
-        , m_uniform_buffer_data(std::move(CreateUniformBuffer()))
-        , m_descriptor_set_layout(std::move(CreateDescriptorSetLayout()))
-        , m_pipeline_layout(std::move(CreatePipelineLayout()))
-        , m_descriptor_pool(std::move(CreateDescriptorPool()))
-        , m_descriptor_set(std::move(CreateDescriptorSet()))
-        , m_render_pass(std::move(CreateRenderPass()))
+        , m_swapchain_data(CreateSwapChian())
+        , m_depth_buffer_data(CreateDepthBuffer())
+        , m_uniform_buffer_data(CreateUniformBuffer())
+        , m_descriptor_set_layout(CreateDescriptorSetLayout())
+        , m_pipeline_layout(CreatePipelineLayout())
+        , m_descriptor_pool(CreateDescriptorPool())
+        , m_descriptor_set(CreateDescriptorSet())
+        , m_render_pass(CreateRenderPass())
         , m_framebuffers(CreateFramebuffers())
-        , m_vertex_buffer_data(std::move(CreateVertexBuffer()))
-        , m_graphics_pipeline(std::move(CreatePipeline()))
+        , m_vertex_buffer_data(CreateVertexBuffer())
+        , m_graphics_pipeline(CreatePipeline())
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        , m_debug_utils_messenger(std::move(CreateDebugUtilsMessengerEXT()))
+        , m_debug_utils_messenger(CreateDebugUtilsMessengerEXT())
 #endif
     {
         CreateSyncObjects();
@@ -420,41 +420,6 @@ namespace Meow
         // TODO: temp
         m_camera_position = bound_center;
     }
-
-    /**
-     * @brief In order to support move ctor.
-     */
-    VulkanRenderer::VulkanRenderer(VulkanRenderer&& rhs) VULKAN_HPP_NOEXCEPT
-        : m_vulkan_context(std::move(rhs.m_vulkan_context)),
-          m_vulkan_instance(std::move(rhs.m_vulkan_instance)),
-          m_gpu(std::move(rhs.m_gpu)),
-          m_surface_data(std::move(rhs.m_surface_data)),
-          m_graphics_queue_family_index(rhs.m_graphics_queue_family_index),
-          m_present_queue_family_index(rhs.m_present_queue_family_index),
-          m_logical_device(std::move(rhs.m_logical_device)),
-          m_graphics_queue(std::move(rhs.m_graphics_queue)),
-          m_present_queue(std::move(rhs.m_present_queue)),
-          m_command_pool(std::move(rhs.m_command_pool)),
-          m_command_buffers(std::move(rhs.m_command_buffers)),
-          m_swapchain_data(std::move(rhs.m_swapchain_data)),
-          m_depth_buffer_data(std::move(rhs.m_depth_buffer_data)),
-          m_uniform_buffer_data(std::move(rhs.m_uniform_buffer_data)),
-          m_descriptor_set_layout(std::move(rhs.m_descriptor_set_layout)),
-          m_pipeline_layout(std::move(rhs.m_pipeline_layout)),
-          m_descriptor_pool(std::move(rhs.m_descriptor_pool)),
-          m_descriptor_set(std::move(rhs.m_descriptor_set)),
-          m_render_pass(std::move(rhs.m_render_pass)),
-          m_framebuffers(std::move(rhs.m_framebuffers)),
-          m_vertex_buffer_data(std::move(rhs.m_vertex_buffer_data)),
-          m_graphics_pipeline(std::move(rhs.m_graphics_pipeline)),
-          m_image_acquired_semaphores(std::move(rhs.m_image_acquired_semaphores)),
-          m_render_finished_semaphores(std::move(rhs.m_render_finished_semaphores)),
-          m_in_flight_fences(std::move(rhs.m_in_flight_fences))
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        ,
-          m_debug_utils_messenger(std::move(rhs.m_debug_utils_messenger))
-#endif
-              {};
 
     /**
      * @brief Begin command buffer and render pass. Set viewport and scissor.
