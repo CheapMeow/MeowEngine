@@ -5,7 +5,7 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES} ${
 
 add_library(${RUNTIME_NAME} SHARED ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 
-set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 17)
+set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")
 
 target_compile_definitions(${RUNTIME_NAME}

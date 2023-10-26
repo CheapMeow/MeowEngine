@@ -6,7 +6,10 @@
 #include "function/renderer/utils/vulkan_shader_utils.hpp"
 
 #include "SPIRV/GlslangToSpv.h"
+
+#include <format>
 #include <map>
+#include <string>
 
 namespace Meow
 {
@@ -360,9 +363,41 @@ namespace Meow
         {
             m_image_acquired_semaphores[i] =
                 std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eSemaphore,
+                                                         vk::Meow::GetVulkanHandle(**m_image_acquired_semaphores[i]),
+                                                         std::format("Image Acquired Semaphore % {}", i).c_str(),
+                                                         nullptr};
+            m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+        }
+
+        for (size_t i = 0; i < vk::Meow::k_max_frames_in_flight; i++)
+        {
             m_render_finished_semaphores[i] =
                 std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eSemaphore,
+                                                         vk::Meow::GetVulkanHandle(**m_render_finished_semaphores[i]),
+                                                         std::format("Render Finished Semaphore % {}", i).c_str(),
+                                                         nullptr};
+            m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+        }
+
+        for (size_t i = 0; i < vk::Meow::k_max_frames_in_flight; i++)
+        {
             m_in_flight_fences[i] = std::make_shared<vk::raii::Fence>(m_logical_device, vk::FenceCreateInfo());
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eFence,
+                                                         vk::Meow::GetVulkanHandle(**m_in_flight_fences[i]),
+                                                         std::format("In Flight Fence % {}", i).c_str(),
+                                                         nullptr};
+            m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
         }
     }
 
@@ -419,6 +454,12 @@ namespace Meow
 
         // TODO: temp
         m_camera_position = bound_center;
+    }
+
+    VulkanRenderer::~VulkanRenderer()
+    {
+        // wait for command buffer
+        m_logical_device.waitIdle();
     }
 
     /**
