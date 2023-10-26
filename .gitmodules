@@ -7,9 +7,6 @@
 [submodule "src/3rdparty/glm"]
 	path = src/3rdparty/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "src/3rdparty/rocket"]
-	path = src/3rdparty/rocket
-	url = https://github.com/tripleslash/rocket.git
 [submodule "src/3rdparty/volk"]
 	path = src/3rdparty/volk
 	url = https://github.com/zeux/volk.git
