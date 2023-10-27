@@ -7,6 +7,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include <cstring>
+#include <format>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,12 +27,31 @@ namespace Meow
                                                               vk::MemoryPropertyFlagBits::eHostCoherent,
                      float const*                 p_data      = nullptr,
                      uint32_t                     _count      = 0,
-                     std::vector<VertexAttribute> _attributes = {})
+                     std::vector<VertexAttribute> _attributes = {}
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                     ,
+                     std::string primitive_name = "Default Primitive Name"
+#endif
+                     )
             : buffer_data(physical_device, device, size, vk::BufferUsageFlagBits::eVertexBuffer, property_flags)
             , count(_count)
             , attributes(_attributes)
         {
             vk::Meow::CopyToDevice(buffer_data.device_memory, p_data, count);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            std::string                     object_name = std::format("{} {}", primitive_name, "Vertex Buffer");
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {
+                vk::ObjectType::eBuffer, vk::Meow::GetVulkanHandle(*buffer_data.buffer), object_name.c_str(), nullptr};
+            device.setDebugUtilsObjectNameEXT(name_info);
+
+            object_name = std::format("{} {}", primitive_name, "Vertex Buffer Device Memory");
+            name_info   = {vk::ObjectType::eDeviceMemory,
+                           vk::Meow::GetVulkanHandle(*buffer_data.device_memory),
+                           object_name.c_str(),
+                           nullptr};
+            device.setDebugUtilsObjectNameEXT(name_info);
+#endif
         }
 
         std::vector<VkVertexInputAttributeDescription> GetInputAttributes() const;

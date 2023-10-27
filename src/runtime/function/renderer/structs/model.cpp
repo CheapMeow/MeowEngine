@@ -6,6 +6,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
+#include <format>
 #include <limits>
 
 namespace Meow
@@ -297,7 +298,7 @@ namespace Meow
         if (indices.size() > 65535)
         {
             std::unordered_map<uint16_t, uint16_t> indices_map;
-            for (size_t _ = 0; _ <= indices.size() / 65535; _++)
+            for (size_t primitive_index = 0; primitive_index <= indices.size() / 65535; primitive_index++)
             {
                 std::vector<float>    primitive_vertices;
                 std::vector<uint16_t> primitive_indices;
@@ -330,14 +331,19 @@ namespace Meow
                 }
 
                 // TODO: Support uint32_t indices
-                primitives.emplace_back(std::move(primitive_vertices),
-                                        std::move(primitive_indices),
-                                        physical_device,
-                                        device,
-                                        vk::MemoryPropertyFlagBits::eHostVisible |
-                                            vk::MemoryPropertyFlagBits::eHostCoherent,
-                                        m_attributes,
-                                        m_index_type);
+                primitives.emplace_back(
+                    std::move(primitive_vertices),
+                    std::move(primitive_indices),
+                    physical_device,
+                    device,
+                    vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                    m_attributes,
+                    m_index_type
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                    ,
+                    std::format("{} {}", aiMesh->mName.C_Str(), primitive_index).c_str()
+#endif
+                );
             }
         }
         else

@@ -5,7 +5,7 @@
 *.slo
 *.lo
 *.o
-*.obj
+# *.obj # this overlap with a model format
 
 # Precompiled Headers
 *.gch

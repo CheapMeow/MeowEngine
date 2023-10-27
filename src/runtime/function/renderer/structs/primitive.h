@@ -24,7 +24,12 @@ namespace Meow
                   vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                            vk::MemoryPropertyFlagBits::eHostCoherent,
                   std::vector<VertexAttribute> vertex_attributes = {},
-                  vk::IndexType                index_type        = vk::IndexType::eUint16)
+                  vk::IndexType                index_type        = vk::IndexType::eUint16
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                  ,
+                  std::string primitive_name = "Default Primitive Name"
+#endif
+                  )
             : vertices(std::move(_vertices))
             , indices(std::move(_indices))
             , vertex_count(vertices.size() / VertexAttributesToSize(vertex_attributes))
@@ -35,14 +40,24 @@ namespace Meow
                             property_flags,
                             vertices.data(),
                             vertex_count / sizeof(float),
-                            vertex_attributes)
+                            vertex_attributes
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                            ,
+                            primitive_name
+#endif
+                            )
             , index_buffer(physical_device,
                            device,
                            indices.size(),
                            property_flags,
                            indices.data(),
                            indices.size() / sizeof(uint16_t),
-                           index_type)
+                           index_type
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                           ,
+                           primitive_name
+#endif
+              )
         {}
 
         void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer) const

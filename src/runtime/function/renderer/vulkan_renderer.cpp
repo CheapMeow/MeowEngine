@@ -172,8 +172,9 @@ namespace Meow
 #endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        vk::DebugUtilsObjectNameInfoEXT name_info = {
-            vk::ObjectType::eDevice, vk::Meow::GetVulkanHandle(*logical_device), "Logical Device", nullptr};
+        std::string                     object_name = "Logical Device";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eDevice, vk::Meow::GetVulkanHandle(*logical_device), object_name.c_str(), nullptr};
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
@@ -216,8 +217,9 @@ namespace Meow
             m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        vk::DebugUtilsObjectNameInfoEXT name_info = {
-            vk::ObjectType::eImage, vk::Meow::GetVulkanHandle(*depth_buffer_data.image), "Depth Image", nullptr};
+        std::string                     object_name = "Depth Image";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eImage, vk::Meow::GetVulkanHandle(*depth_buffer_data.image), object_name.c_str(), nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
@@ -231,8 +233,18 @@ namespace Meow
             m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        vk::DebugUtilsObjectNameInfoEXT name_info = {
-            vk::ObjectType::eBuffer, vk::Meow::GetVulkanHandle(*uniform_buffer_data.buffer), "Uniform Buffer", nullptr};
+        std::string                     object_name = "Uniform Buffer";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
+                                                       vk::Meow::GetVulkanHandle(*uniform_buffer_data.buffer),
+                                                       object_name.c_str(),
+                                                       nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+
+        object_name = "Uniform Buffer Device Memory";
+        name_info   = {vk::ObjectType::eDeviceMemory,
+                       vk::Meow::GetVulkanHandle(*uniform_buffer_data.device_memory),
+                       object_name.c_str(),
+                       nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
@@ -302,8 +314,11 @@ namespace Meow
             vertex_buffer_data.device_memory, ColoredCubeData, sizeof(ColoredCubeData) / sizeof(ColoredCubeData[0]));
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        vk::DebugUtilsObjectNameInfoEXT name_info = {
-            vk::ObjectType::eBuffer, vk::Meow::GetVulkanHandle(*vertex_buffer_data.buffer), "Vertex Buffer", nullptr};
+        std::string                     object_name = "ColoredCube Vertex Buffer";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
+                                                       vk::Meow::GetVulkanHandle(*vertex_buffer_data.buffer),
+                                                       object_name.c_str(),
+                                                       nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
@@ -365,10 +380,11 @@ namespace Meow
                 std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eSemaphore,
-                                                         vk::Meow::GetVulkanHandle(**m_image_acquired_semaphores[i]),
-                                                         std::format("Image Acquired Semaphore % {}", i).c_str(),
-                                                         nullptr};
+            std::string                     object_name = std::format("Image Acquired Semaphore {}", i);
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eSemaphore,
+                                                           vk::Meow::GetVulkanHandle(**m_image_acquired_semaphores[i]),
+                                                           object_name.c_str(),
+                                                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
         }
@@ -379,10 +395,11 @@ namespace Meow
                 std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eSemaphore,
-                                                         vk::Meow::GetVulkanHandle(**m_render_finished_semaphores[i]),
-                                                         std::format("Render Finished Semaphore % {}", i).c_str(),
-                                                         nullptr};
+            std::string                     object_name = std::format("Render Finished Semaphore {}", i);
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eSemaphore,
+                                                           vk::Meow::GetVulkanHandle(**m_render_finished_semaphores[i]),
+                                                           object_name.c_str(),
+                                                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
         }
@@ -392,10 +409,11 @@ namespace Meow
             m_in_flight_fences[i] = std::make_shared<vk::raii::Fence>(m_logical_device, vk::FenceCreateInfo());
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eFence,
-                                                         vk::Meow::GetVulkanHandle(**m_in_flight_fences[i]),
-                                                         std::format("In Flight Fence % {}", i).c_str(),
-                                                         nullptr};
+            std::string                     object_name = std::format("In Flight Fence {}", i);
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eFence,
+                                                           vk::Meow::GetVulkanHandle(**m_in_flight_fences[i]),
+                                                           object_name.c_str(),
+                                                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
         }
@@ -459,7 +477,11 @@ namespace Meow
     VulkanRenderer::~VulkanRenderer()
     {
         // wait for command buffer
+        // some resources can not be deleted when command buffer is used, such as semaphores
         m_logical_device.waitIdle();
+
+        // TODO: temp
+        delete m_model;
     }
 
     /**
