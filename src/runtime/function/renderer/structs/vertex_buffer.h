@@ -22,7 +22,7 @@ namespace Meow
 
         VertexBuffer(vk::raii::PhysicalDevice const& physical_device,
                      vk::raii::Device const&         device,
-                     vk::DeviceSize                  size,
+                     vk::DeviceSize                  device_size,
                      vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                               vk::MemoryPropertyFlagBits::eHostCoherent,
                      float const*                 p_data      = nullptr,
@@ -33,7 +33,7 @@ namespace Meow
                      std::string primitive_name = "Default Primitive Name"
 #endif
                      )
-            : buffer_data(physical_device, device, size, vk::BufferUsageFlagBits::eVertexBuffer, property_flags)
+            : buffer_data(physical_device, device, device_size, vk::BufferUsageFlagBits::eVertexBuffer, property_flags)
             , count(_count)
             , attributes(_attributes)
         {

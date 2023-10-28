@@ -32,14 +32,14 @@ namespace Meow
                   )
             : vertices(std::move(_vertices))
             , indices(std::move(_indices))
-            , vertex_count(vertices.size() / VertexAttributesToSize(vertex_attributes))
-            , index_count(indices.size() / 3)
+            , vertex_count(vertices.size() / VertexAttributesToSize(vertex_attributes) * sizeof(float))
+            , index_count(indices.size())
             , vertex_buffer(physical_device,
                             device,
-                            vertices.size(),
+                            vertices.size() * sizeof(float),
                             property_flags,
                             vertices.data(),
-                            vertex_count / sizeof(float),
+                            vertices.size(),
                             vertex_attributes
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                             ,
@@ -48,10 +48,10 @@ namespace Meow
                             )
             , index_buffer(physical_device,
                            device,
-                           indices.size(),
+                           indices.size() * sizeof(uint16_t),
                            property_flags,
                            indices.data(),
-                           indices.size() / sizeof(uint16_t),
+                           indices.size(),
                            index_type
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                            ,

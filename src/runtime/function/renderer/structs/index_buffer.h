@@ -18,7 +18,7 @@ namespace Meow
         template<typename T>
         IndexBuffer(vk::raii::PhysicalDevice const& physical_device,
                     vk::raii::Device const&         device,
-                    vk::DeviceSize                  size,
+                    vk::DeviceSize                  device_size,
                     vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                              vk::MemoryPropertyFlagBits::eHostCoherent,
                     T const*      p_data = nullptr,
@@ -29,7 +29,7 @@ namespace Meow
                     std::string primitive_name = "Default Primitive Name"
 #endif
                     )
-            : buffer_data(physical_device, device, size, vk::BufferUsageFlagBits::eIndexBuffer, property_flags)
+            : buffer_data(physical_device, device, device_size, vk::BufferUsageFlagBits::eIndexBuffer, property_flags)
             , count(_count)
             , type(_type)
         {

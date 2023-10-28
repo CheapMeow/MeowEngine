@@ -354,18 +354,19 @@ namespace Meow
 
         // TODO: temp vertex layout
         vk::raii::PipelineCache pipeline_cache(m_logical_device, vk::PipelineCacheCreateInfo());
-        return vk::Meow::MakeGraphicsPipeline(m_logical_device,
-                                              pipeline_cache,
-                                              vertex_shader_module,
-                                              nullptr,
-                                              fragment_shader_module,
-                                              nullptr,
-                                              vk::Meow::checked_cast<uint32_t>(sizeof(ColoredCubeData[0])),
-                                              {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}},
-                                              vk::FrontFace::eClockwise,
-                                              true,
-                                              m_pipeline_layout,
-                                              m_render_pass);
+        return vk::Meow::MakeGraphicsPipeline(
+            m_logical_device,
+            pipeline_cache,
+            vertex_shader_module,
+            nullptr,
+            fragment_shader_module,
+            nullptr,
+            VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal}),
+            {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}},
+            vk::FrontFace::eClockwise,
+            true,
+            m_pipeline_layout,
+            m_render_pass);
     }
 
     void VulkanRenderer::CreateSyncObjects()
