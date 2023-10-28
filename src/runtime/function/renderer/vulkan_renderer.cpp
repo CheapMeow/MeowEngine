@@ -470,6 +470,13 @@ namespace Meow
             glm::pi<float>() / 4.0f, (float)window_size[0], (float)window_size[1], 0.1f, 1000.0f);
         vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
 
+        // TODO: Uniform set is temp
+        vk::Meow::UpdateDescriptorSets(
+            m_logical_device,
+            m_descriptor_set,
+            {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
+            {});
+
         // TODO: temp
         m_camera_position = bound_center;
     }
@@ -584,6 +591,13 @@ namespace Meow
             ubo_data.projection = glm::perspectiveFovRH_ZO(
                 glm::pi<float>() / 4.0f, (float)window_size[0], (float)window_size[1], 0.1f, 1000.0f);
             vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
+
+            // TODO: Uniform set is temp
+            vk::Meow::UpdateDescriptorSets(
+                m_logical_device,
+                m_descriptor_set,
+                {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
+                {});
         }
 
         uint32_t image_index;

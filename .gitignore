@@ -42,3 +42,6 @@ build/
 *.vcxproj.user
 *.pdb
 *.sln
+
+# Log file
+.log
