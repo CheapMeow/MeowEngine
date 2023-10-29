@@ -10,10 +10,8 @@ namespace Meow
     {
     public:
         RenderSystem();
+        ~RenderSystem();
 
         void Update(float frame_time);
-
-    private:
-        std::unique_ptr<VulkanRenderer> m_renderer;
     };
 } // namespace Meow

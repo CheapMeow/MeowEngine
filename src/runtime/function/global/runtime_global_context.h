@@ -3,27 +3,27 @@
 #include "function/ecs/systems/file_system.h"
 #include "function/ecs/systems/input/input_system.h"
 #include "function/ecs/systems/render_system.h"
+#include "function/ecs/systems/window_system.h"
 #include "function/renderer/window.h"
+
+#include <entt/entt.hpp>
 
 #include <memory>
 
 namespace Meow
 {
-    class RuntimeGlobalContext
+    struct RuntimeGlobalContext
     {
-    public:
-        void StartSystems();
-        void ShutDownSystems();
+        bool running = true;
 
-        bool IsRunning() { return m_running; }
+        std::shared_ptr<Window>         window;
+        std::shared_ptr<WindowSystem>   window_system;
+        std::shared_ptr<InputSystem>    input_system;
+        std::shared_ptr<FileSystem>     file_system;
+        std::shared_ptr<VulkanRenderer> renderer;
+        std::shared_ptr<RenderSystem>   render_system;
 
-        bool m_running = true;
-
-        std::shared_ptr<Window> m_window;
-
-        std::shared_ptr<InputSystem>  m_input_system;
-        std::shared_ptr<FileSystem>   m_file_system;
-        std::shared_ptr<RenderSystem> m_render_system;
+        entt::registry registry;
     };
 
     extern RuntimeGlobalContext g_runtime_global_context;

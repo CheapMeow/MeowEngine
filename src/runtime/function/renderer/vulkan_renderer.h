@@ -16,14 +16,23 @@
 
 namespace Meow
 {
+    struct UBOData
+    {
+        glm::mat4 model      = glm::mat4(1.0f);
+        glm::mat4 view       = glm::mat4(1.0f);
+        glm::mat4 projection = glm::mat4(1.0f);
+    };
+
     class VulkanRenderer : NonCopyable
     {
+        friend class RenderSystem;
+
     public:
         VulkanRenderer();
 
         ~VulkanRenderer();
 
-        void Update(float frame_time);
+        void UpdateUniformBuffer(UBOData ubo_data);
 
     private:
         vk::raii::Context                    CreateVulkanContent();
@@ -79,12 +88,6 @@ namespace Meow
         std::vector<std::shared_ptr<vk::raii::Semaphore>> m_render_finished_semaphores;
         std::vector<std::shared_ptr<vk::raii::Fence>>     m_in_flight_fences;
         uint32_t                                          m_current_frame_index = 0;
-
-        // TODO: temp
-        Model* m_model;
-
-        // TODO: temp
-        glm::vec3 m_camera_position = glm::vec3(1.0f);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger;

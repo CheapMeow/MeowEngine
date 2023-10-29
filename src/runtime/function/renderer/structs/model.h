@@ -16,8 +16,8 @@ namespace Meow
         Model(const std::string&              file_name,
               vk::raii::PhysicalDevice const& physical_device,
               vk::raii::Device const&         device,
-              std::vector<VertexAttribute>&&  attributes)
-            : m_attributes(std::move(attributes))
+              std::vector<VertexAttribute>    attributes)
+            : m_attributes(attributes)
         {
             LoadFromFile(physical_device, device, file_name);
         }
@@ -48,12 +48,12 @@ namespace Meow
                       const aiScene*                  scene);
 
     public:
-        std::string                                     m_directory;
-        std::vector<std::string>                        m_texture_paths;
-        std::vector<MaterialInfo>                       m_material_infos;
-        std::vector<VertexAttribute>                    m_attributes;
-        vk::IndexType                                   m_index_type = vk::IndexType::eUint16;
-        std::unordered_map<uint32_t, std::vector<Mesh>> m_meshes_per_material_map;
-        BoundingBox                                     m_bounding;
+        std::string                                                      m_directory;
+        std::vector<std::string>                                         m_texture_paths;
+        std::vector<MaterialInfo>                                        m_material_infos;
+        std::vector<VertexAttribute>                                     m_attributes;
+        vk::IndexType                                                    m_index_type = vk::IndexType::eUint16;
+        std::unordered_map<uint32_t, std::vector<std::shared_ptr<Mesh>>> m_meshes_per_material_map;
+        BoundingBox                                                      m_bounding;
     };
 } // namespace Meow

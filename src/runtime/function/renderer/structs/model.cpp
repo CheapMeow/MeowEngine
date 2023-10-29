@@ -56,12 +56,12 @@ namespace Meow
     {
         for (const auto& meshes_per_material : m_meshes_per_material_map)
         {
-            const uint32_t&          material_index = meshes_per_material.first;
-            const std::vector<Mesh>& meshes         = meshes_per_material.second;
+            const uint32_t&                           material_index = meshes_per_material.first;
+            const std::vector<std::shared_ptr<Mesh>>& meshes         = meshes_per_material.second;
 
             for (auto& mesh : meshes)
             {
-                mesh.BindDrawCmd(cmd_buffer);
+                mesh->BindDrawCmd(cmd_buffer);
             }
         }
     }
@@ -125,7 +125,7 @@ namespace Meow
 
         uint8_t* data_ptr;
         uint32_t data_size;
-        g_runtime_global_context.m_file_system.get()->ReadBinaryFile(file_name, data_ptr, data_size);
+        g_runtime_global_context.file_system.get()->ReadBinaryFile(file_name, data_ptr, data_size);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);
@@ -287,7 +287,7 @@ namespace Meow
             indices.push_back(aiMesh->mFaces[i].mIndices[2]);
         }
 
-        std::vector<Primitive> primitives;
+        std::vector<std::shared_ptr<Primitive>> primitives;
 
         int32_t stride = vertices.size() / aiMesh->mNumVertices;
 
@@ -330,7 +330,7 @@ namespace Meow
                 }
 
                 // TODO: Support uint32_t indices
-                primitives.emplace_back(
+                primitives.push_back(std::make_shared<Primitive>(
                     std::move(primitive_vertices),
                     std::move(primitive_indices),
                     physical_device,
@@ -342,7 +342,7 @@ namespace Meow
                     ,
                     std::format("{} {}", aiMesh->mName.C_Str(), primitive_index).c_str()
 #endif
-                );
+                        ));
             }
         }
         else
@@ -354,17 +354,24 @@ namespace Meow
                 primitive_indices.push_back(index);
             }
 
-            primitives.emplace_back(std::move(vertices),
-                                    std::move(primitive_indices),
-                                    physical_device,
-                                    device,
-                                    vk::MemoryPropertyFlagBits::eHostVisible |
-                                        vk::MemoryPropertyFlagBits::eHostCoherent,
-                                    m_attributes,
-                                    m_index_type);
+            primitives.push_back(std::make_shared<Primitive>(
+                std::move(vertices),
+                std::move(primitive_indices),
+                physical_device,
+                device,
+                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+                m_attributes,
+                m_index_type
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                ,
+                aiMesh->mName.C_Str()
+#endif
+                    ));
         }
 
-        m_meshes_per_material_map[material_index].emplace_back(std::move(primitives), BoundingBox(mmin, mmax));
+        m_meshes_per_material_map[material_index].push_back(
+            std::make_shared<Mesh>(primitives, BoundingBox(mmin, mmax)));
+
         m_bounding.Merge(mmin, mmax);
     }
 } // namespace Meow

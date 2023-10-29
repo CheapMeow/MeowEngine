@@ -13,13 +13,6 @@
 
 namespace Meow
 {
-    struct UBOData
-    {
-        glm::mat4 model      = glm::mat4(1.0f);
-        glm::mat4 view       = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-    };
-
     vk::raii::Context VulkanRenderer::CreateVulkanContent()
     {
         vk::raii::Context vulkan_context;
@@ -138,11 +131,10 @@ namespace Meow
 
     vk::Meow::SurfaceData VulkanRenderer::CreateSurface()
     {
-        auto         size = g_runtime_global_context.m_window->GetSize();
+        auto         size = g_runtime_global_context.window->GetSize();
         vk::Extent2D extent(size.x, size.y);
 
-        vk::Meow::SurfaceData surface_data(
-            m_vulkan_instance, g_runtime_global_context.m_window->GetGLFWWindow(), extent);
+        vk::Meow::SurfaceData surface_data(m_vulkan_instance, g_runtime_global_context.window->GetGLFWWindow(), extent);
 
         return surface_data;
     }
@@ -334,7 +326,7 @@ namespace Meow
         uint8_t* data_ptr = nullptr;
         uint32_t data_size;
 
-        g_runtime_global_context.m_file_system.get()->ReadBinaryFile(
+        g_runtime_global_context.file_system.get()->ReadBinaryFile(
             "builtin/shaders/mesh.vert.spv", data_ptr, data_size);
         vk::raii::ShaderModule vertex_shader_module(m_logical_device,
                                                     {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
@@ -342,7 +334,7 @@ namespace Meow
         delete[] data_ptr;
         data_ptr = nullptr;
 
-        g_runtime_global_context.m_file_system.get()->ReadBinaryFile(
+        g_runtime_global_context.file_system.get()->ReadBinaryFile(
             "builtin/shaders/mesh.frag.spv", data_ptr, data_size);
         vk::raii::ShaderModule fragment_shader_module(m_logical_device,
                                                       {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
@@ -446,40 +438,6 @@ namespace Meow
 #endif
     {
         CreateSyncObjects();
-
-        // TODO: temp
-        m_model = new Model("builtin/models/monkey_head.obj",
-                            m_gpu,
-                            m_logical_device,
-                            {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
-
-        // Update Uniform Buffer
-        // TODO: Create a Camera
-        UBOData    ubo_data;
-        glm::ivec2 window_size = g_runtime_global_context.m_window->GetSize();
-
-        BoundingBox bounding     = m_model->GetBounding();
-        glm::vec3   bound_size   = bounding.max - bounding.min;
-        glm::vec3   bound_center = bounding.min + bound_size * 0.5f;
-
-        glm::mat4 model_matrix(1.0f);
-        model_matrix = glm::translate(model_matrix, bound_center);
-        // model_matrix = glm::scale(model_matrix, Scale);
-        // model_matrix = glm::rotate(model_matrix, rotAngle, Rotation);
-        ubo_data.model      = model_matrix;
-        ubo_data.projection = glm::perspectiveFovRH_ZO(
-            glm::pi<float>() / 4.0f, (float)window_size[0], (float)window_size[1], 0.1f, 1000.0f);
-        vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
-
-        // TODO: Uniform set is temp
-        vk::Meow::UpdateDescriptorSets(
-            m_logical_device,
-            m_descriptor_set,
-            {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
-            {});
-
-        // TODO: temp
-        m_camera_position = bound_center;
     }
 
     VulkanRenderer::~VulkanRenderer()
@@ -487,9 +445,6 @@ namespace Meow
         // wait for command buffer
         // some resources can not be deleted when command buffer is used, such as semaphores
         m_logical_device.waitIdle();
-
-        // TODO: temp
-        delete m_model;
     }
 
     /**
@@ -524,6 +479,10 @@ namespace Meow
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
                                                        clear_values);
         m_command_buffers[m_current_frame_index].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
+        m_command_buffers[m_current_frame_index].bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphics_pipeline);
+        m_command_buffers[m_current_frame_index].bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, *m_pipeline_layout, 0, {*m_descriptor_set}, nullptr);
 
         return true;
     }
@@ -566,49 +525,13 @@ namespace Meow
         m_current_frame_index = (m_current_frame_index + 1) % vk::Meow::k_max_frames_in_flight;
     }
 
-    void VulkanRenderer::Update(float frame_time)
+    void VulkanRenderer::UpdateUniformBuffer(UBOData ubo_data)
     {
-        // TODO: temp
-        if (g_runtime_global_context.m_input_system->GetButton("Left")->GetAction() == InputAction::Press)
-        {
-            RUNTIME_INFO("Press Button Left!");
-
-            m_camera_position += glm::vec3(-1.0f, 0.0f, 0.0f) * frame_time;
-
-            // Update Uniform Buffer
-            // TODO: Create a Camera
-            UBOData    ubo_data;
-            glm::ivec2 window_size = g_runtime_global_context.m_window->GetSize();
-
-            BoundingBox bounding     = m_model->GetBounding();
-            glm::vec3   bound_size   = bounding.max - bounding.min;
-            glm::vec3   bound_center = bounding.min + bound_size * 0.5f;
-
-            glm::mat4 model_matrix(1.0f);
-            model_matrix = glm::translate(model_matrix, m_camera_position);
-            // model_matrix = glm::scale(model_matrix, Scale);
-            // model_matrix = glm::rotate(model_matrix, rotAngle, Rotation);
-            ubo_data.model      = model_matrix;
-            ubo_data.projection = glm::perspectiveFovRH_ZO(
-                glm::pi<float>() / 4.0f, (float)window_size[0], (float)window_size[1], 0.1f, 1000.0f);
-            vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
-
-            // TODO: Uniform set is temp
-            vk::Meow::UpdateDescriptorSets(
-                m_logical_device,
-                m_descriptor_set,
-                {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
-                {});
-        }
-
-        uint32_t image_index;
-        StartRenderpass(image_index);
-
-        m_command_buffers[m_current_frame_index].bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphics_pipeline);
-        m_command_buffers[m_current_frame_index].bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *m_pipeline_layout, 0, {*m_descriptor_set}, nullptr);
-        m_model->Draw(m_command_buffers[m_current_frame_index]);
-
-        EndRenderpass(image_index);
+        vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
+        vk::Meow::UpdateDescriptorSets(
+            m_logical_device,
+            m_descriptor_set,
+            {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
+            {});
     }
 } // namespace Meow

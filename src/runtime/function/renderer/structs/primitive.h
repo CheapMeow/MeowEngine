@@ -60,6 +60,8 @@ namespace Meow
               )
         {}
 
+        Primitive(Primitive& rhs) = delete;
+
         void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer) const
         {
             vertex_buffer.Bind(cmd_buffer);

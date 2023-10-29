@@ -9,7 +9,7 @@ namespace Meow
     MouseInputButton::MouseInputButton(MouseButtonCode button)
         : m_button(button)
     {
-        g_runtime_global_context.m_window->OnMouseButton().connect(
+        g_runtime_global_context.window->OnMouseButton().connect(
             this, [this](MouseButtonCode button, InputAction action, uint8_t mods) {
                 if (m_button == button)
                 {
@@ -20,6 +20,6 @@ namespace Meow
 
     InputAction MouseInputButton::GetAction() const
     {
-        return g_runtime_global_context.m_window->GetMouseButtonAction(m_button);
+        return g_runtime_global_context.window->GetMouseButtonAction(m_button);
     }
 } // namespace Meow
