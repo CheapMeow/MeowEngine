@@ -1,9 +1,10 @@
 #pragma once
 
-#include "function/ecs/systems/file_system.h"
+#include "function/ecs/systems/camera/camera_system.h"
+#include "function/ecs/systems/file/file_system.h"
 #include "function/ecs/systems/input/input_system.h"
-#include "function/ecs/systems/render_system.h"
-#include "function/ecs/systems/window_system.h"
+#include "function/ecs/systems/render/render_system.h"
+#include "function/ecs/systems/window/window_system.h"
 #include "function/renderer/window.h"
 
 #include <entt/entt.hpp>
@@ -20,6 +21,7 @@ namespace Meow
         std::shared_ptr<WindowSystem>   window_system;
         std::shared_ptr<InputSystem>    input_system;
         std::shared_ptr<FileSystem>     file_system;
+        std::shared_ptr<CameraSystem>   camera_system;
         std::shared_ptr<VulkanRenderer> renderer;
         std::shared_ptr<RenderSystem>   render_system;
 

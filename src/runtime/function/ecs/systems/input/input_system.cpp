@@ -1,8 +1,13 @@
 #include "input_system.h"
 
+#include "core/input/buttons/keyboard_input_button.h"
+#include "core/input/buttons/mouse_input_button.h"
 #include "core/log/log.h"
-#include "function/ecs/systems/input/buttons/keyboard_input_button.h"
-#include "function/ecs/systems/input/buttons/mouse_input_button.h"
+#include "function/ecs/components/3d/transform/transform_3d_component.h"
+#include "function/ecs/components/shared/pawn_component.h"
+#include "function/global/runtime_global_context.h"
+
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Meow
 {
@@ -33,6 +38,54 @@ namespace Meow
 
         m_current_scheme->AddButton("Forward", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonLeft));
         m_current_scheme->AddButton("Backward", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonRight));
+    }
+
+    void InputSystem::Update(float frame_time)
+    {
+        for (auto [entity, transform_component, pawn_component] :
+             g_runtime_global_context.registry.view<Transform3DComponent, const PawnComponent>().each())
+        {
+            if (pawn_component.is_player)
+            {
+                glm::mat4 transform = transform_component.global_transform;
+
+                glm::vec3 right = transform * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+                // glm::vec3 up = transform * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
+                glm::vec3 forward = transform * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
+
+                glm::vec3 movement = glm::vec3(0.0f);
+
+                if (GetButton("Left")->GetAction() == InputAction::Press)
+                {
+                    movement += -right;
+                }
+                if (GetButton("Right")->GetAction() == InputAction::Press)
+                {
+                    movement += right;
+                }
+                if (GetButton("Forward")->GetAction() == InputAction::Press)
+                {
+                    movement += forward;
+                }
+                if (GetButton("Backward")->GetAction() == InputAction::Press)
+                {
+                    movement += -forward;
+                }
+                if (GetButton("Up")->GetAction() == InputAction::Press)
+                {
+                    movement += glm::vec3(0.0f, 1.0f, 0.0f);
+                }
+                if (GetButton("Down")->GetAction() == InputAction::Press)
+                {
+                    movement += -glm::vec3(0.0f, 1.0f, 0.0f);
+                }
+
+                movement *= frame_time * 0.001f;
+
+                transform_component.global_transform = glm::translate(transform_component.global_transform, movement);
+                transform_component.local_transform  = glm::translate(transform_component.local_transform, movement);
+            }
+        }
     }
 
     InputScheme* InputSystem::GetScheme(const std::string& name) const

@@ -2,10 +2,6 @@
 
 #include "core/base/non_copyable.h"
 #include "function/renderer/utils/vulkan_hpp_utils.hpp"
-#include "function/renderer/window.h"
-
-// TODO: temp
-#include "function/renderer/structs/model.h"
 
 #include <volk.h>
 #include <vulkan/vulkan_raii.hpp>

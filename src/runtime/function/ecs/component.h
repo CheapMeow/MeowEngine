@@ -2,6 +2,6 @@
 
 namespace Meow
 {
-    class Component
+    struct Component
     {};
 } // namespace Meow

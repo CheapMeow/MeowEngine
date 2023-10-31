@@ -1,7 +1,7 @@
 #pragma once
 
+#include "core/input/input_scheme.h"
 #include "function/ecs/system.h"
-#include "input_scheme.h"
 
 namespace Meow
 {
@@ -9,6 +9,8 @@ namespace Meow
     {
     public:
         InputSystem();
+
+        void Update(float frame_time);
 
         InputScheme* GetScheme() const { return m_current_scheme; }
         InputScheme* GetScheme(const std::string& name) const;

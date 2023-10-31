@@ -14,6 +14,7 @@ namespace Meow
         g_runtime_global_context.window_system = std::make_shared<WindowSystem>();
         g_runtime_global_context.input_system  = std::make_shared<InputSystem>();
         g_runtime_global_context.file_system   = std::make_shared<FileSystem>();
+        g_runtime_global_context.camera_system = std::make_shared<CameraSystem>();
         g_runtime_global_context.render_system = std::make_shared<RenderSystem>();
 
         return true;
@@ -51,6 +52,8 @@ namespace Meow
             float frame_time = curr_time - m_last_time;
 
             g_runtime_global_context.window_system->Update(frame_time);
+            g_runtime_global_context.input_system->Update(frame_time);
+            g_runtime_global_context.camera_system->Update(frame_time);
             g_runtime_global_context.render_system->Update(frame_time);
         }
     }
@@ -58,6 +61,7 @@ namespace Meow
     void MeowEngine::ShutDown()
     {
         g_runtime_global_context.render_system = nullptr;
+        g_runtime_global_context.camera_system = nullptr;
         g_runtime_global_context.file_system   = nullptr;
         g_runtime_global_context.input_system  = nullptr;
         g_runtime_global_context.window_system = nullptr;

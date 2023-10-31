@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/ecs/systems/input/input_axis.h"
+#include "core/input/input_axis.h"
 
 namespace Meow
 {

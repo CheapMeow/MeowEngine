@@ -1,6 +1,8 @@
 #include "vulkan_renderer.h"
+
 #include "core/log/log.h"
 #include "function/global/runtime_global_context.h"
+#include "function/renderer/structs/vertex_attribute.h"
 #include "function/renderer/utils/geometries.hpp"
 #include "function/renderer/utils/vulkan_math_utils.hpp"
 #include "function/renderer/utils/vulkan_shader_utils.hpp"

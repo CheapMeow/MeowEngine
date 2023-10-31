@@ -8,9 +8,8 @@
 
 namespace Meow
 {
-    class SceneTreeProxyComponent : Component
+    struct SceneTreeProxyComponent : Component
     {
-    public:
         std::vector<std::weak_ptr<entt::entity>> m_child_entity_ptrs;
     };
 
