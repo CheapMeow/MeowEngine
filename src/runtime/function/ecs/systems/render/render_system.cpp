@@ -18,13 +18,14 @@ namespace Meow
         const auto camera_entity = g_runtime_global_context.registry.create();
         auto&      camera_transform_component =
             g_runtime_global_context.registry.emplace<Transform3DComponent>(camera_entity);
-        auto& pawn_component            = g_runtime_global_context.registry.emplace<PawnComponent>(camera_entity);
-        pawn_component.is_player        = true;
         auto& camera_component          = g_runtime_global_context.registry.emplace<Camera3DComponent>(camera_entity);
         camera_component.is_main_camera = true;
 
         const auto model_entity = g_runtime_global_context.registry.create();
         g_runtime_global_context.registry.emplace<Transform3DComponent>(model_entity);
+        // model_transform_component.global_transform =
+        //     glm::rotate(model_transform_component.global_transform, glm::radians(180.0f), glm::vec3(0.0f, 1.0f,
+        //     0.0f));
         auto& model_component = g_runtime_global_context.registry.emplace<ModelComponent>(
             model_entity,
             "builtin/models/monkey_head.obj",
@@ -32,11 +33,11 @@ namespace Meow
             g_runtime_global_context.renderer->m_logical_device,
             std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
 
-        BoundingBox model_bounding = model_component.model.GetBounding();
-        glm::vec3   bound_size     = model_bounding.max - model_bounding.min;
-        glm::vec3   bound_center   = model_bounding.min + bound_size * 0.5f;
-        camera_transform_component.global_transform =
-            glm::translate(glm::mat4(1.0f), glm::vec3(bound_center.x, bound_center.y, bound_center.z - 50.0f));
+        BoundingBox model_bounding          = model_component.model.GetBounding();
+        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
+        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
+        camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
+        // glm::lookAt
     }
 
     RenderSystem::~RenderSystem()
@@ -57,13 +58,29 @@ namespace Meow
 
         UBOData ubo_data;
 
-        for (auto [entity, camera_component] : g_runtime_global_context.registry.view<const Camera3DComponent>().each())
+        for (auto [entity, transfrom_component, model_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        {
+            // TODO: temp
+            ubo_data.model = transfrom_component.GetTransform();
+        }
+
+        for (auto [entity, transfrom_component, camera_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, const Camera3DComponent>().each())
         {
             if (camera_component.is_main_camera)
             {
-                ubo_data.view       = camera_component.view;
-                ubo_data.projection = camera_component.projection;
+                glm::ivec2 window_size = g_runtime_global_context.window->GetSize();
 
+                glm::mat4 view = glm::mat4(1.0f);
+                view           = glm::mat4_cast(glm::conjugate(transfrom_component.rotation)) * view;
+                view           = glm::translate(view, -transfrom_component.position);
+
+                ubo_data.view       = view;
+                ubo_data.projection = glm::perspectiveLH_ZO(camera_component.field_of_view,
+                                                            (float)window_size[0] / (float)window_size[1],
+                                                            camera_component.near_plane,
+                                                            camera_component.far_plane);
                 break;
             }
         }

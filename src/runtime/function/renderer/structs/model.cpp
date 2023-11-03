@@ -105,7 +105,7 @@ namespace Meow
                              vk::raii::Device const&         device,
                              const std::string&              file_name)
     {
-        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
+        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
 
         for (int32_t i = 0; i < m_attributes.size(); ++i)
         {

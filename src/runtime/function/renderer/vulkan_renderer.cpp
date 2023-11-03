@@ -466,9 +466,9 @@ namespace Meow
         m_command_buffers[m_current_frame_index].setViewport(
             0,
             vk::Viewport(0.0f,
-                         0.0f,
-                         static_cast<float>(m_surface_data.extent.width),
                          static_cast<float>(m_surface_data.extent.height),
+                         static_cast<float>(m_surface_data.extent.width),
+                         -static_cast<float>(m_surface_data.extent.height),
                          0.0f,
                          1.0f));
         m_command_buffers[m_current_frame_index].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));

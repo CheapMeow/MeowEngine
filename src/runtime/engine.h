@@ -30,9 +30,9 @@ namespace Meow
     private:
         bool m_running = true;
 
-        double m_last_time = 0.0;
-        // double m_accumulator          = 0.0;
-        // double m_phyics_time           = 0.0;
-        // double m_phyics_fixed_delta_time = 1.0 / 60.0;
+        float m_last_time = 0.0;
+        // float m_accumulator          = 0.0;
+        // float m_phyics_time           = 0.0;
+        // float m_phyics_fixed_delta_time = 1.0 / 60.0;
     };
 } // namespace Meow

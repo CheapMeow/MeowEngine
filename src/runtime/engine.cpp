@@ -50,6 +50,7 @@ namespace Meow
         {
             float curr_time  = Time::GetTime();
             float frame_time = curr_time - m_last_time;
+            m_last_time      = curr_time;
 
             g_runtime_global_context.window_system->Update(frame_time);
             g_runtime_global_context.input_system->Update(frame_time);

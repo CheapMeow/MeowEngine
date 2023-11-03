@@ -1,5 +1,6 @@
 #include "input_system.h"
 
+#include "core/input/axes/mouse_input_axis.h"
 #include "core/input/buttons/keyboard_input_button.h"
 #include "core/input/buttons/mouse_input_button.h"
 #include "core/log/log.h"
@@ -33,60 +34,17 @@ namespace Meow
         m_current_scheme->AddButton("Right", std::make_unique<KeyboardInputButton>(KeyCode::D));
         m_current_scheme->AddButton("Forward", std::make_unique<KeyboardInputButton>(KeyCode::W));
         m_current_scheme->AddButton("Backward", std::make_unique<KeyboardInputButton>(KeyCode::S));
-        m_current_scheme->AddButton("Up", std::make_unique<KeyboardInputButton>(KeyCode::Q));
-        m_current_scheme->AddButton("Down", std::make_unique<KeyboardInputButton>(KeyCode::E));
+        m_current_scheme->AddButton("Up", std::make_unique<KeyboardInputButton>(KeyCode::E));
+        m_current_scheme->AddButton("Down", std::make_unique<KeyboardInputButton>(KeyCode::Q));
 
-        m_current_scheme->AddButton("Forward", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonLeft));
-        m_current_scheme->AddButton("Backward", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonRight));
+        m_current_scheme->AddButton("LeftMouse", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonLeft));
+        m_current_scheme->AddButton("RightMouse", std::make_unique<MouseInputButton>(MouseButtonCode::ButtonRight));
+
+        m_current_scheme->AddAxis("MouseX", std::make_unique<MouseInputAxis>(0));
+        m_current_scheme->AddAxis("MouseY", std::make_unique<MouseInputAxis>(1));
     }
 
-    void InputSystem::Update(float frame_time)
-    {
-        for (auto [entity, transform_component, pawn_component] :
-             g_runtime_global_context.registry.view<Transform3DComponent, const PawnComponent>().each())
-        {
-            if (pawn_component.is_player)
-            {
-                glm::mat4 transform = transform_component.global_transform;
-
-                glm::vec3 right = transform * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-                // glm::vec3 up = transform * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f);
-                glm::vec3 forward = transform * glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
-
-                glm::vec3 movement = glm::vec3(0.0f);
-
-                if (GetButton("Left")->GetAction() == InputAction::Press)
-                {
-                    movement += -right;
-                }
-                if (GetButton("Right")->GetAction() == InputAction::Press)
-                {
-                    movement += right;
-                }
-                if (GetButton("Forward")->GetAction() == InputAction::Press)
-                {
-                    movement += forward;
-                }
-                if (GetButton("Backward")->GetAction() == InputAction::Press)
-                {
-                    movement += -forward;
-                }
-                if (GetButton("Up")->GetAction() == InputAction::Press)
-                {
-                    movement += glm::vec3(0.0f, 1.0f, 0.0f);
-                }
-                if (GetButton("Down")->GetAction() == InputAction::Press)
-                {
-                    movement += -glm::vec3(0.0f, 1.0f, 0.0f);
-                }
-
-                movement *= frame_time * 0.001f;
-
-                transform_component.global_transform = glm::translate(transform_component.global_transform, movement);
-                transform_component.local_transform  = glm::translate(transform_component.local_transform, movement);
-            }
-        }
-    }
+    void InputSystem::Update(float frame_time) {}
 
     InputScheme* InputSystem::GetScheme(const std::string& name) const
     {

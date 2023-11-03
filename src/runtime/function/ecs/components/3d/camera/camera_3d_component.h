@@ -3,6 +3,7 @@
 #include "function/ecs/component.h"
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace Meow
 {
@@ -11,9 +12,8 @@ namespace Meow
         bool is_main_camera = false;
 
         float near_plane = 0.1f, far_plane = 1000.0f;
-        float field_of_view = glm::radians(70.0f);
+        float field_of_view = glm::radians(45.0f);
 
-        glm::mat4 view       = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
+        float yaw = 0.0f, pitch = 0.0f;
     };
 } // namespace Meow

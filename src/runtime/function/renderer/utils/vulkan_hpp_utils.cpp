@@ -861,10 +861,10 @@ namespace vk
                 vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB |
                 vk::ColorComponentFlagBits::eA);
             vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(false,
-                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendFactor::eOne,
                                                                                         vk::BlendFactor::eZero,
                                                                                         vk::BlendOp::eAdd,
-                                                                                        vk::BlendFactor::eZero,
+                                                                                        vk::BlendFactor::eOne,
                                                                                         vk::BlendFactor::eZero,
                                                                                         vk::BlendOp::eAdd,
                                                                                         color_component_flags);
