@@ -19,3 +19,7 @@
 [submodule "src/3rdparty/entt"]
 	path = src/3rdparty/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "src/3rdparty/imgui"]
+	path = src/3rdparty/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking

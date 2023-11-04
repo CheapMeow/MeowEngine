@@ -38,6 +38,10 @@ if(NOT TARGET assimp)
     add_subdirectory(assimp)
 endif()
 
+if(NOT TARGET imgui)
+    include(imgui.cmake)
+endif()
+
 if(NOT TARGET EnTT::EnTT)
     add_subdirectory(entt)
 endif()

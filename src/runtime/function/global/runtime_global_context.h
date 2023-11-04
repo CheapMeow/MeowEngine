@@ -1,11 +1,11 @@
 #pragma once
 
-#include "function/ecs/systems/camera/camera_system.h"
-#include "function/ecs/systems/file/file_system.h"
-#include "function/ecs/systems/input/input_system.h"
-#include "function/ecs/systems/render/render_system.h"
-#include "function/ecs/systems/window/window_system.h"
-#include "function/renderer/window.h"
+#include "function/systems/camera/camera_system.h"
+#include "function/systems/file/file_system.h"
+#include "function/systems/input/input_system.h"
+#include "function/systems/render/render_system.h"
+#include "function/systems/window/window_system.h"
+#include "render_context.h"
 
 #include <entt/entt.hpp>
 
@@ -17,15 +17,14 @@ namespace Meow
     {
         bool running = true;
 
-        std::shared_ptr<Window>         window;
-        std::shared_ptr<WindowSystem>   window_system;
-        std::shared_ptr<InputSystem>    input_system;
-        std::shared_ptr<FileSystem>     file_system;
-        std::shared_ptr<CameraSystem>   camera_system;
-        std::shared_ptr<VulkanRenderer> renderer;
-        std::shared_ptr<RenderSystem>   render_system;
-
+        RenderContext  render_context;
         entt::registry registry;
+
+        std::shared_ptr<WindowSystem> window_system;
+        std::shared_ptr<InputSystem>  input_system;
+        std::shared_ptr<FileSystem>   file_system;
+        std::shared_ptr<CameraSystem> camera_system;
+        std::shared_ptr<RenderSystem> render_system;
     };
 
     extern RuntimeGlobalContext g_runtime_global_context;
