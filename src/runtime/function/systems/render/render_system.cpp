@@ -482,7 +482,7 @@ namespace Meow
 #endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Logical Device";
+        std::string                     object_name = "Render System Logical Device";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {
             vk::ObjectType::eDevice,
             vk::Meow::GetVulkanHandle(**g_runtime_global_context.render_context.logical_device),
@@ -544,7 +544,7 @@ namespace Meow
                                                         g_runtime_global_context.render_context.surface_data->extent);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Depth Image";
+        std::string                     object_name = "Render System Depth Image";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {
             vk::ObjectType::eImage,
             vk::Meow::GetVulkanHandle(*g_runtime_global_context.render_context.depth_buffer_data->image),
@@ -564,7 +564,7 @@ namespace Meow
                                                    vk::BufferUsageFlagBits::eUniformBuffer);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Uniform Buffer";
+        std::string                     object_name = "Render System Uniform Buffer";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {
             vk::ObjectType::eBuffer,
             vk::Meow::GetVulkanHandle(*g_runtime_global_context.render_context.uniform_buffer_data->buffer),
@@ -641,6 +641,16 @@ namespace Meow
             vk::Meow::MakeRenderPass(*g_runtime_global_context.render_context.logical_device,
                                      color_format,
                                      g_runtime_global_context.render_context.depth_buffer_data->format));
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        std::string                     object_name = "Render System Render Pass";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eRenderPass,
+            vk::Meow::GetVulkanHandle(**g_runtime_global_context.render_context.render_pass),
+            object_name.c_str(),
+            nullptr};
+        g_runtime_global_context.render_context.logical_device->setDebugUtilsObjectNameEXT(name_info);
+#endif
     }
 
     VOID RenderSystem::CreateFramebuffers()

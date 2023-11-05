@@ -737,17 +737,25 @@ namespace vk
                                                      vk::ImageLayout::eUndefined,
                                                      vk::ImageLayout::eDepthStencilAttachmentOptimal);
             }
-            vk::AttachmentReference  color_attachment(0, vk::ImageLayout::eColorAttachmentOptimal);
-            vk::AttachmentReference  depth_attachment(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-            vk::SubpassDescription   subpass_description(vk::SubpassDescriptionFlags(),
+            vk::AttachmentReference            color_attachment(0, vk::ImageLayout::eColorAttachmentOptimal);
+            vk::AttachmentReference            depth_attachment(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+            vk::SubpassDescription             subpass_description(vk::SubpassDescriptionFlags(),
                                                        vk::PipelineBindPoint::eGraphics,
-                                                         {},
+                                                                   {},
                                                        color_attachment,
-                                                         {},
+                                                                   {},
                                                        (depth_format != vk::Format::eUndefined) ? &depth_attachment :
-                                                                                                    nullptr);
+                                                                                                              nullptr);
+            std::vector<vk::SubpassDependency> dependencies;
+            dependencies.emplace_back(VK_SUBPASS_EXTERNAL,
+                                      0,
+                                      vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                      vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                      vk::AccessFlagBits::eNone,
+                                      vk::AccessFlagBits::eColorAttachmentWrite);
             vk::RenderPassCreateInfo render_pass_create_info(
-                vk::RenderPassCreateFlags(), attachment_descriptions, subpass_description);
+                vk::RenderPassCreateFlags(), attachment_descriptions, subpass_description, dependencies);
+
             return vk::raii::RenderPass(device, render_pass_create_info);
         }
 
