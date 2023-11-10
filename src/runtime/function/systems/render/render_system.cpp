@@ -631,13 +631,29 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
+        // TODO: iterate material, one material one vector of renderable
+
+        // TODO: sort renderables by distance
+
+        std::vector<Renderable*> renderables;
+
+        // TODO: get renderable from model according to material
+
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
         {
             // TODO: How to solve the different uniform buffer problem?
             // ubo_data.model = transfrom_component.m_global_transform;
 
-            model_component.model.Draw(cmd_buffer);
+            for (Mesh& mesh : model_component.model.meshes)
+                renderables.push_back(&mesh);
+        }
+
+        // TODO: before bind draw cmd, set material
+
+        for (Renderable* renderable : renderables)
+        {
+            renderable->BindDrawCmd(cmd_buffer);
         }
 
         ImGui::Render();

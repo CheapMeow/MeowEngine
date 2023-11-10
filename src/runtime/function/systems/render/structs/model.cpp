@@ -12,88 +12,6 @@
 namespace Meow
 {
     /**
-     * @brief Current input binding only bind to 0, it may be changed when app need to solve complex situation.
-     */
-    VkVertexInputBindingDescription Model::GetInputBinding()
-    {
-        int32_t stride = 0;
-        for (int32_t i = 0; i < m_attributes.size(); ++i)
-        {
-            stride += VertexAttributeToSize(m_attributes[i]);
-        }
-
-        VkVertexInputBindingDescription vertex_input_binding = {};
-        vertex_input_binding.binding                         = 0;
-        vertex_input_binding.stride                          = stride;
-        vertex_input_binding.inputRate                       = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return vertex_input_binding;
-    }
-
-    /**
-     * @brief Current input binding only bind to 0, it may be changed when app need to solve complex situation.
-     */
-    std::vector<VkVertexInputAttributeDescription> Model::GetInputAttributes()
-    {
-        std::vector<VkVertexInputAttributeDescription> vertex_input_attributes;
-        int32_t                                        offset = 0;
-
-        for (int32_t i = 0; i < m_attributes.size(); ++i)
-        {
-            VkVertexInputAttributeDescription input_attributes = {};
-            input_attributes.binding                           = 0;
-            input_attributes.location                          = i;
-            input_attributes.format                            = VertexAttributeToVkFormat(m_attributes[i]);
-            input_attributes.offset                            = offset;
-            offset += VertexAttributeToSize(m_attributes[i]);
-            vertex_input_attributes.push_back(input_attributes);
-        }
-
-        return vertex_input_attributes;
-    }
-
-    void Model::Draw(const vk::raii::CommandBuffer& cmd_buffer)
-    {
-        for (const auto& meshes_per_material : m_meshes_per_material_map)
-        {
-            const uint32_t&                           material_index = meshes_per_material.first;
-            const std::vector<std::shared_ptr<Mesh>>& meshes         = meshes_per_material.second;
-
-            for (auto& mesh : meshes)
-            {
-                mesh->BindDrawCmd(cmd_buffer);
-            }
-        }
-    }
-
-    std::vector<uint32_t> Model::LoadMaterialTextures(const aiMaterial* mat, const aiTextureType type)
-    {
-        std::vector<uint32_t> texture_indices;
-        for (uint32_t i = 0; i < mat->GetTextureCount(type); i++)
-        {
-            aiString str;
-            mat->GetTexture(type, 0, &str);
-            bool        skip         = false;
-            std::string texture_path = m_directory + str.C_Str();
-            for (uint32_t j = 0; j < m_texture_paths.size(); j++)
-            {
-                if (m_texture_paths[j] == texture_path)
-                {
-                    texture_indices.push_back(j);
-                    skip = true;
-                    break;
-                }
-            }
-            if (!skip)
-            {
-                texture_indices.push_back(m_texture_paths.size());
-                m_texture_paths.push_back(texture_path);
-            }
-        }
-        return texture_indices;
-    }
-
-    /**
      * @brief Load model from file using assimp.
      *
      * Use aiProcess_PreTransformVertices when importing, so model node doesn't need to save local transform matrix.
@@ -103,21 +21,21 @@ namespace Meow
      */
     void Model::LoadFromFile(vk::raii::PhysicalDevice const& physical_device,
                              vk::raii::Device const&         device,
-                             const std::string&              file_name)
+                             const std::string&              file_path)
     {
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
 
-        for (int32_t i = 0; i < m_attributes.size(); ++i)
+        for (int32_t i = 0; i < attributes.size(); ++i)
         {
-            if (m_attributes[i] == VertexAttribute::VA_Tangent)
+            if (attributes[i] == VertexAttribute::VA_Tangent)
             {
                 assimpFlags = assimpFlags | aiProcess_CalcTangentSpace;
             }
-            else if (m_attributes[i] == VertexAttribute::VA_UV0)
+            else if (attributes[i] == VertexAttribute::VA_UV0)
             {
                 assimpFlags = assimpFlags | aiProcess_GenUVCoords;
             }
-            else if (m_attributes[i] == VertexAttribute::VA_Normal)
+            else if (attributes[i] == VertexAttribute::VA_Normal)
             {
                 assimpFlags = assimpFlags | aiProcess_GenSmoothNormals;
             }
@@ -125,38 +43,24 @@ namespace Meow
 
         uint8_t* data_ptr;
         uint32_t data_size;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(file_name, data_ptr, data_size);
+        g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path, data_ptr, data_size);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);
 
-        LoadNode(physical_device, device, scene->mRootNode, scene);
+        meshes.resize(scene->mNumMeshes);
+        for (size_t i = 0; i < scene->mNumMeshes; ++i)
+        {
+            LoadMesh(physical_device, device, scene->mMeshes[i], meshes[i]);
+        }
 
         delete[] data_ptr;
-    }
-
-    void Model::LoadNode(vk::raii::PhysicalDevice const& physical_device,
-                         vk::raii::Device const&         device,
-                         const aiNode*                   aiNode,
-                         const aiScene*                  aiScene)
-    {
-        // mesh
-        for (int i = 0; i < aiNode->mNumMeshes; ++i)
-        {
-            LoadMesh(physical_device, device, aiScene->mMeshes[aiNode->mMeshes[i]], aiScene);
-        }
-
-        // children node
-        for (int32_t i = 0; i < aiNode->mNumChildren; ++i)
-        {
-            LoadNode(physical_device, device, aiNode->mChildren[i], aiScene);
-        }
     }
 
     void Model::LoadMesh(vk::raii::PhysicalDevice const& physical_device,
                          vk::raii::Device const&         device,
                          const aiMesh*                   aiMesh,
-                         const aiScene*                  aiScene)
+                         Mesh&                           mesh)
     {
         glm::vec3 mmin(
             std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
@@ -166,52 +70,11 @@ namespace Meow
         std::vector<float>    vertices;
         std::vector<uint32_t> indices;
 
-        uint32_t    material_index = 0;
-        aiMaterial* material       = aiScene->mMaterials[aiMesh->mMaterialIndex];
-        if (material)
-        {
-            std::vector<uint32_t> diffuse_texture_indices =
-                LoadMaterialTextures(material, aiTextureType::aiTextureType_DIFFUSE);
-            std::vector<uint32_t> normal_texture_indices =
-                LoadMaterialTextures(material, aiTextureType::aiTextureType_NORMALS);
-            std::vector<uint32_t> specular_texture_indices =
-                LoadMaterialTextures(material, aiTextureType::aiTextureType_SPECULAR);
-
-            uint32_t diffuse_texture_index =
-                diffuse_texture_indices.size() > 0 ? diffuse_texture_indices[0] : std::numeric_limits<uint32_t>::max();
-            uint32_t normal_texture_index =
-                normal_texture_indices.size() > 0 ? normal_texture_indices[0] : std::numeric_limits<uint32_t>::max();
-            uint32_t specular_texture_index = specular_texture_indices.size() > 0 ?
-                                                  specular_texture_indices[0] :
-                                                  std::numeric_limits<uint32_t>::max();
-
-            MaterialInfo material_info(diffuse_texture_index, normal_texture_index, specular_texture_index);
-
-            bool skip = false;
-            for (uint32_t i = 0; i < m_material_infos.size(); i++)
-            {
-                if (CompareMaterial(m_material_infos[i], material_info))
-                {
-                    material_index = i;
-                    skip           = true;
-                    break;
-                }
-            }
-            if (!skip)
-            {
-                material_index = m_material_infos.size();
-                m_material_infos.push_back(material_info);
-            }
-        }
-
-        aiString texPath;
-        material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texPath);
-
         for (int32_t i = 0; i < aiMesh->mNumVertices; ++i)
         {
-            for (int32_t j = 0; j < m_attributes.size(); ++j)
+            for (int32_t j = 0; j < attributes.size(); ++j)
             {
-                if (m_attributes[j] == VertexAttribute::VA_Position)
+                if (attributes[j] == VertexAttribute::VA_Position)
                 {
                     float v0 = aiMesh->mVertices[i].x;
                     float v1 = aiMesh->mVertices[i].y;
@@ -228,30 +91,30 @@ namespace Meow
                     mmax.y = glm::max(v1, mmax.y);
                     mmax.z = glm::max(v2, mmax.z);
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_UV0)
+                else if (attributes[j] == VertexAttribute::VA_UV0)
                 {
                     vertices.push_back(aiMesh->mTextureCoords[0][i].x);
                     vertices.push_back(aiMesh->mTextureCoords[0][i].y);
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_UV1)
+                else if (attributes[j] == VertexAttribute::VA_UV1)
                 {
                     vertices.push_back(aiMesh->mTextureCoords[1][i].x);
                     vertices.push_back(aiMesh->mTextureCoords[1][i].y);
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_Normal)
+                else if (attributes[j] == VertexAttribute::VA_Normal)
                 {
                     vertices.push_back(aiMesh->mNormals[i].x);
                     vertices.push_back(aiMesh->mNormals[i].y);
                     vertices.push_back(aiMesh->mNormals[i].z);
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_Tangent)
+                else if (attributes[j] == VertexAttribute::VA_Tangent)
                 {
                     vertices.push_back(aiMesh->mTangents[i].x);
                     vertices.push_back(aiMesh->mTangents[i].y);
                     vertices.push_back(aiMesh->mTangents[i].z);
                     vertices.push_back(1);
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_Color)
+                else if (attributes[j] == VertexAttribute::VA_Color)
                 {
                     if (aiMesh->HasVertexColors(i))
                     {
@@ -267,10 +130,8 @@ namespace Meow
                         vertices.push_back(1.0f);
                     }
                 }
-                else if (m_attributes[j] == VertexAttribute::VA_Custom0 ||
-                         m_attributes[j] == VertexAttribute::VA_Custom1 ||
-                         m_attributes[j] == VertexAttribute::VA_Custom2 ||
-                         m_attributes[j] == VertexAttribute::VA_Custom3)
+                else if (attributes[j] == VertexAttribute::VA_Custom0 || attributes[j] == VertexAttribute::VA_Custom1 ||
+                         attributes[j] == VertexAttribute::VA_Custom2 || attributes[j] == VertexAttribute::VA_Custom3)
                 {
                     vertices.push_back(0.0f);
                     vertices.push_back(0.0f);
@@ -287,8 +148,6 @@ namespace Meow
             indices.push_back(aiMesh->mFaces[i].mIndices[2]);
         }
 
-        std::vector<std::shared_ptr<Primitive>> primitives;
-
         int32_t stride = vertices.size() / aiMesh->mNumVertices;
 
         // when vertex count > 65535 in one mesh, spilt it
@@ -297,12 +156,12 @@ namespace Meow
         if (indices.size() > 65535)
         {
             std::unordered_map<uint16_t, uint16_t> indices_map;
-            for (size_t primitive_index = 0; primitive_index <= indices.size() / 65535; primitive_index++)
+            for (size_t primitive_index = 0; primitive_index <= indices.size() / 65535; ++primitive_index)
             {
                 std::vector<float>    primitive_vertices;
                 std::vector<uint16_t> primitive_indices;
 
-                for (int32_t i = 0; i < indices.size(); ++i)
+                for (size_t i = 0; i < indices.size(); ++i)
                 {
                     indices_map.clear();
 
@@ -330,14 +189,15 @@ namespace Meow
                 }
 
                 // TODO: Support uint32_t indices
-                primitives.push_back(std::make_shared<Primitive>(
-                    std::move(primitive_vertices),
-                    std::move(primitive_indices),
+                mesh.primitives.emplace_back(std::make_shared<Primitive>(
+                    primitive_vertices,
+                    primitive_indices,
+                    primitive_vertices.size() / VertexAttributesToSize(attributes) * sizeof(float),
+                    primitive_indices.size(),
                     physical_device,
                     device,
                     vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                    m_attributes,
-                    m_index_type
+                    index_type
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                     ,
                     std::format("{} {}", aiMesh->mName.C_Str(), primitive_index).c_str()
@@ -354,14 +214,15 @@ namespace Meow
                 primitive_indices.push_back(index);
             }
 
-            primitives.push_back(std::make_shared<Primitive>(
-                std::move(vertices),
-                std::move(primitive_indices),
+            mesh.primitives.emplace_back(std::make_shared<Primitive>(
+                vertices,
+                primitive_indices,
+                vertices.size() / VertexAttributesToSize(attributes) * sizeof(float),
+                primitive_indices.size(),
                 physical_device,
                 device,
                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-                m_attributes,
-                m_index_type
+                index_type
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                 ,
                 aiMesh->mName.C_Str()
@@ -369,9 +230,8 @@ namespace Meow
                     ));
         }
 
-        m_meshes_per_material_map[material_index].push_back(
-            std::make_shared<Mesh>(primitives, BoundingBox(mmin, mmax)));
+        mesh.bounding = BoundingBox(mmin, mmax);
 
-        m_bounding.Merge(mmin, mmax);
+        bounding.Merge(mmin, mmax);
     }
 } // namespace Meow

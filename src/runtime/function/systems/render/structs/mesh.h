@@ -2,32 +2,22 @@
 
 #include "core/math/bounding_box.h"
 #include "primitive.h"
+#include "renderable.h"
 
 namespace Meow
 {
-    struct Mesh
+    struct Mesh : Renderable
     {
         std::vector<std::shared_ptr<Primitive>> primitives;
+        std::string                             material_name = "Default Material";
         BoundingBox                             bounding;
-
-        Mesh(std::vector<std::shared_ptr<Primitive>> primitives, BoundingBox bounding)
-        {
-            this->primitives = primitives;
-            this->bounding   = bounding;
-
-            for (auto primitive : primitives)
-            {
-                vertex_count += primitive->vertex_count;
-                index_count += primitive->index_count;
-            }
-        }
 
         int32_t vertex_count = 0;
         int32_t index_count  = 0;
 
-        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer) const
+        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer) const override
         {
-            for (int i = 0; i < primitives.size(); ++i)
+            for (size_t i = 0; i < primitives.size(); ++i)
             {
                 primitives[i]->BindDrawCmd(cmd_buffer);
             }
