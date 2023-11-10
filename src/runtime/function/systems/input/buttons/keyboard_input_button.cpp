@@ -7,13 +7,17 @@ namespace Meow
     KeyboardInputButton::KeyboardInputButton(KeyCode key)
         : m_key(key)
     {
-        g_runtime_global_context.render_context.window->OnKey().connect(this, [this](KeyCode key, InputAction action, uint8_t mods) {
-            if (m_key == key)
-            {
-                m_on_button(action, mods);
-            }
-        });
+        g_runtime_global_context.window_system->m_window->OnKey().connect(
+            this, [this](KeyCode key, InputAction action, uint8_t mods) {
+                if (m_key == key)
+                {
+                    m_on_button(action, mods);
+                }
+            });
     }
 
-    InputAction KeyboardInputButton::GetAction() const { return g_runtime_global_context.render_context.window->GetKeyAction(m_key); }
+    InputAction KeyboardInputButton::GetAction() const
+    {
+        return g_runtime_global_context.window_system->m_window->GetKeyAction(m_key);
+    }
 } // namespace Meow

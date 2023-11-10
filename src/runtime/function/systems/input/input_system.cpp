@@ -1,12 +1,12 @@
 #include "input_system.h"
 
-#include "function/systems/input/axes/mouse_input_axis.h"
-#include "function/systems/input/buttons/keyboard_input_button.h"
-#include "function/systems/input/buttons/mouse_input_button.h"
 #include "core/log/log.h"
 #include "function/components/3d/transform/transform_3d_component.h"
 #include "function/components/shared/pawn_component.h"
 #include "function/global/runtime_global_context.h"
+#include "function/systems/input/axes/mouse_input_axis.h"
+#include "function/systems/input/buttons/keyboard_input_button.h"
+#include "function/systems/input/buttons/mouse_input_button.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
