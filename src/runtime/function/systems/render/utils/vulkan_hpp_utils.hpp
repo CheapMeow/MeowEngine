@@ -75,6 +75,8 @@ namespace vk
                 surface = vk::raii::SurfaceKHR(instance, _surface);
             }
 
+            SurfaceData(std::nullptr_t) {}
+
             vk::Extent2D         extent;
             vk::raii::SurfaceKHR surface = nullptr;
         };
@@ -174,6 +176,8 @@ namespace vk
                     image_views.emplace_back(device, image_view_create_info);
                 }
             }
+
+            SwapChainData(std::nullptr_t) {}
 
             vk::Format                       color_format;
             vk::raii::SwapchainKHR           swap_chain = nullptr;
@@ -279,6 +283,10 @@ namespace vk
                             vk::MemoryPropertyFlagBits::eDeviceLocal,
                             vk::ImageAspectFlagBits::eDepth)
             {}
+
+            DepthBufferData(std::nullptr_t)
+                : ImageData(nullptr)
+            {}
         };
 
         template<typename Func>
@@ -374,12 +382,11 @@ namespace vk
             // standard destructor of the BufferData, the order of DeviceMemory and Buffer here matters
             vk::raii::DeviceMemory device_memory = nullptr;
             vk::raii::Buffer       buffer        = nullptr;
-#if defined(MEOW_DEBUG)
+
         private:
             vk::DeviceSize          m_size;
             vk::BufferUsageFlags    m_usage;
             vk::MemoryPropertyFlags m_property_flags;
-#endif
         };
 
         void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,

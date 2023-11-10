@@ -14,17 +14,12 @@
 
 namespace Meow
 {
-    vk::raii::Context RenderSystem::CreateVulkanContent()
+    void RenderSystem::CreateVulkanInstance()
     {
-        vk::raii::Context vulkan_context;
 #ifdef MEOW_DEBUG
-        vk::Meow::LogVulkanAPIVersion(vulkan_context.enumerateInstanceVersion());
+        vk::Meow::LogVulkanAPIVersion(m_vulkan_context.enumerateInstanceVersion());
 #endif
-        return vulkan_context;
-    }
 
-    vk::raii::Instance RenderSystem::CreateVulkanInstance()
-    {
         // prepare for create vk::InstanceCreateInfo
         std::vector<vk::ExtensionProperties> available_instance_extensions =
             m_vulkan_context.enumerateInstanceExtensionProperties();
@@ -34,6 +29,7 @@ namespace Meow
         {
             throw std::runtime_error("Required instance extensions are missing.");
         }
+
         std::vector<vk::LayerProperties> supported_validation_layers =
             m_vulkan_context.enumerateInstanceLayerProperties();
         std::vector<const char*> required_validation_layers {};
@@ -56,9 +52,11 @@ namespace Meow
         {
             throw std::runtime_error("Required validation layers are missing.");
         }
+
         uint32_t               api_version = m_vulkan_context.enumerateInstanceVersion();
         vk::ApplicationInfo    app("Meow Engine Vulkan Renderer", {}, "Meow Engine", {}, api_version);
         vk::InstanceCreateInfo instance_info({}, &app, required_validation_layers, required_instance_extensions);
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         // VkDebugUtilsMessengerEXT only covers stuff from its creation to its destruction.
         // vkCreateInstance and vkDestroyInstance are covered by the special pNext variant
@@ -66,10 +64,13 @@ namespace Meow
         vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vk::Meow::MakeDebugUtilsMessengerCreateInfoEXT();
         instance_info.pNext                                          = &debug_utils_create_info;
 #endif
+
 #if (defined(VKB_ENABLE_PORTABILITY))
         instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
-        vk::raii::Instance vulkan_instance(m_vulkan_context, instance_info);
+
+        m_vulkan_instance = vk::raii::Instance(m_vulkan_context, instance_info);
+
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)
         // we need some additional initializing for this platform!
         if (volkInitialize())
@@ -78,18 +79,20 @@ namespace Meow
         }
         volkLoadInstance(instance);
 #endif
-        return vulkan_instance;
     }
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-    vk::raii::DebugUtilsMessengerEXT RenderSystem::CreateDebugUtilsMessengerEXT()
+    void RenderSystem::CreateDebugUtilsMessengerEXT()
     {
         vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vk::Meow::MakeDebugUtilsMessengerCreateInfoEXT();
-        return vk::raii::DebugUtilsMessengerEXT(m_vulkan_instance, debug_utils_create_info);
+        m_debug_utils_messenger = vk::raii::DebugUtilsMessengerEXT(m_vulkan_instance, debug_utils_create_info);
     }
 #endif
-    vk::raii::PhysicalDevice RenderSystem::CreatePhysicalDevice()
+
+    void RenderSystem::CreatePhysicalDevice()
     {
         vk::raii::PhysicalDevices gpus(m_vulkan_instance);
+
         // Maps to hold devices and sort by rank.
         std::multimap<uint32_t, vk::raii::PhysicalDevice> ranked_devices;
         auto                                              where = ranked_devices.end();
@@ -103,146 +106,151 @@ namespace Meow
         {
             throw std::runtime_error("Best gpu get negitive score.");
         }
-        vk::raii::PhysicalDevice gpu(ranked_devices.rbegin()->second);
-        return gpu;
+
+        m_gpu = vk::raii::PhysicalDevice(ranked_devices.rbegin()->second);
     }
 
-    vk::Meow::SurfaceData RenderSystem::CreateSurface()
+    void RenderSystem::CreateSurface()
     {
-        auto                  size = g_runtime_global_context.window_system.get()->m_window->GetSize();
-        vk::Extent2D          extent(size.x, size.y);
-        vk::Meow::SurfaceData surface_data(
+        auto         size = g_runtime_global_context.window_system.get()->m_window->GetSize();
+        vk::Extent2D extent(size.x, size.y);
+        m_surface_data = vk::Meow::SurfaceData(
             m_vulkan_instance, g_runtime_global_context.window_system.get()->m_window->GetGLFWWindow(), extent);
-        return surface_data;
     }
 
-    vk::raii::Device RenderSystem::CreateLogicalDevice()
+    void RenderSystem::CreateLogicalDevice()
     {
         std::vector<vk::ExtensionProperties> device_extensions = m_gpu.enumerateDeviceExtensionProperties();
         if (!vk::Meow::ValidateExtensions(vk::Meow::k_required_device_extensions, device_extensions))
         {
             throw std::runtime_error("Required device extensions are missing, will try without.");
         }
+
         auto indexs                   = vk::Meow::FindGraphicsAndPresentQueueFamilyIndex(m_gpu, m_surface_data.surface);
         m_graphics_queue_family_index = indexs.first;
         m_present_queue_family_index  = indexs.second;
+
         // Create a device with one queue
         float                     queue_priority = 1.0f;
         vk::DeviceQueueCreateInfo queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
         vk::DeviceCreateInfo      device_info({}, queue_info, {}, vk::Meow::k_required_device_extensions);
-        vk::raii::Device          logical_device(m_gpu, device_info);
+        m_logical_device = vk::raii::Device(m_gpu, device_info);
+
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)
         volkLoadDevice(*logical_device);
 #endif
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Logical Device";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eDevice, vk::Meow::GetVulkanHandle(*logical_device), object_name.c_str(), nullptr};
-        logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-        return logical_device;
-    }
-
-    vk::Meow::SwapChainData RenderSystem::CreateSwapChian()
-    {
-        return vk::Meow::SwapChainData(m_gpu,
-                                       m_logical_device,
-                                       m_surface_data.surface,
-                                       m_surface_data.extent,
-                                       vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-                                       nullptr,
-                                       m_graphics_queue_family_index,
-                                       m_present_queue_family_index);
-    }
-
-    vk::Meow::DepthBufferData RenderSystem::CreateDepthBuffer()
-    {
-        vk::Meow::DepthBufferData depth_buffer_data(
-            m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Depth Image";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eImage, vk::Meow::GetVulkanHandle(*depth_buffer_data.image), object_name.c_str(), nullptr};
+            vk::ObjectType::eDevice, vk::Meow::GetVulkanHandle(*m_logical_device), object_name.c_str(), nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
-        return depth_buffer_data;
+
+        m_graphics_queue = vk::raii::Queue(m_logical_device, m_graphics_queue_family_index, 0);
+        m_present_queue  = vk::raii::Queue(m_logical_device, m_present_queue_family_index, 0);
     }
 
-    vk::Meow::BufferData RenderSystem::CreateUniformBuffer()
+    void RenderSystem::CreateSwapChian()
+    {
+        m_swapchain_data =
+            vk::Meow::SwapChainData(m_gpu,
+                                    m_logical_device,
+                                    m_surface_data.surface,
+                                    m_surface_data.extent,
+                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+                                    nullptr,
+                                    m_graphics_queue_family_index,
+                                    m_present_queue_family_index);
+    }
+
+    void RenderSystem::CreateDepthBuffer()
+    {
+        m_depth_buffer_data =
+            vk::Meow::DepthBufferData(m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        std::string                     object_name = "Depth Image";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eImage,
+                                                       vk::Meow::GetVulkanHandle(*m_depth_buffer_data.image),
+                                                       object_name.c_str(),
+                                                       nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+    }
+
+    void RenderSystem::CreateUniformBuffer()
     {
         // TODO: UBOData is temp
-        vk::Meow::BufferData uniform_buffer_data(
-            m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
+        m_uniform_buffer_data =
+            vk::Meow::BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Uniform Buffer";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
-                                                       vk::Meow::GetVulkanHandle(*uniform_buffer_data.buffer),
+                                                       vk::Meow::GetVulkanHandle(*m_uniform_buffer_data.buffer),
                                                        object_name.c_str(),
                                                        nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
         object_name = "Uniform Buffer Device Memory";
         name_info   = {vk::ObjectType::eDeviceMemory,
-                       vk::Meow::GetVulkanHandle(*uniform_buffer_data.device_memory),
+                       vk::Meow::GetVulkanHandle(*m_uniform_buffer_data.device_memory),
                        object_name.c_str(),
                        nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
-        return uniform_buffer_data;
     }
 
-    vk::raii::DescriptorSetLayout RenderSystem::CreateDescriptorSetLayout()
+    void RenderSystem::CreateDescriptorSetLayout()
     {
-        return vk::Meow::MakeDescriptorSetLayout(
+        m_descriptor_set_layout = vk::Meow::MakeDescriptorSetLayout(
             m_logical_device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
     }
 
-    vk::raii::PipelineLayout RenderSystem::CreatePipelineLayout()
+    void RenderSystem::CreatePipelineLayout()
     {
         vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, *m_descriptor_set_layout);
-        return vk::raii::PipelineLayout(m_logical_device, pipeline_layout_create_info);
+        m_pipeline_layout = vk::raii::PipelineLayout(m_logical_device, pipeline_layout_create_info);
     }
 
-    vk::raii::DescriptorPool RenderSystem::CreateDescriptorPool()
+    void RenderSystem::CreateDescriptorPool()
     {
         // create a descriptor pool
         vk::DescriptorPoolSize       pool_size(vk::DescriptorType::eUniformBuffer, 1);
         vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
             vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1, pool_size);
-        return vk::raii::DescriptorPool(m_logical_device, descriptor_pool_create_info);
+        m_descriptor_pool = vk::raii::DescriptorPool(m_logical_device, descriptor_pool_create_info);
     }
 
-    vk::raii::DescriptorSet RenderSystem::CreateDescriptorSet()
+    void RenderSystem::CreateDescriptorSet()
     {
         // allocate a descriptor set
         vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(*m_descriptor_pool, *m_descriptor_set_layout);
-        vk::raii::DescriptorSet       descriptor_set(
+        m_descriptor_set = vk::raii::DescriptorSet(
             std::move(vk::raii::DescriptorSets(m_logical_device, descriptor_set_allocate_info).front()));
         // TODO: Uniform set is temp
         vk::Meow::UpdateDescriptorSets(
             m_logical_device,
-            descriptor_set,
+            m_descriptor_set,
             {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
             {});
-        return descriptor_set;
     }
 
-    vk::raii::RenderPass RenderSystem::CreateRenderPass()
+    void RenderSystem::CreateRenderPass()
     {
         vk::Format color_format =
             vk::Meow::PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        return vk::Meow::MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
+        m_render_pass = vk::Meow::MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
     }
 
-    std::vector<vk::raii::Framebuffer> RenderSystem::CreateFramebuffers()
+    void RenderSystem::CreateFramebuffers()
     {
-        return std::vector<vk::raii::Framebuffer>(std::move(vk::Meow::MakeFramebuffers(m_logical_device,
-                                                                                       m_render_pass,
-                                                                                       m_swapchain_data.image_views,
-                                                                                       &m_depth_buffer_data.image_view,
-                                                                                       m_surface_data.extent)));
+        m_framebuffers = vk::Meow::MakeFramebuffers(m_logical_device,
+                                                    m_render_pass,
+                                                    m_swapchain_data.image_views,
+                                                    &m_depth_buffer_data.image_view,
+                                                    m_surface_data.extent);
     }
 
-    vk::raii::Pipeline RenderSystem::CreatePipeline()
+    void RenderSystem::CreatePipeline()
     {
         // --------------Create Shaders--------------
         // TODO: temp Shader
@@ -260,10 +268,11 @@ namespace Meow
                                                       {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
         delete[] data_ptr;
         data_ptr = nullptr;
+
         // --------------Create Pipeline--------------
         // TODO: temp vertex layout
         vk::raii::PipelineCache pipeline_cache(m_logical_device, vk::PipelineCacheCreateInfo());
-        return vk::Meow::MakeGraphicsPipeline(
+        m_graphics_pipeline = vk::Meow::MakeGraphicsPipeline(
             m_logical_device,
             pipeline_cache,
             vertex_shader_module,
@@ -278,62 +287,59 @@ namespace Meow
             m_render_pass);
     }
 
-    std::vector<PerFrameData> RenderSystem::CreatePerFrameData()
+    void RenderSystem::CreatePerFrameData()
     {
-        std::vector<PerFrameData> per_frame_data;
-        per_frame_data.resize(vk::Meow::k_max_frames_in_flight);
+        m_per_frame_data.resize(vk::Meow::k_max_frames_in_flight);
 
         for (uint32_t i = 0; i < vk::Meow::k_max_frames_in_flight; ++i)
         {
             vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
                                                                    vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
                                                                m_graphics_queue_family_index);
-            per_frame_data[i].command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+            m_per_frame_data[i].command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
 
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
-                *per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(m_logical_device, command_buffer_allocate_info);
 
-            per_frame_data[i].command_buffer = std::move(command_buffers[0]);
+            m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
 
-            per_frame_data[i].image_acquired_semaphore =
+            m_per_frame_data[i].image_acquired_semaphore =
                 vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             std::string                     object_name = std::format("Image Acquired Semaphore {}", i);
             vk::DebugUtilsObjectNameInfoEXT name_info   = {
                 vk::ObjectType::eSemaphore,
-                vk::Meow::GetVulkanHandle(*per_frame_data[i].image_acquired_semaphore),
+                vk::Meow::GetVulkanHandle(*m_per_frame_data[i].image_acquired_semaphore),
                 object_name.c_str(),
                 nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
-            per_frame_data[i].render_finished_semaphore =
+            m_per_frame_data[i].render_finished_semaphore =
                 vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("Render Finished Semaphore {}", i);
             name_info   = {vk::ObjectType::eSemaphore,
-                           vk::Meow::GetVulkanHandle(*per_frame_data[i].render_finished_semaphore),
+                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].render_finished_semaphore),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
-            per_frame_data[i].in_flight_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
+            m_per_frame_data[i].in_flight_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("In Flight Fence {}", i);
             name_info   = {vk::ObjectType::eFence,
-                           vk::Meow::GetVulkanHandle(*per_frame_data[i].in_flight_fence),
+                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].in_flight_fence),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
         }
-
-        return per_frame_data;
     }
 
-    vk::raii::DescriptorPool RenderSystem::InitImGui()
+    void RenderSystem::InitImGui()
     {
         std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
                                                           {vk::DescriptorType::eCombinedImageSampler, 1000},
@@ -348,7 +354,7 @@ namespace Meow
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
         vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
             vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
-        vk::raii::DescriptorPool imgui_descriptor_pool(m_logical_device, descriptor_pool_create_info);
+        m_imgui_descriptor_pool = vk::raii::DescriptorPool(m_logical_device, descriptor_pool_create_info);
 
         // Setup Dear ImGui context
         IMGUI_CHECKVERSION();
@@ -383,7 +389,7 @@ namespace Meow
         init_info.Device                    = *m_logical_device;
         init_info.QueueFamily               = m_graphics_queue_family_index;
         init_info.Queue                     = *m_graphics_queue;
-        init_info.DescriptorPool            = *imgui_descriptor_pool;
+        init_info.DescriptorPool            = *m_imgui_descriptor_pool;
         init_info.Subpass                   = 0;
         init_info.MinImageCount             = vk::Meow::k_max_frames_in_flight;
         init_info.ImageCount                = vk::Meow::k_max_frames_in_flight;
@@ -411,34 +417,29 @@ namespace Meow
             m_logical_device.waitIdle();
             ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
-
-        return imgui_descriptor_pool;
     }
 
     RenderSystem::RenderSystem()
-        : m_vulkan_context(CreateVulkanContent())
-        , m_vulkan_instance(CreateVulkanInstance())
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        , m_debug_utils_messenger(CreateDebugUtilsMessengerEXT())
-#endif
-        , m_gpu(CreatePhysicalDevice())
-        , m_surface_data(CreateSurface())
-        , m_logical_device(CreateLogicalDevice())
-        , m_graphics_queue(m_logical_device, m_graphics_queue_family_index, 0)
-        , m_present_queue(m_logical_device, m_present_queue_family_index, 0)
-        , m_swapchain_data(CreateSwapChian())
-        , m_depth_buffer_data(CreateDepthBuffer())
-        , m_uniform_buffer_data(CreateUniformBuffer())
-        , m_descriptor_set_layout(CreateDescriptorSetLayout())
-        , m_pipeline_layout(CreatePipelineLayout())
-        , m_descriptor_pool(CreateDescriptorPool())
-        , m_descriptor_set(CreateDescriptorSet())
-        , m_render_pass(CreateRenderPass())
-        , m_framebuffers(CreateFramebuffers())
-        , m_graphics_pipeline(CreatePipeline())
-        , m_per_frame_data(CreatePerFrameData())
-        , m_imgui_descriptor_pool(InitImGui())
     {
+        CreateVulkanInstance();
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        CreateDebugUtilsMessengerEXT();
+#endif
+        CreatePhysicalDevice();
+        CreateSurface();
+        CreateLogicalDevice();
+        CreateSwapChian();
+        CreateDepthBuffer();
+        CreateUniformBuffer();
+        CreateDescriptorSetLayout();
+        CreatePipelineLayout();
+        CreateDescriptorPool();
+        CreateDescriptorSet();
+        CreateRenderPass();
+        CreateFramebuffers();
+        CreatePipeline();
+        CreatePerFrameData();
+        InitImGui();
 
         // TODO: creating entity should be obstract
         const auto camera_entity = g_runtime_global_context.registry.create();
