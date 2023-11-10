@@ -143,22 +143,6 @@ namespace Meow
         return logical_device;
     }
 
-    vk::raii::CommandPool RenderSystem::CreateCommandPool()
-    {
-        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
-                                                               vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                                                           m_graphics_queue_family_index);
-        vk::raii::CommandPool     command_pool(m_logical_device, command_pool_create_info);
-        return command_pool;
-    }
-
-    std::vector<vk::raii::CommandBuffer> RenderSystem::CreateCommandBuffers()
-    {
-        vk::CommandBufferAllocateInfo command_buffer_allocate_info(
-            *m_command_pool, vk::CommandBufferLevel::ePrimary, vk::Meow::k_max_frames_in_flight);
-        return vk::raii::CommandBuffers(m_logical_device, command_buffer_allocate_info);
-    }
-
     vk::Meow::SwapChainData RenderSystem::CreateSwapChian()
     {
         return vk::Meow::SwapChainData(m_gpu,
@@ -294,49 +278,59 @@ namespace Meow
             m_render_pass);
     }
 
-    void RenderSystem::CreateSyncObjects()
+    std::vector<PerFrameData> RenderSystem::CreatePerFrameData()
     {
-        m_image_acquired_semaphores.resize(vk::Meow::k_max_frames_in_flight);
-        m_render_finished_semaphores.resize(vk::Meow::k_max_frames_in_flight);
-        m_in_flight_fences.resize(vk::Meow::k_max_frames_in_flight);
-        for (size_t i = 0; i < vk::Meow::k_max_frames_in_flight; i++)
+        std::vector<PerFrameData> per_frame_data;
+        per_frame_data.resize(vk::Meow::k_max_frames_in_flight);
+
+        for (uint32_t i = 0; i < vk::Meow::k_max_frames_in_flight; ++i)
         {
-            m_image_acquired_semaphores[i] =
-                std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
+            vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
+                                                                   vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                               m_graphics_queue_family_index);
+            per_frame_data[i].command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+
+            vk::CommandBufferAllocateInfo command_buffer_allocate_info(
+                *per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+            vk::raii::CommandBuffers command_buffers(m_logical_device, command_buffer_allocate_info);
+
+            per_frame_data[i].command_buffer = std::move(command_buffers[0]);
+
+            per_frame_data[i].image_acquired_semaphore =
+                vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             std::string                     object_name = std::format("Image Acquired Semaphore {}", i);
-            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eSemaphore,
-                                                           vk::Meow::GetVulkanHandle(**m_image_acquired_semaphores[i]),
-                                                           object_name.c_str(),
-                                                           nullptr};
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {
+                vk::ObjectType::eSemaphore,
+                vk::Meow::GetVulkanHandle(*per_frame_data[i].image_acquired_semaphore),
+                object_name.c_str(),
+                nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
-        }
-        for (size_t i = 0; i < vk::Meow::k_max_frames_in_flight; i++)
-        {
-            m_render_finished_semaphores[i] =
-                std::make_shared<vk::raii::Semaphore>(m_logical_device, vk::SemaphoreCreateInfo());
+
+            per_frame_data[i].render_finished_semaphore =
+                vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            std::string                     object_name = std::format("Render Finished Semaphore {}", i);
-            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eSemaphore,
-                                                           vk::Meow::GetVulkanHandle(**m_render_finished_semaphores[i]),
-                                                           object_name.c_str(),
-                                                           nullptr};
+            object_name = std::format("Render Finished Semaphore {}", i);
+            name_info   = {vk::ObjectType::eSemaphore,
+                           vk::Meow::GetVulkanHandle(*per_frame_data[i].render_finished_semaphore),
+                           object_name.c_str(),
+                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
-        }
-        for (size_t i = 0; i < vk::Meow::k_max_frames_in_flight; i++)
-        {
-            m_in_flight_fences[i] = std::make_shared<vk::raii::Fence>(m_logical_device, vk::FenceCreateInfo());
+
+            per_frame_data[i].in_flight_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            std::string                     object_name = std::format("In Flight Fence {}", i);
-            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eFence,
-                                                           vk::Meow::GetVulkanHandle(**m_in_flight_fences[i]),
-                                                           object_name.c_str(),
-                                                           nullptr};
+            object_name = std::format("In Flight Fence {}", i);
+            name_info   = {vk::ObjectType::eFence,
+                           vk::Meow::GetVulkanHandle(*per_frame_data[i].in_flight_fence),
+                           object_name.c_str(),
+                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
         }
+
+        return per_frame_data;
     }
 
     vk::raii::DescriptorPool RenderSystem::InitImGui()
@@ -400,9 +394,11 @@ namespace Meow
         // Upload Fonts
         {
             // Use any command queue
-            auto& cmd_buffer = m_command_buffers[m_current_frame_index];
+            auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+            auto& cmd_pool       = per_frame_data.command_pool;
+            auto& cmd_buffer     = per_frame_data.command_buffer;
 
-            m_command_pool.reset();
+            cmd_pool.reset();
             cmd_buffer.begin({});
 
             ImGui_ImplVulkan_CreateFontsTexture(*cmd_buffer);
@@ -430,8 +426,6 @@ namespace Meow
         , m_logical_device(CreateLogicalDevice())
         , m_graphics_queue(m_logical_device, m_graphics_queue_family_index, 0)
         , m_present_queue(m_logical_device, m_present_queue_family_index, 0)
-        , m_command_pool(CreateCommandPool())
-        , m_command_buffers(CreateCommandBuffers())
         , m_swapchain_data(CreateSwapChian())
         , m_depth_buffer_data(CreateDepthBuffer())
         , m_uniform_buffer_data(CreateUniformBuffer())
@@ -442,9 +436,9 @@ namespace Meow
         , m_render_pass(CreateRenderPass())
         , m_framebuffers(CreateFramebuffers())
         , m_graphics_pipeline(CreatePipeline())
+        , m_per_frame_data(CreatePerFrameData())
         , m_imgui_descriptor_pool(InitImGui())
     {
-        CreateSyncObjects();
 
         // TODO: creating entity should be obstract
         const auto camera_entity = g_runtime_global_context.registry.create();
@@ -501,34 +495,39 @@ namespace Meow
     /**
      * @brief Begin command buffer and render pass. Set viewport and scissor.
      */
-    bool RenderSystem::StartRenderpass(uint32_t& image_index)
+    bool RenderSystem::StartRenderpass()
     {
+        auto& per_frame_data           = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer               = per_frame_data.command_buffer;
+        auto& image_acquired_semaphore = per_frame_data.image_acquired_semaphore;
+
         vk::Result result;
-        std::tie(result, image_index) = m_swapchain_data.swap_chain.acquireNextImage(
-            vk::Meow::k_fence_timeout, **m_image_acquired_semaphores[m_current_frame_index]);
+        std::tie(result, m_current_image_index) =
+            m_swapchain_data.swap_chain.acquireNextImage(vk::Meow::k_fence_timeout, *image_acquired_semaphore);
+
         assert(result == vk::Result::eSuccess);
-        assert(image_index < m_swapchain_data.images.size());
-        m_command_buffers[m_current_frame_index].reset();
-        m_command_buffers[m_current_frame_index].begin({});
-        m_command_buffers[m_current_frame_index].setViewport(
-            0,
-            vk::Viewport(0.0f,
-                         static_cast<float>(m_surface_data.extent.height),
-                         static_cast<float>(m_surface_data.extent.width),
-                         -static_cast<float>(m_surface_data.extent.height),
-                         0.0f,
-                         1.0f));
-        m_command_buffers[m_current_frame_index].setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
+        assert(m_current_image_index < m_swapchain_data.images.size());
+
+        cmd_buffer.reset();
+        cmd_buffer.begin({});
+        cmd_buffer.setViewport(0,
+                               vk::Viewport(0.0f,
+                                            static_cast<float>(m_surface_data.extent.height),
+                                            static_cast<float>(m_surface_data.extent.width),
+                                            -static_cast<float>(m_surface_data.extent.height),
+                                            0.0f,
+                                            1.0f));
+        cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
         std::array<vk::ClearValue, 2> clear_values;
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
         vk::RenderPassBeginInfo render_pass_begin_info(*m_render_pass,
-                                                       *m_framebuffers[image_index],
+                                                       *m_framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
                                                        clear_values);
-        m_command_buffers[m_current_frame_index].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-        m_command_buffers[m_current_frame_index].bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphics_pipeline);
-        m_command_buffers[m_current_frame_index].bindDescriptorSets(
+        cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+        cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphics_pipeline);
+        cmd_buffer.bindDescriptorSets(
             vk::PipelineBindPoint::eGraphics, *m_pipeline_layout, 0, {*m_descriptor_set}, nullptr);
         return true;
     }
@@ -536,23 +535,29 @@ namespace Meow
     /**
      * @brief End render pass and command buffer. Submit graphics queue. Present.
      */
-    void RenderSystem::EndRenderpass(uint32_t& image_index)
+    void RenderSystem::EndRenderpass()
     {
-        m_command_buffers[m_current_frame_index].endRenderPass();
-        m_command_buffers[m_current_frame_index].end();
+        auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer                = per_frame_data.command_buffer;
+        auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
+        auto& render_finished_semaphore = per_frame_data.render_finished_semaphore;
+        auto& in_flight_fence           = per_frame_data.in_flight_fence;
+
+        cmd_buffer.endRenderPass();
+        cmd_buffer.end();
+
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-        vk::SubmitInfo         submit_info(**m_image_acquired_semaphores[m_current_frame_index],
-                                   wait_destination_stage_mask,
-                                   *m_command_buffers[m_current_frame_index],
-                                   **m_render_finished_semaphores[m_current_frame_index]);
-        m_graphics_queue.submit(submit_info, **m_in_flight_fences[m_current_frame_index]);
-        while (vk::Result::eTimeout == m_logical_device.waitForFences({**m_in_flight_fences[m_current_frame_index]},
-                                                                      VK_TRUE,
-                                                                      vk::Meow::k_fence_timeout))
+        vk::SubmitInfo         submit_info(
+            *image_acquired_semaphore, wait_destination_stage_mask, *cmd_buffer, *render_finished_semaphore);
+        m_graphics_queue.submit(submit_info, *in_flight_fence);
+
+        while (vk::Result::eTimeout ==
+               m_logical_device.waitForFences({*in_flight_fence}, VK_TRUE, vk::Meow::k_fence_timeout))
             ;
-        m_logical_device.resetFences({**m_in_flight_fences[m_current_frame_index]});
+        m_logical_device.resetFences({*in_flight_fence});
+
         vk::PresentInfoKHR present_info(
-            **m_render_finished_semaphores[m_current_frame_index], *m_swapchain_data.swap_chain, image_index);
+            *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
         vk::Result result = m_present_queue.presentKHR(present_info);
         switch (result)
         {
@@ -564,6 +569,7 @@ namespace Meow
             default:
                 assert(false); // an unexpected result is returned !
         }
+
         m_current_frame_index = (m_current_frame_index + 1) % vk::Meow::k_max_frames_in_flight;
     }
 
@@ -619,10 +625,10 @@ namespace Meow
 
         UpdateUniformBuffer(ubo_data);
 
-        uint32_t image_index;
-        StartRenderpass(image_index);
+        StartRenderpass();
 
-        auto& cmd_buffer = m_command_buffers[m_current_frame_index];
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
 
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
@@ -646,6 +652,6 @@ namespace Meow
             ImGui::RenderPlatformWindowsDefault();
         }
 
-        EndRenderpass(image_index);
+        EndRenderpass();
     }
 } // namespace Meow
