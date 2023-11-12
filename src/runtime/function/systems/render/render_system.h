@@ -49,12 +49,10 @@ namespace Meow
         void CreateDepthBuffer();
         void CreateUniformBuffer();
         void CreateDescriptorSetLayout();
-        void CreatePipelineLayout();
         void CreateDescriptorPool();
         void CreateDescriptorSet();
         void CreateRenderPass();
         void CreateFramebuffers();
-        void CreatePipeline();
         void CreatePerFrameData();
         void InitImGui();
 
@@ -81,12 +79,10 @@ namespace Meow
         vk::Meow::DepthBufferData          m_depth_buffer_data     = nullptr;
         vk::Meow::BufferData               m_uniform_buffer_data   = nullptr;
         vk::raii::DescriptorSetLayout      m_descriptor_set_layout = nullptr;
-        vk::raii::PipelineLayout           m_pipeline_layout       = nullptr;
         vk::raii::DescriptorPool           m_descriptor_pool       = nullptr;
         vk::raii::DescriptorSet            m_descriptor_set        = nullptr;
         vk::raii::RenderPass               m_render_pass           = nullptr;
         std::vector<vk::raii::Framebuffer> m_framebuffers;
-        vk::raii::Pipeline                 m_graphics_pipeline = nullptr;
         std::vector<PerFrameData>          m_per_frame_data;
 
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;

@@ -15,7 +15,7 @@ namespace Meow
         int32_t vertex_count = 0;
         int32_t index_count  = 0;
 
-        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer) const override
+        void BindDrawCmd(vk::raii::CommandBuffer const& cmd_buffer) const override
         {
             for (size_t i = 0; i < primitives.size(); ++i)
             {

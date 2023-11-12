@@ -205,12 +205,6 @@ namespace Meow
             m_logical_device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
     }
 
-    void RenderSystem::CreatePipelineLayout()
-    {
-        vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, *m_descriptor_set_layout);
-        m_pipeline_layout = vk::raii::PipelineLayout(m_logical_device, pipeline_layout_create_info);
-    }
-
     void RenderSystem::CreateDescriptorPool()
     {
         // create a descriptor pool
@@ -248,43 +242,6 @@ namespace Meow
                                                     m_swapchain_data.image_views,
                                                     &m_depth_buffer_data.image_view,
                                                     m_surface_data.extent);
-    }
-
-    void RenderSystem::CreatePipeline()
-    {
-        // --------------Create Shaders--------------
-        // TODO: temp Shader
-        uint8_t* data_ptr = nullptr;
-        uint32_t data_size;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(
-            "builtin/shaders/mesh.vert.spv", data_ptr, data_size);
-        vk::raii::ShaderModule vertex_shader_module(m_logical_device,
-                                                    {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
-        delete[] data_ptr;
-        data_ptr = nullptr;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(
-            "builtin/shaders/mesh.frag.spv", data_ptr, data_size);
-        vk::raii::ShaderModule fragment_shader_module(m_logical_device,
-                                                      {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
-        delete[] data_ptr;
-        data_ptr = nullptr;
-
-        // --------------Create Pipeline--------------
-        // TODO: temp vertex layout
-        vk::raii::PipelineCache pipeline_cache(m_logical_device, vk::PipelineCacheCreateInfo());
-        m_graphics_pipeline = vk::Meow::MakeGraphicsPipeline(
-            m_logical_device,
-            pipeline_cache,
-            vertex_shader_module,
-            nullptr,
-            fragment_shader_module,
-            nullptr,
-            VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal}),
-            {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}},
-            vk::FrontFace::eClockwise,
-            true,
-            m_pipeline_layout,
-            m_render_pass);
     }
 
     void RenderSystem::CreatePerFrameData()
@@ -432,14 +389,16 @@ namespace Meow
         CreateDepthBuffer();
         CreateUniformBuffer();
         CreateDescriptorSetLayout();
-        CreatePipelineLayout();
         CreateDescriptorPool();
         CreateDescriptorSet();
         CreateRenderPass();
         CreateFramebuffers();
-        CreatePipeline();
         CreatePerFrameData();
         InitImGui();
+
+        // TODO: temp material creation
+        g_runtime_global_context.resource_system->m_materials["Default Material"] =
+            Material(m_logical_device, m_descriptor_set_layout, m_render_pass);
 
         // TODO: creating entity should be obstract
         const auto camera_entity = g_runtime_global_context.registry.create();
@@ -527,9 +486,6 @@ namespace Meow
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
                                                        clear_values);
         cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
-        cmd_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *m_graphics_pipeline);
-        cmd_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *m_pipeline_layout, 0, {*m_descriptor_set}, nullptr);
         return true;
     }
 
@@ -631,13 +587,7 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        // TODO: iterate material, one material one vector of renderable
-
-        // TODO: sort renderables by distance
-
-        std::vector<Renderable*> renderables;
-
-        // TODO: get renderable from model according to material
+        std::unordered_map<Material*, std::vector<Renderable*>> renderables_per_material;
 
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
@@ -646,14 +596,22 @@ namespace Meow
             // ubo_data.model = transfrom_component.m_global_transform;
 
             for (Mesh& mesh : model_component.model.meshes)
-                renderables.push_back(&mesh);
+            {
+                Material* material_ptr = &g_runtime_global_context.resource_system->m_materials[mesh.material_name];
+                renderables_per_material[material_ptr].push_back(&mesh);
+            }
         }
 
-        // TODO: before bind draw cmd, set material
+        // TODO: sort renderables by distance
 
-        for (Renderable* renderable : renderables)
+        for (std::pair<Material*, std::vector<Renderable*>> kv : renderables_per_material)
         {
-            renderable->BindDrawCmd(cmd_buffer);
+            kv.first->Bind(cmd_buffer, m_descriptor_set);
+
+            for (Renderable* renderable : kv.second)
+            {
+                renderable->BindDrawCmd(cmd_buffer);
+            }
         }
 
         ImGui::Render();
