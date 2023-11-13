@@ -164,6 +164,34 @@ namespace Meow
                                     m_present_queue_family_index);
     }
 
+    void RenderSystem::CreateUploadContext()
+    {
+        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
+                                                               vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                           m_graphics_queue_family_index);
+        m_upload_context.command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        std::string                     object_name = "Command pool in UploadContext";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eCommandPool,
+                                                       vk::Meow::GetVulkanHandle(*m_upload_context.command_pool),
+                                                       object_name.c_str(),
+                                                       nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+
+        m_upload_context.upload_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        object_name = "Upload Fence in UploadContext";
+        name_info   = {vk::ObjectType::eFence,
+                       vk::Meow::GetVulkanHandle(*m_upload_context.upload_fence),
+                       object_name.c_str(),
+                       nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+    }
+
     void RenderSystem::CreateDepthBuffer()
     {
         m_depth_buffer_data =
@@ -255,28 +283,46 @@ namespace Meow
                                                                m_graphics_queue_family_index);
             m_per_frame_data[i].command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            std::string                     object_name = std::format("Command Pool in PerFrameData {}", i);
+            vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eCommandPool,
+                                                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].command_pool),
+                                                           object_name.c_str(),
+                                                           nullptr};
+            m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
                 *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(m_logical_device, command_buffer_allocate_info);
-
             m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            object_name = std::format("Command Buffer in PerFrameData {}", i);
+            name_info   = {vk::ObjectType::eCommandBuffer,
+                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].command_buffer),
+                           object_name.c_str(),
+                           nullptr};
+            m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
 
             m_per_frame_data[i].image_acquired_semaphore =
                 vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            std::string                     object_name = std::format("Image Acquired Semaphore {}", i);
-            vk::DebugUtilsObjectNameInfoEXT name_info   = {
-                vk::ObjectType::eSemaphore,
-                vk::Meow::GetVulkanHandle(*m_per_frame_data[i].image_acquired_semaphore),
-                object_name.c_str(),
-                nullptr};
+            object_name = std::format("Image Acquired Semaphore in PerFrameData {}", i);
+            name_info   = {vk::ObjectType::eSemaphore,
+                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].image_acquired_semaphore),
+                           object_name.c_str(),
+                           nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
             m_per_frame_data[i].render_finished_semaphore =
                 vk::raii::Semaphore(m_logical_device, vk::SemaphoreCreateInfo());
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            object_name = std::format("Render Finished Semaphore {}", i);
+            object_name = std::format("Render Finished Semaphore in PerFrameData {}", i);
             name_info   = {vk::ObjectType::eSemaphore,
                            vk::Meow::GetVulkanHandle(*m_per_frame_data[i].render_finished_semaphore),
                            object_name.c_str(),
@@ -285,8 +331,9 @@ namespace Meow
 #endif
 
             m_per_frame_data[i].in_flight_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            object_name = std::format("In Flight Fence {}", i);
+            object_name = std::format("In Flight Fence in PerFrameData{}", i);
             name_info   = {vk::ObjectType::eFence,
                            vk::Meow::GetVulkanHandle(*m_per_frame_data[i].in_flight_fence),
                            object_name.c_str(),
@@ -386,6 +433,7 @@ namespace Meow
         CreateSurface();
         CreateLogicalDevice();
         CreateSwapChian();
+        CreateUploadContext();
         CreateDepthBuffer();
         CreateUniformBuffer();
         CreateDescriptorSetLayout();
@@ -414,9 +462,11 @@ namespace Meow
         //     0.0f));
         auto& model_component = g_runtime_global_context.registry.emplace<ModelComponent>(
             model_entity,
-            "builtin/models/monkey_head.obj",
             m_gpu,
             m_logical_device,
+            m_upload_context.command_pool,
+            m_graphics_queue,
+            "builtin/models/monkey_head.obj",
             std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
 
         BoundingBox model_bounding          = model_component.model.GetBounding();

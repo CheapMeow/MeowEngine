@@ -63,11 +63,11 @@ namespace Meow
 
     void MeowEngine::ShutDown()
     {
+        g_runtime_global_context.resource_system = nullptr;
         g_runtime_global_context.render_system   = nullptr;
         g_runtime_global_context.camera_system   = nullptr;
         g_runtime_global_context.file_system     = nullptr;
         g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.window_system   = nullptr;
-        g_runtime_global_context.resource_system = nullptr;
     }
 } // namespace Meow

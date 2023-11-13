@@ -11,11 +11,14 @@ namespace Meow
     {
         Model model;
 
-        ModelComponent(const std::string&              file_name,
-                       vk::raii::PhysicalDevice const& physical_device,
+        ModelComponent(vk::raii::PhysicalDevice const& physical_device,
                        vk::raii::Device const&         device,
-                       std::vector<VertexAttribute>    attributes)
-            : model(file_name, physical_device, device, attributes)
+                       vk::raii::CommandPool const&    command_pool,
+                       vk::raii::Queue const&          queue,
+                       const std::string&              file_path,
+                       std::vector<VertexAttribute>    attributes,
+                       vk::IndexType                   index_type = vk::IndexType::eUint16)
+            : model(physical_device, device, command_pool, queue, file_path, attributes, index_type)
         {}
     };
 } // namespace Meow

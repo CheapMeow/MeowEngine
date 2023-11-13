@@ -9,7 +9,6 @@
 #include <glm/glm.hpp>
 
 #include <filesystem>
-#include <unordered_map>
 
 namespace Meow
 {
@@ -18,28 +17,14 @@ namespace Meow
         std::vector<Mesh> meshes;
         BoundingBox       bounding;
 
-        std::vector<VertexAttribute> attributes;
-        vk::IndexType                index_type = vk::IndexType::eUint16;
-
-        Model(const std::string&              file_path,
-              vk::raii::PhysicalDevice const& physical_device,
+        Model(vk::raii::PhysicalDevice const& physical_device,
               vk::raii::Device const&         device,
-              std::vector<VertexAttribute>    _attributes)
-            : attributes(_attributes)
-        {
-            LoadFromFile(physical_device, device, file_path);
-        }
+              vk::raii::CommandPool const&    command_pool,
+              vk::raii::Queue const&          queue,
+              const std::string&              file_path,
+              std::vector<VertexAttribute>    attributes,
+              vk::IndexType                   index_type);
 
         BoundingBox GetBounding() { return bounding; }
-
-    private:
-        void LoadFromFile(vk::raii::PhysicalDevice const& physical_device,
-                          vk::raii::Device const&         device,
-                          const std::string&              file_name);
-
-        void LoadMesh(vk::raii::PhysicalDevice const& physical_device,
-                      vk::raii::Device const&         device,
-                      const aiMesh*                   aiMesh,
-                      Mesh&                           mesh);
     };
 } // namespace Meow

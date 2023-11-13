@@ -20,15 +20,16 @@ namespace Meow
 
         Primitive() {}
 
-        Primitive(std::vector<float>&             vertices,
+        Primitive(vk::raii::PhysicalDevice const& physical_device,
+                  vk::raii::Device const&         device,
+                  vk::raii::CommandPool const&    command_pool,
+                  vk::raii::Queue const&          queue,
+                  vk::MemoryPropertyFlags         property_flags,
+                  vk::IndexType                   _index_type,
+                  std::vector<float>&             vertices,
                   std::vector<uint16_t>&          indices,
                   size_t                          _vertex_count,
-                  size_t                          _index_count,
-                  vk::raii::PhysicalDevice const& physical_device,
-                  vk::raii::Device const&         device,
-                  vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
-                                                           vk::MemoryPropertyFlagBits::eHostCoherent,
-                  vk::IndexType _index_type = vk::IndexType::eUint16
+                  size_t                          _index_count
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                   ,
                   std::string primitive_name = "Default Primitive Name"
@@ -40,16 +41,16 @@ namespace Meow
             , vertex_buffer(physical_device,
                             device,
                             vertices.size() * sizeof(float),
-                            vk::BufferUsageFlagBits::eVertexBuffer,
+                            vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
                             property_flags)
             , index_buffer(physical_device,
                            device,
                            indices.size() * sizeof(uint16_t),
-                           vk::BufferUsageFlagBits::eIndexBuffer,
+                           vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst,
                            property_flags)
         {
-
-            vk::Meow::CopyToDevice(vertex_buffer.device_memory, vertices.data(), vertices.size());
+            vertex_buffer.Upload(physical_device, device, command_pool, queue, vertices, 0);
+            index_buffer.Upload(physical_device, device, command_pool, queue, indices, 0);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             std::string                     object_name = std::format("{} {}", primitive_name, "Vertex Buffer");
@@ -65,11 +66,7 @@ namespace Meow
                            object_name.c_str(),
                            nullptr};
             device.setDebugUtilsObjectNameEXT(name_info);
-#endif
 
-            vk::Meow::CopyToDevice(index_buffer.device_memory, indices.data(), indices.size());
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("{} {}", primitive_name, "Index Buffer");
             name_info   = {
                 vk::ObjectType::eBuffer, vk::Meow::GetVulkanHandle(*index_buffer.buffer), object_name.c_str(), nullptr};

@@ -26,6 +26,20 @@ namespace Meow
         vk::raii::Semaphore image_acquired_semaphore  = nullptr;
         vk::raii::Semaphore render_finished_semaphore = nullptr;
         vk::raii::Fence     in_flight_fence           = nullptr;
+
+        PerFrameData() {}
+
+        PerFrameData(std::nullptr_t) {}
+    };
+
+    struct UploadContext
+    {
+        vk::raii::CommandPool command_pool = nullptr;
+        vk::raii::Fence       upload_fence = nullptr;
+
+        UploadContext() {}
+
+        UploadContext(std::nullptr_t) {}
     };
 
     class RenderSystem final : public System
@@ -46,6 +60,7 @@ namespace Meow
         void CreateSurface();
         void CreateLogicalDevice();
         void CreateSwapChian();
+        void CreateUploadContext();
         void CreateDepthBuffer();
         void CreateUniformBuffer();
         void CreateDescriptorSetLayout();
@@ -76,6 +91,7 @@ namespace Meow
         vk::raii::Queue                    m_graphics_queue        = nullptr;
         vk::raii::Queue                    m_present_queue         = nullptr;
         vk::Meow::SwapChainData            m_swapchain_data        = nullptr;
+        UploadContext                      m_upload_context        = nullptr;
         vk::Meow::DepthBufferData          m_depth_buffer_data     = nullptr;
         vk::Meow::BufferData               m_uniform_buffer_data   = nullptr;
         vk::raii::DescriptorSetLayout      m_descriptor_set_layout = nullptr;
