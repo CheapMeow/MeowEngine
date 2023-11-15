@@ -30,7 +30,7 @@ namespace Meow
 
         // TODO: temp vertex layout
         vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
-        graphics_pipeline = vk::Meow::MakeGraphicsPipeline(
+        graphics_pipeline = MakeGraphicsPipeline(
             logical_device,
             pipeline_cache,
             vertex_shader_module,

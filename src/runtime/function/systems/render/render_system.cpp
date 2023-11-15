@@ -6,6 +6,8 @@
 #include "function/components/3d/transform/transform_3d_component.h"
 #include "function/components/shared/pawn_component.h"
 #include "function/global/runtime_global_context.h"
+#include "function/systems/render/utils/vulkan_initialize_utils.hpp"
+#include "function/systems/render/utils/vulkan_update_utils.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -17,15 +19,15 @@ namespace Meow
     void RenderSystem::CreateVulkanInstance()
     {
 #ifdef MEOW_DEBUG
-        vk::Meow::LogVulkanAPIVersion(m_vulkan_context.enumerateInstanceVersion());
+        LogVulkanAPIVersion(m_vulkan_context.enumerateInstanceVersion());
 #endif
 
         // prepare for create vk::InstanceCreateInfo
         std::vector<vk::ExtensionProperties> available_instance_extensions =
             m_vulkan_context.enumerateInstanceExtensionProperties();
         std::vector<const char*> required_instance_extensions =
-            vk::Meow::GetRequiredInstanceExtensions({VK_KHR_SURFACE_EXTENSION_NAME});
-        if (!vk::Meow::ValidateExtensions(required_instance_extensions, available_instance_extensions))
+            GetRequiredInstanceExtensions({VK_KHR_SURFACE_EXTENSION_NAME});
+        if (!ValidateExtensions(required_instance_extensions, available_instance_extensions))
         {
             throw std::runtime_error("Required instance extensions are missing.");
         }
@@ -36,11 +38,11 @@ namespace Meow
 #ifdef VKB_VALIDATION_LAYERS
         // Determine the optimal validation layers to enable that are necessary for useful debugging
         std::vector<const char*> optimal_validation_layers =
-            vk::Meow::GetOptimalValidationLayers(supported_validation_layers);
+            GetOptimalValidationLayers(supported_validation_layers);
         required_validation_layers.insert(
             required_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
-        if (vk::Meow::ValidateLayers(required_validation_layers, supported_validation_layers))
+        if (ValidateLayers(required_validation_layers, supported_validation_layers))
         {
             RUNTIME_INFO("Enabled Validation Layers:");
             for (const auto& layer : required_validation_layers)
@@ -61,7 +63,7 @@ namespace Meow
         // VkDebugUtilsMessengerEXT only covers stuff from its creation to its destruction.
         // vkCreateInstance and vkDestroyInstance are covered by the special pNext variant
         // because at that point the VkDebugUtilsMessengerEXT object cannot even exist yet\anymore
-        vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vk::Meow::MakeDebugUtilsMessengerCreateInfoEXT();
+        vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = MakeDebugUtilsMessengerCreateInfoEXT();
         instance_info.pNext                                          = &debug_utils_create_info;
 #endif
 
@@ -84,7 +86,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
     void RenderSystem::CreateDebugUtilsMessengerEXT()
     {
-        vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = vk::Meow::MakeDebugUtilsMessengerCreateInfoEXT();
+        vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = MakeDebugUtilsMessengerCreateInfoEXT();
         m_debug_utils_messenger = vk::raii::DebugUtilsMessengerEXT(m_vulkan_instance, debug_utils_create_info);
     }
 #endif
@@ -98,8 +100,8 @@ namespace Meow
         auto                                              where = ranked_devices.end();
         // Iterates through all devices and rate their suitability.
         for (const auto& gpu : gpus)
-            where = ranked_devices.insert(
-                where, {vk::Meow::ScorePhysicalDevice(gpu, vk::Meow::k_required_device_extensions), gpu});
+            where =
+                ranked_devices.insert(where, {ScorePhysicalDevice(gpu, k_required_device_extensions), gpu});
         // Checks to make sure the best candidate scored higher than 0  rbegin points to last element of ranked
         // devices(highest rated), first is its rating.
         if (ranked_devices.rbegin()->first < 0)
@@ -114,26 +116,26 @@ namespace Meow
     {
         auto         size = g_runtime_global_context.window_system.get()->m_window->GetSize();
         vk::Extent2D extent(size.x, size.y);
-        m_surface_data = vk::Meow::SurfaceData(
+        m_surface_data = SurfaceData(
             m_vulkan_instance, g_runtime_global_context.window_system.get()->m_window->GetGLFWWindow(), extent);
     }
 
     void RenderSystem::CreateLogicalDevice()
     {
         std::vector<vk::ExtensionProperties> device_extensions = m_gpu.enumerateDeviceExtensionProperties();
-        if (!vk::Meow::ValidateExtensions(vk::Meow::k_required_device_extensions, device_extensions))
+        if (!ValidateExtensions(k_required_device_extensions, device_extensions))
         {
             throw std::runtime_error("Required device extensions are missing, will try without.");
         }
 
-        auto indexs                   = vk::Meow::FindGraphicsAndPresentQueueFamilyIndex(m_gpu, m_surface_data.surface);
+        auto indexs                   = FindGraphicsAndPresentQueueFamilyIndex(m_gpu, m_surface_data.surface);
         m_graphics_queue_family_index = indexs.first;
         m_present_queue_family_index  = indexs.second;
 
         // Create a device with one queue
         float                     queue_priority = 1.0f;
         vk::DeviceQueueCreateInfo queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
-        vk::DeviceCreateInfo      device_info({}, queue_info, {}, vk::Meow::k_required_device_extensions);
+        vk::DeviceCreateInfo      device_info({}, queue_info, {}, k_required_device_extensions);
         m_logical_device = vk::raii::Device(m_gpu, device_info);
 
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)
@@ -143,7 +145,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Logical Device";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eDevice, vk::Meow::GetVulkanHandle(*m_logical_device), object_name.c_str(), nullptr};
+            vk::ObjectType::eDevice, GetVulkanHandle(*m_logical_device), object_name.c_str(), nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
@@ -154,14 +156,14 @@ namespace Meow
     void RenderSystem::CreateSwapChian()
     {
         m_swapchain_data =
-            vk::Meow::SwapChainData(m_gpu,
-                                    m_logical_device,
-                                    m_surface_data.surface,
-                                    m_surface_data.extent,
-                                    vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-                                    nullptr,
-                                    m_graphics_queue_family_index,
-                                    m_present_queue_family_index);
+            SwapChainData(m_gpu,
+                          m_logical_device,
+                          m_surface_data.surface,
+                          m_surface_data.extent,
+                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+                          nullptr,
+                          m_graphics_queue_family_index,
+                          m_present_queue_family_index);
     }
 
     void RenderSystem::CreateUploadContext()
@@ -174,32 +176,20 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Command pool in UploadContext";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eCommandPool,
-                                                       vk::Meow::GetVulkanHandle(*m_upload_context.command_pool),
+                                                       GetVulkanHandle(*m_upload_context.command_pool),
                                                        object_name.c_str(),
                                                        nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-
-        m_upload_context.upload_fence = vk::raii::Fence(m_logical_device, vk::FenceCreateInfo());
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        object_name = "Upload Fence in UploadContext";
-        name_info   = {vk::ObjectType::eFence,
-                       vk::Meow::GetVulkanHandle(*m_upload_context.upload_fence),
-                       object_name.c_str(),
-                       nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
 
     void RenderSystem::CreateDepthBuffer()
     {
-        m_depth_buffer_data =
-            vk::Meow::DepthBufferData(m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
+        m_depth_buffer_data = DepthBufferData(m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Depth Image";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eImage,
-                                                       vk::Meow::GetVulkanHandle(*m_depth_buffer_data.image),
+                                                       GetVulkanHandle(*m_depth_buffer_data.image),
                                                        object_name.c_str(),
                                                        nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -210,17 +200,17 @@ namespace Meow
     {
         // TODO: UBOData is temp
         m_uniform_buffer_data =
-            vk::Meow::BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
+            BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Uniform Buffer";
         vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
-                                                       vk::Meow::GetVulkanHandle(*m_uniform_buffer_data.buffer),
+                                                       GetVulkanHandle(*m_uniform_buffer_data.buffer),
                                                        object_name.c_str(),
                                                        nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
         object_name = "Uniform Buffer Device Memory";
         name_info   = {vk::ObjectType::eDeviceMemory,
-                       vk::Meow::GetVulkanHandle(*m_uniform_buffer_data.device_memory),
+                       GetVulkanHandle(*m_uniform_buffer_data.device_memory),
                        object_name.c_str(),
                        nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -229,7 +219,7 @@ namespace Meow
 
     void RenderSystem::CreateDescriptorSetLayout()
     {
-        m_descriptor_set_layout = vk::Meow::MakeDescriptorSetLayout(
+        m_descriptor_set_layout = MakeDescriptorSetLayout(
             m_logical_device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
     }
 
@@ -249,7 +239,7 @@ namespace Meow
         m_descriptor_set = vk::raii::DescriptorSet(
             std::move(vk::raii::DescriptorSets(m_logical_device, descriptor_set_allocate_info).front()));
         // TODO: Uniform set is temp
-        vk::Meow::UpdateDescriptorSets(
+        UpdateDescriptorSets(
             m_logical_device,
             m_descriptor_set,
             {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
@@ -259,13 +249,13 @@ namespace Meow
     void RenderSystem::CreateRenderPass()
     {
         vk::Format color_format =
-            vk::Meow::PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        m_render_pass = vk::Meow::MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
+            PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        m_render_pass = MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
     }
 
     void RenderSystem::CreateFramebuffers()
     {
-        m_framebuffers = vk::Meow::MakeFramebuffers(m_logical_device,
+        m_framebuffers = MakeFramebuffers(m_logical_device,
                                                     m_render_pass,
                                                     m_swapchain_data.image_views,
                                                     &m_depth_buffer_data.image_view,
@@ -274,9 +264,9 @@ namespace Meow
 
     void RenderSystem::CreatePerFrameData()
     {
-        m_per_frame_data.resize(vk::Meow::k_max_frames_in_flight);
+        m_per_frame_data.resize(k_max_frames_in_flight);
 
-        for (uint32_t i = 0; i < vk::Meow::k_max_frames_in_flight; ++i)
+        for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
             vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
                                                                    vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
@@ -286,7 +276,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             std::string                     object_name = std::format("Command Pool in PerFrameData {}", i);
             vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eCommandPool,
-                                                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].command_pool),
+                                                           GetVulkanHandle(*m_per_frame_data[i].command_pool),
                                                            object_name.c_str(),
                                                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -300,7 +290,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("Command Buffer in PerFrameData {}", i);
             name_info   = {vk::ObjectType::eCommandBuffer,
-                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].command_buffer),
+                           GetVulkanHandle(*m_per_frame_data[i].command_buffer),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -312,7 +302,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("Image Acquired Semaphore in PerFrameData {}", i);
             name_info   = {vk::ObjectType::eSemaphore,
-                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].image_acquired_semaphore),
+                           GetVulkanHandle(*m_per_frame_data[i].image_acquired_semaphore),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -324,7 +314,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("Render Finished Semaphore in PerFrameData {}", i);
             name_info   = {vk::ObjectType::eSemaphore,
-                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].render_finished_semaphore),
+                           GetVulkanHandle(*m_per_frame_data[i].render_finished_semaphore),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -335,7 +325,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             object_name = std::format("In Flight Fence in PerFrameData{}", i);
             name_info   = {vk::ObjectType::eFence,
-                           vk::Meow::GetVulkanHandle(*m_per_frame_data[i].in_flight_fence),
+                           GetVulkanHandle(*m_per_frame_data[i].in_flight_fence),
                            object_name.c_str(),
                            nullptr};
             m_logical_device.setDebugUtilsObjectNameEXT(name_info);
@@ -395,8 +385,8 @@ namespace Meow
         init_info.Queue                     = *m_graphics_queue;
         init_info.DescriptorPool            = *m_imgui_descriptor_pool;
         init_info.Subpass                   = 0;
-        init_info.MinImageCount             = vk::Meow::k_max_frames_in_flight;
-        init_info.ImageCount                = vk::Meow::k_max_frames_in_flight;
+        init_info.MinImageCount             = k_max_frames_in_flight;
+        init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
 
         ImGui_ImplVulkan_Init(&init_info, *m_render_pass);
@@ -494,8 +484,8 @@ namespace Meow
 
     void RenderSystem::UpdateUniformBuffer(UBOData ubo_data)
     {
-        vk::Meow::CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
-        vk::Meow::UpdateDescriptorSets(
+        CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
+        UpdateDescriptorSets(
             m_logical_device,
             m_descriptor_set,
             {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
@@ -513,7 +503,7 @@ namespace Meow
 
         vk::Result result;
         std::tie(result, m_current_image_index) =
-            m_swapchain_data.swap_chain.acquireNextImage(vk::Meow::k_fence_timeout, *image_acquired_semaphore);
+            m_swapchain_data.swap_chain.acquireNextImage(k_fence_timeout, *image_acquired_semaphore);
 
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
@@ -558,8 +548,7 @@ namespace Meow
             *image_acquired_semaphore, wait_destination_stage_mask, *cmd_buffer, *render_finished_semaphore);
         m_graphics_queue.submit(submit_info, *in_flight_fence);
 
-        while (vk::Result::eTimeout ==
-               m_logical_device.waitForFences({*in_flight_fence}, VK_TRUE, vk::Meow::k_fence_timeout))
+        while (vk::Result::eTimeout == m_logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
             ;
         m_logical_device.resetFences({*in_flight_fence});
 
@@ -571,13 +560,13 @@ namespace Meow
             case vk::Result::eSuccess:
                 break;
             case vk::Result::eSuboptimalKHR:
-                std::cout << "vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n";
+                RUNTIME_ERROR("vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n");
                 break;
             default:
                 assert(false); // an unexpected result is returned !
         }
 
-        m_current_frame_index = (m_current_frame_index + 1) % vk::Meow::k_max_frames_in_flight;
+        m_current_frame_index = (m_current_frame_index + 1) % k_max_frames_in_flight;
     }
 
     void RenderSystem::Update(float frame_time)

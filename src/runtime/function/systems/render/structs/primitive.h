@@ -1,9 +1,7 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
-#include "function/systems/render/utils/vulkan_hpp_utils.hpp"
-
-#include <vulkan/vulkan_raii.hpp>
+#include "function/systems/render/structs/buffer_data.h"
 
 namespace Meow
 {
@@ -15,8 +13,8 @@ namespace Meow
 
         vk::IndexType index_type = vk::IndexType::eUint16;
 
-        vk::Meow::BufferData vertex_buffer = nullptr;
-        vk::Meow::BufferData index_buffer  = nullptr;
+        BufferData vertex_buffer = nullptr;
+        BufferData index_buffer  = nullptr;
 
         Primitive() {}
 
@@ -55,26 +53,26 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
             std::string                     object_name = std::format("{} {}", primitive_name, "Vertex Buffer");
             vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
-                                                           vk::Meow::GetVulkanHandle(*vertex_buffer.buffer),
+                                                           GetVulkanHandle(*vertex_buffer.buffer),
                                                            object_name.c_str(),
                                                            nullptr};
             device.setDebugUtilsObjectNameEXT(name_info);
 
             object_name = std::format("{} {}", primitive_name, "Vertex Buffer Device Memory");
             name_info   = {vk::ObjectType::eDeviceMemory,
-                           vk::Meow::GetVulkanHandle(*vertex_buffer.device_memory),
+                           GetVulkanHandle(*vertex_buffer.device_memory),
                            object_name.c_str(),
                            nullptr};
             device.setDebugUtilsObjectNameEXT(name_info);
 
             object_name = std::format("{} {}", primitive_name, "Index Buffer");
             name_info   = {
-                vk::ObjectType::eBuffer, vk::Meow::GetVulkanHandle(*index_buffer.buffer), object_name.c_str(), nullptr};
+                vk::ObjectType::eBuffer, GetVulkanHandle(*index_buffer.buffer), object_name.c_str(), nullptr};
             device.setDebugUtilsObjectNameEXT(name_info);
 
             object_name = std::format("{} {}", primitive_name, "Index Buffer Device Memory");
             name_info   = {vk::ObjectType::eDeviceMemory,
-                           vk::Meow::GetVulkanHandle(*index_buffer.device_memory),
+                           GetVulkanHandle(*index_buffer.device_memory),
                            object_name.c_str(),
                            nullptr};
             device.setDebugUtilsObjectNameEXT(name_info);
