@@ -37,8 +37,7 @@ namespace Meow
         std::vector<const char*> required_validation_layers {};
 #ifdef VKB_VALIDATION_LAYERS
         // Determine the optimal validation layers to enable that are necessary for useful debugging
-        std::vector<const char*> optimal_validation_layers =
-            GetOptimalValidationLayers(supported_validation_layers);
+        std::vector<const char*> optimal_validation_layers = GetOptimalValidationLayers(supported_validation_layers);
         required_validation_layers.insert(
             required_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
@@ -100,8 +99,7 @@ namespace Meow
         auto                                              where = ranked_devices.end();
         // Iterates through all devices and rate their suitability.
         for (const auto& gpu : gpus)
-            where =
-                ranked_devices.insert(where, {ScorePhysicalDevice(gpu, k_required_device_extensions), gpu});
+            where = ranked_devices.insert(where, {ScorePhysicalDevice(gpu, k_required_device_extensions), gpu});
         // Checks to make sure the best candidate scored higher than 0  rbegin points to last element of ranked
         // devices(highest rated), first is its rating.
         if (ranked_devices.rbegin()->first < 0)
@@ -188,10 +186,8 @@ namespace Meow
         m_depth_buffer_data = DepthBufferData(m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Depth Image";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eImage,
-                                                       GetVulkanHandle(*m_depth_buffer_data.image),
-                                                       object_name.c_str(),
-                                                       nullptr};
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eImage, GetVulkanHandle(*m_depth_buffer_data.image), object_name.c_str(), nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
@@ -203,10 +199,8 @@ namespace Meow
             BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         std::string                     object_name = "Uniform Buffer";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eBuffer,
-                                                       GetVulkanHandle(*m_uniform_buffer_data.buffer),
-                                                       object_name.c_str(),
-                                                       nullptr};
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eBuffer, GetVulkanHandle(*m_uniform_buffer_data.buffer), object_name.c_str(), nullptr};
         m_logical_device.setDebugUtilsObjectNameEXT(name_info);
         object_name = "Uniform Buffer Device Memory";
         name_info   = {vk::ObjectType::eDeviceMemory,
@@ -248,18 +242,17 @@ namespace Meow
 
     void RenderSystem::CreateRenderPass()
     {
-        vk::Format color_format =
-            PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        m_render_pass = MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
+        vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        m_render_pass           = MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
     }
 
     void RenderSystem::CreateFramebuffers()
     {
         m_framebuffers = MakeFramebuffers(m_logical_device,
-                                                    m_render_pass,
-                                                    m_swapchain_data.image_views,
-                                                    &m_depth_buffer_data.image_view,
-                                                    m_surface_data.extent);
+                                          m_render_pass,
+                                          m_swapchain_data.image_views,
+                                          &m_depth_buffer_data.image_view,
+                                          m_surface_data.extent);
     }
 
     void RenderSystem::CreatePerFrameData()
@@ -413,6 +406,28 @@ namespace Meow
         }
     }
 
+    void RenderSystem::RecreateSwapChain()
+    {
+        m_logical_device.waitIdle();
+
+        ImGui_ImplVulkan_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+
+        m_per_frame_data.clear();
+        m_framebuffers.clear();
+        m_depth_buffer_data = nullptr;
+        m_swapchain_data    = nullptr;
+        m_surface_data      = nullptr;
+
+        CreateSurface();
+        CreateSwapChian();
+        CreateDepthBuffer();
+        CreateFramebuffers();
+        CreatePerFrameData();
+        InitImGui();
+    }
+
     RenderSystem::RenderSystem()
     {
         CreateVulkanInstance();
@@ -505,6 +520,12 @@ namespace Meow
         std::tie(result, m_current_image_index) =
             m_swapchain_data.swap_chain.acquireNextImage(k_fence_timeout, *image_acquired_semaphore);
 
+        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebuffer_resized)
+        {
+            m_framebuffer_resized = false;
+            RecreateSwapChain();
+            return false;
+        }
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
 
@@ -621,51 +642,52 @@ namespace Meow
 
         UpdateUniformBuffer(ubo_data);
 
-        StartRenderpass();
-
-        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
-        auto& cmd_buffer     = per_frame_data.command_buffer;
-
-        std::unordered_map<Material*, std::vector<Renderable*>> renderables_per_material;
-
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        if (StartRenderpass())
         {
-            // TODO: How to solve the different uniform buffer problem?
-            // ubo_data.model = transfrom_component.m_global_transform;
+            auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+            auto& cmd_buffer     = per_frame_data.command_buffer;
 
-            for (Mesh& mesh : model_component.model.meshes)
+            std::unordered_map<Material*, std::vector<Renderable*>> renderables_per_material;
+
+            for (auto [entity, transfrom_component, model_component] :
+                 g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
-                Material* material_ptr = &g_runtime_global_context.resource_system->m_materials[mesh.material_name];
-                renderables_per_material[material_ptr].push_back(&mesh);
+                // TODO: How to solve the different uniform buffer problem?
+                // ubo_data.model = transfrom_component.m_global_transform;
+
+                for (Mesh& mesh : model_component.model.meshes)
+                {
+                    Material* material_ptr = &g_runtime_global_context.resource_system->m_materials[mesh.material_name];
+                    renderables_per_material[material_ptr].push_back(&mesh);
+                }
             }
-        }
 
-        // TODO: sort renderables by distance
+            // TODO: sort renderables by distance
 
-        for (std::pair<Material*, std::vector<Renderable*>> kv : renderables_per_material)
-        {
-            kv.first->Bind(cmd_buffer, m_descriptor_set);
-
-            for (Renderable* renderable : kv.second)
+            for (std::pair<Material*, std::vector<Renderable*>> kv : renderables_per_material)
             {
-                renderable->BindDrawCmd(cmd_buffer);
+                kv.first->Bind(cmd_buffer, m_descriptor_set);
+
+                for (Renderable* renderable : kv.second)
+                {
+                    renderable->BindDrawCmd(cmd_buffer);
+                }
             }
+
+            ImGui::Render();
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
+
+            // Specially for docking branch
+            // Update and Render additional Platform Windows
+            ImGuiIO& io = ImGui::GetIO();
+            (void)io;
+            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                ImGui::UpdatePlatformWindows();
+                ImGui::RenderPlatformWindowsDefault();
+            }
+
+            EndRenderpass();
         }
-
-        ImGui::Render();
-        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
-
-        // Specially for docking branch
-        // Update and Render additional Platform Windows
-        ImGuiIO& io = ImGui::GetIO();
-        (void)io;
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-        }
-
-        EndRenderpass();
     }
 } // namespace Meow

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function/systems/render/structs/material.h"
-#include "function/systems/render/structs/texture.h"
+#include "function/systems/render/structs/texture_data.hpp"
 #include "function/systems/system.h"
 
 #include <unordered_map>
@@ -34,7 +34,7 @@ namespace Meow
 
         void Update(float frame_time);
 
-        // std::unordered_map<std::string, Texture>  m_textures;
-        std::unordered_map<std::string, Material> m_materials;
+        std::unordered_map<std::string, TextureData> m_textures;
+        std::unordered_map<std::string, Material>    m_materials;
     };
 } // namespace Meow

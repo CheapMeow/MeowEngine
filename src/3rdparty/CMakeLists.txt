@@ -32,6 +32,10 @@ if(NOT TARGET glslang)
     add_subdirectory(glslang)
 endif()
 
+if(NOT TARGET stb)
+    include(stb.cmake)
+endif()
+
 if(NOT TARGET assimp)
     # assimp may have warning
     option(ASSIMP_WARNINGS_AS_ERRORS "Don't treat all warnings as errors." OFF)

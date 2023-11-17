@@ -8,6 +8,9 @@ namespace Meow
 {
     struct SurfaceData
     {
+        vk::Extent2D         extent;
+        vk::raii::SurfaceKHR surface = nullptr;
+
         SurfaceData(vk::raii::Instance const& instance, GLFWwindow* glfw_window, vk::Extent2D const& extent_)
             : extent(extent_)
         {
@@ -19,8 +22,5 @@ namespace Meow
         }
 
         SurfaceData(std::nullptr_t) {}
-
-        vk::Extent2D         extent;
-        vk::raii::SurfaceKHR surface = nullptr;
     };
 } // namespace Meow

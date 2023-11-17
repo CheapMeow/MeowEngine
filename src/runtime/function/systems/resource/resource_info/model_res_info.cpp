@@ -31,12 +31,12 @@ namespace Meow
     {
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
 
-        uint8_t* data_ptr;
-        uint32_t data_size;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path, data_ptr, data_size);
+        auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);
+
+        delete[] data_ptr;
 
         for (size_t i = 0; i < scene->mNumMaterials; ++i)
         {

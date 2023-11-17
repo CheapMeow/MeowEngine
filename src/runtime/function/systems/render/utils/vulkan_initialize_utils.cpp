@@ -474,6 +474,24 @@ namespace Meow
         return vk::raii::DescriptorSetLayout(device, descriptor_set_layout_create_info);
     }
 
+    /**
+     * @brief Set the Image Layout.
+     *
+     * If an image is not initialized in any specific layout, so we need to do a layout transition.
+     *
+     * Such as you need the driver puts the texture into Linear layout,
+     * which is the best for copying data from a buffer into a texture.
+     *
+     * To perform layout transitions, we need to use pipeline barriers. Pipeline barriers can control how the GPU
+     * overlaps commands before and after the barrier, but if you do pipeline barriers with image barriers, the driver
+     * can also transform the image to the correct formats and layouts.
+     *
+     * @param command_buffer Usually use command buffer in upload context
+     * @param image Target image need a layout transition
+     * @param format Image data format
+     * @param old_image_layout Old image layout
+     * @param new_image_layout New image layout
+     */
     void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,
                         vk::Image                      image,
                         vk::Format                     format,

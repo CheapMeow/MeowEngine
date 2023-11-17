@@ -13,36 +13,35 @@ namespace Meow
         pipeline_layout = vk::raii::PipelineLayout(logical_device, pipeline_layout_create_info);
 
         // TODO: temp Shader
-        uint8_t* data_ptr = nullptr;
-        uint32_t data_size;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(
-            "builtin/shaders/mesh.vert.spv", data_ptr, data_size);
+        auto [data_ptr, data_size] =
+            g_runtime_global_context.file_system.get()->ReadBinaryFile("builtin/shaders/mesh.vert.spv");
         vk::raii::ShaderModule vertex_shader_module(logical_device,
                                                     {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
         delete[] data_ptr;
         data_ptr = nullptr;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(
-            "builtin/shaders/mesh.frag.spv", data_ptr, data_size);
-        vk::raii::ShaderModule fragment_shader_module(logical_device,
-                                                      {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
-        delete[] data_ptr;
-        data_ptr = nullptr;
+
+        auto [data_ptr2, data_size2] =
+            g_runtime_global_context.file_system.get()->ReadBinaryFile("builtin/shaders/mesh.frag.spv");
+        vk::raii::ShaderModule fragment_shader_module(
+            logical_device, {vk::ShaderModuleCreateFlags(), data_size2, (uint32_t*)data_ptr2});
+        delete[] data_ptr2;
+        data_ptr2 = nullptr;
 
         // TODO: temp vertex layout
         vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
-        graphics_pipeline = MakeGraphicsPipeline(
-            logical_device,
-            pipeline_cache,
-            vertex_shader_module,
-            nullptr,
-            fragment_shader_module,
-            nullptr,
-            VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal}),
-            {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}},
-            vk::FrontFace::eClockwise,
-            true,
-            pipeline_layout,
-            render_pass);
+        graphics_pipeline =
+            MakeGraphicsPipeline(logical_device,
+                                 pipeline_cache,
+                                 vertex_shader_module,
+                                 nullptr,
+                                 fragment_shader_module,
+                                 nullptr,
+                                 VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal}),
+                                 {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}},
+                                 vk::FrontFace::eClockwise,
+                                 true,
+                                 pipeline_layout,
+                                 render_pass);
     }
 
     void Material::Bind(vk::raii::CommandBuffer const& command_buffer, vk::raii::DescriptorSet const& descriptor_set)

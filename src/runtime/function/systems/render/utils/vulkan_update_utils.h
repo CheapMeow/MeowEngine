@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/systems/render/structs/texture_data.h"
+#include "function/systems/render/structs/texture_data.hpp"
 
 namespace Meow
 {

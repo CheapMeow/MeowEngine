@@ -6,6 +6,13 @@ namespace Meow
 {
     struct ImageData
     {
+        // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
+        // destructor of the ImageData, the order of DeviceMemory and Image here matters
+        vk::Format             format;
+        vk::raii::DeviceMemory device_memory = nullptr;
+        vk::raii::Image        image         = nullptr;
+        vk::raii::ImageView    image_view    = nullptr;
+
         ImageData(vk::raii::PhysicalDevice const& physical_device,
                   vk::raii::Device const&         device,
                   vk::Format                      format_,
@@ -39,12 +46,5 @@ namespace Meow
         }
 
         ImageData(std::nullptr_t) {}
-
-        // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
-        // destructor of the ImageData, the order of DeviceMemory and Image here matters
-        vk::Format             format;
-        vk::raii::DeviceMemory device_memory = nullptr;
-        vk::raii::Image        image         = nullptr;
-        vk::raii::ImageView    image_view    = nullptr;
     };
 } // namespace Meow

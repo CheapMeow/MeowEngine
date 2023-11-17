@@ -4,7 +4,7 @@
 #include "function/systems/render/structs/depth_buffer_data.h"
 #include "function/systems/render/structs/surface_data.h"
 #include "function/systems/render/structs/swapchain_data.h"
-#include "function/systems/render/structs/texture_data.h"
+#include "function/systems/render/structs/texture_data.hpp"
 #include "function/systems/system.h"
 #include "function/systems/window/window.h"
 
@@ -65,6 +65,8 @@ namespace Meow
         void UpdateUniformBuffer(UBOData ubo_data);
         void Update(float frame_time);
 
+        void SetResized(bool resized) { m_framebuffer_resized = resized; }
+
     private:
         void CreateVulkanInstance();
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -84,6 +86,7 @@ namespace Meow
         void CreateFramebuffers();
         void CreatePerFrameData();
         void InitImGui();
+        void RecreateSwapChain();
 
         bool StartRenderpass();
         void EndRenderpass();
@@ -97,6 +100,8 @@ namespace Meow
 
         uint32_t m_graphics_queue_family_index = 0;
         uint32_t m_present_queue_family_index  = 0;
+
+        bool m_framebuffer_resized = false;
 
         vk::raii::Context  m_vulkan_context;
         vk::raii::Instance m_vulkan_instance = nullptr;

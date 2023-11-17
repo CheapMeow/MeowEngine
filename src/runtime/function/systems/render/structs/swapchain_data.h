@@ -6,6 +6,11 @@ namespace Meow
 {
     struct SwapChainData
     {
+        vk::Format                       color_format;
+        vk::raii::SwapchainKHR           swap_chain = nullptr;
+        std::vector<vk::Image>           images;
+        std::vector<vk::raii::ImageView> image_views;
+
         SwapChainData(vk::raii::PhysicalDevice const& physical_device,
                       vk::raii::Device const&         device,
                       vk::raii::SurfaceKHR const&     surface,
@@ -15,9 +20,8 @@ namespace Meow
                       uint32_t                        graphics_queue_family_index,
                       uint32_t                        present_queue_family_index)
         {
-            vk::SurfaceFormatKHR surface_format =
-                PickSurfaceFormat(physical_device.getSurfaceFormatsKHR(*surface));
-            color_format = surface_format.format;
+            vk::SurfaceFormatKHR surface_format = PickSurfaceFormat(physical_device.getSurfaceFormatsKHR(*surface));
+            color_format                        = surface_format.format;
 
             vk::SurfaceCapabilitiesKHR surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
             vk::Extent2D               swapchain_extent;
@@ -47,8 +51,7 @@ namespace Meow
                 (surface_capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit) ?
                     vk::CompositeAlphaFlagBitsKHR::eInherit :
                     vk::CompositeAlphaFlagBitsKHR::eOpaque;
-            vk::PresentModeKHR present_mode =
-                PickPresentMode(physical_device.getSurfacePresentModesKHR(*surface));
+            vk::PresentModeKHR present_mode = PickPresentMode(physical_device.getSurfacePresentModesKHR(*surface));
             vk::SwapchainCreateInfoKHR swap_chain_create_info(
                 {},
                 *surface,
@@ -90,11 +93,6 @@ namespace Meow
         }
 
         SwapChainData(std::nullptr_t) {}
-
-        vk::Format                       color_format;
-        vk::raii::SwapchainKHR           swap_chain = nullptr;
-        std::vector<vk::Image>           images;
-        std::vector<vk::raii::ImageView> image_views;
     };
 
 } // namespace Meow

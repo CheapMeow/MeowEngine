@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace Meow
@@ -14,7 +15,9 @@ namespace Meow
         // TODO: Support configure of engine root path
         FileSystem() { m_root_path = "E:/repositories/MeowEngine"; }
 
-        void ReadBinaryFile(std::string const& filepath, uint8_t*& data_ptr, uint32_t& data_size);
+        std::tuple<uint8_t*, uint32_t> ReadBinaryFile(std::string const& filepath);
+
+        uint32_t ReadImageFileToPtr(std::string const& filepath, uint8_t* data_ptr);
 
     private:
         std::filesystem::path m_root_path;

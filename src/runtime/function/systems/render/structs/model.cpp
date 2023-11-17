@@ -45,9 +45,7 @@ namespace Meow
             }
         }
 
-        uint8_t* data_ptr;
-        uint32_t data_size;
-        g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path, data_ptr, data_size);
+        auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);

@@ -58,6 +58,9 @@ target_link_libraries(${RUNTIME_NAME} PUBLIC
     SPIRV)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glslang)
 
+target_link_libraries(${RUNTIME_NAME} PUBLIC stb)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/stb)
+
 target_link_libraries(${RUNTIME_NAME} PUBLIC assimp)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/assimp/include)
 
