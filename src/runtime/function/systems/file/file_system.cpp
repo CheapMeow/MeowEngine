@@ -10,8 +10,15 @@
 
 namespace Meow
 {
+    void FileSystem::Start() {}
+
     std::tuple<uint8_t*, uint32_t> FileSystem::ReadBinaryFile(std::string const& filepath)
     {
+        if (!Exists(filepath))
+        {
+            return {nullptr, 0};
+        }
+
         std::ifstream ifs(m_root_path / filepath, std::ios::binary | std::ios::ate);
 
         if (!ifs)
@@ -37,6 +44,11 @@ namespace Meow
 
     uint32_t FileSystem::ReadImageFileToPtr(std::string const& filepath, uint8_t* data_ptr)
     {
+        if (!Exists(filepath))
+        {
+            return 0;
+        }
+
         int texWidth, texHeight, texChannels;
 
         auto absolute_filepath = m_root_path / filepath;

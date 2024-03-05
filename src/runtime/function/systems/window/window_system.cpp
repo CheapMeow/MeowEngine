@@ -14,5 +14,7 @@ namespace Meow
 
     WindowSystem::~WindowSystem() { m_window = nullptr; }
 
+    void WindowSystem::Start() {}
+
     void WindowSystem::Update(float frame_time) { m_window->Update(frame_time); }
 } // namespace Meow

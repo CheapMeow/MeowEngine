@@ -32,9 +32,27 @@ namespace Meow
         ResourceSystem();
         ~ResourceSystem();
 
+        void Start() override;
+
         void Update(float frame_time);
 
-        std::unordered_map<std::string, TextureData> m_textures;
-        std::unordered_map<std::string, Material>    m_materials;
+        std::shared_ptr<TextureData> LoadTexture(const std::string& filepath, vk::Extent2D const& extent);
+
+        std::shared_ptr<TextureData> GetTexture(const std::string& filepath);
+
+        bool LoadMaterial(const std::string& filepath);
+
+        std::shared_ptr<Material> GetMaterial(const std::string& filepath);
+
+    private:
+        /**
+         * @brief Relative path - TextureData
+         */
+        std::unordered_map<std::string, std::shared_ptr<TextureData>> m_textures;
+
+        /**
+         * @brief Relative path - Material
+         */
+        std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
     };
 } // namespace Meow

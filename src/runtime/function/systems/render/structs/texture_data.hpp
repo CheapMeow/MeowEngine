@@ -14,8 +14,6 @@ namespace Meow
         ImageData         image_data          = nullptr;
         vk::raii::Sampler sampler             = nullptr;
 
-        TextureData(std::nullptr_t) {}
-
         TextureData(vk::raii::PhysicalDevice const& physical_device,
                     vk::raii::Device const&         device,
                     vk::Extent2D const&             extent_              = {256, 256},
@@ -23,6 +21,9 @@ namespace Meow
                     vk::FormatFeatureFlags          format_feature_flags = {},
                     bool                            anisotropy_enable    = false,
                     bool                            force_staging        = false);
+
+        TextureData(std::nullptr_t) {}
+        TextureData() {}
 
         void TransitLayout(vk::raii::CommandBuffer const& command_buffer);
 

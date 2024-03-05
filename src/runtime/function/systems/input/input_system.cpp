@@ -28,6 +28,9 @@ namespace Meow
     InputSystem::InputSystem()
         : m_null_scheme(std::make_unique<InputScheme>())
         , m_current_scheme(m_null_scheme.get())
+    {}
+
+    void InputSystem::Start()
     {
         // TODO: Support json to get default input scheme
         m_current_scheme->AddButton("Left", std::make_unique<KeyboardInputButton>(KeyCode::A));

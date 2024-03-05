@@ -106,7 +106,8 @@ namespace Meow
                          staging_buffer_data.device_memory.mapMemory(
                              0, staging_buffer_data.buffer.getMemoryRequirements().size) :
                          image_data.device_memory.mapMemory(0, image_data.image.getMemoryRequirements().size);
-        g_runtime_global_context.file_system->ReadImageFileToPtr(filepath, static_cast<uint8_t*>(data));
+        if (g_runtime_global_context.file_system->ReadImageFileToPtr(filepath, static_cast<uint8_t*>(data)) == 0)
+            return false;
         need_staging ? staging_buffer_data.device_memory.unmapMemory() : image_data.device_memory.unmapMemory();
 
         TransitLayout(command_buffer);

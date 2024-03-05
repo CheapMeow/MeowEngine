@@ -16,6 +16,7 @@ namespace Meow
     {
     public:
         bool Init(); /**< Init engine */
+        bool Start();
         void Run();
         void ShutDown();
 

@@ -13,6 +13,8 @@ namespace Meow
         WindowSystem();
         ~WindowSystem();
 
+        void Start() override;
+
         void Update(float frame_time);
 
         std::shared_ptr<Window> m_window;

@@ -9,6 +9,7 @@ namespace Meow
     class CameraSystem : System
     {
     public:
+        void Start() override;
         void Update(float frame_time);
 
     private:

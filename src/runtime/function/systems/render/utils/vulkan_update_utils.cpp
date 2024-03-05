@@ -93,14 +93,14 @@ namespace Meow
                 image_infos.emplace_back(
                     *thd.sampler, *thd.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
             }
-            write_descriptor_sets.emplace_back(*descriptor_set,                                      // dstSet
-                                               dst_binding,                                          // dstBinding
-                                               0,                                                    // dstArrayElement
+            write_descriptor_sets.emplace_back(*descriptor_set,                            // dstSet
+                                               dst_binding,                                // dstBinding
+                                               0,                                          // dstArrayElement
                                                checked_cast<uint32_t>(image_infos.size()), // descriptorCount
-                                               vk::DescriptorType::eCombinedImageSampler,            // descriptorType
-                                               image_infos.data(),                                   // pImageInfo
-                                               nullptr,                                              // pBufferInfo
-                                               nullptr                                               // pTexelBufferView
+                                               vk::DescriptorType::eCombinedImageSampler,  // descriptorType
+                                               image_infos.data(),                         // pImageInfo
+                                               nullptr,                                    // pBufferInfo
+                                               nullptr                                     // pTexelBufferView
             );
         }
 

@@ -1,2 +1,5 @@
 # MeowEngine
-A game engine for learning game engine development.
+
+## C++ 风格
+
+使用 clang 

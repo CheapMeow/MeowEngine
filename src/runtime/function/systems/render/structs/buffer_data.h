@@ -35,6 +35,39 @@ namespace Meow
 
         BufferData(std::nullptr_t) {}
 
+        ~BufferData() { clear(); }
+
+        BufferData()                  = delete;
+        BufferData(BufferData const&) = delete;
+        BufferData(BufferData&& rhs)
+            : device_memory(std::exchange(rhs.device_memory, nullptr))
+            , buffer(std::exchange(rhs.buffer, nullptr))
+            , device_size(rhs.device_size)
+            , usage(rhs.usage)
+            , property_flags(rhs.property_flags)
+        {}
+        BufferData& operator=(BufferData const&) = delete;
+        BufferData& operator=(BufferData&& rhs)
+        {
+            if (this != &rhs)
+            {
+                clear();
+
+                device_memory  = std::exchange(rhs.device_memory, nullptr);
+                buffer         = std::exchange(rhs.buffer, nullptr);
+                device_size    = rhs.device_size;
+                usage          = rhs.usage;
+                property_flags = rhs.property_flags;
+            }
+            return *this;
+        }
+
+        void clear()
+        {
+            device_memory = nullptr;
+            buffer        = nullptr;
+        }
+
         template<typename DataType>
         void Upload(DataType const& data) const
         {

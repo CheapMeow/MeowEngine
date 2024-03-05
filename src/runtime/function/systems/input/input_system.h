@@ -10,6 +10,8 @@ namespace Meow
     public:
         InputSystem();
 
+        void Start() override;
+
         void Update(float frame_time);
 
         InputScheme* GetScheme() const { return m_current_scheme; }

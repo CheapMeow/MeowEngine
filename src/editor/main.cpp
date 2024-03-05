@@ -10,6 +10,8 @@ int main()
         return 1;
     }
 
+    MeowEngine::GetEngine().Start();
+
     EDITOR_INFO("Editor is running!");
     MeowEngine::GetEngine().Run();
 

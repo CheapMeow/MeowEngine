@@ -8,6 +8,18 @@
 
 namespace Meow
 {
+    void CameraSystem::Start() {}
+
+    void CameraSystem::Update(float frame_time)
+    {
+        for (auto [entity, transfrom_component, camera_component] :
+             g_runtime_global_context.registry.view<Transform3DComponent, Camera3DComponent>().each())
+        {
+            // TODO: camera type
+            UpdateFreeCamera(transfrom_component, camera_component, frame_time);
+        }
+    }
+
     void CameraSystem::UpdateFreeCamera(Transform3DComponent& transform_component,
                                         Camera3DComponent&    camera_component,
                                         float                 frame_time)
@@ -61,15 +73,5 @@ namespace Meow
         movement *= frame_time * 20.0f;
 
         transform_component.position += movement;
-    }
-
-    void CameraSystem::Update(float frame_time)
-    {
-        for (auto [entity, transfrom_component, camera_component] :
-             g_runtime_global_context.registry.view<Transform3DComponent, Camera3DComponent>().each())
-        {
-            // TODO: camera type
-            UpdateFreeCamera(transfrom_component, camera_component, frame_time);
-        }
     }
 } // namespace Meow

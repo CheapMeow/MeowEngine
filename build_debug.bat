@@ -3,9 +3,9 @@
 cls
 
 REM Configure a debug build
-cmake -S . -B build/ -D CMAKE_BUILD_TYPE=Debug
+cmake -S . -B build/
 
 REM Actually build the binaries
-cmake --build build/
+cmake --build build/ --config Debug
 
 pause

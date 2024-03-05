@@ -2,26 +2,23 @@
 
 #include "function/systems/render/structs/buffer_data.h"
 #include "function/systems/render/structs/depth_buffer_data.h"
+#include "function/systems/render/structs/material.h"
 #include "function/systems/render/structs/surface_data.h"
 #include "function/systems/render/structs/swapchain_data.h"
 #include "function/systems/render/structs/texture_data.hpp"
+#include "function/systems/render/structs/ubo_data.h"
 #include "function/systems/system.h"
 #include "function/systems/window/window.h"
 
 #include <vulkan/vulkan_raii.hpp>
 
+#include <functional>
 #include <memory>
+#include <queue>
 #include <vector>
 
 namespace Meow
 {
-    struct UBOData
-    {
-        glm::mat4 model      = glm::mat4(1.0f);
-        glm::mat4 view       = glm::mat4(1.0f);
-        glm::mat4 projection = glm::mat4(1.0f);
-    };
-
     struct PerFrameData
     {
         vk::raii::CommandPool   command_pool   = nullptr;
@@ -62,10 +59,37 @@ namespace Meow
         RenderSystem();
         ~RenderSystem();
 
-        void UpdateUniformBuffer(UBOData ubo_data);
+        void Start() override;
+
         void Update(float frame_time);
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
+
+        TextureData CreateTextureData(vk::Extent2D const& extent)
+        {
+            return TextureData(m_gpu, m_logical_device, extent);
+        }
+
+        Material CreateMaterial(std::string                  vert_shader_file_path,
+                                std::string                  frag_shader_file_path,
+                                std::shared_ptr<TextureData> diffuse_texture)
+        {
+            return Material(m_gpu,
+                            m_logical_device,
+                            m_descriptor_pool,
+                            m_render_pass,
+                            vert_shader_file_path,
+                            frag_shader_file_path,
+                            diffuse_texture);
+        }
+
+        /**
+         * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
+         * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
+         *
+         * @param command Function handler of render task.
+         */
+        void EnQueueRenderCommand(std::function<void(vk::raii::CommandBuffer const&)> command);
 
     private:
         void CreateVulkanInstance();
@@ -78,10 +102,7 @@ namespace Meow
         void CreateSwapChian();
         void CreateUploadContext();
         void CreateDepthBuffer();
-        void CreateUniformBuffer();
-        void CreateDescriptorSetLayout();
         void CreateDescriptorPool();
-        void CreateDescriptorSet();
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreatePerFrameData();
@@ -108,22 +129,25 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger = nullptr;
 #endif
-        vk::raii::PhysicalDevice           m_gpu                   = nullptr;
-        SurfaceData                        m_surface_data          = nullptr;
-        vk::raii::Device                   m_logical_device        = nullptr;
-        vk::raii::Queue                    m_graphics_queue        = nullptr;
-        vk::raii::Queue                    m_present_queue         = nullptr;
-        SwapChainData                      m_swapchain_data        = nullptr;
-        UploadContext                      m_upload_context        = nullptr;
-        DepthBufferData                    m_depth_buffer_data     = nullptr;
-        BufferData                         m_uniform_buffer_data   = nullptr;
-        vk::raii::DescriptorSetLayout      m_descriptor_set_layout = nullptr;
-        vk::raii::DescriptorPool           m_descriptor_pool       = nullptr;
-        vk::raii::DescriptorSet            m_descriptor_set        = nullptr;
-        vk::raii::RenderPass               m_render_pass           = nullptr;
+        vk::raii::PhysicalDevice           m_gpu               = nullptr;
+        SurfaceData                        m_surface_data      = nullptr;
+        vk::raii::Device                   m_logical_device    = nullptr;
+        vk::raii::Queue                    m_graphics_queue    = nullptr;
+        vk::raii::Queue                    m_present_queue     = nullptr;
+        SwapChainData                      m_swapchain_data    = nullptr;
+        UploadContext                      m_upload_context    = nullptr;
+        DepthBufferData                    m_depth_buffer_data = nullptr;
+        vk::raii::DescriptorPool           m_descriptor_pool   = nullptr;
+        vk::raii::RenderPass               m_render_pass       = nullptr;
         std::vector<vk::raii::Framebuffer> m_framebuffers;
         std::vector<PerFrameData>          m_per_frame_data;
 
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
+
+        /**
+         * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
+         * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
+         */
+        std::queue<std::function<void(vk::raii::CommandBuffer const&)>> m_pending_commands;
     };
 } // namespace Meow

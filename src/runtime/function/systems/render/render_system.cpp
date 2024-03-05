@@ -192,52 +192,26 @@ namespace Meow
 #endif
     }
 
-    void RenderSystem::CreateUniformBuffer()
-    {
-        // TODO: UBOData is temp
-        m_uniform_buffer_data =
-            BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Uniform Buffer";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eBuffer, GetVulkanHandle(*m_uniform_buffer_data.buffer), object_name.c_str(), nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-        object_name = "Uniform Buffer Device Memory";
-        name_info   = {vk::ObjectType::eDeviceMemory,
-                       GetVulkanHandle(*m_uniform_buffer_data.device_memory),
-                       object_name.c_str(),
-                       nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-    }
-
-    void RenderSystem::CreateDescriptorSetLayout()
-    {
-        m_descriptor_set_layout = MakeDescriptorSetLayout(
-            m_logical_device, {{vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}});
-    }
-
     void RenderSystem::CreateDescriptorPool()
     {
         // create a descriptor pool
-        vk::DescriptorPoolSize       pool_size(vk::DescriptorType::eUniformBuffer, 1);
-        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
-            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1, pool_size);
+        // TODO: descriptor pool size is determined by all materials, so
+        // it depends on analysis of shader?
+        // Or you can allocate a very large pool at first?
+        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
+                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
+                                                          {vk::DescriptorType::eSampledImage, 1000},
+                                                          {vk::DescriptorType::eStorageImage, 1000},
+                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eInputAttachment, 1000}};
+        vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
         m_descriptor_pool = vk::raii::DescriptorPool(m_logical_device, descriptor_pool_create_info);
-    }
-
-    void RenderSystem::CreateDescriptorSet()
-    {
-        // allocate a descriptor set
-        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(*m_descriptor_pool, *m_descriptor_set_layout);
-        m_descriptor_set = vk::raii::DescriptorSet(
-            std::move(vk::raii::DescriptorSets(m_logical_device, descriptor_set_allocate_info).front()));
-        // TODO: Uniform set is temp
-        UpdateDescriptorSets(
-            m_logical_device,
-            m_descriptor_set,
-            {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
-            {});
     }
 
     void RenderSystem::CreateRenderPass()
@@ -440,45 +414,11 @@ namespace Meow
         CreateSwapChian();
         CreateUploadContext();
         CreateDepthBuffer();
-        CreateUniformBuffer();
-        CreateDescriptorSetLayout();
         CreateDescriptorPool();
-        CreateDescriptorSet();
         CreateRenderPass();
         CreateFramebuffers();
         CreatePerFrameData();
         InitImGui();
-
-        // TODO: temp material creation
-        g_runtime_global_context.resource_system->m_materials["Default Material"] =
-            Material(m_logical_device, m_descriptor_set_layout, m_render_pass);
-
-        // TODO: creating entity should be obstract
-        const auto camera_entity = g_runtime_global_context.registry.create();
-        auto&      camera_transform_component =
-            g_runtime_global_context.registry.emplace<Transform3DComponent>(camera_entity);
-        auto& camera_component          = g_runtime_global_context.registry.emplace<Camera3DComponent>(camera_entity);
-        camera_component.is_main_camera = true;
-
-        const auto model_entity = g_runtime_global_context.registry.create();
-        g_runtime_global_context.registry.emplace<Transform3DComponent>(model_entity);
-        // model_transform_component.global_transform =
-        //     glm::rotate(model_transform_component.global_transform, glm::radians(180.0f), glm::vec3(0.0f, 1.0f,
-        //     0.0f));
-        auto& model_component = g_runtime_global_context.registry.emplace<ModelComponent>(
-            model_entity,
-            m_gpu,
-            m_logical_device,
-            m_upload_context.command_pool,
-            m_graphics_queue,
-            "builtin/models/monkey_head.obj",
-            std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
-
-        BoundingBox model_bounding          = model_component.model.GetBounding();
-        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
-        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
-        camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
-        // glm::lookAt
     }
 
     RenderSystem::~RenderSystem()
@@ -497,14 +437,34 @@ namespace Meow
         ImGui::DestroyContext();
     }
 
-    void RenderSystem::UpdateUniformBuffer(UBOData ubo_data)
+    void RenderSystem::Start()
     {
-        CopyToDevice(m_uniform_buffer_data.device_memory, ubo_data);
-        UpdateDescriptorSets(
+        // TODO: creating entity should be obstract
+        const auto camera_entity = g_runtime_global_context.registry.create();
+        auto&      camera_transform_component =
+            g_runtime_global_context.registry.emplace<Transform3DComponent>(camera_entity);
+        auto& camera_component          = g_runtime_global_context.registry.emplace<Camera3DComponent>(camera_entity);
+        camera_component.is_main_camera = true;
+
+        const auto model_entity = g_runtime_global_context.registry.create();
+        g_runtime_global_context.registry.emplace<Transform3DComponent>(model_entity);
+        // model_transform_component.global_transform =
+        //     glm::rotate(model_transform_component.global_transform, glm::radians(180.0f), glm::vec3(0.0f, 1.0f,
+        //     0.0f));
+        auto& model_component = g_runtime_global_context.registry.emplace<ModelComponent>(
+            model_entity,
+            m_gpu,
             m_logical_device,
-            m_descriptor_set,
-            {{vk::DescriptorType::eUniformBuffer, m_uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr}},
-            {});
+            m_upload_context.command_pool,
+            m_graphics_queue,
+            "builtin/models/backpack/backpack.obj",
+            std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
+
+        BoundingBox model_bounding          = model_component.model.GetBounding();
+        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
+        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
+        camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
+        // glm::lookAt
     }
 
     /**
@@ -640,14 +600,27 @@ namespace Meow
 
         // ------------------- render -------------------
 
-        UpdateUniformBuffer(ubo_data);
+        // TODO: Try UpdateUniformBuffer after Render pass begin
+        // UpdateUniformBuffer(ubo_data);
 
         if (StartRenderpass())
         {
             auto& per_frame_data = m_per_frame_data[m_current_frame_index];
             auto& cmd_buffer     = per_frame_data.command_buffer;
 
-            std::unordered_map<Material*, std::vector<Renderable*>> renderables_per_material;
+            // Handling command after command buffer begin
+
+            while (!m_pending_commands.empty())
+            {
+                auto command = m_pending_commands.front();
+                m_pending_commands.pop();
+
+                command(cmd_buffer);
+            }
+
+            // Collate renderable mesh
+
+            std::unordered_map<std::string, std::vector<Renderable*>> renderables_per_material;
 
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
@@ -657,16 +630,18 @@ namespace Meow
 
                 for (Mesh& mesh : model_component.model.meshes)
                 {
-                    Material* material_ptr = &g_runtime_global_context.resource_system->m_materials[mesh.material_name];
-                    renderables_per_material[material_ptr].push_back(&mesh);
+                    renderables_per_material[mesh.material_name].push_back(&mesh);
                 }
             }
 
             // TODO: sort renderables by distance
 
-            for (std::pair<Material*, std::vector<Renderable*>> kv : renderables_per_material)
+            for (auto kv : renderables_per_material)
             {
-                kv.first->Bind(cmd_buffer, m_descriptor_set);
+                std::shared_ptr<Material> material_ptr =
+                    g_runtime_global_context.resource_system->GetMaterial(kv.first);
+                material_ptr->Bind(cmd_buffer);
+                material_ptr->UpdateUniformBuffer(ubo_data);
 
                 for (Renderable* renderable : kv.second)
                 {
@@ -690,4 +665,10 @@ namespace Meow
             EndRenderpass();
         }
     }
+
+    void RenderSystem::EnQueueRenderCommand(std::function<void(vk::raii::CommandBuffer const&)> command)
+    {
+        m_pending_commands.push(command);
+    }
+
 } // namespace Meow
