@@ -608,46 +608,46 @@ namespace Meow
             auto& per_frame_data = m_per_frame_data[m_current_frame_index];
             auto& cmd_buffer     = per_frame_data.command_buffer;
 
-            // // Handling command after command buffer begin
+            // Handling command after command buffer begin
 
-            // while (!m_pending_commands.empty())
-            // {
-            //     auto command = m_pending_commands.front();
-            //     m_pending_commands.pop();
+            while (!m_pending_commands.empty())
+            {
+                auto command = m_pending_commands.front();
+                m_pending_commands.pop();
 
-            //     command(cmd_buffer);
-            // }
+                command(cmd_buffer);
+            }
 
-            // // Collate renderable mesh
+            // Collate renderable mesh
 
-            // std::unordered_map<std::string, std::vector<Renderable*>> renderables_per_material;
+            std::unordered_map<std::string, std::vector<Renderable*>> renderables_per_material;
 
-            // for (auto [entity, transfrom_component, model_component] :
-            //      g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-            // {
-            //     // TODO: How to solve the different uniform buffer problem?
-            //     // ubo_data.model = transfrom_component.m_global_transform;
+            for (auto [entity, transfrom_component, model_component] :
+                 g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+            {
+                // TODO: How to solve the different uniform buffer problem?
+                // ubo_data.model = transfrom_component.m_global_transform;
 
-            //     for (Mesh& mesh : model_component.model.meshes)
-            //     {
-            //         renderables_per_material[mesh.material_name].push_back(&mesh);
-            //     }
-            // }
+                for (Mesh& mesh : model_component.model.meshes)
+                {
+                    renderables_per_material[mesh.material_name].push_back(&mesh);
+                }
+            }
 
-            // // TODO: sort renderables by distance
+            // TODO: sort renderables by distance
 
-            // for (auto kv : renderables_per_material)
-            // {
-            //     std::shared_ptr<Material> material_ptr =
-            //         g_runtime_global_context.resource_system->GetMaterial(kv.first);
-            //     material_ptr->Bind(cmd_buffer);
-            //     material_ptr->UpdateUniformBuffer(ubo_data);
+            for (auto kv : renderables_per_material)
+            {
+                std::shared_ptr<Material> material_ptr =
+                    g_runtime_global_context.resource_system->GetMaterial(kv.first);
+                material_ptr->Bind(cmd_buffer);
+                material_ptr->UpdateUniformBuffer(ubo_data);
 
-            //     for (Renderable* renderable : kv.second)
-            //     {
-            //         renderable->BindDrawCmd(cmd_buffer);
-            //     }
-            // }
+                for (Renderable* renderable : kv.second)
+                {
+                    renderable->BindDrawCmd(cmd_buffer);
+                }
+            }
 
             ImGui::Render();
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
