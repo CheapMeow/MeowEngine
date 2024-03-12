@@ -28,7 +28,7 @@ namespace Meow
             }
             else
             {
-                cmd_buffer.drawIndexed(index_count, 1, 0, 0, 0);
+                cmd_buffer.drawIndexed(index_buffer_ptr->index_count, 1, 0, 0, 0);
             }
         }
 
@@ -37,13 +37,13 @@ namespace Meow
             if (vertex_buffer_ptr)
             {
                 cmd_buffer.bindVertexBuffers(
-                    0, {*vertex_buffer_ptr->buffer_data_ptr->buffer}, &(vertex_buffer_ptr->offset));
+                    0, {*vertex_buffer_ptr->buffer_data_ptr->buffer}, {vertex_buffer_ptr->offset});
             }
 
             if (instance_buffer_ptr)
             {
                 cmd_buffer.bindVertexBuffers(
-                    0, {*instance_buffer_ptr->buffer_data_ptr->buffer}, &(instance_buffer_ptr->offset));
+                    0, {*instance_buffer_ptr->buffer_data_ptr->buffer}, {instance_buffer_ptr->offset});
             }
 
             if (index_buffer_ptr)

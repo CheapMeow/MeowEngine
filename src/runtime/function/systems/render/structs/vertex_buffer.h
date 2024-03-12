@@ -16,8 +16,8 @@ namespace Meow
                      vk::raii::Device const&         device,
                      vk::raii::CommandPool const&    command_pool,
                      vk::raii::Queue const&          queue,
-                     std::vector<float>&             vertices,
-                     vk::MemoryPropertyFlags         property_flags)
+                     vk::MemoryPropertyFlags         property_flags,
+                     std::vector<float>&             vertices)
         {
             buffer_data_ptr = std::make_shared<BufferData>(physical_device,
                                                            device,
