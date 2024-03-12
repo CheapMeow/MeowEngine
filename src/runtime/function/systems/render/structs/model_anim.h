@@ -60,7 +60,7 @@ namespace Meow
 
     struct ModelAnimationClip
     {
-        std::string                 nodeName;
+        std::string                 node_name;
         float                       duration;
         ModelAnimChannel<glm::vec3> positions;
         ModelAnimChannel<glm::vec3> scales;

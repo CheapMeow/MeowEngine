@@ -9,7 +9,6 @@
 #include <glm/gtc/random.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-
 #include <format>
 #include <limits>
 #include <unordered_map>
@@ -32,6 +31,8 @@ namespace Meow
                  std::vector<VertexAttribute>    attributes,
                  vk::IndexType                   index_type = vk::IndexType::eUint16)
     {
+        this->attributes = attributes;
+
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
 
         for (size_t i = 0; i < attributes.size(); ++i)
@@ -118,7 +119,7 @@ namespace Meow
 
     void Model::LoadBones(const aiScene* ai_scene)
     {
-        std::unordered_map<std::string, size_t> boneIndexMap;
+        std::unordered_map<std::string, size_t> bone_index_map;
         for (size_t i = 0; i < (size_t)ai_scene->mNumMeshes; ++i)
         {
             aiMesh* ai_mesh = ai_scene->mMeshes[i];
@@ -127,65 +128,65 @@ namespace Meow
                 aiBone*     ai_bone = ai_mesh->mBones[j];
                 std::string name    = ai_bone->mName.C_Str();
 
-                auto it = boneIndexMap.find(name);
-                if (it == boneIndexMap.end())
+                auto it = bone_index_map.find(name);
+                if (it == bone_index_map.end())
                 {
                     // new bone
-                    size_t     index      = (size_t)bones.size();
-                    ModelBone* bone       = new ModelBone();
-                    bone->index           = index;
-                    bone->parent          = -1;
-                    bone->name            = name;
-                    bone->inverseBindPose = AssimpGLMHelpers::ConvertMatrixToGLMFormat(ai_bone->mOffsetMatrix);
+                    size_t     index        = (size_t)bones.size();
+                    ModelBone* bone         = new ModelBone();
+                    bone->index             = index;
+                    bone->parent            = -1;
+                    bone->name              = name;
+                    bone->inverse_bind_pose = AssimpGLMHelpers::ConvertMatrixToGLMFormat(ai_bone->mOffsetMatrix);
                     // 记录Bone信息
                     bones.push_back(bone);
                     bones_map.insert(std::make_pair(name, bone));
                     // cache
-                    boneIndexMap.insert(std::make_pair(name, index));
+                    bone_index_map.insert(std::make_pair(name, index));
                 }
             }
         }
     }
 
-    void Model::LoadSkin(std::unordered_map<size_t, ModelVertexSkin>& skinInfoMap,
+    void Model::LoadSkin(std::unordered_map<size_t, ModelVertexSkin>& skin_info_map,
                          ModelMesh*                                   mesh,
                          const aiMesh*                                ai_mesh,
                          const aiScene*                               ai_scene)
     {
-        std::unordered_map<size_t, size_t> boneIndexMap;
+        std::unordered_map<size_t, size_t> bone_index_map;
 
         for (size_t i = 0; i < (size_t)ai_mesh->mNumBones; ++i)
         {
-            aiBone*     boneInfo = ai_mesh->mBones[i];
-            std::string boneName(boneInfo->mName.C_Str());
-            size_t      boneIndex = bones_map[boneName]->index;
+            aiBone*     bone_info = ai_mesh->mBones[i];
+            std::string bone_name(bone_info->mName.C_Str());
+            size_t      bone_index = bones_map[bone_name]->index;
 
             // bone在mesh中的索引
-            size_t meshBoneIndex = 0;
-            auto   it            = boneIndexMap.find(boneIndex);
-            if (it == boneIndexMap.end())
+            size_t mesh_bone_index = 0;
+            auto   it              = bone_index_map.find(bone_index);
+            if (it == bone_index_map.end())
             {
-                meshBoneIndex = (size_t)mesh->bones.size();
-                mesh->bones.push_back(boneIndex);
-                boneIndexMap.insert(std::make_pair(boneIndex, meshBoneIndex));
+                mesh_bone_index = (size_t)mesh->bones.size();
+                mesh->bones.push_back(bone_index);
+                bone_index_map.insert(std::make_pair(bone_index, mesh_bone_index));
             }
             else
             {
-                meshBoneIndex = it->second;
+                mesh_bone_index = it->second;
             }
 
             // 收集被Bone影响的顶点信息
-            for (size_t j = 0; j < boneInfo->mNumWeights; ++j)
+            for (size_t j = 0; j < bone_info->mNumWeights; ++j)
             {
-                size_t vertexID = boneInfo->mWeights[j].mVertexId;
-                float  weight   = boneInfo->mWeights[j].mWeight;
+                size_t vertexID = bone_info->mWeights[j].mVertexId;
+                float  weight   = bone_info->mWeights[j].mWeight;
                 // 顶点->Bone
-                if (skinInfoMap.find(vertexID) == skinInfoMap.end())
+                if (skin_info_map.find(vertexID) == skin_info_map.end())
                 {
-                    skinInfoMap.insert(std::make_pair(vertexID, ModelVertexSkin()));
+                    skin_info_map.insert(std::make_pair(vertexID, ModelVertexSkin()));
                 }
-                ModelVertexSkin* info     = &(skinInfoMap[vertexID]);
-                info->indices[info->used] = meshBoneIndex;
+                ModelVertexSkin* info     = &(skin_info_map[vertexID]);
+                info->indices[info->used] = mesh_bone_index;
                 info->weights[info->used] = weight;
                 info->used += 1;
                 // 只允许最多四个骨骼影响顶点
@@ -196,8 +197,8 @@ namespace Meow
             }
         }
 
-        // 再次处理一遍skinInfoMap，把未使用的补齐
-        for (auto it = skinInfoMap.begin(); it != skinInfoMap.end(); ++it)
+        // 再次处理一遍skin_info_map，把未使用的补齐
+        for (auto it = skin_info_map.begin(); it != skin_info_map.end(); ++it)
         {
             ModelVertexSkin& info = it->second;
             for (size_t i = info.used; i < 4; ++i)
@@ -210,7 +211,7 @@ namespace Meow
         mesh->isSkin = true;
     }
 
-    void Model::LoadVertexDatas(std::unordered_map<size_t, ModelVertexSkin>& skinInfoMap,
+    void Model::LoadVertexDatas(std::unordered_map<size_t, ModelVertexSkin>& skin_info_map,
                                 std::vector<float>&                          vertices,
                                 glm::vec3&                                   mmax,
                                 glm::vec3&                                   mmin,
@@ -299,24 +300,24 @@ namespace Meow
                 {
                     if (mesh->isSkin)
                     {
-                        ModelVertexSkin& skin = skinInfoMap[i];
+                        ModelVertexSkin& skin = skin_info_map[i];
 
-                        size_t idx0      = skin.indices[0];
-                        size_t idx1      = skin.indices[1];
-                        size_t idx2      = skin.indices[2];
-                        size_t idx3      = skin.indices[3];
-                        size_t packIndex = (idx0 << 24) + (idx1 << 16) + (idx2 << 8) + idx3;
+                        size_t idx0       = skin.indices[0];
+                        size_t idx1       = skin.indices[1];
+                        size_t idx2       = skin.indices[2];
+                        size_t idx3       = skin.indices[3];
+                        size_t pack_index = (idx0 << 24) + (idx1 << 16) + (idx2 << 8) + idx3;
 
-                        uint16_t weight0     = uint16_t(skin.weights[0] * 65535);
-                        uint16_t weight1     = uint16_t(skin.weights[1] * 65535);
-                        uint16_t weight2     = uint16_t(skin.weights[2] * 65535);
-                        uint16_t weight3     = uint16_t(skin.weights[3] * 65535);
-                        size_t   packWeight0 = (weight0 << 16) + weight1;
-                        size_t   packWeight1 = (weight2 << 16) + weight3;
+                        uint16_t weight0      = uint16_t(skin.weights[0] * 65535);
+                        uint16_t weight1      = uint16_t(skin.weights[1] * 65535);
+                        uint16_t weight2      = uint16_t(skin.weights[2] * 65535);
+                        uint16_t weight3      = uint16_t(skin.weights[3] * 65535);
+                        size_t   pack_weight0 = (weight0 << 16) + weight1;
+                        size_t   pack_weight1 = (weight2 << 16) + weight3;
 
-                        vertices.push_back((float)packIndex);
-                        vertices.push_back((float)packWeight0);
-                        vertices.push_back((float)packWeight1);
+                        vertices.push_back((float)pack_index);
+                        vertices.push_back((float)pack_weight0);
+                        vertices.push_back((float)pack_weight1);
                     }
                     else
                     {
@@ -329,7 +330,7 @@ namespace Meow
                 {
                     if (mesh->isSkin)
                     {
-                        ModelVertexSkin& skin = skinInfoMap[i];
+                        ModelVertexSkin& skin = skin_info_map[i];
                         vertices.push_back((float)skin.indices[0]);
                         vertices.push_back((float)skin.indices[1]);
                         vertices.push_back((float)skin.indices[2]);
@@ -347,7 +348,7 @@ namespace Meow
                 {
                     if (mesh->isSkin)
                     {
-                        ModelVertexSkin& skin = skinInfoMap[i];
+                        ModelVertexSkin& skin = skin_info_map[i];
                         vertices.push_back(skin.weights[0]);
                         vertices.push_back(skin.weights[1]);
                         vertices.push_back(skin.weights[2]);
@@ -397,7 +398,7 @@ namespace Meow
 
         if (indices.size() > 65535)
         {
-            std::unordered_map<size_t, size_t> indicesMap;
+            std::unordered_map<size_t, size_t> indices_map;
             ModelPrimitive*                    primitive = nullptr;
 
             for (size_t i = 0; i < indices.size(); ++i)
@@ -406,19 +407,19 @@ namespace Meow
                 if (primitive == nullptr)
                 {
                     primitive = new ModelPrimitive();
-                    indicesMap.clear();
+                    indices_map.clear();
                     mesh->primitives.push_back(primitive);
                 }
 
                 size_t newIdx = 0;
-                auto   it     = indicesMap.find(idx);
-                if (it == indicesMap.end())
+                auto   it     = indices_map.find(idx);
+                if (it == indices_map.end())
                 {
                     size_t start = idx * stride;
                     newIdx       = (size_t)primitive->vertices.size() / stride;
                     primitive->vertices.insert(
                         primitive->vertices.end(), vertices.begin() + start, vertices.begin() + start + stride);
-                    indicesMap.insert(std::make_pair(idx, newIdx));
+                    indices_map.insert(std::make_pair(idx, newIdx));
                 }
                 else
                 {
@@ -502,10 +503,10 @@ namespace Meow
         }
 
         // load bones
-        std::unordered_map<size_t, ModelVertexSkin> skinInfoMap;
+        std::unordered_map<size_t, ModelVertexSkin> skin_info_map;
         if (ai_mesh->mNumBones > 0 && loadSkin)
         {
-            LoadSkin(skinInfoMap, mesh, ai_mesh, ai_scene);
+            LoadSkin(skin_info_map, mesh, ai_mesh, ai_scene);
         }
 
         // load vertex data
@@ -515,7 +516,7 @@ namespace Meow
         glm::vec3 mmax(-std::numeric_limits<float>().max(),
                        -std::numeric_limits<float>().max(),
                        -std::numeric_limits<float>().max());
-        LoadVertexDatas(skinInfoMap, vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
+        LoadVertexDatas(skin_info_map, vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
 
         // load indices
         std::vector<size_t> indices;
@@ -562,7 +563,7 @@ namespace Meow
         }
 
         // nodes map
-        nodesMap.insert(std::make_pair(model_node->name, model_node));
+        nodes_map.insert(std::make_pair(model_node->name, model_node));
         linear_nodes.push_back(model_node);
 
         // bones parent
@@ -608,13 +609,13 @@ namespace Meow
 
             for (size_t j = 0; j < (size_t)ai_animation->mNumChannels; ++j)
             {
-                aiNodeAnim* nodeAnim = ai_animation->mChannels[j];
-                std::string nodeName = nodeAnim->mNodeName.C_Str();
+                aiNodeAnim* nodeAnim  = ai_animation->mChannels[j];
+                std::string node_name = nodeAnim->mNodeName.C_Str();
 
-                model_animation.clips.insert(std::make_pair(nodeName, ModelAnimationClip()));
+                model_animation.clips.insert(std::make_pair(node_name, ModelAnimationClip()));
 
-                ModelAnimationClip& animClip = model_animation.clips[nodeName];
-                animClip.nodeName            = nodeName;
+                ModelAnimationClip& animClip = model_animation.clips[node_name];
+                animClip.node_name           = node_name;
                 animClip.duration            = 0.0f;
 
                 // position
@@ -664,7 +665,7 @@ namespace Meow
         for (auto it = animation.clips.begin(); it != animation.clips.end(); ++it)
         {
             ModelAnimationClip& clip = it->second;
-            ModelNode*          node = nodesMap[clip.nodeName];
+            ModelNode*          node = nodes_map[clip.node_name];
 
             float alpha = 0.0f;
 
@@ -696,10 +697,10 @@ namespace Meow
         for (size_t i = 0; i < bones.size(); ++i)
         {
             ModelBone* bone = bones[i];
-            ModelNode* node = nodesMap[bone->name];
+            ModelNode* node = nodes_map[bone->name];
             // 注意行列矩阵的区别
-            bone->finalTransform = bone->inverseBindPose;
-            bone->finalTransform = node->GetGlobalMatrix() * bone->finalTransform;
+            bone->final_transform = bone->inverse_bind_pose;
+            bone->final_transform = node->GetGlobalMatrix() * bone->final_transform;
         }
     }
 
@@ -741,41 +742,6 @@ namespace Meow
             index = animIndex;
         }
         return animations[index];
-    }
-
-    VkVertexInputBindingDescription Model::GetInputBinding()
-    {
-        size_t stride = 0;
-        for (size_t i = 0; i < attributes.size(); ++i)
-        {
-            stride += VertexAttributeToSize(attributes[i]);
-        }
-
-        VkVertexInputBindingDescription vertexInputBinding = {};
-        vertexInputBinding.binding                         = 0;
-        vertexInputBinding.stride                          = stride;
-        vertexInputBinding.inputRate                       = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return vertexInputBinding;
-    }
-
-    std::vector<VkVertexInputAttributeDescription> Model::GetInputAttributes()
-    {
-        std::vector<VkVertexInputAttributeDescription> vertexInputAttributs;
-        size_t                                         offset = 0;
-
-        for (size_t i = 0; i < attributes.size(); ++i)
-        {
-            VkVertexInputAttributeDescription inputAttribute = {};
-            inputAttribute.binding                           = 0;
-            inputAttribute.location                          = i;
-            inputAttribute.format                            = VertexAttributeToVkFormat(attributes[i]);
-            inputAttribute.offset                            = offset;
-            offset += VertexAttributeToSize(attributes[i]);
-            vertexInputAttributs.push_back(inputAttribute);
-        }
-
-        return vertexInputAttributs;
     }
 
 } // namespace Meow

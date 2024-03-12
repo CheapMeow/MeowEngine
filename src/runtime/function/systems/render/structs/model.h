@@ -20,8 +20,8 @@ namespace Meow
         std::string name;
         size_t      index  = -1;
         size_t      parent = -1;
-        glm::mat4   inverseBindPose;
-        glm::mat4   finalTransform;
+        glm::mat4   inverse_bind_pose;
+        glm::mat4   final_transform;
     };
 
     struct VertexSkin
@@ -36,11 +36,11 @@ namespace Meow
         typedef std::unordered_map<std::string, ModelNode*> NodesMap;
         typedef std::unordered_map<std::string, ModelBone*> BonesMap;
 
-        ModelNode*              root_node;
+        ModelNode*              root_node = nullptr;
         std::vector<ModelNode*> linear_nodes;
         std::vector<ModelMesh*> meshes;
 
-        NodesMap nodesMap;
+        NodesMap nodes_map;
 
         std::vector<ModelBone*> bones;
         BonesMap                bones_map;
@@ -82,10 +82,6 @@ namespace Meow
 
         void GotoAnimation(float time);
 
-        VkVertexInputBindingDescription GetInputBinding();
-
-        std::vector<VkVertexInputAttributeDescription> GetInputAttributes();
-
     protected:
         ModelNode* LoadNode(vk::raii::PhysicalDevice const& physical_device,
                             vk::raii::Device const&         device,
@@ -103,12 +99,12 @@ namespace Meow
 
         void LoadBones(const aiScene* aiScene);
 
-        void LoadSkin(std::unordered_map<size_t, ModelVertexSkin>& skinInfoMap,
+        void LoadSkin(std::unordered_map<size_t, ModelVertexSkin>& skin_info_map,
                       ModelMesh*                                   mesh,
                       const aiMesh*                                aiMesh,
                       const aiScene*                               aiScene);
 
-        void LoadVertexDatas(std::unordered_map<size_t, ModelVertexSkin>& skinInfoMap,
+        void LoadVertexDatas(std::unordered_map<size_t, ModelVertexSkin>& skin_info_map,
                              std::vector<float>&                          vertices,
                              glm::vec3&                                   mmax,
                              glm::vec3&                                   mmin,

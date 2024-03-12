@@ -649,6 +649,22 @@ namespace Meow
             //     }
             // }
 
+            // Testing
+
+            for (auto [entity, transfrom_component, model_component] :
+                 g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+            {
+                std::shared_ptr<Material> material_ptr =
+                    g_runtime_global_context.resource_system->GetMaterial("Default Material");
+                material_ptr->Bind(cmd_buffer);
+                material_ptr->UpdateUniformBuffer(ubo_data);
+
+                for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
+                {
+                    model_component.model.meshes[meshIndex]->BindDrawCmd(cmd_buffer);
+                }
+            }
+
             ImGui::Render();
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
 

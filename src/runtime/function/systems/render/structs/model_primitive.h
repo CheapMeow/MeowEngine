@@ -14,7 +14,6 @@ namespace Meow
         std::shared_ptr<VertexBuffer> instance_buffer_ptr = nullptr;
 
         std::vector<float>    vertices;
-        std::vector<float>    instanceDatas;
         std::vector<uint16_t> indices;
 
         size_t vertex_count = 0;

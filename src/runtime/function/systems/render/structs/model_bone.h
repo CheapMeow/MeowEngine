@@ -11,8 +11,8 @@ namespace Meow
         std::string name;
         size_t      index  = -1;
         size_t      parent = -1;
-        glm::mat4   inverseBindPose;
-        glm::mat4   finalTransform;
+        glm::mat4   inverse_bind_pose;
+        glm::mat4   final_transform;
     };
 
     struct ModelVertexSkin
