@@ -460,7 +460,7 @@ namespace Meow
             "builtin/models/backpack/backpack.obj",
             std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
 
-        BoundingBox model_bounding          = model_component.model.GetBounding();
+        BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
         glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
