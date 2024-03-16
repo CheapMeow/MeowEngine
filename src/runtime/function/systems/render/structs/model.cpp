@@ -33,7 +33,7 @@ namespace Meow
     {
         this->attributes = attributes;
 
-        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
+        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
         for (size_t i = 0; i < attributes.size(); ++i)
         {

@@ -36,24 +36,22 @@ namespace Meow
 
         // TODO: temp vertex layout
         vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
-        graphics_pipeline = MakeGraphicsPipeline(logical_device,
-                                                 pipeline_cache,
-                                                 vertex_shader_module,
-                                                 nullptr,
-                                                 fragment_shader_module,
-                                                 nullptr,
-                                                 VertexAttributesToSize({VertexAttribute::VA_Position,
-                                                                         VertexAttribute::VA_Normal,
-                                                                         VertexAttribute::VA_Color,
-                                                                         VertexAttribute::VA_UV0}),
-                                                 {{vk::Format::eR32G32B32Sfloat, 0},
-                                                  {vk::Format::eR32G32B32Sfloat, 12},
-                                                  {vk::Format::eR32G32B32Sfloat, 24},
-                                                  {vk::Format::eR32G32Sfloat, 36}},
-                                                 vk::FrontFace::eClockwise,
-                                                 true,
-                                                 pipeline_layout,
-                                                 render_pass);
+        graphics_pipeline =
+            MakeGraphicsPipeline(logical_device,
+                                 pipeline_cache,
+                                 vertex_shader_module,
+                                 nullptr,
+                                 fragment_shader_module,
+                                 nullptr,
+                                 VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal}),
+                                 {{vk::Format::eR32G32B32Sfloat, 0},
+                                  {vk::Format::eR32G32B32Sfloat, 12},
+                                  {vk::Format::eR32G32B32Sfloat, 24},
+                                  {vk::Format::eR32G32Sfloat, 36}},
+                                 vk::FrontFace::eClockwise,
+                                 true,
+                                 pipeline_layout,
+                                 render_pass);
 
         CreateUniformBuffer(gpu, logical_device);
         CreateDescriptorSet(logical_device, descriptor_pool);
@@ -97,7 +95,7 @@ namespace Meow
         // It should be generated from analysis of shader?
         // And this should be done by material?
         UpdateDescriptorSets(
-            logical_device,     // device
+            logical_device, // device
             descriptor_set, // descriptor_set
             {
                 {vk::DescriptorType::eUniformBuffer, uniform_buffer_data.buffer, VK_WHOLE_SIZE, nullptr},

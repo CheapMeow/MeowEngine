@@ -29,7 +29,7 @@ namespace Meow
     ModelResInfo::ModelResInfo(const std::string& _file_path)
         : file_path(_file_path)
     {
-        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_PreTransformVertices;
+        int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
         auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
 
