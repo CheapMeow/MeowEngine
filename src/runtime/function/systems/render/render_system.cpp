@@ -457,7 +457,7 @@ namespace Meow
             m_logical_device,
             m_upload_context.command_pool,
             m_graphics_queue,
-            "builtin/models/backpack/backpack.obj",
+            "builtin/models/monkey_head.obj",
             std::vector<VertexAttribute> {VertexAttribute::VA_Position, VertexAttribute::VA_Normal});
 
         BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
