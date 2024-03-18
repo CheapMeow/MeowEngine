@@ -2,7 +2,7 @@
 
 #include "core/base/macro.h"
 #include "core/base/non_copyable.h"
-#include "function/systems/system.h"
+#include "function/system.h"
 
 #include <memory>
 #include <vector>

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "function/systems/camera/camera_system.h"
-#include "function/systems/file/file_system.h"
-#include "function/systems/input/input_system.h"
-#include "function/systems/render/render_system.h"
-#include "function/systems/resource/resource_system.h"
-#include "function/systems/window/window_system.h"
+#include "function/camera/camera_system.h"
+#include "function/file/file_system.h"
+#include "function/input/input_system.h"
+#include "function/render/render_system.h"
+#include "function/resource/resource_system.h"
+#include "function/window/window_system.h"
 
 #include <entt/entt.hpp>
 

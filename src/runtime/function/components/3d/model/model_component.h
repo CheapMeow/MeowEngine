@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function/components/component.h"
-#include "function/systems/render/structs/model.h"
+#include "function/render/structs/model.h"
 
 #include <vector>
 
