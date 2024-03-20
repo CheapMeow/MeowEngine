@@ -460,7 +460,6 @@ namespace Meow
             "builtin/models/backpack/backpack.obj",
             std::vector<VertexAttribute> {VertexAttribute::VA_Position,
                                           VertexAttribute::VA_Normal,
-                                          VertexAttribute::VA_Color,
                                           VertexAttribute::VA_UV0});
 
         BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
@@ -564,6 +563,7 @@ namespace Meow
         {
             // TODO: temp
             ubo_data.model = transfrom_component.GetTransform();
+            ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         }
 
         for (auto [entity, transfrom_component, camera_component] :
