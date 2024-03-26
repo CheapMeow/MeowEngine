@@ -2,7 +2,7 @@
 
 #include "function/render/structs/buffer_data.h"
 #include "function/render/structs/depth_buffer_data.h"
-#include "function/render/structs/material.h"
+#include "function/render/structs/shader.h"
 #include "function/render/structs/surface_data.h"
 #include "function/render/structs/swapchain_data.h"
 #include "function/render/structs/texture_data.hpp"
@@ -70,18 +70,6 @@ namespace Meow
             return TextureData(m_gpu, m_logical_device, extent);
         }
 
-        Material CreateMaterial(std::string                  vert_shader_file_path,
-                                std::string                  frag_shader_file_path,
-                                std::shared_ptr<TextureData> diffuse_texture)
-        {
-            return Material(m_gpu,
-                            m_logical_device,
-                            m_descriptor_pool,
-                            m_render_pass,
-                            vert_shader_file_path,
-                            frag_shader_file_path);
-        }
-
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
          * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
@@ -147,6 +135,9 @@ namespace Meow
         // TODO: UBO shouldn't be stroed in render system?
         BufferData uniform_buffer_data = nullptr;
 
+        // TODO: temp shader
+        Shader testShader;
+        
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
          * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.

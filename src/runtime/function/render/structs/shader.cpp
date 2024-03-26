@@ -64,6 +64,14 @@ namespace Meow
         // TODO: temp vertex layout
         // should get from analysis?
         vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
+
+        std::vector<std::pair<vk::Format, uint32_t>> vertex_input_attribute_format_offset;
+        uint32_t curr_offset = 0;
+        for(int32_t i = 0; i < perVertexAttributes.size(); i++){
+            vertex_input_attribute_format_offset.emplace_back(VertexAttributeToVkFormat(perVertexAttributes[i]), curr_offset);
+            curr_offset += VertexAttributeToSize(perVertexAttributes[i]);
+        }
+
         graphics_pipeline = MakeGraphicsPipeline(
             logical_device,
             pipeline_cache,
@@ -71,8 +79,8 @@ namespace Meow
             nullptr,
             frag_shader_module,
             nullptr,
-            VertexAttributesToSize({VertexAttribute::VA_Position, VertexAttribute::VA_Normal, VertexAttribute::VA_UV0}),
-            {{vk::Format::eR32G32B32Sfloat, 0}, {vk::Format::eR32G32B32Sfloat, 12}, {vk::Format::eR32G32Sfloat, 24}},
+            VertexAttributesToSize(perVertexAttributes),
+            vertex_input_attribute_format_offset,
             vk::FrontFace::eClockwise,
             true,
             pipeline_layout,
@@ -496,14 +504,6 @@ namespace Meow
         descriptor_sets = vk::raii::DescriptorSets(logical_device, descriptor_set_allocate_info);
     }
 
-    void Shader::Bind(vk::raii::CommandBuffer const& command_buffer)
-    {
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
-        // TODO: temp {*descriptor_sets[0], *descriptor_sets[1]}
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, {*descriptor_set}, nullptr);
-    }
-
     void Shader::PushBufferWrite(const std::string&          name,
                                  vk::raii::Buffer const&     buffer,
                                  vk::raii::BufferView const* raii_buffer_view)
@@ -571,5 +571,13 @@ namespace Meow
     {
         device.updateDescriptorSets(write_descriptor_sets, nullptr);
         write_descriptor_sets.clear();
+    }
+
+    void Shader::Bind(vk::raii::CommandBuffer const& command_buffer)
+    {
+        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
+        // TODO: temp {*descriptor_sets[0], *descriptor_sets[1]}
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, descriptor_sets, nullptr);
     }
 } // namespace Meow

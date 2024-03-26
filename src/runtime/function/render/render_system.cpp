@@ -482,6 +482,12 @@ namespace Meow
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
         // glm::lookAt
+
+        std::shared_ptr<TextureData> diffuse_texture = g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
+        testShader = Shader(m_gpu, m_logical_device, m_descriptor_pool, m_render_pass, "builtin/shaders/textured_mesh_without_vertex_color.vert.spv", "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
+        testShader.PushBufferWrite("uboMVP", uniform_buffer_data);
+        testShader.PushImageWrite("diffuseMap", *diffuse_texture);
+        testShader.UpdateDescriptorSets(m_logical_device);
     }
 
     /**
@@ -672,9 +678,7 @@ namespace Meow
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
-                std::shared_ptr<Material> material_ptr =
-                    g_runtime_global_context.resource_system->GetMaterial("Default Material");
-                material_ptr->Bind(cmd_buffer);
+                testShader->Bind(cmd_buffer);
 
                 // TODO: where to control uniform buffer memory copy
                 CopyToDevice(uniform_buffer_data.device_memory, ubo_data);
