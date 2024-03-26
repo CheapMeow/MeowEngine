@@ -31,6 +31,8 @@ namespace Meow
 
     int32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes);
 
-    VkFormat VertexAttributeToVkFormat(VertexAttribute attribute);
+    vk::Format VertexAttributeToVkFormat(VertexAttribute attribute);
+
+    VertexAttribute StringToVertexAttribute(const std::string& name);
 
 } // namespace Meow

@@ -79,8 +79,7 @@ namespace Meow
                             m_descriptor_pool,
                             m_render_pass,
                             vert_shader_file_path,
-                            frag_shader_file_path,
-                            diffuse_texture);
+                            frag_shader_file_path);
         }
 
         /**
@@ -142,7 +141,11 @@ namespace Meow
         std::vector<vk::raii::Framebuffer> m_framebuffers;
         std::vector<PerFrameData>          m_per_frame_data;
 
+        // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
+
+        // TODO: UBO shouldn't be stroed in render system?
+        BufferData uniform_buffer_data = nullptr;
 
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().

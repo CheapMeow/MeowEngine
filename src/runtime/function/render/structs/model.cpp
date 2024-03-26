@@ -2,7 +2,6 @@
 
 #include "core/math/assimp_glm_helper.h"
 #include "function/global/runtime_global_context.h"
-#include "vertex_attribute.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>

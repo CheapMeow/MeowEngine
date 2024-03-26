@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/math/bounding_box.h"
-#include "function/render/structs/material.h"
+#include "vertex_attribute.h"
 
 #include "model_anim.h"
 #include "model_bone.h"
@@ -15,22 +15,6 @@
 
 namespace Meow
 {
-    struct Bone
-    {
-        std::string name;
-        size_t      index  = -1;
-        size_t      parent = -1;
-        glm::mat4   inverse_bind_pose;
-        glm::mat4   final_transform;
-    };
-
-    struct VertexSkin
-    {
-        size_t used = 0;
-        size_t indices[4];
-        float  weights[4];
-    };
-
     struct Model
     {
         typedef std::unordered_map<std::string, ModelNode*> NodesMap;

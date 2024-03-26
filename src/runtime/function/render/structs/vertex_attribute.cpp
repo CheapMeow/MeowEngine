@@ -79,67 +79,125 @@ namespace Meow
         return size;
     }
 
-    VkFormat VertexAttributeToVkFormat(VertexAttribute attribute)
+    vk::Format VertexAttributeToVkFormat(VertexAttribute attribute)
     {
-        VkFormat format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+        vk::Format format = vk::Format::eR32G32B32Sfloat;
         if (attribute == VertexAttribute::VA_Position)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+            format = vk::Format::eR32G32B32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_UV0)
         {
-            format = VkFormat::VK_FORMAT_R32G32_SFLOAT;
+            format = vk::Format::eR32G32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_UV1)
         {
-            format = VkFormat::VK_FORMAT_R32G32_SFLOAT;
+            format = vk::Format::eR32G32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_Normal)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+            format = vk::Format::eR32G32B32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_Tangent)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
+            format = vk::Format::eR32G32B32A32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_Color)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+            format = vk::Format::eR32G32B32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_SkinPack)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+            format = vk::Format::eR32G32B32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_SkinWeight)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
+            format = vk::Format::eR32G32B32A32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_SkinIndex)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
+            format = vk::Format::eR32G32B32A32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_Custom0 || attribute == VertexAttribute::VA_Custom1 ||
                  attribute == VertexAttribute::VA_Custom2 || attribute == VertexAttribute::VA_Custom3)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
+            format = vk::Format::eR32G32B32A32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_InstanceFloat1)
         {
-            format = VkFormat::VK_FORMAT_R32_SFLOAT;
+            format = vk::Format::eR32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_InstanceFloat2)
         {
-            format = VkFormat::VK_FORMAT_R32G32_SFLOAT;
+            format = vk::Format::eR32G32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_InstanceFloat3)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32_SFLOAT;
+            format = vk::Format::eR32G32B32Sfloat;
         }
         else if (attribute == VertexAttribute::VA_InstanceFloat4)
         {
-            format = VkFormat::VK_FORMAT_R32G32B32A32_SFLOAT;
+            format = vk::Format::eR32G32B32A32Sfloat;
         }
 
         return format;
+    }
+
+    VertexAttribute StringToVertexAttribute(const std::string& name)
+    {
+        if (name == "inPosition")
+        {
+            return VertexAttribute::VA_Position;
+        }
+        else if (name == "inUV0")
+        {
+            return VertexAttribute::VA_UV0;
+        }
+        else if (name == "inUV1")
+        {
+            return VertexAttribute::VA_UV1;
+        }
+        else if (name == "inNormal")
+        {
+            return VertexAttribute::VA_Normal;
+        }
+        else if (name == "inTangent")
+        {
+            return VertexAttribute::VA_Tangent;
+        }
+        else if (name == "inColor")
+        {
+            return VertexAttribute::VA_Color;
+        }
+        else if (name == "inSkinWeight")
+        {
+            return VertexAttribute::VA_SkinWeight;
+        }
+        else if (name == "inSkinIndex")
+        {
+            return VertexAttribute::VA_SkinIndex;
+        }
+        else if (name == "inSkinPack")
+        {
+            return VertexAttribute::VA_SkinPack;
+        }
+        else if (name == "inCustom0")
+        {
+            return VertexAttribute::VA_Custom0;
+        }
+        else if (name == "inCustom1")
+        {
+            return VertexAttribute::VA_Custom1;
+        }
+        else if (name == "inCustom2")
+        {
+            return VertexAttribute::VA_Custom2;
+        }
+        else if (name == "inCustom3")
+        {
+            return VertexAttribute::VA_Custom3;
+        }
+
+        return VertexAttribute::VA_None;
     }
 } // namespace Meow

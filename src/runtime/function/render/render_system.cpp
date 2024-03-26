@@ -419,6 +419,22 @@ namespace Meow
         CreateFramebuffers();
         CreatePerFrameData();
         InitImGui();
+
+        // TODO: temp
+        uniform_buffer_data =
+            BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        std::string                     object_name = "Uniform Buffer";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eBuffer, GetVulkanHandle(*uniform_buffer_data.buffer), object_name.c_str(), nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+        object_name = "Uniform Buffer Device Memory";
+        name_info   = {vk::ObjectType::eDeviceMemory,
+                       GetVulkanHandle(*uniform_buffer_data.device_memory),
+                       object_name.c_str(),
+                       nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
     }
 
     RenderSystem::~RenderSystem()
@@ -458,9 +474,8 @@ namespace Meow
             m_upload_context.command_pool,
             m_graphics_queue,
             "builtin/models/backpack/backpack.obj",
-            std::vector<VertexAttribute> {VertexAttribute::VA_Position,
-                                          VertexAttribute::VA_Normal,
-                                          VertexAttribute::VA_UV0});
+            std::vector<VertexAttribute> {
+                VertexAttribute::VA_Position, VertexAttribute::VA_Normal, VertexAttribute::VA_UV0});
 
         BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
         glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
@@ -660,7 +675,9 @@ namespace Meow
                 std::shared_ptr<Material> material_ptr =
                     g_runtime_global_context.resource_system->GetMaterial("Default Material");
                 material_ptr->Bind(cmd_buffer);
-                material_ptr->UpdateUniformBuffer(ubo_data);
+
+                // TODO: where to control uniform buffer memory copy
+                CopyToDevice(uniform_buffer_data.device_memory, ubo_data);
 
                 for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
                 {
