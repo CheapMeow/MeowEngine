@@ -58,6 +58,16 @@ target_link_libraries(${RUNTIME_NAME} PUBLIC
     SPIRV)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glslang)
 
+target_link_libraries(${RUNTIME_NAME} PUBLIC 
+    spirv-cross-glsl
+	spirv-cross-hlsl
+	spirv-cross-cpp
+	spirv-cross-reflect
+	spirv-cross-msl
+	spirv-cross-util
+	spirv-cross-core)
+target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/SPIRV-Cross)
+
 target_link_libraries(${RUNTIME_NAME} PUBLIC stb)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/stb)
 

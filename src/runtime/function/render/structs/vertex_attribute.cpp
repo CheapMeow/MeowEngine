@@ -2,7 +2,7 @@
 
 namespace Meow
 {
-    int32_t VertexAttributeToSize(VertexAttribute attribute)
+    uint32_t VertexAttributeToSize(VertexAttribute attribute)
     {
         // count * sizeof(float)
         if (attribute == VertexAttribute::VA_Position)
@@ -66,9 +66,9 @@ namespace Meow
         return 0;
     }
 
-    int32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes)
+    uint32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes)
     {
-        int32_t size = 0;
+        uint32_t size = 0;
         for (auto attribute : vertex_attributes)
         {
             size += VertexAttributeToSize(attribute);

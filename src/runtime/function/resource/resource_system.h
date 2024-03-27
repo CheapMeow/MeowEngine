@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/render/structs/material.h"
+#include "function/render/structs/shader.h"
 #include "function/render/structs/texture_data.hpp"
 #include "function/system.h"
 
@@ -40,9 +40,9 @@ namespace Meow
 
         std::shared_ptr<TextureData> GetTexture(const std::string& filepath);
 
-        bool LoadMaterial(const std::string& filepath);
+        // bool LoadMaterial(const std::string& filepath);
 
-        std::shared_ptr<Material> GetMaterial(const std::string& filepath);
+        // std::shared_ptr<Material> GetMaterial(const std::string& filepath);
 
     private:
         /**
@@ -50,9 +50,9 @@ namespace Meow
          */
         std::unordered_map<std::string, std::shared_ptr<TextureData>> m_textures;
 
-        /**
-         * @brief Relative path - Material
-         */
-        std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
+        // /**
+        //  * @brief Relative path - Material
+        //  */
+        // std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
     };
 } // namespace Meow

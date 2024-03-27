@@ -27,9 +27,9 @@ namespace Meow
         VA_Count,
     };
 
-    int32_t VertexAttributeToSize(VertexAttribute attribute);
+    uint32_t VertexAttributeToSize(VertexAttribute attribute);
 
-    int32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes);
+    uint32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes);
 
     vk::Format VertexAttributeToVkFormat(VertexAttribute attribute);
 

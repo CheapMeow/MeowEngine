@@ -32,6 +32,10 @@ if(NOT TARGET glslang)
     add_subdirectory(glslang)
 endif()
 
+if(NOT TARGET spirv-cross-glsl)
+    add_subdirectory(SPIRV-Cross)
+endif()
+
 if(NOT TARGET stb)
     include(stb.cmake)
 endif()

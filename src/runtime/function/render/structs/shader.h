@@ -5,7 +5,7 @@
 #include "ubo_data.h"
 #include "vertex_attribute.h"
 
-#include "spirv_glsl.hpp"
+#include <spirv_glsl.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 #include <cstdint>
@@ -155,8 +155,8 @@ namespace Meow
         std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
         vk::raii::PipelineLayout      pipeline_layout       = nullptr;
-        vk::raii::DescriptorSetLayout descriptor_set_layout = nullptr;
-        vk::raii::DescriptorSets      descriptor_sets       = nullptr;
+
+        std::vector<vk::DescriptorSet>     descriptor_sets;
 
         std::vector<vk::WriteDescriptorSet> write_descriptor_sets;
 
@@ -177,9 +177,13 @@ namespace Meow
 
         void PushBufferWrite(const std::string&          name,
                              vk::raii::Buffer const&     buffer,
-                             vk::raii::BufferView const* raii_buffer_view);
+                             vk::raii::BufferView const* raii_buffer_view = nullptr);
 
         void PushImageWrite(const std::string& name, TextureData& texture_data);
+
+        void UpdateDescriptorSets(vk::raii::Device const& logical_device);
+
+        void Bind(vk::raii::CommandBuffer const& command_buffer);
 
     private:
         bool CreateShaderModuleAndGetMeta(
@@ -231,8 +235,6 @@ namespace Meow
          */
         void AllocateDescriptorSet(vk::raii::Device const&         logical_device,
                                    vk::raii::DescriptorPool const& descriptor_pool);
-
-        void Bind(vk::raii::CommandBuffer const& command_buffer);
     };
 
 } // namespace Meow
