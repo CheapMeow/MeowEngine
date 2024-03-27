@@ -30,6 +30,12 @@ vertex 数据错误读取了，原来能画 100 个三角形的数据现在错�
 
 这里也就直接用 Shader 类来处理
 
+#### 反编译
+
+目前的反编译是直接识别顶点属性的名称
+
+所以 glsl 里面的顶点属性的名称必须是特定的值，例如 inPosition, inUV0
+
 ### Descriptor Allocator
 
 #### 创建
@@ -163,3 +169,17 @@ pBufferInfo, pImageInfo 需要的 VkDescriptorBufferInfo, VkDescriptorImageInfo 
 ### Uniform buffer
 
 在哪里控制 uniform buffer 的 memory copy？
+
+## Debug
+
+### RAII 类的生命周期
+
+一个常见的错误是，虽然创建了 `vk::raii::XXX`，但是很快就要把它转化成 `vk::XXX`，引发了 RAII 类的析构，把原始数据给删除了
+
+一般出现类似
+
+```
+the imageView member of each element of pImageInfo must be either a valid VkImageView handle or VK_NULL_HANDLE 
+```
+
+这种的报错，就可能是你的资源意外销毁了

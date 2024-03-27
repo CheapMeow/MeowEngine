@@ -154,9 +154,9 @@ namespace Meow
         // stored to create descriptor pool
         std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
 
-        vk::raii::PipelineLayout      pipeline_layout       = nullptr;
+        vk::raii::PipelineLayout pipeline_layout = nullptr;
 
-        std::vector<vk::DescriptorSet>     descriptor_sets;
+        std::vector<vk::DescriptorSet> descriptor_sets;
 
         std::vector<vk::WriteDescriptorSet> write_descriptor_sets;
 
@@ -219,7 +219,7 @@ namespace Meow
 
         void GenerateInputInfo();
 
-        void GenerateLayout(vk::raii::Device const& logical_device);
+        void GenerateLayout(vk::raii::Device const& raii_logical_device);
 
         /**
          * @brief Allocate multiple descriptor sets

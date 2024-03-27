@@ -66,25 +66,26 @@ namespace Meow
         vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
 
         std::vector<std::pair<vk::Format, uint32_t>> vertex_input_attribute_format_offset;
-        uint32_t curr_offset = 0;
-        for(int32_t i = 0; i < perVertexAttributes.size(); i++){
-            vertex_input_attribute_format_offset.emplace_back(VertexAttributeToVkFormat(perVertexAttributes[i]), curr_offset);
+        uint32_t                                     curr_offset = 0;
+        for (int32_t i = 0; i < perVertexAttributes.size(); i++)
+        {
+            vertex_input_attribute_format_offset.emplace_back(VertexAttributeToVkFormat(perVertexAttributes[i]),
+                                                              curr_offset);
             curr_offset += VertexAttributeToSize(perVertexAttributes[i]);
         }
 
-        graphics_pipeline = MakeGraphicsPipeline(
-            logical_device,
-            pipeline_cache,
-            vert_shader_module,
-            nullptr,
-            frag_shader_module,
-            nullptr,
-            VertexAttributesToSize(perVertexAttributes),
-            vertex_input_attribute_format_offset,
-            vk::FrontFace::eClockwise,
-            true,
-            pipeline_layout,
-            render_pass);
+        graphics_pipeline = MakeGraphicsPipeline(logical_device,
+                                                 pipeline_cache,
+                                                 vert_shader_module,
+                                                 nullptr,
+                                                 frag_shader_module,
+                                                 nullptr,
+                                                 VertexAttributesToSize(perVertexAttributes),
+                                                 vertex_input_attribute_format_offset,
+                                                 vk::FrontFace::eClockwise,
+                                                 true,
+                                                 pipeline_layout,
+                                                 render_pass);
 
         AllocateDescriptorSet(logical_device, descriptor_pool);
     }
@@ -459,7 +460,7 @@ namespace Meow
         }
     }
 
-    void Shader::GenerateLayout(vk::raii::Device const& logical_device)
+    void Shader::GenerateLayout(vk::raii::Device const& raii_logical_device)
     {
         std::vector<DescriptorSetLayoutMeta>& setLayouts = set_layouts_meta.setLayouts;
 
@@ -483,23 +484,40 @@ namespace Meow
         // support multiple descriptor set layout
         for (int32_t i = 0; i < setLayouts.size(); ++i)
         {
-            DescriptorSetLayoutMeta& setLayoutInfo       = setLayouts[i];
+            // DescriptorSetLayoutMeta& setLayoutInfo = setLayouts[i];
 
-            vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(vk::DescriptorSetLayoutCreateFlags {}, setLayoutInfo.bindings);
-            descriptorSetLayouts.push_back(
-                *logical_device.createDescriptorSetLayout(descriptor_set_layout_create_info));
+            // vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(vk::DescriptorSetLayoutCreateFlags
+            // {},
+            //                                                                     setLayoutInfo.bindings);
+            // vk::DescriptorSetLayout           descriptor_set_layout =
+            //     std::move(*raii_logical_device.createDescriptorSetLayout(descriptor_set_layout_create_info));
+
+            DescriptorSetLayoutMeta& setLayoutInfo = setLayouts[i];
+
+            vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(vk::DescriptorSetLayoutCreateFlags {},
+                                                                                setLayoutInfo.bindings);
+
+            vk::DescriptorSetLayout setLayout;
+            raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
+                static_cast<VkDevice>(*raii_logical_device),
+                reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(&descriptor_set_layout_create_info),
+                nullptr,
+                reinterpret_cast<VkDescriptorSetLayout*>(&setLayout));
+
+            descriptorSetLayouts.push_back(setLayout);
         }
 
         vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
             {}, (uint32_t)descriptorSetLayouts.size(), descriptorSetLayouts.data());
-        pipeline_layout = vk::raii::PipelineLayout(logical_device, pipeline_layout_create_info);
+        pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
     }
 
     void Shader::AllocateDescriptorSet(vk::raii::Device const&         logical_device,
                                        vk::raii::DescriptorPool const& descriptor_pool)
     {
         // TODO: allocate descriptor set from a dynamic allocator
-        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(*descriptor_pool, descriptorSetLayouts.size(), descriptorSetLayouts.data());
+        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
+            *descriptor_pool, descriptorSetLayouts.size(), descriptorSetLayouts.data());
         vk::raii::DescriptorSets raii_descriptor_sets(logical_device, descriptor_set_allocate_info);
 
         for (size_t i = 0; i < raii_descriptor_sets.size(); ++i)
@@ -533,7 +551,7 @@ namespace Meow
         }
 
         write_descriptor_sets.emplace_back(
-            descriptor_sets[bindInfo.set],                                     // dstSet
+            descriptor_sets[bindInfo.set],                                      // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
@@ -560,12 +578,12 @@ namespace Meow
             *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         write_descriptor_sets.emplace_back(
-            descriptor_sets[bindInfo.set],                                     // dstSet
+            descriptor_sets[bindInfo.set],                                      // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
             set_layouts_meta.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
-            &image_info,                                                         // pImageInfo
+            &image_info,                                                        // pImageInfo
             nullptr,                                                            // pBufferInfo
             nullptr                                                             // pTexelBufferView
         );

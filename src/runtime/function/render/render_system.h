@@ -137,6 +137,9 @@ namespace Meow
 
         // TODO: temp shader
         Shader testShader;
+
+        // TODO: temp texture
+       std::shared_ptr<TextureData> diffuse_texture = nullptr;
         
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().

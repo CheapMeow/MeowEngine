@@ -18,6 +18,7 @@ target_compile_definitions(${RUNTIME_NAME}
     VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser according to cmake build platform
     VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
     VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from vulkan hpp
+    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 
     NOMINMAX # for std::numeric_limits<double>::min() and max()
     )
 
