@@ -518,12 +518,7 @@ namespace Meow
         // TODO: allocate descriptor set from a dynamic allocator
         vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
             *descriptor_pool, descriptorSetLayouts.size(), descriptorSetLayouts.data());
-        vk::raii::DescriptorSets raii_descriptor_sets(logical_device, descriptor_set_allocate_info);
-
-        for (size_t i = 0; i < raii_descriptor_sets.size(); ++i)
-        {
-            descriptor_sets.push_back(*std::move(raii_descriptor_sets[i]));
-        }
+        descriptor_sets = vk::raii::DescriptorSets(logical_device, descriptor_set_allocate_info);
     }
 
     void Shader::PushBufferWrite(const std::string&          name,
@@ -552,7 +547,7 @@ namespace Meow
         }
 
         write_descriptor_sets.emplace_back(
-            descriptor_sets[bindInfo.set],                                      // dstSet
+            *descriptor_sets[bindInfo.set],                                     // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
@@ -581,7 +576,7 @@ namespace Meow
             *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         write_descriptor_sets.emplace_back(
-            descriptor_sets[bindInfo.set],                                      // dstSet
+            *descriptor_sets[bindInfo.set],                                     // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
@@ -603,8 +598,14 @@ namespace Meow
     void Shader::Bind(vk::raii::CommandBuffer const& command_buffer)
     {
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
-        // TODO: temp {*descriptor_sets[0], *descriptor_sets[1]}
+
+        std::vector<vk::DescriptorSet> _descriptor_sets(descriptor_sets.size());
+        for (size_t i = 0; i < descriptor_sets.size(); ++i)
+        {
+            _descriptor_sets[i] = *descriptor_sets[i];
+        }
+
         command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, descriptor_sets, nullptr);
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, _descriptor_sets, nullptr);
     }
 } // namespace Meow

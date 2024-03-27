@@ -172,14 +172,15 @@ pBufferInfo, pImageInfo 需要的 VkDescriptorBufferInfo, VkDescriptorImageInfo 
 
 ## Debug
 
-### RAII 类的生命周期
+### CreateInfo 可能引用了局部变量
 
-一个常见的错误是，虽然创建了 `vk::raii::XXX`，但是很快就要把它转化成 `vk::XXX`，引发了 RAII 类的析构，把原始数据给删除了
+比如某个 `CreateInfo` 需要 `&BufferInfo`
 
-一般出现类似
+这个 `BufferInfo` 是当前函数的局部变量
 
-```
-the imageView member of each element of pImageInfo must be either a valid VkImageView handle or VK_NULL_HANDLE 
-```
+在当前函数中创建完 `CreateInfo`，并不是立即使用，而是存到 `vector` 中留待后用
 
-这种的报错，就可能是你的资源意外销毁了
+那么在离开函数的时候，`BufferInfo` 销毁，存在 `vector` 中的 `CreateInfo` 就出错了
+
+别人引用了局部变量 `BufferInfo` 怎么没出错？因为他们创建出来 `CreateInfo` 之后就立即使用了
+

@@ -156,12 +156,15 @@ namespace Meow
 
         vk::raii::PipelineLayout pipeline_layout = nullptr;
 
-        std::vector<vk::DescriptorSet> descriptor_sets;
+        vk::raii::DescriptorSets descriptor_sets = nullptr;
+
+        // vector storing temp info and temp WriteDescriptorSet
 
         std::vector<vk::DescriptorBufferInfo> descriptor_buffer_infos;
         std::vector<vk::DescriptorImageInfo>  descriptor_image_infos;
         std::vector<vk::WriteDescriptorSet>   write_descriptor_sets;
 
+        // TODO: create pipeline in material
         vk::raii::Pipeline graphics_pipeline = nullptr;
 
         Shader() {}
