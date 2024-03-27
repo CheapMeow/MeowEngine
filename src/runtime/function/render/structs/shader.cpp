@@ -542,8 +542,9 @@ namespace Meow
 
         // Default is offset = 0, buffer size = whole size
         // Maybe it needs to be configurable?
-        vk::DescriptorBufferInfo buffer_info(*buffer, 0, VK_WHOLE_SIZE);
+        descriptor_buffer_infos.emplace_back(*buffer, 0, VK_WHOLE_SIZE);
 
+        // TODO: store buffer view in an vector
         vk::BufferView buffer_view;
         if (raii_buffer_view)
         {
@@ -557,9 +558,11 @@ namespace Meow
             1,                                                                  // descriptorCount
             set_layouts_meta.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
             nullptr,                                                            // pImageInfo
-            &buffer_info,                                                       // pBufferInfo
+            &descriptor_buffer_infos.back(),                                    // pBufferInfo
             raii_buffer_view ? &buffer_view : nullptr                           // pTexelBufferView
         );
+
+        int test = 1;
     }
 
     void Shader::PushImageWrite(const std::string& name, TextureData& texture_data)
@@ -574,7 +577,7 @@ namespace Meow
 
         auto bindInfo = it->second;
 
-        vk::DescriptorImageInfo image_info(
+        descriptor_image_infos.emplace_back(
             *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         write_descriptor_sets.emplace_back(
@@ -583,7 +586,7 @@ namespace Meow
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
             set_layouts_meta.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
-            &image_info,                                                        // pImageInfo
+            &descriptor_image_infos.back(),                                     // pImageInfo
             nullptr,                                                            // pBufferInfo
             nullptr                                                             // pTexelBufferView
         );
@@ -592,6 +595,8 @@ namespace Meow
     void Shader::UpdateDescriptorSets(vk::raii::Device const& logical_device)
     {
         logical_device.updateDescriptorSets(write_descriptor_sets, nullptr);
+        descriptor_buffer_infos.clear();
+        descriptor_image_infos.clear();
         write_descriptor_sets.clear();
     }
 

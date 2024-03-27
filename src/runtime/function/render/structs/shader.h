@@ -158,7 +158,9 @@ namespace Meow
 
         std::vector<vk::DescriptorSet> descriptor_sets;
 
-        std::vector<vk::WriteDescriptorSet> write_descriptor_sets;
+        std::vector<vk::DescriptorBufferInfo> descriptor_buffer_infos;
+        std::vector<vk::DescriptorImageInfo>  descriptor_image_infos;
+        std::vector<vk::WriteDescriptorSet>   write_descriptor_sets;
 
         vk::raii::Pipeline graphics_pipeline = nullptr;
 
