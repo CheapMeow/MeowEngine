@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buffer_data.h"
+#include "descriptor_allocator_growable.h"
 #include "texture_data.hpp"
 #include "ubo_data.h"
 #include "vertex_attribute.h"
@@ -169,16 +170,16 @@ namespace Meow
 
         Shader() {}
 
-        Shader(vk::raii::PhysicalDevice const& gpu,
-               vk::raii::Device const&         logical_device,
-               vk::raii::DescriptorPool const& descriptor_pool,
-               vk::raii::RenderPass const&     render_pass,
-               std::string                     vert_shader_file_path,
-               std::string                     frag_shader_file_path,
-               std::string                     geom_shader_file_path = "",
-               std::string                     comp_shader_file_path = "",
-               std::string                     tesc_shader_file_path = "",
-               std::string                     tese_shader_file_path = "");
+        Shader(vk::raii::PhysicalDevice const&    gpu,
+               vk::raii::Device const&            logical_device,
+               DescriptorAllocatorGrowable& descriptor_allocator,
+               vk::raii::RenderPass const&        render_pass,
+               std::string                        vert_shader_file_path,
+               std::string                        frag_shader_file_path,
+               std::string                        geom_shader_file_path = "",
+               std::string                        comp_shader_file_path = "",
+               std::string                        tesc_shader_file_path = "",
+               std::string                        tese_shader_file_path = "");
 
         void PushBufferWrite(const std::string&          name,
                              vk::raii::Buffer const&     buffer,
@@ -236,10 +237,10 @@ namespace Meow
          * It will result in two descriptor sets allocated.
          *
          * @param logical_device logical device
-         * @param descriptor_pool descriptor pool
+         * @param descriptor_allocator descriptor allocator
          */
-        void AllocateDescriptorSet(vk::raii::Device const&         logical_device,
-                                   vk::raii::DescriptorPool const& descriptor_pool);
+        void AllocateDescriptorSet(vk::raii::Device const&      logical_device,
+                                   DescriptorAllocatorGrowable& descriptor_allocator);
     };
 
 } // namespace Meow

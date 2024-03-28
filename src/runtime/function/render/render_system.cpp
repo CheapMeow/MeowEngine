@@ -191,7 +191,7 @@ namespace Meow
 #endif
     }
 
-    void RenderSystem::CreateDescriptorPool()
+    void RenderSystem::CreateDescriptorAllocator()
     {
         // create a descriptor pool
         // TODO: descriptor pool size is determined by all materials, so
@@ -208,9 +208,7 @@ namespace Meow
                                                           {vk::DescriptorType::eUniformBufferDynamic, 1000},
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
-        vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
-            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
-        m_descriptor_pool = vk::raii::DescriptorPool(m_logical_device, descriptor_pool_create_info);
+        m_descriptor_allocator = DescriptorAllocatorGrowable(m_logical_device, 1000, pool_sizes);
     }
 
     void RenderSystem::CreateRenderPass()
@@ -413,7 +411,7 @@ namespace Meow
         CreateSwapChian();
         CreateUploadContext();
         CreateDepthBuffer();
-        CreateDescriptorPool();
+        CreateDescriptorAllocator();
         CreateRenderPass();
         CreateFramebuffers();
         CreatePerFrameData();
@@ -486,7 +484,7 @@ namespace Meow
             g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
         testShader = Shader(m_gpu,
                             m_logical_device,
-                            m_descriptor_pool,
+                            m_descriptor_allocator,
                             m_render_pass,
                             "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
                             "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");

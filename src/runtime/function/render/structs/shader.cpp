@@ -2,13 +2,12 @@
 
 #include "core/log/log.h"
 #include "function/global/runtime_global_context.h"
-#include "function/render/structs/vertex_attribute.h"
 
 namespace Meow
 {
     Shader::Shader(vk::raii::PhysicalDevice const& gpu,
                    vk::raii::Device const&         logical_device,
-                   vk::raii::DescriptorPool const& descriptor_pool,
+                   DescriptorAllocatorGrowable&    descriptor_allocator,
                    vk::raii::RenderPass const&     render_pass,
                    std::string                     vert_shader_file_path,
                    std::string                     frag_shader_file_path,
@@ -86,7 +85,7 @@ namespace Meow
                                                  pipeline_layout,
                                                  render_pass);
 
-        AllocateDescriptorSet(logical_device, descriptor_pool);
+        AllocateDescriptorSet(logical_device, descriptor_allocator);
     }
 
     bool Shader::CreateShaderModuleAndGetMeta(
@@ -504,13 +503,10 @@ namespace Meow
         pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
     }
 
-    void Shader::AllocateDescriptorSet(vk::raii::Device const&         logical_device,
-                                       vk::raii::DescriptorPool const& descriptor_pool)
+    void Shader::AllocateDescriptorSet(vk::raii::Device const&      logical_device,
+                                       DescriptorAllocatorGrowable& descriptor_allocator)
     {
-        // TODO: allocate descriptor set from a dynamic allocator
-        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
-            *descriptor_pool, descriptor_set_layouts.size(), descriptor_set_layouts.data());
-        descriptor_sets = vk::raii::DescriptorSets(logical_device, descriptor_set_allocate_info);
+        descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
     }
 
     void Shader::PushBufferWrite(const std::string&          name,

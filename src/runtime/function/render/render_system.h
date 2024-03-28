@@ -89,7 +89,7 @@ namespace Meow
         void CreateSwapChian();
         void CreateUploadContext();
         void CreateDepthBuffer();
-        void CreateDescriptorPool();
+        void CreateDescriptorAllocator();
         void CreateRenderPass();
         void CreateFramebuffers();
         void CreatePerFrameData();
@@ -116,16 +116,16 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger = nullptr;
 #endif
-        vk::raii::PhysicalDevice           m_gpu               = nullptr;
-        SurfaceData                        m_surface_data      = nullptr;
-        vk::raii::Device                   m_logical_device    = nullptr;
-        vk::raii::Queue                    m_graphics_queue    = nullptr;
-        vk::raii::Queue                    m_present_queue     = nullptr;
-        SwapChainData                      m_swapchain_data    = nullptr;
-        UploadContext                      m_upload_context    = nullptr;
-        DepthBufferData                    m_depth_buffer_data = nullptr;
-        vk::raii::DescriptorPool           m_descriptor_pool   = nullptr;
-        vk::raii::RenderPass               m_render_pass       = nullptr;
+        vk::raii::PhysicalDevice           m_gpu                = nullptr;
+        SurfaceData                        m_surface_data       = nullptr;
+        vk::raii::Device                   m_logical_device     = nullptr;
+        vk::raii::Queue                    m_graphics_queue     = nullptr;
+        vk::raii::Queue                    m_present_queue      = nullptr;
+        SwapChainData                      m_swapchain_data     = nullptr;
+        UploadContext                      m_upload_context     = nullptr;
+        DepthBufferData                    m_depth_buffer_data  = nullptr;
+        DescriptorAllocatorGrowable        m_descriptor_allocator = nullptr;
+        vk::raii::RenderPass               m_render_pass        = nullptr;
         std::vector<vk::raii::Framebuffer> m_framebuffers;
         std::vector<PerFrameData>          m_per_frame_data;
 
@@ -139,8 +139,8 @@ namespace Meow
         Shader testShader;
 
         // TODO: temp texture
-       std::shared_ptr<TextureData> diffuse_texture = nullptr;
-        
+        std::shared_ptr<TextureData> diffuse_texture = nullptr;
+
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
          * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
