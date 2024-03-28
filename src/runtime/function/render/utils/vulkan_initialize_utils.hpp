@@ -120,11 +120,6 @@ namespace Meow
                         vk::ImageLayout                old_image_layout,
                         vk::ImageLayout                new_image_layout);
 
-    vk::raii::DescriptorSetLayout MakeDescriptorSetLayout(
-        vk::raii::Device const&                                                            device,
-        std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& binding_data,
-        vk::DescriptorSetLayoutCreateFlags                                                 flags = {});
-
     vk::raii::RenderPass MakeRenderPass(vk::raii::Device const& device,
                                         vk::Format              color_format,
                                         vk::Format              depth_format,

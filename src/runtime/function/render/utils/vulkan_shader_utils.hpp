@@ -204,19 +204,6 @@ namespace Meow
         glslang::GlslangToSpv(*program.getIntermediate(stage), spv_shader);
         return true;
     }
-
-    vk::raii::ShaderModule MakeShaderModule(vk::raii::Device const& device,
-                                            vk::ShaderStageFlagBits shader_stage,
-                                            std::string const&      shader_text)
-    {
-        std::vector<unsigned int> shader_spv;
-        if (!GLSLtoSPV(shader_stage, shader_text, shader_spv))
-        {
-            throw std::runtime_error("Could not convert glsl shader to spir-v -> terminating");
-        }
-
-        return vk::raii::ShaderModule(device, vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), shader_spv));
-    }
 } // namespace Meow
 
 // vertex shader with (P)osition and (C)olor in and (C)olor out

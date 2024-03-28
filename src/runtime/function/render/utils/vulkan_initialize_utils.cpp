@@ -457,23 +457,6 @@ namespace Meow
         return vk::raii::DeviceMemory(device, memory_allocate_info);
     }
 
-    vk::raii::DescriptorSetLayout MakeDescriptorSetLayout(
-        vk::raii::Device const&                                                            device,
-        std::vector<std::tuple<vk::DescriptorType, uint32_t, vk::ShaderStageFlags>> const& binding_data,
-        vk::DescriptorSetLayoutCreateFlags                                                 flags)
-    {
-        std::vector<vk::DescriptorSetLayoutBinding> bindings(binding_data.size());
-        for (size_t i = 0; i < binding_data.size(); i++)
-        {
-            bindings[i] = vk::DescriptorSetLayoutBinding(checked_cast<uint32_t>(i),
-                                                         std::get<0>(binding_data[i]),
-                                                         std::get<1>(binding_data[i]),
-                                                         std::get<2>(binding_data[i]));
-        }
-        vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(flags, bindings);
-        return vk::raii::DescriptorSetLayout(device, descriptor_set_layout_create_info);
-    }
-
     /**
      * @brief Set the Image Layout.
      *
