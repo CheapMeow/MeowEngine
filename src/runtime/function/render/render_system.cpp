@@ -7,7 +7,6 @@
 #include "function/components/shared/pawn_component.h"
 #include "function/global/runtime_global_context.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
-#include "function/render/utils/vulkan_update_utils.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>

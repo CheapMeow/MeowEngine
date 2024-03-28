@@ -3,7 +3,6 @@
 #include "core/log/log.h"
 #include "function/global/runtime_global_context.h"
 #include "function/render/structs/vertex_attribute.h"
-#include "function/render/utils/vulkan_update_utils.h"
 
 namespace Meow
 {
