@@ -13,13 +13,13 @@
 
 namespace Meow
 {
-    struct AttributeInfo
+    struct VertexAttributeMeta
     {
         VertexAttribute attribute;
         int32_t         location;
     };
 
-    struct BufferInfo
+    struct BufferMeta
     {
         uint32_t             set            = 0;
         uint32_t             binding        = 0;
@@ -28,7 +28,7 @@ namespace Meow
         vk::ShaderStageFlags stageFlags     = {};
     };
 
-    struct ImageInfo
+    struct ImageMeta
     {
         uint32_t             set            = 0;
         uint32_t             binding        = 0;
@@ -54,7 +54,7 @@ namespace Meow
     class DescriptorSetLayoutsMeta
     {
     public:
-        struct BindInfo
+        struct BindingMeta
         {
             int32_t set;
             int32_t binding;
@@ -66,15 +66,15 @@ namespace Meow
 
         vk::DescriptorType GetDescriptorType(int32_t set, int32_t binding)
         {
-            for (int32_t i = 0; i < setLayouts.size(); ++i)
+            for (int32_t i = 0; i < set_layout_metas.size(); ++i)
             {
-                if (setLayouts[i].set == set)
+                if (set_layout_metas[i].set == set)
                 {
-                    for (int32_t j = 0; j < setLayouts[i].bindings.size(); ++j)
+                    for (int32_t j = 0; j < set_layout_metas[i].bindings.size(); ++j)
                     {
-                        if (setLayouts[i].bindings[j].binding == binding)
+                        if (set_layout_metas[i].bindings[j].binding == binding)
                         {
-                            return setLayouts[i].bindings[j].descriptorType;
+                            return set_layout_metas[i].bindings[j].descriptorType;
                         }
                     }
                 }
@@ -91,11 +91,11 @@ namespace Meow
 
             // find existing set layout
             // this supports multiple set
-            for (int32_t i = 0; i < setLayouts.size(); ++i)
+            for (int32_t i = 0; i < set_layout_metas.size(); ++i)
             {
-                if (setLayouts[i].set == set)
+                if (set_layout_metas[i].set == set)
                 {
-                    setLayout = &(setLayouts[i]);
+                    setLayout = &(set_layout_metas[i]);
                     break;
                 }
             }
@@ -103,8 +103,8 @@ namespace Meow
             // If there is not set layout, new one
             if (setLayout == nullptr)
             {
-                setLayouts.push_back({});
-                setLayout = &(setLayouts[setLayouts.size() - 1]);
+                set_layout_metas.push_back({});
+                setLayout = &(set_layout_metas[set_layout_metas.size() - 1]);
             }
 
             for (int32_t i = 0; i < setLayout->bindings.size(); ++i)
@@ -121,15 +121,15 @@ namespace Meow
             setLayout->bindings.push_back(binding);
 
             // save mapping from parameter name to set and binding
-            BindInfo paramInfo = {};
-            paramInfo.set      = set;
-            paramInfo.binding  = binding.binding;
-            paramsMap.insert(std::make_pair(varName, paramInfo));
+            BindingMeta paramInfo = {};
+            paramInfo.set         = set;
+            paramInfo.binding     = binding.binding;
+            binding_meta_map.insert(std::make_pair(varName, paramInfo));
         }
 
     public:
-        std::unordered_map<std::string, BindInfo> paramsMap;
-        std::vector<DescriptorSetLayoutMeta>      setLayouts;
+        std::unordered_map<std::string, BindingMeta> binding_meta_map;
+        std::vector<DescriptorSetLayoutMeta>         set_layout_metas;
     };
 
     struct Shader
@@ -141,18 +141,18 @@ namespace Meow
 
         DescriptorSetLayoutsMeta set_layouts_meta;
 
-        std::vector<AttributeInfo>                  attributeParams;
-        std::unordered_map<std::string, BufferInfo> bufferParams;
-        std::unordered_map<std::string, ImageInfo>  imageParams;
+        std::vector<VertexAttributeMeta>            vertex_attribute_metas;
+        std::unordered_map<std::string, BufferMeta> buffer_meta_map;
+        std::unordered_map<std::string, ImageMeta>  image_meta_map;
 
-        std::vector<VertexAttribute> perVertexAttributes;
-        std::vector<VertexAttribute> instancesAttributes;
+        std::vector<VertexAttribute> per_vertex_attributes;
+        std::vector<VertexAttribute> instances_attributes;
 
-        InputBindingsVector   inputBindings;
-        InputAttributesVector inputAttributes;
+        InputBindingsVector   input_bindings;
+        InputAttributesVector input_attributes;
 
         // stored to create descriptor pool
-        std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+        std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
 
         vk::raii::PipelineLayout pipeline_layout = nullptr;
 
