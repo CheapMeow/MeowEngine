@@ -17,14 +17,18 @@ target_compile_definitions(${RUNTIME_NAME}
     $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
     VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser according to cmake build platform
     VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
-    VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from vulkan hpp
-    VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 
+    VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from vulkan hpp 
     NOMINMAX # for std::numeric_limits<double>::min() and max()
+    # _DISABLE_STRING_ANNOTATION # for ASAN
+    # _DISABLE_VECTOR_ANNOTATION # for ASAN
     )
 
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
 target_compile_options(${RUNTIME_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/WX->")
+
+# ASAN
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
 
 target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 
