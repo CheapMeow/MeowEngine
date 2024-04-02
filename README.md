@@ -1,8 +1,34 @@
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=1 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [MeowEngine](#meowengine)
+  - [渲染数据结构](#渲染数据结构)
+    - [着色器类 Shader](#着色器类-shader)
+      - [反编译顶点属性，缓冲区和纹理输入](#反编译顶点属性缓冲区和纹理输入)
+      - [使用 pool 数量可变的 Descriptor Allocator](#使用-pool-数量可变的-descriptor-allocator)
+      - [分配 descriptor set](#分配-descriptor-set)
+      - [存储 descriptor set](#存储-descriptor-set)
+      - [更新 descriptor set](#更新-descriptor-set)
+    - [DescriptorAllocatorGrowable](#descriptorallocatorgrowable)
+    - [材质类 Material](#材质类-material)
+      - [管理 Uniform Buffer](#管理-uniform-buffer)
+        - [逐场景的 uniform buffer](#逐场景的-uniform-buffer)
+        - [逐帧的 uniform buffer](#逐帧的-uniform-buffer)
+      - [Ring buffer](#ring-buffer)
+  - [常见错误](#常见错误)
+    - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
+    - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
+
+<!-- /code_chunk_output -->
+
+
 # MeowEngine
 
 ## 渲染数据结构
 
-### Shader
+### 着色器类 Shader
 
 #### 反编译顶点属性，缓冲区和纹理输入
 
@@ -172,9 +198,70 @@ pool 数量可变的 descriptor set 分配器
 
 descriptor pool 的 `std::vector<vk::DescriptorPoolSize> pool_sizes` 都是相同的，暂时不去细究
 
-### Uniform buffer
+### 材质类 Material
 
-在哪里控制 uniform buffer 的 memory copy？
+#### 管理 Uniform Buffer 
+
+一开始，我的疑问是在哪里控制 uniform buffer 的 memory copy？
+
+这个问题其实可以细分。
+
+从更新频率来说，有逐场景的和逐帧的 uniform buffer，它们的更新频率不一样；
+
+从 shader 来说，每一个 shader 对应的物体的数量都是不确定的，那么对应的 uniform buffer 的数据量是不一样的；
+
+从 uniform buffer 的存储结构来说，可能一个物体对应一个 VkBuffer，也可以所有物体共同使用同一个大的 VkBuffer，使用基地址和偏移量来区分各自的数据
+
+那么其实我们需要一个抽象类，控制属于同一个 shader 的不同物体的 uniform buffer 的更新，还有就是控制 descriptor set 的绑定
+
+##### 逐场景的 uniform buffer
+
+##### 逐帧的 uniform buffer
+
+因为每一个 shader 对应的物体的数量都是不确定的，所以使用一个 ring buffer 来存储逐帧的 uniform buffer
+
+在渲染主循环中，每帧提交每个物体的 uniform buffer 数据
+
+```cpp
+material_ins.UploadUniformData("uniform_data_name", uniform_data_ptr, uniform_data_size);
+```
+
+此时提交的数据会被拷贝到 ring buffer
+
+如果一个物体具有多个需要提交的数据，那么就要上传多次
+
+```cpp
+material_ins.UploadUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+material_ins.UploadUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+```
+
+那么多次上传之前，需要区分哪些上传对应哪些物体
+
+这里，设计一对 begin 和 end 来确定每个物体对应在 ring buffer 中的 offset
+
+```cpp
+// object 1
+material_ins.BeginObject();
+material_ins.UploadUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+```
+
+#### Ring buffer
+
+Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
+
+该数据量不一定是内存对齐值的整数倍
+
+从 Ring buffer 分配内存的时候，返回当前的 offset 的对齐之后的值作为分配的内存的首地址，同时 Ring buffer 内部存储的 offset 是这个首地址 + 分配的 size
+
+对齐的首地址 + 不一定是内存对齐值的整数倍的分配的 size，得到的值又不一定是内存对齐值的整数倍了
+
+如果新的 offset 超出了 Ring buffer 内部的数据区的长度，那么就不返回当前的 offset 的对齐之后的值，而是直接返回
 
 ## 常见错误
 
