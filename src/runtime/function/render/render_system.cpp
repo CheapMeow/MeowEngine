@@ -482,15 +482,15 @@ namespace Meow
 
         diffuse_texture =
             g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
-        testMat            = Material(m_gpu, m_logical_device);
-        testMat.shader_ptr = std::make_shared<Shader>(m_gpu,
-                                                      m_logical_device,
-                                                      m_descriptor_allocator,
-                                                      "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
-                                                      "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
-        testMat.shader_ptr->PushBufferWrite("uboMVP", uniform_buffer_data.buffer);
-        testMat.shader_ptr->PushImageWrite("diffuseMap", *diffuse_texture);
-        testMat.shader_ptr->UpdateDescriptorSets(m_logical_device);
+        std::shared_ptr<Shader> shader_ptr =
+            std::make_shared<Shader>(m_gpu,
+                                     m_logical_device,
+                                     m_descriptor_allocator,
+                                     "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
+                                     "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
+        testMat = Material(m_gpu, m_logical_device, shader_ptr);
+        testMat.SetImage("diffuseMap", *diffuse_texture);
+        testMat.UpdateDescriptorSets(m_logical_device);
         testMat.CreatePipeline(m_logical_device, m_render_pass, vk::FrontFace::eClockwise, true);
     }
 
@@ -626,6 +626,22 @@ namespace Meow
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
+        // Update mesh uniform
+
+        testMat.BeginFrame();
+        for (auto [entity, transfrom_component, model_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        {
+
+            for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
+            {
+                testMat.BeginObject();
+                testMat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
+                testMat.EndObject();
+            }
+        }
+        testMat.EndFrame();
+
         // ------------------- render -------------------
 
         // TODO: Try UpdateUniformBuffer after Render pass begin
@@ -646,38 +662,7 @@ namespace Meow
                 command(cmd_buffer);
             }
 
-            // Collate renderable mesh
-
-            // std::unordered_map<std::string, std::vector<Renderable*>> renderables_per_material;
-
-            // for (auto [entity, transfrom_component, model_component] :
-            //      g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-            // {
-            //     // TODO: How to solve the different uniform buffer problem?
-            //     // ubo_data.model = transfrom_component.m_global_transform;
-
-            //     for (Mesh& mesh : model_component.model.meshes)
-            //     {
-            //         renderables_per_material[mesh.material_name].push_back(&mesh);
-            //     }
-            // }
-
-            // // TODO: sort renderables by distance
-
-            // for (auto kv : renderables_per_material)
-            // {
-            //     std::shared_ptr<Material> material_ptr =
-            //         g_runtime_global_context.resource_system->GetMaterial(kv.first);
-            //     material_ptr->Bind(cmd_buffer);
-            //     material_ptr->UpdateUniformBuffer(ubo_data);
-
-            //     for (Renderable* renderable : kv.second)
-            //     {
-            //         renderable->BindDrawCmd(cmd_buffer);
-            //     }
-            // }
-
-            // Testing
+            // Draw mesh
 
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
@@ -689,7 +674,7 @@ namespace Meow
 
                 for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
                 {
-                    testMat.BindDescriptorSets(cmd_buffer);
+                    testMat.BindDescriptorSets(cmd_buffer, meshIndex);
                     model_component.model.meshes[meshIndex]->BindDrawCmd(cmd_buffer);
                 }
             }

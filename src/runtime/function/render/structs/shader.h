@@ -22,11 +22,12 @@ namespace Meow
 
     struct BufferMeta
     {
-        uint32_t             set            = 0;
-        uint32_t             binding        = 0;
-        uint32_t             bufferSize     = 0;
-        vk::DescriptorType   descriptorType = vk::DescriptorType::eUniformBuffer;
-        vk::ShaderStageFlags stageFlags     = {};
+        uint32_t             set                  = 0;
+        uint32_t             binding              = 0;
+        uint32_t             bufferSize           = 0;
+        vk::DescriptorType   descriptorType       = vk::DescriptorType::eUniformBuffer;
+        vk::ShaderStageFlags stageFlags           = {};
+        uint32_t             dynamic_offset_index = 0;
     };
 
     struct ImageMeta
@@ -52,7 +53,7 @@ namespace Meow
         BindingsArray bindings;
     };
 
-    class DescriptorSetLayoutsMeta
+    class DescriptorSetLayoutMetas
     {
     public:
         struct BindingMeta
@@ -61,21 +62,21 @@ namespace Meow
             int32_t binding;
         };
 
-        DescriptorSetLayoutsMeta() {}
+        DescriptorSetLayoutMetas() {}
 
-        ~DescriptorSetLayoutsMeta() {}
+        ~DescriptorSetLayoutMetas() {}
 
         vk::DescriptorType GetDescriptorType(int32_t set, int32_t binding)
         {
-            for (int32_t i = 0; i < set_layout_metas.size(); ++i)
+            for (int32_t i = 0; i < metas.size(); ++i)
             {
-                if (set_layout_metas[i].set == set)
+                if (metas[i].set == set)
                 {
-                    for (int32_t j = 0; j < set_layout_metas[i].bindings.size(); ++j)
+                    for (int32_t j = 0; j < metas[i].bindings.size(); ++j)
                     {
-                        if (set_layout_metas[i].bindings[j].binding == binding)
+                        if (metas[i].bindings[j].binding == binding)
                         {
-                            return set_layout_metas[i].bindings[j].descriptorType;
+                            return metas[i].bindings[j].descriptorType;
                         }
                     }
                 }
@@ -92,11 +93,11 @@ namespace Meow
 
             // find existing set layout
             // this supports multiple set
-            for (int32_t i = 0; i < set_layout_metas.size(); ++i)
+            for (int32_t i = 0; i < metas.size(); ++i)
             {
-                if (set_layout_metas[i].set == set)
+                if (metas[i].set == set)
                 {
-                    setLayout = &(set_layout_metas[i]);
+                    setLayout = &(metas[i]);
                     break;
                 }
             }
@@ -104,8 +105,8 @@ namespace Meow
             // If there is not set layout, new one
             if (setLayout == nullptr)
             {
-                set_layout_metas.push_back({});
-                setLayout = &(set_layout_metas[set_layout_metas.size() - 1]);
+                metas.push_back({});
+                setLayout = &(metas[metas.size() - 1]);
             }
 
             for (int32_t i = 0; i < setLayout->bindings.size(); ++i)
@@ -130,7 +131,7 @@ namespace Meow
 
     public:
         std::unordered_map<std::string, BindingMeta> binding_meta_map;
-        std::vector<DescriptorSetLayoutMeta>         set_layout_metas;
+        std::vector<DescriptorSetLayoutMeta>         metas;
     };
 
     struct Shader
@@ -159,11 +160,13 @@ namespace Meow
 
         bool use_dynamic_uniform_buffer = false;
 
-        DescriptorSetLayoutsMeta set_layouts_meta;
+        DescriptorSetLayoutMetas set_layout_metas;
 
         std::vector<VertexAttributeMeta>            vertex_attribute_metas;
         std::unordered_map<std::string, BufferMeta> buffer_meta_map;
         std::unordered_map<std::string, ImageMeta>  image_meta_map;
+
+        uint32_t uniform_buffer_count = 0;
 
         std::vector<VertexAttribute> per_vertex_attributes;
         std::vector<VertexAttribute> instances_attributes;
@@ -198,6 +201,7 @@ namespace Meow
 
         void PushBufferWrite(const std::string&          name,
                              vk::raii::Buffer const&     buffer,
+                             vk::DeviceSize              range            = VK_WHOLE_SIZE,
                              vk::raii::BufferView const* raii_buffer_view = nullptr);
 
         void PushImageWrite(const std::string& name, TextureData& texture_data);
@@ -239,6 +243,8 @@ namespace Meow
         void GenerateInputInfo();
 
         void GenerateLayout(vk::raii::Device const& raii_logical_device);
+
+        void GenerateDynamicUniformBufferOffset();
 
         /**
          * @brief Allocate multiple descriptor sets

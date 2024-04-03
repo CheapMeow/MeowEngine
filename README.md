@@ -204,10 +204,6 @@ descriptor pool 的 `std::vector<vk::DescriptorPoolSize> pool_sizes` 都是相�
 
 #### 管理 Uniform Buffer 
 
-一开始，我的疑问是在哪里控制 uniform buffer 的 memory copy？
-
-这个问题其实可以细分。
-
 从更新频率来说，有逐场景的和逐帧的 uniform buffer，它们的更新频率不一样；
 
 从 shader 来说，每一个 shader 对应的物体的数量都是不确定的，那么对应的 uniform buffer 的数据量是不一样的；
@@ -308,7 +304,6 @@ Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 理想情况下，在一帧的末尾，ring buffer 对应于这一帧分配的内存的结构是
 
 ```
-
 [...] 
 
 [global buffer] 
@@ -366,7 +361,19 @@ N 个 object 对应 N 次 `vkCmdBindDescriptorSets` 和 draw，假设不考虑�
 
 那么每一个 object 对应的 offset 数组都要缓存
 
-最后还是要做一个 `vector<vector<uint32_t>>`
+最后还是要做一个 `vector<vector<uint32_t>> per_obj_dynamic_offsets` 来存储每个物体在 ring buffer 上分配的内存的首地址
+
+但是这个 `per_obj_dynamic_offsets` 并不能直接传入 `vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段
+
+因为可能存在一种情况：某一个 `Material` 并不需要绘制网格，而只是单纯的接受 uniform 输入并输出
+
+那么这时，外部并不会对这个 `Material` 类实例调用 `BeginObject()` `EndObject()`
+
+这时，`per_obj_dynamic_offsets` 为空，如果还坚持要将 `per_obj_dynamic_offsets` 的元素赋给`vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段，就会出错
+
+所以应该有一个判断，当 `per_obj_dynamic_offsets` 为空时，给 `per_obj_dynamic_offsets` 添加一个元素，并且把 global 的 offset 复制进去
+
+这时，外部在绑定描述符集的时候直接传入 `obj_index = 0` 就好了
 
 ## 常见错误
 

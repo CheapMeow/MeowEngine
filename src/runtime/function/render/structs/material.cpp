@@ -1,7 +1,41 @@
 #include "material.h"
+#include "core/log/log.h"
+
+#include <algorithm>
 
 namespace Meow
 {
+    Material::Material(vk::raii::PhysicalDevice const& physical_device,
+                       vk::raii::Device const&         logical_device,
+                       std::shared_ptr<Shader>         shader_ptr)
+        : ring_buffer(physical_device, logical_device)
+    {
+        this->shader_ptr = shader_ptr;
+
+        // convert type from vk::raii::DescriptorSet to vk::DescriptorSet
+
+        descriptor_sets.resize(shader_ptr->descriptor_sets.size());
+        for (size_t i = 0; i < descriptor_sets.size(); ++i)
+        {
+            descriptor_sets[i] = *shader_ptr->descriptor_sets[i];
+        }
+
+        // bind ring buffer to descriptor set
+        // There are two parts about binding resources to descriptor set
+        // One is binding ring buffer. It is known by Material class, so it is done in Material ctor
+        // The second is other's binding, such as image. It is done outside of Material ctor
+
+        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
+        {
+            if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer ||
+                it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+            {
+                shader_ptr->PushBufferWrite(it->first, ring_buffer.buffer_data_ptr->buffer, it->second.bufferSize);
+                shader_ptr->UpdateDescriptorSets(logical_device);
+            }
+        }
+    }
+
     void Material::CreatePipeline(vk::raii::Device const&     logical_device,
                                   vk::raii::RenderPass const& render_pass,
                                   vk::FrontFace               front_face,
@@ -149,22 +183,193 @@ namespace Meow
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
 
+    void Material::BeginFrame()
+    {
+        if (actived)
+        {
+            return;
+        }
+        actived = true;
+
+        // clear per obj data
+
+        obj_count = 0;
+        per_obj_dynamic_offsets.clear();
+
+        // copy global uniform buffer data to ring buffer
+
+        // global uniform buffer should be set before BeginFrame() is called
+        // so copy global uniform buffer to ring buffer here
+        // then it does not need to copy global uniform buffer later during this frame
+
+        for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
+        {
+            uint8_t* ringCPUData = (uint8_t*)(ring_buffer.mapped_data_ptr);
+            uint64_t bufferSize  = global_uniform_buffer_info.data.size();
+            uint64_t ringOffset  = ring_buffer.AllocateMemory(bufferSize);
+
+            memcpy(ringCPUData + ringOffset, global_uniform_buffer_info.data.data(), bufferSize);
+
+            global_uniform_buffer_info.dynamic_offset = (uint32_t)ringOffset;
+        }
+    }
+
+    void Material::EndFrame()
+    {
+        actived = false;
+
+        // if no object
+        // all elements of per_obj_dynamic_offsets[0] are global uniform buffer offset
+
+        if (per_obj_dynamic_offsets.size() == 0)
+        {
+            per_obj_dynamic_offsets.push_back(
+                std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
+
+            // copy global uniform buffer offset
+
+            for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
+            {
+                per_obj_dynamic_offsets[0][global_uniform_buffer_info.dynamic_offset_index] =
+                    global_uniform_buffer_info.dynamic_offset;
+            }
+        }
+    }
+
+    void Material::BeginObject()
+    {
+        per_obj_dynamic_offsets.push_back(
+            std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
+
+        // copy global uniform buffer offset
+
+        for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
+        {
+            per_obj_dynamic_offsets[obj_count][global_uniform_buffer_info.dynamic_offset_index] =
+                global_uniform_buffer_info.dynamic_offset;
+        }
+    }
+
+    void Material::EndObject()
+    {
+        // check if all dynamic offset is set
+
+        // if there are objects
+        if (per_obj_dynamic_offsets.size() == obj_count + 1)
+        {
+            // check current object
+            for (auto offset : per_obj_dynamic_offsets[obj_count])
+            {
+                if (offset == std::numeric_limits<uint32_t>::max())
+                {
+                    RUNTIME_ERROR("Uniform not set\n");
+                }
+            }
+        }
+
+        ++obj_count;    
+    }
+
+    void Material::SetGlobalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
+    {
+        auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
+        if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
+        {
+            // TODO: format log
+            // MLOGE("Uniform %s not found.", name.c_str());
+            return;
+        }
+
+        if (buffer_meta_iter->second.bufferSize != size)
+        {
+            // TODO: format log
+            // MLOGE("Uniform %s size not match, dst=%ud src=%ud", name.c_str(), it->second.dataSize, size);
+            return;
+        }
+
+        // store data into info class instance
+
+        auto global_uniform_buffer_info_iter = std::find_if(
+            global_uniform_buffer_infos.begin(), global_uniform_buffer_infos.end(), [&](auto& rhs) -> bool {
+                return rhs.dynamic_offset_index == buffer_meta_iter->second.dynamic_offset_index;
+            });
+
+        if (global_uniform_buffer_info_iter == global_uniform_buffer_infos.end())
+        {
+            GlobalUniformBufferInfo global_uniform_buffer_info;
+            global_uniform_buffer_info.dynamic_offset_index = buffer_meta_iter->second.dynamic_offset_index;
+            memcpy(global_uniform_buffer_info.data.data(), dataPtr, size);
+
+            global_uniform_buffer_infos.push_back(global_uniform_buffer_info);
+        }
+        else
+        {
+            memcpy(global_uniform_buffer_info_iter->data.data(), dataPtr, size);
+        }
+    }
+
+    void Material::SetLocalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
+    {
+        auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
+        if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
+        {
+            // TODO: format log
+            // MLOGE("Uniform %s not found.", name.c_str());
+            return;
+        }
+
+        if (buffer_meta_iter->second.bufferSize != size)
+        {
+            // TODO: format log
+            // MLOGE("Uniform %s size not match, dst=%ud src=%ud", name.c_str(), it->second.dataSize, size);
+            return;
+        }
+
+        // copy local uniform buffer to ring buffer
+
+        uint8_t* ringCPUData = (uint8_t*)(ring_buffer.mapped_data_ptr);
+        uint64_t bufferSize  = buffer_meta_iter->second.bufferSize;
+        uint64_t ringOffset  = ring_buffer.AllocateMemory(bufferSize);
+
+        memcpy(ringCPUData + ringOffset, dataPtr, bufferSize);
+
+        per_obj_dynamic_offsets[obj_count][buffer_meta_iter->second.dynamic_offset_index] = (uint32_t)ringOffset;
+    }
+
+    void Material::SetStorageBuffer(const std::string&          name,
+                                    vk::raii::Buffer const&     buffer,
+                                    vk::DeviceSize              range,
+                                    vk::raii::BufferView const* raii_buffer_view)
+    {
+        shader_ptr->PushBufferWrite(name, buffer, range, raii_buffer_view);
+    }
+
+    void Material::SetImage(const std::string& name, TextureData& texture_data)
+    {
+        shader_ptr->PushImageWrite(name, texture_data);
+    }
+
+    void Material::UpdateDescriptorSets(vk::raii::Device const& logical_device)
+    {
+        shader_ptr->UpdateDescriptorSets(logical_device);
+    }
+
     void Material::BindPipeline(vk::raii::CommandBuffer const& command_buffer)
     {
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
-    void Material::BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer)
+    void Material::BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index)
     {
-        // convert type from vk::raii::DescriptorSet to vk::DescriptorSet
-
-        std::vector<vk::DescriptorSet> descriptor_sets(shader_ptr->descriptor_sets.size());
-        for (size_t i = 0; i < descriptor_sets.size(); ++i)
+        if (obj_index >= per_obj_dynamic_offsets.size())
         {
-            descriptor_sets[i] = *shader_ptr->descriptor_sets[i];
+            return;
         }
 
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *shader_ptr->pipeline_layout, 0, descriptor_sets, nullptr);
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *shader_ptr->pipeline_layout,
+                                          0,
+                                          descriptor_sets,
+                                          per_obj_dynamic_offsets[obj_index]);
     }
 } // namespace Meow

@@ -73,7 +73,7 @@ namespace Meow
 
         GenerateInputInfo();
         GenerateLayout(logical_device);
-
+        GenerateDynamicUniformBufferOffset();
         AllocateDescriptorSet(logical_device, descriptor_allocator);
     }
 
@@ -135,7 +135,7 @@ namespace Meow
             vk::DescriptorSetLayoutBinding set_layout_binding {
                 binding, vk::DescriptorType::eInputAttachment, 1, stageFlags, nullptr};
 
-            set_layouts_meta.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
             // store mapping from image name to ImageMeta
             auto it = image_meta_map.find(var_name);
@@ -183,7 +183,7 @@ namespace Meow
                 stageFlags,
                 nullptr};
 
-            set_layouts_meta.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
             // store mapping from uniform buffer name to BufferMeta
             auto it = buffer_meta_map.find(var_name);
@@ -221,7 +221,7 @@ namespace Meow
             vk::DescriptorSetLayoutBinding set_layout_binding {
                 binding, vk::DescriptorType::eCombinedImageSampler, 1, stageFlags, nullptr};
 
-            set_layouts_meta.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
             auto it = image_meta_map.find(var_name);
             if (it == image_meta_map.end())
@@ -308,7 +308,7 @@ namespace Meow
             vk::DescriptorSetLayoutBinding set_layout_binding = {
                 binding, vk::DescriptorType::eStorageBuffer, 1, stageFlags, nullptr};
 
-            set_layouts_meta.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
             // store mapping from storage buffer name to BufferMeta
             auto it = buffer_meta_map.find(var_name);
@@ -346,7 +346,7 @@ namespace Meow
             vk::DescriptorSetLayoutBinding set_layout_binding = {
                 binding, vk::DescriptorType::eStorageImage, 1, stageFlags, nullptr};
 
-            set_layouts_meta.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
             // store mapping from storage buffer name to BufferMeta
             auto it = image_meta_map.find(var_name);
@@ -450,18 +450,18 @@ namespace Meow
 
     void Shader::GenerateLayout(vk::raii::Device const& raii_logical_device)
     {
-        std::vector<DescriptorSetLayoutMeta>& set_layout_metas = set_layouts_meta.set_layout_metas;
+        std::vector<DescriptorSetLayoutMeta>& metas = set_layout_metas.metas;
 
         // first sort according to set
         std::sort(
-            set_layout_metas.begin(),
-            set_layout_metas.end(),
-            [](const DescriptorSetLayoutMeta& a, const DescriptorSetLayoutMeta& b) -> bool { return a.set < b.set; });
+            metas.begin(), metas.end(), [](const DescriptorSetLayoutMeta& a, const DescriptorSetLayoutMeta& b) -> bool {
+                return a.set < b.set;
+            });
 
         // first sort according to binding
-        for (int32_t i = 0; i < set_layout_metas.size(); ++i)
+        for (int32_t i = 0; i < metas.size(); ++i)
         {
-            std::vector<vk::DescriptorSetLayoutBinding>& bindings = set_layout_metas[i].bindings;
+            std::vector<vk::DescriptorSetLayoutBinding>& bindings = metas[i].bindings;
             std::sort(bindings.begin(),
                       bindings.end(),
                       [](const vk::DescriptorSetLayoutBinding& a, const vk::DescriptorSetLayoutBinding& b) -> bool {
@@ -470,9 +470,9 @@ namespace Meow
         }
 
         // support multiple descriptor set layout
-        for (int32_t i = 0; i < set_layout_metas.size(); ++i)
+        for (int32_t i = 0; i < metas.size(); ++i)
         {
-            DescriptorSetLayoutMeta& set_layout_meta = set_layout_metas[i];
+            DescriptorSetLayoutMeta& set_layout_meta = metas[i];
 
             vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(vk::DescriptorSetLayoutCreateFlags {},
                                                                                 set_layout_meta.bindings);
@@ -492,6 +492,40 @@ namespace Meow
         pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
     }
 
+    void Shader::GenerateDynamicUniformBufferOffset()
+    {
+        // metas has been sort acrroding to
+        std::vector<DescriptorSetLayoutMeta>& metas = set_layout_metas.metas;
+
+        // set uniform buffer offset index
+        // for the use of dynamic uniform buffer
+        // the offset index is related about set and binding
+        // so it is wrong to iterate like:
+        // for (auto& buffer_meta : buffer_meta_map)
+        // instead, use double layer looping
+
+        uniform_buffer_count = 0;
+        for (auto& meta : metas)
+        {
+            for (auto& descriptor_layout_binding : meta.bindings)
+            {
+                // Convention: Non-dynamic is regarded as dynamic
+                for (auto& buffer_meta : buffer_meta_map)
+                {
+                    if (buffer_meta.second.set == meta.set &&
+                        buffer_meta.second.binding == descriptor_layout_binding.binding &&
+                        buffer_meta.second.descriptorType == descriptor_layout_binding.descriptorType &&
+                        buffer_meta.second.stageFlags == descriptor_layout_binding.stageFlags)
+                    {
+                        buffer_meta.second.dynamic_offset_index = uniform_buffer_count;
+                        uniform_buffer_count += 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     void Shader::AllocateDescriptorSet(vk::raii::Device const&      logical_device,
                                        DescriptorAllocatorGrowable& descriptor_allocator)
     {
@@ -500,10 +534,11 @@ namespace Meow
 
     void Shader::PushBufferWrite(const std::string&          name,
                                  vk::raii::Buffer const&     buffer,
+                                 vk::DeviceSize              range,
                                  vk::raii::BufferView const* raii_buffer_view)
     {
-        auto it = set_layouts_meta.binding_meta_map.find(name);
-        if (it == set_layouts_meta.binding_meta_map.end())
+        auto it = set_layout_metas.binding_meta_map.find(name);
+        if (it == set_layout_metas.binding_meta_map.end())
         {
             // TODO: support log format
             // EDITOR_ERROR("Failed write buffer, %s not found!", name.c_str());
@@ -514,7 +549,7 @@ namespace Meow
 
         // Default is offset = 0, buffer size = whole size
         // Maybe it needs to be configurable?
-        descriptor_buffer_infos.emplace_back(*buffer, 0, VK_WHOLE_SIZE);
+        descriptor_buffer_infos.emplace_back(*buffer, 0, range);
 
         // TODO: store buffer view in an vector
         vk::BufferView buffer_view;
@@ -528,7 +563,7 @@ namespace Meow
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
-            set_layouts_meta.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
+            set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
             nullptr,                                                            // pImageInfo
             &descriptor_buffer_infos.back(),                                    // pBufferInfo
             raii_buffer_view ? &buffer_view : nullptr                           // pTexelBufferView
@@ -539,8 +574,8 @@ namespace Meow
 
     void Shader::PushImageWrite(const std::string& name, TextureData& texture_data)
     {
-        auto it = set_layouts_meta.binding_meta_map.find(name);
-        if (it == set_layouts_meta.binding_meta_map.end())
+        auto it = set_layout_metas.binding_meta_map.find(name);
+        if (it == set_layout_metas.binding_meta_map.end())
         {
             // TODO: support log format
             // EDITOR_ERROR("Failed write buffer, %s not found!", name.c_str());
@@ -557,7 +592,7 @@ namespace Meow
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
-            set_layouts_meta.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
+            set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
             &descriptor_image_infos.back(),                                     // pImageInfo
             nullptr,                                                            // pBufferInfo
             nullptr                                                             // pTexelBufferView
