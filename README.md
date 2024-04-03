@@ -15,9 +15,10 @@
     - [材质类 Material](#材质类-material)
       - [管理 Uniform Buffer](#管理-uniform-buffer)
       - [更新 Uniform Buffer](#更新-uniform-buffer)
-      - [Ring Buffer 的内存分配方法](#ring-buffer-的内存分配方法)
-      - [Ring Buffer 的内存分配结构](#ring-buffer-的内存分配结构)
-      - [Ring Buffer 的内存分配记录](#ring-buffer-的内存分配记录)
+    - [环形缓冲类 Ring Buffer](#环形缓冲类-ring-buffer)
+      - [内存分配方法](#内存分配方法)
+      - [内存分配结构](#内存分配结构)
+      - [内存分配记录](#内存分配记录)
   - [常见错误](#常见错误)
     - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
     - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
@@ -288,7 +289,9 @@ material_ins.EndObject();
 material_ins.EndFrame();
 ```
 
-#### Ring Buffer 的内存分配方法
+### 环形缓冲类 Ring Buffer
+
+#### 内存分配方法
 
 Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 
@@ -300,9 +303,11 @@ Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 
 如果新的 offset 超出了 Ring buffer 内部的数据区的长度，那么就不返回当前的 offset 的对齐之后的值，而是直接返回
 
-#### Ring Buffer 的内存分配结构
+#### 内存分配结构
 
 理想情况下，在一帧的末尾，ring buffer 对应于这一帧分配的内存的结构是
+
+```
 
 [...] 
 
@@ -315,6 +320,7 @@ Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 [...]
 
 [object m local buffer 1] [object m local buffer 2] [...] [object m local buffer nm] 
+```
 
 实际内存是线性的，这里为了方便理解就做了换行
 
@@ -322,11 +328,13 @@ Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 
 所以你只能保证 global uniform buffer 在所有 local uniform buffer 的前面，因为 global uniform buffer 是在这一帧开始之前就知道的；还有你可以确定序号小的 object 提交的 buffer 一定在序号大的 object 之前，其他的顺序无法保证
 
-#### Ring Buffer 的内存分配记录
+#### 内存分配记录
 
 所以你可能有
 
+```
 [...] [global buffer] [object 1 local buffer 3] [object 1 local buffer 1] [...] [object 2 local buffer 1] [object 2 local buffer 4] [...]
+```
 
 所以在后端，每一次提交时都要记录下当前分配的 ring buffer 首地址，最后提供给 `vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段
 
