@@ -138,6 +138,25 @@ namespace Meow
         typedef std::vector<vk::VertexInputBindingDescription>   InputBindingsVector;
         typedef std::vector<vk::VertexInputAttributeDescription> InputAttributesVector;
 
+        // stored for creating pipeline
+
+        vk::raii::ShaderModule vert_shader_module = nullptr;
+        vk::raii::ShaderModule frag_shader_module = nullptr;
+        vk::raii::ShaderModule geom_shader_module = nullptr;
+        vk::raii::ShaderModule comp_shader_module = nullptr;
+        vk::raii::ShaderModule tesc_shader_module = nullptr;
+        vk::raii::ShaderModule tese_shader_module = nullptr;
+
+        // a dirty hack
+        // because raii class doesn't provide operator== override
+
+        bool is_vert_shader_valid = false;
+        bool is_frag_shader_valid = false;
+        bool is_geom_shader_valid = false;
+        bool is_comp_shader_valid = false;
+        bool is_tesc_shader_valid = false;
+        bool is_tese_shader_valid = false;
+
         bool use_dynamic_uniform_buffer = false;
 
         DescriptorSetLayoutsMeta set_layouts_meta;
@@ -165,21 +184,17 @@ namespace Meow
         std::vector<vk::DescriptorImageInfo>  descriptor_image_infos;
         std::vector<vk::WriteDescriptorSet>   write_descriptor_sets;
 
-        // TODO: create pipeline in material
-        vk::raii::Pipeline graphics_pipeline = nullptr;
-
         Shader() {}
 
-        Shader(vk::raii::PhysicalDevice const&    gpu,
-               vk::raii::Device const&            logical_device,
-               DescriptorAllocatorGrowable& descriptor_allocator,
-               vk::raii::RenderPass const&        render_pass,
-               std::string                        vert_shader_file_path,
-               std::string                        frag_shader_file_path,
-               std::string                        geom_shader_file_path = "",
-               std::string                        comp_shader_file_path = "",
-               std::string                        tesc_shader_file_path = "",
-               std::string                        tese_shader_file_path = "");
+        Shader(vk::raii::PhysicalDevice const& gpu,
+               vk::raii::Device const&         logical_device,
+               DescriptorAllocatorGrowable&    descriptor_allocator,
+               std::string                     vert_shader_file_path,
+               std::string                     frag_shader_file_path,
+               std::string                     geom_shader_file_path = "",
+               std::string                     comp_shader_file_path = "",
+               std::string                     tesc_shader_file_path = "",
+               std::string                     tese_shader_file_path = "");
 
         void PushBufferWrite(const std::string&          name,
                              vk::raii::Buffer const&     buffer,
@@ -188,8 +203,6 @@ namespace Meow
         void PushImageWrite(const std::string& name, TextureData& texture_data);
 
         void UpdateDescriptorSets(vk::raii::Device const& logical_device);
-
-        void Bind(vk::raii::CommandBuffer const& command_buffer);
 
     private:
         bool CreateShaderModuleAndGetMeta(

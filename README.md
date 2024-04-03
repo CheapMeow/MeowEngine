@@ -11,12 +11,13 @@
       - [分配 descriptor set](#分配-descriptor-set)
       - [存储 descriptor set](#存储-descriptor-set)
       - [更新 descriptor set](#更新-descriptor-set)
-    - [DescriptorAllocatorGrowable](#descriptorallocatorgrowable)
+    - [可变容量的描述符分配器类 DescriptorAllocatorGrowable](#可变容量的描述符分配器类-descriptorallocatorgrowable)
     - [材质类 Material](#材质类-material)
       - [管理 Uniform Buffer](#管理-uniform-buffer)
-        - [逐场景的 uniform buffer](#逐场景的-uniform-buffer)
-        - [逐帧的 uniform buffer](#逐帧的-uniform-buffer)
-      - [Ring buffer](#ring-buffer)
+      - [更新 Uniform Buffer](#更新-uniform-buffer)
+      - [Ring Buffer 的内存分配方法](#ring-buffer-的内存分配方法)
+      - [Ring Buffer 的内存分配结构](#ring-buffer-的内存分配结构)
+      - [Ring Buffer 的内存分配记录](#ring-buffer-的内存分配记录)
   - [常见错误](#常见错误)
     - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
     - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
@@ -190,7 +191,7 @@ pBufferInfo, pImageInfo 需要的 `VkDescriptorBufferInfo`, `VkDescriptorImageIn
 
 但是我感觉，这个东西，在创建 `VkWriteDescriptorSet` 的时候创建就好了，这样就显得 `pBufferInfo`, `pImageInfo` 的意义比较明确
 
-### DescriptorAllocatorGrowable
+### 可变容量的描述符分配器类 DescriptorAllocatorGrowable
 
 pool 数量可变的 descriptor set 分配器
 
@@ -214,9 +215,7 @@ descriptor pool 的 `std::vector<vk::DescriptorPoolSize> pool_sizes` 都是相�
 
 那么其实我们需要一个抽象类，控制属于同一个 shader 的不同物体的 uniform buffer 的更新，还有就是控制 descriptor set 的绑定
 
-##### 逐场景的 uniform buffer
-
-##### 逐帧的 uniform buffer
+#### 更新 Uniform Buffer
 
 因为每一个 shader 对应的物体的数量都是不确定的，所以使用一个 ring buffer 来存储逐帧的 uniform buffer
 
@@ -251,7 +250,45 @@ material_ins.UploadUniformData("uniform_data_name2", uniform_data_ptr2, uniform_
 material_ins.EndObject();
 ```
 
-#### Ring buffer
+有一些 uniform buffer 是对所有物体生效的，他可能每帧刷新也可能不是每帧刷新，这里非正式地称为 global 的。
+
+```cpp
+material_ins.UploadGlobalUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+
+// object 1
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name3", uniform_data_ptr3, uniform_data_size3);
+material_ins.EndObject();
+```
+
+因为使用了 ring buffer，所以这些 global uniform buffer 哪怕只在渲染器前端只更新一次，在后端，每帧都要把 global uniform buffer 拷贝到 ring buffer 的最前面，并且保存首地址
+
+这通过另外一组 begin 和 end 来完成
+
+```cpp
+material_ins.UploadGlobalUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+
+material_ins.BeginFrame();
+
+// object 1
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name3", uniform_data_ptr3, uniform_data_size3);
+material_ins.EndObject();
+
+material_ins.EndFrame();
+```
+
+#### Ring Buffer 的内存分配方法
 
 Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 
@@ -262,6 +299,66 @@ Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
 对齐的首地址 + 不一定是内存对齐值的整数倍的分配的 size，得到的值又不一定是内存对齐值的整数倍了
 
 如果新的 offset 超出了 Ring buffer 内部的数据区的长度，那么就不返回当前的 offset 的对齐之后的值，而是直接返回
+
+#### Ring Buffer 的内存分配结构
+
+理想情况下，在一帧的末尾，ring buffer 对应于这一帧分配的内存的结构是
+
+[...] 
+
+[global buffer] 
+
+[object 1 local buffer 1] [object 1 local buffer 2] [...] [object 1 local buffer n1] 
+
+[object 2 local buffer 1] [object 2 local buffer 2] [...] [object 2 local buffer n2] 
+
+[...]
+
+[object m local buffer 1] [object m local buffer 2] [...] [object m local buffer nm] 
+
+实际内存是线性的，这里为了方便理解就做了换行
+
+因为你无法确定在这一帧提交 local uniform buffer 的顺序，而每次提交都会线性分配 ring buffer
+
+所以你只能保证 global uniform buffer 在所有 local uniform buffer 的前面，因为 global uniform buffer 是在这一帧开始之前就知道的；还有你可以确定序号小的 object 提交的 buffer 一定在序号大的 object 之前，其他的顺序无法保证
+
+#### Ring Buffer 的内存分配记录
+
+所以你可能有
+
+[...] [global buffer] [object 1 local buffer 3] [object 1 local buffer 1] [...] [object 2 local buffer 1] [object 2 local buffer 4] [...]
+
+所以在后端，每一次提交时都要记录下当前分配的 ring buffer 首地址，最后提供给 `vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段
+
+这个字段接受一个指针，指向一个存储 uniform buffer 偏移量的数组。对于我们的数据结构，就是存储 ring buffer 分配的内存的首地址的数组。
+
+也就是说，我们认为 `pDynamicOffsets` 指向的数组要存储所有 object 的 offset
+
+这个数组在每帧开始时清空，然后接受每一个 object 的 uniform buffer 对应的 offset
+
+因为这一个材质对应的所有 object 都共用同一个 shader，所以显然所有 object 的 uniform buffer 的 descriptor 的数量都是一样的
+
+所以如果这一帧有 N 个 object，每一个 object 的 uniform buffer 的 descriptor 的数量是 `dynamicOffsetCount` 那么 `pDynamicOffsets` 指向的数组的大小就是 `N * dynamicOffsetCount`
+
+在每一帧，这个数组的每个元素都必须分配到正确的偏移量，否则就说明对应的 uniform buffer 没有提交。
+
+当然，可以添加一个机制，为每一个 local uniform buffer 缓存最后一次提交的数据，如果这一帧没有提交对应的 local uniform buffer，那么就提交缓存。或者是提交缺省值。
+
+N 个 object 对应 N 次 `vkCmdBindDescriptorSets` 和 draw，假设不考虑优化。
+
+第 i 次 `vkCmdBindDescriptorSets` 需要传入 `pDynamicOffsets` 指向的数组的第 i 段区间，那么 `Material` 类需要对此进行封装
+
+是否能够将这个设计简化，现在我们 `pDynamicOffsets` 指向的数组不再是存储所有 object 的 offset，而仅仅是一个指向某一个 object 的所有 offset 的数组
+
+那么现在它的大小为 `dynamicOffsetCount`，不再是在 `BeginFrame` 中初始化，而是在 `BeginObject` 中初始化
+
+`vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段接受的就直接是数组的首地址，而不需要计算某一个大数组的某个区间的首地址
+
+这样当然可以，但是因为不管是 `BeginFrame` 还是 `BeginObject`，都是在 render pass 启动之前的
+
+那么每一个 object 对应的 offset 数组都要缓存
+
+最后还是要做一个 `vector<vector<uint32_t>>`
 
 ## 常见错误
 

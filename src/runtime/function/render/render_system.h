@@ -2,6 +2,7 @@
 
 #include "function/render/structs/buffer_data.h"
 #include "function/render/structs/depth_buffer_data.h"
+#include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "function/render/structs/surface_data.h"
 #include "function/render/structs/swapchain_data.h"
@@ -116,16 +117,16 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger = nullptr;
 #endif
-        vk::raii::PhysicalDevice           m_gpu                = nullptr;
-        SurfaceData                        m_surface_data       = nullptr;
-        vk::raii::Device                   m_logical_device     = nullptr;
-        vk::raii::Queue                    m_graphics_queue     = nullptr;
-        vk::raii::Queue                    m_present_queue      = nullptr;
-        SwapChainData                      m_swapchain_data     = nullptr;
-        UploadContext                      m_upload_context     = nullptr;
-        DepthBufferData                    m_depth_buffer_data  = nullptr;
+        vk::raii::PhysicalDevice           m_gpu                  = nullptr;
+        SurfaceData                        m_surface_data         = nullptr;
+        vk::raii::Device                   m_logical_device       = nullptr;
+        vk::raii::Queue                    m_graphics_queue       = nullptr;
+        vk::raii::Queue                    m_present_queue        = nullptr;
+        SwapChainData                      m_swapchain_data       = nullptr;
+        UploadContext                      m_upload_context       = nullptr;
+        DepthBufferData                    m_depth_buffer_data    = nullptr;
         DescriptorAllocatorGrowable        m_descriptor_allocator = nullptr;
-        vk::raii::RenderPass               m_render_pass        = nullptr;
+        vk::raii::RenderPass               m_render_pass          = nullptr;
         std::vector<vk::raii::Framebuffer> m_framebuffers;
         std::vector<PerFrameData>          m_per_frame_data;
 
@@ -136,7 +137,7 @@ namespace Meow
         BufferData uniform_buffer_data = nullptr;
 
         // TODO: temp shader
-        Shader testShader;
+        Material testMat = nullptr;
 
         // TODO: temp texture
         std::shared_ptr<TextureData> diffuse_texture = nullptr;

@@ -482,15 +482,16 @@ namespace Meow
 
         diffuse_texture =
             g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
-        testShader = Shader(m_gpu,
-                            m_logical_device,
-                            m_descriptor_allocator,
-                            m_render_pass,
-                            "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
-                            "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
-        testShader.PushBufferWrite("uboMVP", uniform_buffer_data.buffer);
-        testShader.PushImageWrite("diffuseMap", *diffuse_texture);
-        testShader.UpdateDescriptorSets(m_logical_device);
+        testMat            = Material(m_gpu, m_logical_device);
+        testMat.shader_ptr = std::make_shared<Shader>(m_gpu,
+                                                      m_logical_device,
+                                                      m_descriptor_allocator,
+                                                      "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
+                                                      "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
+        testMat.shader_ptr->PushBufferWrite("uboMVP", uniform_buffer_data.buffer);
+        testMat.shader_ptr->PushImageWrite("diffuseMap", *diffuse_texture);
+        testMat.shader_ptr->UpdateDescriptorSets(m_logical_device);
+        testMat.CreatePipeline(m_logical_device, m_render_pass, vk::FrontFace::eClockwise, true);
     }
 
     /**
@@ -681,13 +682,14 @@ namespace Meow
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
-                testShader.Bind(cmd_buffer);
+                testMat.BindPipeline(cmd_buffer);
 
                 // TODO: where to control uniform buffer memory copy
                 CopyToDevice(uniform_buffer_data.device_memory, ubo_data);
 
                 for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
                 {
+                    testMat.BindDescriptorSets(cmd_buffer);
                     model_component.model.meshes[meshIndex]->BindDrawCmd(cmd_buffer);
                 }
             }

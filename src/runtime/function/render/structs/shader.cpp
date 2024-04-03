@@ -8,7 +8,6 @@ namespace Meow
     Shader::Shader(vk::raii::PhysicalDevice const& gpu,
                    vk::raii::Device const&         logical_device,
                    DescriptorAllocatorGrowable&    descriptor_allocator,
-                   vk::raii::RenderPass const&     render_pass,
                    std::string                     vert_shader_file_path,
                    std::string                     frag_shader_file_path,
                    std::string                     geom_shader_file_path,
@@ -16,74 +15,64 @@ namespace Meow
                    std::string                     tesc_shader_file_path,
                    std::string                     tese_shader_file_path)
     {
-        vk::raii::ShaderModule vert_shader_module = nullptr;
-        vk::raii::ShaderModule frag_shader_module = nullptr;
-        vk::raii::ShaderModule geom_shader_module = nullptr;
-        vk::raii::ShaderModule comp_shader_module = nullptr;
-        vk::raii::ShaderModule tesc_shader_module = nullptr;
-        vk::raii::ShaderModule tese_shader_module = nullptr;
-
         std::vector<vk::PipelineShaderStageCreateInfo> pipeline_shader_stage_create_infos;
 
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     vert_shader_module,
-                                     vert_shader_file_path,
-                                     vk::ShaderStageFlagBits::eVertex,
-                                     pipeline_shader_stage_create_infos);
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     frag_shader_module,
-                                     frag_shader_file_path,
-                                     vk::ShaderStageFlagBits::eFragment,
-                                     pipeline_shader_stage_create_infos);
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     geom_shader_module,
-                                     geom_shader_file_path,
-                                     vk::ShaderStageFlagBits::eGeometry,
-                                     pipeline_shader_stage_create_infos);
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     comp_shader_module,
-                                     comp_shader_file_path,
-                                     vk::ShaderStageFlagBits::eCompute,
-                                     pipeline_shader_stage_create_infos);
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     tesc_shader_module,
-                                     tesc_shader_file_path,
-                                     vk::ShaderStageFlagBits::eTessellationControl,
-                                     pipeline_shader_stage_create_infos);
-        CreateShaderModuleAndGetMeta(logical_device,
-                                     tese_shader_module,
-                                     tese_shader_file_path,
-                                     vk::ShaderStageFlagBits::eTessellationEvaluation,
-                                     pipeline_shader_stage_create_infos);
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         vert_shader_module,
+                                         vert_shader_file_path,
+                                         vk::ShaderStageFlagBits::eVertex,
+                                         pipeline_shader_stage_create_infos))
+            is_vert_shader_valid = true;
+        else
+            is_vert_shader_valid = false;
+
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         frag_shader_module,
+                                         frag_shader_file_path,
+                                         vk::ShaderStageFlagBits::eFragment,
+                                         pipeline_shader_stage_create_infos))
+            is_frag_shader_valid = true;
+        else
+            is_frag_shader_valid = false;
+
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         geom_shader_module,
+                                         geom_shader_file_path,
+                                         vk::ShaderStageFlagBits::eGeometry,
+                                         pipeline_shader_stage_create_infos))
+            is_geom_shader_valid = true;
+        else
+            is_geom_shader_valid = false;
+
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         comp_shader_module,
+                                         comp_shader_file_path,
+                                         vk::ShaderStageFlagBits::eCompute,
+                                         pipeline_shader_stage_create_infos))
+            is_comp_shader_valid = true;
+        else
+            is_comp_shader_valid = false;
+
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         tesc_shader_module,
+                                         tesc_shader_file_path,
+                                         vk::ShaderStageFlagBits::eTessellationControl,
+                                         pipeline_shader_stage_create_infos))
+            is_tesc_shader_valid = true;
+        else
+            is_tesc_shader_valid = false;
+
+        if (CreateShaderModuleAndGetMeta(logical_device,
+                                         tese_shader_module,
+                                         tese_shader_file_path,
+                                         vk::ShaderStageFlagBits::eTessellationEvaluation,
+                                         pipeline_shader_stage_create_infos))
+            is_tese_shader_valid = true;
+        else
+            is_tese_shader_valid = false;
 
         GenerateInputInfo();
         GenerateLayout(logical_device);
-
-        // TODO: temp vertex layout
-        // should get from analysis?
-        vk::raii::PipelineCache pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
-
-        std::vector<std::pair<vk::Format, uint32_t>> vertex_input_attribute_format_offset;
-        uint32_t                                     curr_offset = 0;
-        for (int32_t i = 0; i < per_vertex_attributes.size(); i++)
-        {
-            vertex_input_attribute_format_offset.emplace_back(VertexAttributeToVkFormat(per_vertex_attributes[i]),
-                                                              curr_offset);
-            curr_offset += VertexAttributeToSize(per_vertex_attributes[i]);
-        }
-
-        graphics_pipeline = MakeGraphicsPipeline(logical_device,
-                                                 pipeline_cache,
-                                                 vert_shader_module,
-                                                 nullptr,
-                                                 frag_shader_module,
-                                                 nullptr,
-                                                 VertexAttributesToSize(per_vertex_attributes),
-                                                 vertex_input_attribute_format_offset,
-                                                 vk::FrontFace::eClockwise,
-                                                 true,
-                                                 pipeline_layout,
-                                                 render_pass);
 
         AllocateDescriptorSet(logical_device, descriptor_allocator);
     }
@@ -581,21 +570,5 @@ namespace Meow
         descriptor_buffer_infos.clear();
         descriptor_image_infos.clear();
         write_descriptor_sets.clear();
-    }
-
-    void Shader::Bind(vk::raii::CommandBuffer const& command_buffer)
-    {
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
-
-        // convert type from vk::raii::DescriptorSet to vk::DescriptorSet
-
-        std::vector<vk::DescriptorSet> _descriptor_sets(descriptor_sets.size());
-        for (size_t i = 0; i < descriptor_sets.size(); ++i)
-        {
-            _descriptor_sets[i] = *descriptor_sets[i];
-        }
-
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, _descriptor_sets, nullptr);
     }
 } // namespace Meow

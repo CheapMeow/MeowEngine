@@ -16,12 +16,9 @@ namespace Meow
         uint64_t                    allocated_memory = 0;
         uint32_t                    min_alignment    = 0;
 
-        RingUniformBuffer(vk::raii::PhysicalDevice const& physical_device,
-                          vk::raii::Device const&         device,
-                          vk::raii::CommandPool const&    command_pool,
-                          vk::raii::Queue const&          queue,
-                          vk::MemoryPropertyFlags         property_flags,
-                          std::vector<float>&             vertices)
+        RingUniformBuffer(std::nullptr_t) {}
+
+        RingUniformBuffer(vk::raii::PhysicalDevice const& physical_device, vk::raii::Device const& device)
         {
             buffer_size   = 32 * 1024 * 1024; // 32MB
             min_alignment = physical_device.getProperties().limits.minUniformBufferOffsetAlignment;
@@ -30,8 +27,7 @@ namespace Meow
                                                            device,
                                                            buffer_size,
                                                            vk::BufferUsageFlagBits::eUniformBuffer |
-                                                               vk::BufferUsageFlagBits::eTransferDst,
-                                                           property_flags);
+                                                               vk::BufferUsageFlagBits::eTransferDst);
             mapped_data_ptr = buffer_data_ptr->device_memory.mapMemory(0, VK_WHOLE_SIZE);
         }
 
@@ -62,7 +58,34 @@ namespace Meow
 
     struct Material
     {
-        Shader shader;
+        std::shared_ptr<Shader> shader_ptr = nullptr;
+
+        RingUniformBuffer ring_buffer = nullptr;
+
+        vk::raii::Pipeline graphics_pipeline = nullptr;
+
+        Material(std::nullptr_t) {}
+
+        Material(vk::raii::PhysicalDevice const& physical_device, vk::raii::Device const& device)
+            : ring_buffer(physical_device, device)
+        {}
+
+        void CreatePipeline(vk::raii::Device const&     logical_device,
+                            vk::raii::RenderPass const& render_pass,
+                            vk::FrontFace               front_face,
+                            bool                        depth_buffered);
+
+        void BeginObject();
+
+        void EndObject();
+
+        void BeginFrame();
+
+        void EndFrame();
+
+        void BindPipeline(vk::raii::CommandBuffer const& command_buffer);
+
+        void BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer);
     };
 
 } // namespace Meow
