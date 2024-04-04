@@ -418,22 +418,6 @@ namespace Meow
         CreateFramebuffers();
         CreatePerFrameData();
         InitImGui();
-
-        // TODO: temp
-        uniform_buffer_data =
-            BufferData(m_gpu, m_logical_device, sizeof(UBOData), vk::BufferUsageFlagBits::eUniformBuffer);
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Uniform Buffer";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eBuffer, GetVulkanHandle(*uniform_buffer_data.buffer), object_name.c_str(), nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-        object_name = "Uniform Buffer Device Memory";
-        name_info   = {vk::ObjectType::eDeviceMemory,
-                       GetVulkanHandle(*uniform_buffer_data.device_memory),
-                       object_name.c_str(),
-                       nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
     }
 
     RenderSystem::~RenderSystem()
@@ -637,7 +621,6 @@ namespace Meow
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
         {
-
             for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
             {
                 testMat.BeginObject();
@@ -673,9 +656,6 @@ namespace Meow
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
                 testMat.BindPipeline(cmd_buffer);
-
-                // TODO: where to control uniform buffer memory copy
-                CopyToDevice(uniform_buffer_data.device_memory, ubo_data);
 
                 for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
                 {

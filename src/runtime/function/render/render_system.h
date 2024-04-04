@@ -133,9 +133,6 @@ namespace Meow
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
-        // TODO: UBO shouldn't be stroed in render system?
-        BufferData uniform_buffer_data = nullptr;
-
         // TODO: temp shader
         Material testMat = nullptr;
 
