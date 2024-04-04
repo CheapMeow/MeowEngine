@@ -267,7 +267,7 @@ namespace Meow
             }
         }
 
-        ++obj_count;    
+        ++obj_count;
     }
 
     void Material::SetGlobalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)

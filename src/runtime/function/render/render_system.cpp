@@ -11,7 +11,9 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 #include <volk.h>
+
 
 namespace Meow
 {
@@ -623,8 +625,11 @@ namespace Meow
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code
         // to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+        ImGui::Begin("MeowEngine");
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
 
         // Update mesh uniform
 
