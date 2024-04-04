@@ -23,7 +23,7 @@ namespace Meow
 
         RingUniformBuffer(vk::raii::PhysicalDevice const& physical_device, vk::raii::Device const& logical_device)
         {
-            buffer_size   = 32 * 1024 * 1024; // 32MB
+            buffer_size   = 32 * 1024; // 32KB
             min_alignment = physical_device.getProperties().limits.minUniformBufferOffsetAlignment;
 
             buffer_data_ptr = std::make_shared<BufferData>(physical_device,

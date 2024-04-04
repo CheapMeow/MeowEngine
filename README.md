@@ -22,6 +22,7 @@
   - [常见错误](#常见错误)
     - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
     - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
+    - [Ring buffer 的大小](#ring-buffer-的大小)
 
 <!-- /code_chunk_output -->
 
@@ -413,3 +414,7 @@ for (size_t i = 0; i < raii_descriptor_sets.size(); ++i)
 关键在于转型到的非 RAII 类并不是出于 RAII 的目的设计的，所以可能不会提供移动构造函数，这样，即使使用了 `std::move`，其实仍然是把 `std::move` 产生的左值当作右值传给了拷贝构造函数
 
 而拷贝构造函数一般只是共享了这个资源。因此，在离开作用域之后，RAII 类析构，其中的资源没有转移，因此就析构掉了资源，同时非 RAII 类即使没有被析构，其中的资源也已经无效了
+
+### Ring buffer 的大小
+
+不知道为什么，给负责存储 uniform buffer data 的 Ring buffer 分配 32 KB 就没问题，但是分配 32MB 就会很卡
