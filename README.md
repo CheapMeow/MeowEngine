@@ -15,10 +15,12 @@
     - [材质类 Material](#材质类-material)
       - [管理 Uniform Buffer](#管理-uniform-buffer)
       - [更新 Uniform Buffer](#更新-uniform-buffer)
+      - [Global 和 Local Uniform Buffer 与 Unity SRP 的对比](#global-和-local-uniform-buffer-与-unity-srp-的对比)
     - [环形缓冲类 Ring Buffer](#环形缓冲类-ring-buffer)
       - [内存分配方法](#内存分配方法)
       - [内存分配结构](#内存分配结构)
       - [内存分配记录](#内存分配记录)
+    - [渲染通道 Render Pass](#渲染通道-render-pass)
   - [常见错误](#常见错误)
     - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
     - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
@@ -286,6 +288,13 @@ material_ins.EndObject();
 material_ins.EndFrame();
 ```
 
+#### Global 和 Local Uniform Buffer 与 Unity SRP 的对比
+
+|        本仓库         |          Unity SRP shader 变量           |
+| :-------------------: | :--------------------------------------: |
+| Local Uniform Buffer  |                无特殊声明                |
+| Global Uniform Buffer | 添加 UnityPerDraw, UnityPerMaterial 声明 |
+
 ### 环形缓冲类 Ring Buffer
 
 #### 内存分配方法
@@ -375,6 +384,12 @@ N 个 object 对应 N 次 `vkCmdBindDescriptorSets` 和 draw，假设不考虑�
 所以应该有一个判断，当 `per_obj_dynamic_offsets` 为空时，给 `per_obj_dynamic_offsets` 添加一个元素，并且把 global 的 offset 复制进去
 
 这时，外部在绑定描述符集的时候直接传入 `obj_index = 0` 就好了
+
+### 渲染通道 Render Pass
+
+更改渲染通道，例如我需要某一个 pass 输出到三个纹理附件，然后下一个 pass 使用这三个纹理附件
+
+那么 render pass 和 command buffer 都需要更改
 
 ## 常见错误
 
