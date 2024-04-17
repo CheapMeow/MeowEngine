@@ -216,15 +216,8 @@ namespace Meow
     {
         vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
         m_deferred_pass         = DeferredPass(m_logical_device, color_format, m_depth_buffer_data.format);
-    }
-
-    void RenderSystem::CreateFramebuffers()
-    {
-        m_framebuffers = MakeFramebuffers(m_logical_device,
-                                          m_deferred_pass.render_pass,
-                                          m_swapchain_data.image_views,
-                                          &m_depth_buffer_data.image_view,
-                                          m_surface_data.extent);
+        m_deferred_pass.RefreshFrameBuffers(
+            m_logical_device, m_swapchain_data.image_views, &m_depth_buffer_data.image_view, m_surface_data.extent);
     }
 
     void RenderSystem::CreatePerFrameData()
@@ -387,7 +380,7 @@ namespace Meow
         ImGui::DestroyContext();
 
         m_per_frame_data.clear();
-        m_framebuffers.clear();
+        m_deferred_pass.framebuffers.clear();
         m_depth_buffer_data = nullptr;
         m_swapchain_data    = nullptr;
         m_surface_data      = nullptr;
@@ -395,7 +388,8 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreateDepthBuffer();
-        CreateFramebuffers();
+        m_deferred_pass.RefreshFrameBuffers(
+            m_logical_device, m_swapchain_data.image_views, &m_depth_buffer_data.image_view, m_surface_data.extent);
         CreatePerFrameData();
         InitImGui();
     }
@@ -414,7 +408,6 @@ namespace Meow
         CreateDepthBuffer();
         CreateDescriptorAllocator();
         CreateRenderPass();
-        CreateFramebuffers();
         CreatePerFrameData();
         InitImGui();
     }
@@ -515,7 +508,7 @@ namespace Meow
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
         vk::RenderPassBeginInfo render_pass_begin_info(*m_deferred_pass.render_pass,
-                                                       *m_framebuffers[m_current_image_index],
+                                                       *m_deferred_pass.framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
                                                        clear_values);
         cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);

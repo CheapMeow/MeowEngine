@@ -425,6 +425,8 @@ render pass 和 frame buffer 都需要知道附件信息
 
 render pass 要知道的是附件的配置，而 frame buffer 要保存附件的 image view
 
+因为其实是 render pass 决定了附件的配置，所以 frame buffer 应该是 render pass 的数据成员
+
 ## 常见错误
 
 ### CreateInfo 可能引用了局部变量
