@@ -14,7 +14,6 @@
 #include <imgui.h>
 #include <volk.h>
 
-
 namespace Meow
 {
     void RenderSystem::CreateVulkanInstance()
@@ -216,13 +215,13 @@ namespace Meow
     void RenderSystem::CreateRenderPass()
     {
         vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        m_render_pass           = MakeRenderPass(m_logical_device, color_format, m_depth_buffer_data.format);
+        m_deferred_pass         = DeferredPass(m_logical_device, color_format, m_depth_buffer_data.format);
     }
 
     void RenderSystem::CreateFramebuffers()
     {
         m_framebuffers = MakeFramebuffers(m_logical_device,
-                                          m_render_pass,
+                                          m_deferred_pass.render_pass,
                                           m_swapchain_data.image_views,
                                           &m_depth_buffer_data.image_view,
                                           m_surface_data.extent);
@@ -355,7 +354,7 @@ namespace Meow
         init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
 
-        ImGui_ImplVulkan_Init(&init_info, *m_render_pass);
+        ImGui_ImplVulkan_Init(&init_info, *m_deferred_pass.render_pass);
 
         // Upload Fonts
         {
@@ -477,7 +476,7 @@ namespace Meow
         testMat = Material(m_gpu, m_logical_device, shader_ptr);
         testMat.SetImage("diffuseMap", *diffuse_texture);
         testMat.UpdateDescriptorSets(m_logical_device);
-        testMat.CreatePipeline(m_logical_device, m_render_pass, vk::FrontFace::eClockwise, true);
+        testMat.CreatePipeline(m_logical_device, m_deferred_pass.render_pass, vk::FrontFace::eClockwise, true);
     }
 
     /**
@@ -515,7 +514,7 @@ namespace Meow
         std::array<vk::ClearValue, 2> clear_values;
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
-        vk::RenderPassBeginInfo render_pass_begin_info(*m_render_pass,
+        vk::RenderPassBeginInfo render_pass_begin_info(*m_deferred_pass.render_pass,
                                                        *m_framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
                                                        clear_values);

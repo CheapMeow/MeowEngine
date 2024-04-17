@@ -120,12 +120,6 @@ namespace Meow
                         vk::ImageLayout                old_image_layout,
                         vk::ImageLayout                new_image_layout);
 
-    vk::raii::RenderPass MakeRenderPass(vk::raii::Device const& device,
-                                        vk::Format              color_format,
-                                        vk::Format              depth_format,
-                                        vk::AttachmentLoadOp    load_op            = vk::AttachmentLoadOp::eClear,
-                                        vk::ImageLayout         color_final_layout = vk::ImageLayout::ePresentSrcKHR);
-
     std::vector<vk::raii::Framebuffer> MakeFramebuffers(vk::raii::Device const&                 device,
                                                         vk::raii::RenderPass&                   render_pass,
                                                         std::vector<vk::raii::ImageView> const& image_views,

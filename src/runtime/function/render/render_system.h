@@ -10,6 +10,7 @@
 #include "function/render/structs/ubo_data.h"
 #include "function/system.h"
 #include "function/window/window.h"
+#include "render_pass/deferred_pass.hpp"
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -126,7 +127,7 @@ namespace Meow
         UploadContext                      m_upload_context       = nullptr;
         DepthBufferData                    m_depth_buffer_data    = nullptr;
         DescriptorAllocatorGrowable        m_descriptor_allocator = nullptr;
-        vk::raii::RenderPass               m_render_pass          = nullptr;
+        DeferredPass                       m_deferred_pass        = nullptr;
         std::vector<vk::raii::Framebuffer> m_framebuffers;
         std::vector<PerFrameData>          m_per_frame_data;
 
