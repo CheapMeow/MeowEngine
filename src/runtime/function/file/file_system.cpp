@@ -42,6 +42,24 @@ namespace Meow
         return {data_ptr, data_size};
     }
 
+    std::tuple<uint32_t, uint32_t> FileSystem::GetImageFileWidthHeight(std::string const& filepath)
+    {
+        if (!Exists(filepath))
+        {
+            return {0, 0};
+        }
+
+        int texture_width, texture_height, texture_channels;
+
+        auto absolute_filepath = m_root_path / filepath;
+        absolute_filepath      = absolute_filepath.lexically_normal();
+
+        stbi_uc* pixels = stbi_load(
+            absolute_filepath.string().c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
+
+        return {(uint32_t)texture_width, (uint32_t)texture_height};
+    }
+
     uint32_t FileSystem::ReadImageFileToPtr(std::string const& filepath, uint8_t* data_ptr)
     {
         if (!Exists(filepath))
@@ -49,14 +67,14 @@ namespace Meow
             return 0;
         }
 
-        int texWidth, texHeight, texChannels;
+        int texture_width, texture_height, texture_channels;
 
         auto absolute_filepath = m_root_path / filepath;
         absolute_filepath      = absolute_filepath.lexically_normal();
 
-        stbi_uc* pixels =
-            stbi_load(absolute_filepath.string().c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        uint32_t data_size = texWidth * texHeight * 4;
+        stbi_uc* pixels = stbi_load(
+            absolute_filepath.string().c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
+        uint32_t data_size = texture_width * texture_height * 4;
 
         if (!pixels)
         {

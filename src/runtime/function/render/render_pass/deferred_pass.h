@@ -1,28 +1,96 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
+#include "function/render/structs/material.h"
+#include "function/render/structs/model.h"
+#include "function/render/structs/shader.h"
+#include "function/render/structs/surface_data.h"
+#include "function/render/structs/texture_data.hpp"
 
 #include <vulkan/vulkan_raii.hpp>
 
 namespace Meow
 {
+    struct AttachmentParamBlock
+    {
+        int   attachmentIndex;
+        float zNear;
+        float zFar;
+        float padding;
+    };
+
     class DeferredPass : NonCopyable
     {
     public:
         DeferredPass(std::nullptr_t) {}
 
-        DeferredPass(vk::raii::Device const& device,
-                     vk::Format              color_format,
-                     vk::Format              depth_format,
-                     vk::AttachmentLoadOp    load_op            = vk::AttachmentLoadOp::eClear,
-                     vk::ImageLayout         color_final_layout = vk::ImageLayout::ePresentSrcKHR);
+        DeferredPass(DeferredPass&& rhs) noexcept
+        {
+            std::swap(obj2attachment_mat, rhs.obj2attachment_mat);
+            std::swap(quad_mat, rhs.quad_mat);
+            std::swap(quad_model, rhs.quad_model);
+            debug_para = rhs.debug_para;
+            std::swap(debug_names, rhs.debug_names);
+            std::swap(render_pass, rhs.render_pass);
+            std::swap(framebuffers, rhs.framebuffers);
+            depth_format = rhs.depth_format;
+            sample_count = rhs.sample_count;
+            std::swap(m_color_attachment, rhs.m_color_attachment);
+            std::swap(m_normal_attachment, rhs.m_normal_attachment);
+            std::swap(m_depth_attachment, rhs.m_depth_attachment);
+        }
 
-        void RefreshFrameBuffers(vk::raii::Device const&                 device,
-                                 std::vector<vk::raii::ImageView> const& image_views,
-                                 vk::raii::ImageView const*              p_depth_image_view,
+        DeferredPass& operator=(DeferredPass&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                std::swap(obj2attachment_mat, rhs.obj2attachment_mat);
+                std::swap(quad_mat, rhs.quad_mat);
+                std::swap(quad_model, rhs.quad_model);
+                debug_para = rhs.debug_para;
+                std::swap(debug_names, rhs.debug_names);
+                std::swap(render_pass, rhs.render_pass);
+                std::swap(framebuffers, rhs.framebuffers);
+                depth_format = rhs.depth_format;
+                sample_count = rhs.sample_count;
+                std::swap(m_color_attachment, rhs.m_color_attachment);
+                std::swap(m_normal_attachment, rhs.m_normal_attachment);
+                std::swap(m_depth_attachment, rhs.m_depth_attachment);
+            }
+            return *this;
+        }
+
+        DeferredPass(vk::raii::PhysicalDevice const& physical_device,
+                     vk::raii::Device const&         device,
+                     SurfaceData&                    surface_data,
+                     vk::raii::CommandPool const&    command_pool,
+                     vk::raii::Queue const&          queue,
+                     DescriptorAllocatorGrowable&    m_descriptor_allocator);
+
+        void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
+                                 vk::raii::Device const&                 device,
+                                 vk::raii::CommandBuffer const&          command_buffer,
+                                 SurfaceData&                            surface_data,
+                                 std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                  vk::Extent2D const&                     extent);
+
+    public:
+        Material obj2attachment_mat = nullptr;
+        Material quad_mat           = nullptr;
+        Model    quad_model         = nullptr;
+
+        AttachmentParamBlock     debug_para;
+        std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
 
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
+
+    private:
+        vk::Format              depth_format = vk::Format::eD16Unorm;
+        vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
+
+        TextureData m_color_attachment  = nullptr;
+        TextureData m_normal_attachment = nullptr;
+        TextureData m_depth_attachment  = nullptr;
     };
 } // namespace Meow

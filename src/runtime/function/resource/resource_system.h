@@ -36,7 +36,7 @@ namespace Meow
 
         void Update(float frame_time);
 
-        std::shared_ptr<TextureData> LoadTexture(const std::string& filepath, vk::Extent2D const& extent);
+        std::shared_ptr<TextureData> LoadTexture(const std::string& filepath);
 
         std::shared_ptr<TextureData> GetTexture(const std::string& filepath);
 

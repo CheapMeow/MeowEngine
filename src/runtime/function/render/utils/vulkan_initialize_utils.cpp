@@ -597,33 +597,6 @@ namespace Meow
             source_stage, destination_stage, {}, nullptr, nullptr, image_memory_barrier);
     }
 
-    std::vector<vk::raii::Framebuffer> MakeFramebuffers(vk::raii::Device const&                 device,
-                                                        vk::raii::RenderPass&                   render_pass,
-                                                        std::vector<vk::raii::ImageView> const& image_views,
-                                                        vk::raii::ImageView const*              p_depth_image_view,
-                                                        vk::Extent2D const&                     extent)
-    {
-        vk::ImageView attachments[2];
-        attachments[1] = p_depth_image_view ? **p_depth_image_view : vk::ImageView();
-
-        vk::FramebufferCreateInfo          framebuffer_create_info(vk::FramebufferCreateFlags(),
-                                                          *render_pass,
-                                                          p_depth_image_view ? 2 : 1,
-                                                          attachments,
-                                                          extent.width,
-                                                          extent.height,
-                                                          1);
-        std::vector<vk::raii::Framebuffer> framebuffers;
-        framebuffers.reserve(image_views.size());
-        for (auto const& imageView : image_views)
-        {
-            attachments[0] = *imageView;
-            framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
-        }
-
-        return framebuffers;
-    }
-
     vk::raii::Pipeline
     MakeGraphicsPipeline(vk::raii::Device const&                             device,
                          vk::raii::PipelineCache const&                      pipeline_cache,

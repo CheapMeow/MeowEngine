@@ -6,12 +6,14 @@ namespace Meow
 {
     TextureData::TextureData(vk::raii::PhysicalDevice const& physical_device,
                              vk::raii::Device const&         device,
+                             vk::Format                      format_,
                              vk::Extent2D const&             extent_,
                              vk::ImageUsageFlags             usage_flags,
+                             vk::ImageAspectFlags            aspect_mask,
                              vk::FormatFeatureFlags          format_feature_flags,
                              bool                            anisotropy_enable,
                              bool                            force_staging)
-        : format(vk::Format::eR8G8B8A8Unorm)
+        : format(format_)
         , extent(extent_)
         , sampler(device,
                   {{},
@@ -61,7 +63,7 @@ namespace Meow
                                usage_flags | vk::ImageUsageFlagBits::eSampled,
                                initial_layout,
                                requirements,
-                               vk::ImageAspectFlagBits::eColor);
+                               aspect_mask);
     }
 
     void TextureData::TransitLayout(vk::raii::CommandBuffer const& command_buffer)
@@ -100,18 +102,43 @@ namespace Meow
         }
     }
 
-    bool TextureData::LoadImageFromFile(vk::raii::CommandBuffer const& command_buffer, std::string const& filepath)
+    std::shared_ptr<TextureData> TextureData::CreateFromFile(vk::raii::PhysicalDevice const& physical_device,
+                                                             vk::raii::Device const&         device,
+                                                             std::string const&              filepath,
+                                                             vk::Format                      format,
+                                                             vk::ImageUsageFlags             usage_flags,
+                                                             vk::ImageAspectFlags            aspect_mask,
+                                                             vk::FormatFeatureFlags          format_feature_flags,
+                                                             bool                            anisotropy_enable,
+                                                             bool                            force_staging)
     {
-        void* data = need_staging ?
-                         staging_buffer_data.device_memory.mapMemory(
-                             0, staging_buffer_data.buffer.getMemoryRequirements().size) :
-                         image_data.device_memory.mapMemory(0, image_data.image.getMemoryRequirements().size);
+        auto [width, height] = g_runtime_global_context.file_system->GetImageFileWidthHeight(filepath);
+        if (width == 0 || height == 0)
+        {
+            return nullptr;
+        }
+
+        std::shared_ptr<TextureData> texture_ptr = std::make_shared<TextureData>(physical_device,
+                                                                                 device,
+                                                                                 format,
+                                                                                 vk::Extent2D {width, height},
+                                                                                 usage_flags,
+                                                                                 aspect_mask,
+                                                                                 format_feature_flags,
+                                                                                 anisotropy_enable,
+                                                                                 force_staging);
+
+        void* data = texture_ptr->need_staging ?
+                         texture_ptr->staging_buffer_data.device_memory.mapMemory(
+                             0, texture_ptr->staging_buffer_data.buffer.getMemoryRequirements().size) :
+                         texture_ptr->image_data.device_memory.mapMemory(
+                             0, texture_ptr->image_data.image.getMemoryRequirements().size);
         if (g_runtime_global_context.file_system->ReadImageFileToPtr(filepath, static_cast<uint8_t*>(data)) == 0)
-            return false;
-        need_staging ? staging_buffer_data.device_memory.unmapMemory() : image_data.device_memory.unmapMemory();
+            return nullptr;
 
-        TransitLayout(command_buffer);
+        texture_ptr->need_staging ? texture_ptr->staging_buffer_data.device_memory.unmapMemory() :
+                                    texture_ptr->image_data.device_memory.unmapMemory();
 
-        return true;
+        return texture_ptr;
     }
 } // namespace Meow

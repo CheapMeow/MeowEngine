@@ -532,10 +532,11 @@ namespace Meow
         descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
     }
 
-    void Shader::PushBufferWrite(const std::string&          name,
-                                 vk::raii::Buffer const&     buffer,
-                                 vk::DeviceSize              range,
-                                 vk::raii::BufferView const* raii_buffer_view)
+    void Shader::SetBuffer(vk::raii::Device const&     logical_device,
+                           const std::string&          name,
+                           vk::raii::Buffer const&     buffer,
+                           vk::DeviceSize              range,
+                           vk::raii::BufferView const* raii_buffer_view)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -549,7 +550,7 @@ namespace Meow
 
         // Default is offset = 0, buffer size = whole size
         // Maybe it needs to be configurable?
-        descriptor_buffer_infos.emplace_back(*buffer, 0, range);
+        vk::DescriptorBufferInfo descriptor_buffer_info(*buffer, 0, range);
 
         // TODO: store buffer view in an vector
         vk::BufferView buffer_view;
@@ -558,21 +559,21 @@ namespace Meow
             buffer_view = **raii_buffer_view;
         }
 
-        write_descriptor_sets.emplace_back(
+        vk::WriteDescriptorSet write_descriptor_set(
             *descriptor_sets[bindInfo.set],                                     // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
             set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
             nullptr,                                                            // pImageInfo
-            &descriptor_buffer_infos.back(),                                    // pBufferInfo
+            &descriptor_buffer_info,                                            // pBufferInfo
             raii_buffer_view ? &buffer_view : nullptr                           // pTexelBufferView
         );
 
-        int test = 1;
+        logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::PushImageWrite(const std::string& name, TextureData& texture_data)
+    void Shader::SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -584,26 +585,20 @@ namespace Meow
 
         auto bindInfo = it->second;
 
-        descriptor_image_infos.emplace_back(
+        vk::DescriptorImageInfo descriptor_image_info(
             *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-        write_descriptor_sets.emplace_back(
+        vk::WriteDescriptorSet write_descriptor_set(
             *descriptor_sets[bindInfo.set],                                     // dstSet
             bindInfo.binding,                                                   // dstBinding
             0,                                                                  // dstArrayElement
             1,                                                                  // descriptorCount
             set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
-            &descriptor_image_infos.back(),                                     // pImageInfo
+            &descriptor_image_info,                                             // pImageInfo
             nullptr,                                                            // pBufferInfo
             nullptr                                                             // pTexelBufferView
         );
-    }
 
-    void Shader::UpdateDescriptorSets(vk::raii::Device const& logical_device)
-    {
-        logical_device.updateDescriptorSets(write_descriptor_sets, nullptr);
-        descriptor_buffer_infos.clear();
-        descriptor_image_infos.clear();
-        write_descriptor_sets.clear();
+        logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 } // namespace Meow

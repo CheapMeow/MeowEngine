@@ -21,37 +21,43 @@ add_subdirectory(src/runtime)
 add_subdirectory(src/editor)
 
 # Setup editor to be startup project
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${EDITOR_NAME})
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT
+                                                            ${EDITOR_NAME})
 
 # Docs only available if this is the main app
 find_package(Doxygen)
 if(Doxygen_FOUND)
-    message(STATUS "Found Doxygen, building docs")
-    add_subdirectory(docs)
+  message(STATUS "Found Doxygen, building docs")
+  add_subdirectory(docs)
 else()
-    message(STATUS "Doxygen not found, not building docs")
+  message(STATUS "Doxygen not found, not building docs")
 endif()
 
 # Set all 3rd party project to one folder
 get_all_targets(ALL_TAR_LIST)
 foreach(TAR ${ALL_TAR_LIST})
-    if("${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
-        continue()
-    endif()
+  if("${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
+    continue()
+  endif()
 
-    # alias target can not call set_target_properties
-    # interface library doesn't have folder property
-    # so exclude them
-    get_property(ALIAS TARGET "${TAR}" PROPERTY ALIASED_TARGET)
-    if(NOT ("${ALIAS}" STREQUAL ""))
-        continue()
-    endif()
-    get_target_property(3RD_PARTY_LIB_TYPE ${TAR} TYPE)
-    if("${3RD_PARTY_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
-        continue()
-    endif()
+  # alias target can not call set_target_properties interface library doesn't
+  # have folder property so exclude them
+  get_property(
+    ALIAS
+    TARGET "${TAR}"
+    PROPERTY ALIASED_TARGET)
+  if(NOT ("${ALIAS}" STREQUAL ""))
+    continue()
+  endif()
+  get_target_property(3RD_PARTY_LIB_TYPE ${TAR} TYPE)
+  if("${3RD_PARTY_LIB_TYPE}" STREQUAL "INTERFACE_LIBRARY")
+    continue()
+  endif()
 
-    message(STATUS "Found target: ${TAR}")
-    get_property(OLD_FOLDER TARGET "${TAR}" PROPERTY FOLDER)
-    set_target_properties(${TAR} PROPERTIES FOLDER "3rdparty/${OLD_FOLDER}")
+  message(STATUS "Found target: ${TAR}")
+  get_property(
+    OLD_FOLDER
+    TARGET "${TAR}"
+    PROPERTY FOLDER)
+  set_target_properties(${TAR} PROPERTIES FOLDER "3rdparty/${OLD_FOLDER}")
 endforeach()

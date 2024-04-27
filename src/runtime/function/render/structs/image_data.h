@@ -1,10 +1,11 @@
 #pragma once
 
+#include "core/base/non_copyable.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
 
 namespace Meow
 {
-    struct ImageData
+    struct ImageData : NonCopyable
     {
         // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
         // destructor of the ImageData, the order of DeviceMemory and Image here matters

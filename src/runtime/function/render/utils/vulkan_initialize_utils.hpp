@@ -120,12 +120,6 @@ namespace Meow
                         vk::ImageLayout                old_image_layout,
                         vk::ImageLayout                new_image_layout);
 
-    std::vector<vk::raii::Framebuffer> MakeFramebuffers(vk::raii::Device const&                 device,
-                                                        vk::raii::RenderPass&                   render_pass,
-                                                        std::vector<vk::raii::ImageView> const& image_views,
-                                                        vk::raii::ImageView const*              p_depth_image_view,
-                                                        vk::Extent2D const&                     extent);
-
     vk::raii::Pipeline
     MakeGraphicsPipeline(vk::raii::Device const&                             device,
                          vk::raii::PipelineCache const&                      pipeline_cache,

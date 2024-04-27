@@ -67,11 +67,6 @@ namespace Meow
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
 
-        TextureData CreateTextureData(vk::Extent2D const& extent)
-        {
-            return TextureData(m_gpu, m_logical_device, extent);
-        }
-
         /**
          * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
          * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
@@ -79,6 +74,8 @@ namespace Meow
          * @param command Function handler of render task.
          */
         void EnQueueRenderCommand(std::function<void(vk::raii::CommandBuffer const&)> command);
+
+        std::shared_ptr<TextureData> CreateImageFromFile(const std::string& filepath);
 
     private:
         void CreateVulkanInstance();
@@ -90,10 +87,9 @@ namespace Meow
         void CreateLogicalDevice();
         void CreateSwapChian();
         void CreateUploadContext();
-        void CreateDepthBuffer();
         void CreateDescriptorAllocator();
-        void CreateRenderPass();
         void CreatePerFrameData();
+        void CreateRenderPass();
         void InitImGui();
         void RecreateSwapChain();
 
@@ -117,23 +113,19 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::raii::DebugUtilsMessengerEXT m_debug_utils_messenger = nullptr;
 #endif
-        vk::raii::PhysicalDevice           m_gpu                  = nullptr;
-        SurfaceData                        m_surface_data         = nullptr;
-        vk::raii::Device                   m_logical_device       = nullptr;
-        vk::raii::Queue                    m_graphics_queue       = nullptr;
-        vk::raii::Queue                    m_present_queue        = nullptr;
-        SwapChainData                      m_swapchain_data       = nullptr;
-        UploadContext                      m_upload_context       = nullptr;
-        DepthBufferData                    m_depth_buffer_data    = nullptr;
-        DescriptorAllocatorGrowable        m_descriptor_allocator = nullptr;
-        DeferredPass                       m_deferred_pass        = nullptr;
-        std::vector<PerFrameData>          m_per_frame_data;
+        vk::raii::PhysicalDevice    m_gpu                  = nullptr;
+        SurfaceData                 m_surface_data         = nullptr;
+        vk::raii::Device            m_logical_device       = nullptr;
+        vk::raii::Queue             m_graphics_queue       = nullptr;
+        vk::raii::Queue             m_present_queue        = nullptr;
+        SwapChainData               m_swapchain_data       = nullptr;
+        UploadContext               m_upload_context       = nullptr;
+        DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
+        DeferredPass                m_deferred_pass        = nullptr;
+        std::vector<PerFrameData>   m_per_frame_data;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
-
-        // TODO: temp shader
-        Material testMat = nullptr;
 
         // TODO: temp texture
         std::shared_ptr<TextureData> diffuse_texture = nullptr;

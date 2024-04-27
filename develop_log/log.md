@@ -1,0 +1,742 @@
+- [构建](#构建)
+- [渲染数据结构](#渲染数据结构)
+  - [着色器类 Shader](#着色器类-shader)
+    - [反编译顶点属性，缓冲区和纹理输入](#反编译顶点属性缓冲区和纹理输入)
+    - [使用 pool 数量可变的 Descriptor Allocator](#使用-pool-数量可变的-descriptor-allocator)
+    - [分配 descriptor set](#分配-descriptor-set)
+    - [存储 descriptor set](#存储-descriptor-set)
+    - [更新 descriptor set](#更新-descriptor-set)
+      - [不提前创建 `VkDescriptorBufferInfo`, `VkDescriptorImageInfo`](#不提前创建-vkdescriptorbufferinfo-vkdescriptorimageinfo)
+      - [创建出 `vk::WriteDescriptorSet` 之后立即 `updateDescriptorSets`](#创建出-vkwritedescriptorset-之后立即-updatedescriptorsets)
+  - [可变容量的描述符分配器类 DescriptorAllocatorGrowable](#可变容量的描述符分配器类-descriptorallocatorgrowable)
+  - [材质类 Material](#材质类-material)
+    - [管理 Uniform Buffer](#管理-uniform-buffer)
+    - [更新 Uniform Buffer](#更新-uniform-buffer)
+    - [Global 和 Local Uniform Buffer 与 Unity SRP 的对比](#global-和-local-uniform-buffer-与-unity-srp-的对比)
+  - [环形缓冲类 Ring Buffer](#环形缓冲类-ring-buffer)
+    - [内存分配方法](#内存分配方法)
+    - [内存分配结构](#内存分配结构)
+    - [内存分配记录](#内存分配记录)
+  - [渲染通道 Render Pass](#渲染通道-render-pass)
+    - [信息依赖](#信息依赖)
+    - [结构设计](#结构设计)
+    - [其他](#其他)
+      - [附件不需要为 frames in flight 而备份](#附件不需要为-frames-in-flight-而备份)
+- [常见错误](#常见错误)
+  - [CreateInfo 可能引用了局部变量](#createinfo-可能引用了局部变量)
+  - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
+  - [Ring buffer 的大小](#ring-buffer-的大小)
+  - [在 stl 容器中使用 vk 类](#在-stl-容器中使用-vk-类)
+
+## 构建
+
+使用 `file(GLOB_RECURSE ...)` 获取文件列表的方法不值得采纳，因为 CMake 是一个构建系统生成器，而不是构建系统。
+
+`GLOB_RECURSE` 是在构建的时候生成文件列表，那么 CMake 在生成构建系统的时候就没有办法知道文件列表，也就没有办法利用文件信息
+
+比如我觉得是因为他没有办法利用时间戳，才导致每次都要重新构建
+
+所以想要增量构建，还是直接在 CMakeLists 里面直接给出所有文件的列表更稳妥
+
+我不想手动维护所有文件列表，所以写了一个 python 脚本，递归获取指定文件夹下以特定后缀为结尾的所有文件
+
+然后再用 cmake-format 来格式化
+
+我在想……为什么不直接写到 bat 里面
+
+做一个 CMakeLists.template 获取文件列表，替换进去，产生 CMakeList，还能加个格式化
+
+## 渲染数据结构
+
+### 着色器类 Shader
+
+#### 反编译顶点属性，缓冲区和纹理输入
+
+需要有一个东西管理 `vk::raii::ShaderModule` 和对应的 `vk::ShaderStageFlagBits`
+
+DescriptorSet 需要负责从内存接受描述符对应的资源，上传到 gpu
+
+因此 Shader 存储自己的对应的 DescriptorSet
+
+DescriptorSet 和 DescriptorSetLayout 如果由人来指定的话，就会很麻烦，需要人手设置与 shader 一一对应的值，并且容易出错
+
+例如模型文件的顶点数据的结构，需要和 shader 的顶点数据结构相匹配
+
+不匹配的结果就会是一团糟，比如原本模型文件里面只有 position 和 normal，现在你用一个 position, normal, color, uv 输入的顶点着色器
+
+那么就会把原来是 position 和 normal 的数据读一部分到 color, uv，这就全部乱了
+
+vertex 数据错误读取了，原来能画 100 个三角形的数据现在错误地读成了画 50 个的，那剩下 50 个三角形的绘制没有数据了，vulkan 也不会报错
+
+所以这可能一开始令人一头雾水……明明没有报错，文件读取也没有问题……
+
+创建管线的时候会设置顶点数据的 stride，这个也跟顶点数据结构有关
+
+这些都会导致错误……所以这些确实应该有一个自动化配置的方法
+
+所以需要用一个类负责反编译 spv，自动生成 DescriptorSetLayout
+
+这里也就直接用 Shader 类来处理
+
+目前的反编译是直接识别顶点属性的名称
+
+所以 glsl 里面的顶点属性的名称必须是特定的值，例如 inPosition, inUV0
+
+#### 使用 pool 数量可变的 Descriptor Allocator
+
+创建 descriptor pool 的时候，可以初始指定可能需要的 descriptor 的种类和对应的数量。具体到 API 来说，这些是通过 pool size 来设置的
+
+如果材质个数已知，那么其实 pool size 和 set count 都已知，那就不需要动态的 descriptor allocator 了
+
+所以很多教程代码上面是直接通过某个 shader 对应的 descriptor set layout 算出对应的 pool size，得到的 descriptor pool 只用分配一次 descriptor，永远不会出错
+
+因为 shader 数量是未知的，所以 descriptor set 的数量也是未知的
+
+所以固定 set count 的 descriptor pool 可能会出错
+
+所以使用动态大小的分配器，在 set count 不足的情况下动态创建 descriptor pool
+
+那么这个动态大小的分配器内含的 descriptor pool 的初始的 pool size 怎么确定呢？既然现在你不想暴力通过某些 shader 的 descriptor set layout 来算
+
+我感觉……应该没有标准做法，就是自己设定吧
+
+我看到有一个做法是，在 `Shader` 类里面存动态数量的 descriptor pool 的
+
+我在想，这个和有一个全局的 allocator，allocator 里面存很多个 descriptor pool，有什么区别
+
+也就是，每个 `Shader` 有一堆 descriptor pool，和全局的一个 allocator 里面存一堆 descriptor pool，之间的区别
+
+#### 分配 descriptor set
+
+从 descriptor pool 创建 descriptor set 需要 descriptor set layout
+
+这个 set layout 是存储在 `Shader` 中的，是 `Shader` 对 spv 反编译的结果，描述了 `Shader` 所需的资源
+
+获取 descriptor set 这个操作应该是在渲染主循环里面，原则上应该是程序员来控制，而不是在某个 struct 里面？
+
+从最简单的情景开始想起：
+
+假设一个程序员现在已经把反编译 spv 创建 descriptor set layout 的流程写完了，除此之外就没有别的自动化逻辑了
+
+那么他仍然需要知道，自己要读取什么 spv shader，仍然要 hard code 从哪个 spv shader 来获取 descriptor，然后再根据这个 descriptor 来写入纹理或者 buffer
+
+或许之后能够达到：在编辑器里面创建任意数量的 `Shader`，都不用程序员自己 hard code 要读取什么了，你有什么我就读什么
+
+当然这里肯定涉及到资源加载的问题，在游戏运行时要读取什么 `Shader`
+
+假设先不管这个，那么之后肯定是可以有这么一个自动化的东西的
+
+不管怎么说，创建 descriptor set 的这个位置，不管是 hard code 还是自动化流程，位置应该是在主循环的
+
+#### 存储 descriptor set
+
+根据 [vulkan_best_practice_for_mobile_developers/samples/performance/descriptor_management
+/descriptor_management_tutorial.md](https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/blob/master/samples/performance/descriptor_management/descriptor_management_tutorial.md)
+
+一般来说，只有当出现新的资源组合的时候，才需要创建新的 descriptor set
+
+而不是在每帧渲染的时候 reset descriptor pool 然后重新为各个 `Shader` allocate descriptor set
+
+那么其实"出现新的资源组合"就相当于出现新的 `Shader` 吧？
+
+那么这种情况下，descriptor set 在主循环中获取，也应该是存储在全局的？
+
+虽然我看大部分教程都是这么做的，但是我感觉这样做是不是不太好
+
+因为本质上这也是一个 hard code，你需要写下
+
+```cpp
+class Renderer{
+public:
+    VkDescriptorSet descriptor_set_0 = nullptr;
+    VkDescriptorSet descriptor_set_1 = nullptr;
+    ...
+
+    void Init(){
+        // Create shader
+        ...
+
+        // Allocate descriptor set
+
+        descriptor_set_0 = m_Shader0->AllocateDescriptorSet();
+        descriptor_set_1 = m_Shader1->AllocateDescriptorSet();
+
+        // Write descriptor set
+        ...
+    }
+};
+```
+
+当然，如果用 vector 的话，似乎也不是不能接受？
+
+```cpp
+class Renderer{
+public:
+    std::vector<VkDescriptorSet> descriptor_set_vec;
+    ...
+
+    void Init(){
+        // Create shader
+        ...
+
+        // Allocate descriptor set
+
+        descriptor_set_vec.push_back(m_Shader0->AllocateDescriptorSet());
+        descriptor_set_vec.push_back(m_Shader1->AllocateDescriptorSet());
+
+        // Write descriptor set
+        ...
+    }
+};
+```
+
+但是实际上我还是需要知道 descriptor set 和 `Shader` 的对应关系的，比如某个 `Shader` 需要写入 ubo 和一些特定的纹理，那我需要知道这个 `Shader` 对应的是哪个 descriptor set 才能导入
+
+所以继续用容器的话，似乎还要用 map 啊之类的
+
+这么一想似乎就没有必要，真的要保存对应关系那还不如用 struct。那就更进一步，为什么他不是一个类的部分？那更进一步，为什么不是 `Shader` 类的一部分？
+
+所以最终还是决定把 descriptor set 放到 `Shader` 里面
+
+#### 更新 descriptor set
+
+##### 不提前创建 `VkDescriptorBufferInfo`, `VkDescriptorImageInfo`
+
+`VkWriteDescriptorSet` 完成的是绑定的工作，核心就是，对于 buffer 是 `pBufferInfo，对于` texture 是 `pImageInfo`
+
+`pBufferInfo` 需要缓冲区句柄，`pImageInfo` 需要 sampler 句柄，这就把资源句柄绑定到了 descriptor set 上面
+
+这里是不涉及怎么更新资源本身的，比如摄像机在每帧运动，View 矩阵时刻在变，那么 UBO 这个 uniform buffer 应该每帧用 memory copy 来更新。资源数据的更新和 `VkWriteDescriptorSet` 这里的绑定不是一个东西。
+
+pBufferInfo, pImageInfo 需要的 `VkDescriptorBufferInfo`, `VkDescriptorImageInfo` 可以提前创建好，所以有的教程会把它们和 `VkBuffer`, `VkImage` 都封装在一个类里面
+
+但是我感觉，这个东西，在创建 `VkWriteDescriptorSet` 的时候创建就好了，这样就显得 `pBufferInfo`, `pImageInfo` 的意义比较明确
+
+##### 创建出 `vk::WriteDescriptorSet` 之后立即 `updateDescriptorSets`
+
+我原本希望能够创建一个 `std::vector<vk::WriteDescriptorSet>` ，然后收集起所有的 `vk::WriteDescriptorSet`，最后只使用一个 `updateDescriptorSets`
+
+外部使用例如
+
+```cpp
+quad_mat.SetImage("inputColor", m_color_attachment);
+quad_mat.SetImage("inputNormal", m_normal_attachment);
+quad_mat.SetImage("inputDepth", m_depth_attachment);
+quad_mat.UpdateDescriptorSets(device);
+```
+
+但因为 `vk::WriteDescriptorSet` 没有实现移动构造和拷贝构造，会导致 `vk::WriteDescriptorSet` 出错。
+
+例如在容器扩容的时候只有赋值构造，处于旧内存中的 `vk::WriteDescriptorSet` 被删除之后，处于新内存的 `vk::WriteDescriptorSet` 中的资源也一并被删除了
+
+或者是复制构造的时候根本没有成功深拷贝元素？这也不对，按理来说指针也是拷贝了，非指针的也是深拷贝的
+
+但是总之会出现问题。一个解决方法当然是不使用 vector 而是 list，但是这样也太麻烦了
+
+所以现在创建出 `vk::WriteDescriptorSet` 之后立即 `updateDescriptorSets`，接口改成了
+
+```cpp
+quad_mat.SetImage(device, "inputColor", m_color_attachment);
+quad_mat.SetImage(device, "inputNormal", m_normal_attachment);
+quad_mat.SetImage(device, "inputDepth", m_depth_attachment);
+```
+
+我觉得 `updateDescriptorSets` 接受一个数组的用法应该是，明确了我接受的是一个数组的更新，例如
+
+```cpp
+quad_mat.SetImage(device,
+                  {{"inputColor", m_color_attachment},
+                    {"inputNormal", m_normal_attachment},
+                    {"inputDepth", m_depth_attachment}});
+```
+
+但是这么写似乎……看上去紧凑，但是没有必要
+
+### 可变容量的描述符分配器类 DescriptorAllocatorGrowable
+
+pool 数量可变的 descriptor set 分配器
+
+内部存储了两个 vector，保存 descriptor pool。第一个 vector 是 `readyPools`，存储可用于分配 descriptor set 的 pool，第二个 vector 是 `fullPools`，存储已经分配满了的 pool
+
+descriptor pool 的 `std::vector<vk::DescriptorPoolSize> pool_sizes` 都是相同的，暂时不去细究
+
+### 材质类 Material
+
+#### 管理 Uniform Buffer 
+
+从更新频率来说，有逐场景的和逐帧的 uniform buffer，它们的更新频率不一样；
+
+从 shader 来说，每一个 shader 对应的物体的数量都是不确定的，那么对应的 uniform buffer 的数据量是不一样的；
+
+从 uniform buffer 的存储结构来说，可能一个物体对应一个 VkBuffer，也可以所有物体共同使用同一个大的 VkBuffer，使用基地址和偏移量来区分各自的数据
+
+那么其实我们需要一个抽象类，控制属于同一个 shader 的不同物体的 uniform buffer 的更新，还有就是控制 descriptor set 的绑定
+
+#### 更新 Uniform Buffer
+
+因为每一个 shader 对应的物体的数量都是不确定的，所以使用一个 ring buffer 来存储逐帧的 uniform buffer
+
+在渲染主循环中，每帧提交每个物体的 uniform buffer 数据
+
+```cpp
+material_ins.UploadUniformData("uniform_data_name", uniform_data_ptr, uniform_data_size);
+```
+
+此时提交的数据会被拷贝到 ring buffer
+
+如果一个物体具有多个需要提交的数据，那么就要上传多次
+
+```cpp
+material_ins.UploadUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+material_ins.UploadUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+```
+
+那么多次上传之前，需要区分哪些上传对应哪些物体
+
+这里，设计一对 begin 和 end 来确定每个物体对应在 ring buffer 中的 offset
+
+```cpp
+// object 1
+material_ins.BeginObject();
+material_ins.UploadUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+```
+
+有一些 uniform buffer 是对所有物体生效的，他可能每帧刷新也可能不是每帧刷新，这里非正式地称为 global 的。
+
+```cpp
+material_ins.UploadGlobalUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+
+// object 1
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name3", uniform_data_ptr3, uniform_data_size3);
+material_ins.EndObject();
+```
+
+因为使用了 ring buffer，所以这些 global uniform buffer 哪怕只在渲染器前端只更新一次，在后端，每帧都要把 global uniform buffer 拷贝到 ring buffer 的最前面，并且保存首地址
+
+这通过另外一组 begin 和 end 来完成
+
+```cpp
+material_ins.UploadGlobalUniformData("uniform_data_name1", uniform_data_ptr1, uniform_data_size1);
+
+material_ins.BeginFrame();
+
+// object 1
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name2", uniform_data_ptr2, uniform_data_size2);
+material_ins.EndObject();
+
+// object 2
+material_ins.BeginObject();
+material_ins.UploadLocalUniformData("uniform_data_name3", uniform_data_ptr3, uniform_data_size3);
+material_ins.EndObject();
+
+material_ins.EndFrame();
+```
+
+#### Global 和 Local Uniform Buffer 与 Unity SRP 的对比
+
+|        本仓库         |          Unity SRP shader 变量           |
+| :-------------------: | :--------------------------------------: |
+| Local Uniform Buffer  |                无特殊声明                |
+| Global Uniform Buffer | 添加 UnityPerDraw, UnityPerMaterial 声明 |
+
+### 环形缓冲类 Ring Buffer
+
+#### 内存分配方法
+
+Ring buffer 内部存储一个 offset，记录已经分配的内存的数据量
+
+该数据量不一定是内存对齐值的整数倍
+
+从 Ring buffer 分配内存的时候，返回当前的 offset 的对齐之后的值作为分配的内存的首地址，同时 Ring buffer 内部存储的 offset 是这个首地址 + 分配的 size
+
+对齐的首地址 + 不一定是内存对齐值的整数倍的分配的 size，得到的值又不一定是内存对齐值的整数倍了
+
+如果新的 offset 超出了 Ring buffer 内部的数据区的长度，那么就不返回当前的 offset 的对齐之后的值，而是直接返回
+
+#### 内存分配结构
+
+理想情况下，在一帧的末尾，ring buffer 对应于这一帧分配的内存的结构是
+
+```
+[...] 
+
+[global buffer] 
+
+[object 1 local buffer 1] [object 1 local buffer 2] [...] [object 1 local buffer n1] 
+
+[object 2 local buffer 1] [object 2 local buffer 2] [...] [object 2 local buffer n2] 
+
+[...]
+
+[object m local buffer 1] [object m local buffer 2] [...] [object m local buffer nm] 
+```
+
+实际内存是线性的，这里为了方便理解就做了换行
+
+因为你无法确定在这一帧提交 local uniform buffer 的顺序，而每次提交都会线性分配 ring buffer
+
+所以你只能保证 global uniform buffer 在所有 local uniform buffer 的前面，因为 global uniform buffer 是在这一帧开始之前就知道的；还有你可以确定序号小的 object 提交的 buffer 一定在序号大的 object 之前，其他的顺序无法保证
+
+#### 内存分配记录
+
+所以你可能有
+
+```
+[...] [global buffer] [object 1 local buffer 3] [object 1 local buffer 1] [...] [object 2 local buffer 1] [object 2 local buffer 4] [...]
+```
+
+所以在后端，每一次提交时都要记录下当前分配的 ring buffer 首地址，最后提供给 `vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段
+
+这个字段接受一个指针，指向一个存储 uniform buffer 偏移量的数组。对于我们的数据结构，就是存储 ring buffer 分配的内存的首地址的数组。
+
+也就是说，我们认为 `pDynamicOffsets` 指向的数组要存储所有 object 的 offset
+
+这个数组在每帧开始时清空，然后接受每一个 object 的 uniform buffer 对应的 offset
+
+因为这一个材质对应的所有 object 都共用同一个 shader，所以显然所有 object 的 uniform buffer 的 descriptor 的数量都是一样的
+
+所以如果这一帧有 N 个 object，每一个 object 的 uniform buffer 的 descriptor 的数量是 `dynamicOffsetCount` 那么 `pDynamicOffsets` 指向的数组的大小就是 `N * dynamicOffsetCount`
+
+在每一帧，这个数组的每个元素都必须分配到正确的偏移量，否则就说明对应的 uniform buffer 没有提交。
+
+当然，可以添加一个机制，为每一个 local uniform buffer 缓存最后一次提交的数据，如果这一帧没有提交对应的 local uniform buffer，那么就提交缓存。或者是提交缺省值。
+
+N 个 object 对应 N 次 `vkCmdBindDescriptorSets` 和 draw，假设不考虑优化。
+
+第 i 次 `vkCmdBindDescriptorSets` 需要传入 `pDynamicOffsets` 指向的数组的第 i 段区间，那么 `Material` 类需要对此进行封装
+
+是否能够将这个设计简化，现在我们 `pDynamicOffsets` 指向的数组不再是存储所有 object 的 offset，而仅仅是一个指向某一个 object 的所有 offset 的数组
+
+那么现在它的大小为 `dynamicOffsetCount`，不再是在 `BeginFrame` 中初始化，而是在 `BeginObject` 中初始化
+
+`vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段接受的就直接是数组的首地址，而不需要计算某一个大数组的某个区间的首地址
+
+这样当然可以，但是因为不管是 `BeginFrame` 还是 `BeginObject`，都是在 render pass 启动之前的
+
+那么每一个 object 对应的 offset 数组都要缓存
+
+最后还是要做一个 `vector<vector<uint32_t>> per_obj_dynamic_offsets` 来存储每个物体在 ring buffer 上分配的内存的首地址
+
+但是这个 `per_obj_dynamic_offsets` 并不能直接传入 `vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段
+
+因为可能存在一种情况：某一个 `Material` 并不需要绘制网格，而只是单纯的接受 uniform 输入并输出
+
+那么这时，外部并不会对这个 `Material` 类实例调用 `BeginObject()` `EndObject()`
+
+这时，`per_obj_dynamic_offsets` 为空，如果还坚持要将 `per_obj_dynamic_offsets` 的元素赋给`vkCmdBindDescriptorSets` 的 `pDynamicOffsets` 字段，就会出错
+
+所以应该有一个判断，当 `per_obj_dynamic_offsets` 为空时，给 `per_obj_dynamic_offsets` 添加一个元素，并且把 global 的 offset 复制进去
+
+这时，外部在绑定描述符集的时候直接传入 `obj_index = 0` 就好了
+
+### 渲染通道 Render Pass
+
+#### 信息依赖
+
+更改渲染通道，例如做延迟渲染的时候，我需要某一个 pass 输出到三个纹理附件，然后下一个 pass 使用这三个纹理附件
+
+那么 render pass 和 frame buffer 都需要更改
+
+render pass 需要知道：
+
+1.各个 subpass 总共要使用到的所有附件的信息
+
+通过 `vk::AttachmentDescription` 存储
+
+2.各个 subpass 对附件集合的引用。正如其名，是一个引用，或者说索引
+
+通过 `vk::AttachmentReference` 存储
+
+之后 subpass 就通过 `vk::AttachmentReference` 来知道，自己使用的是前面 `vk::AttachmentDescription` 中的第几个
+
+3.每一个 subpass 是什么，每一个 subpass 使用的附件
+
+通过 `vk::SubpassDescription` 存储
+
+比如你是什么额外操作都没有，那么就只有一个单独的 subpass
+
+但是比如延迟渲染的话，就需要两个 subpass，一个是输出颜色、法线、深度，一个是读取这些附件做着色
+
+4.每个 subpass 之间的依赖关系
+
+通过 `vk::SubpassDependency` 存储
+
+比如延迟渲染的第二个 pass 需要依赖第一个 pass 的各个附件都输出完
+
+5.最终汇总上面所有的信息，制作一个 render pass
+
+通过 `vk::RenderPassCreateInfo` 存储
+
+render pass 和 frame buffer 都需要知道附件信息
+
+render pass 要知道的是附件的配置，而 frame buffer 要保存附件的 `vk::raii::ImageView` 引用
+
+因为其实是 render pass 决定了附件的配置，所以 frame buffer 应该是 render pass 的数据成员
+
+因为 frame buffer 要保存附件的 `vk::raii::ImageView` 引用，所以 `vk::raii::ImageView` 应该是 frame buffer 的成员
+
+但是既然已经有 `vk::raii::Framebuffer` 了，那我觉得让 `vk::raii::Framebuffer` 和 `vk::raii::ImageView` 平级，都属于 render pass 也无所谓
+
+#### 结构设计
+
+Pipeline 的创建需要知道颜色附件的信息，存储在 `vk::PipelineColorBlendAttachmentState`
+
+一个颜色附件对应一个 `vk::PipelineColorBlendAttachmentState`
+
+`vk::PipelineColorBlendStateCreateInfo` 汇总这些 `vk::PipelineColorBlendAttachmentState`
+
+也就是 Material 创建 Pipeline 的时候，需要知道对应 subpass 的附件信息
+
+因此 Material 应该是附属于 subpass 的数据结构
+
+一个 render pass 的各个 subpass 应该是独立的类实例
+
+```cpp
+DeferredPass::DeferredPass(vk::raii::PhysicalDevice const& physical_device,
+                            vk::raii::Device const&         device,
+                            SurfaceData&                    surface_data,
+                            vk::raii::CommandPool const&    command_pool,
+                            vk::raii::Queue const&          queue,
+                            DescriptorAllocatorGrowable&    m_descriptor_allocator)
+{
+    // Create a set to store all information of attachments
+
+    vk::Format color_format =
+        PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
+    assert(color_format != vk::Format::eUndefined);
+
+    std::vector<vk::AttachmentDescription> attachment_descriptions;
+    // swap chain attachment
+    attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
+                                          color_format,                     /* format */
+                                          sample_count,                     /* samples */
+                                          vk::AttachmentLoadOp::eClear,     /* loadOp */
+                                          vk::AttachmentStoreOp::eStore,    /* storeOp */
+                                          vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                                          vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                                          vk::ImageLayout::eUndefined,      /* initialLayout */
+                                          vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+    // color attachment
+    attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                          color_format,                              /* format */
+                                          sample_count,                              /* samples */
+                                          vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                          vk::AttachmentStoreOp::eDontCare,          /* storeOp */
+                                          vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                          vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                          vk::ImageLayout::eUndefined,               /* initialLayout */
+                                          vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
+    // normal attachment
+    attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                          vk::Format::eR8G8B8A8Unorm,                /* format */
+                                          sample_count,                              /* samples */
+                                          vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                          vk::AttachmentStoreOp::eDontCare,          /* storeOp */
+                                          vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                          vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                          vk::ImageLayout::eUndefined,               /* initialLayout */
+                                          vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
+    // depth attachment
+    attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
+                                          depth_format,                                     /* format */
+                                          sample_count,                                     /* samples */
+                                          vk::AttachmentLoadOp::eClear,                     /* loadOp */
+                                          vk::AttachmentStoreOp::eDontCare,                 /* storeOp */
+                                          vk::AttachmentLoadOp::eDontCare,                  /* stencilLoadOp */
+                                          vk::AttachmentStoreOp::eDontCare,                 /* stencilStoreOp */
+                                          vk::ImageLayout::eUndefined,                      /* initialLayout */
+                                          vk::ImageLayout::eDepthStencilAttachmentOptimal); /* finalLayout */
+
+    // Create reference to attachment information set
+
+    vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+    std::vector<vk::AttachmentReference> color_attachment_references;
+    color_attachment_references.emplace_back(1, vk::ImageLayout::eColorAttachmentOptimal);
+    color_attachment_references.emplace_back(2, vk::ImageLayout::eColorAttachmentOptimal);
+
+    vk::AttachmentReference depth_attachment_reference(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    std::vector<vk::AttachmentReference> input_attachment_references;
+    input_attachment_references.emplace_back(1, vk::ImageLayout::eShaderReadOnlyOptimal);
+    input_attachment_references.emplace_back(2, vk::ImageLayout::eShaderReadOnlyOptimal);
+    input_attachment_references.emplace_back(3, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+    // Create subpass
+
+    std::vector<vk::SubpassDescription> subpass_descriptions;
+    subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                          vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                          {},                               /* pInputAttachments */
+                                                          color_attachment_references,      /* pColorAttachments */
+                                                          {},                          /* pResolveAttachments */
+                                                          &depth_attachment_reference, /* pDepthStencilAttachment */
+                                                          nullptr));                   /* pPreserveAttachments */
+    subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                          vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                          input_attachment_references,      /* pInputAttachments */
+                                                          swapchain_attachment_reference,   /* pColorAttachments */
+                                                          {},        /* pResolveAttachments */
+                                                          {},        /* pDepthStencilAttachment */
+                                                          nullptr)); /* pPreserveAttachments */
+
+    // Create subpass dependency
+
+    std::vector<vk::SubpassDependency> dependencies;
+    dependencies.emplace_back(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+                              0,                                                 /* dstSubpass */
+                              vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
+                              vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+                              vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
+                              vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                              vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
+    dependencies.emplace_back(0,                                                 /* srcSubpass */
+                              1,                                                 /* dstSubpass */
+                              vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                              vk::PipelineStageFlagBits::eFragmentShader,        /* dstStageMask */
+                              vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                              vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                              vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
+    dependencies.emplace_back(1,                                                 /* srcSubpass */
+                              VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                              vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                              vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
+                              vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                              vk::AccessFlagBits::eMemoryRead,                   /* dstAccessMask */
+                              vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
+
+    // Create render pass
+    vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
+                                                      attachment_descriptions,     /* pAttachments */
+                                                      subpass_descriptions,        /* pSubpasses */
+                                                      dependencies);               /* pDependencies */
+
+    render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+
+    // Create Material
+
+    std::shared_ptr<Shader> obj_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                                      device,
+                                                                      m_descriptor_allocator,
+                                                                      "builtin/shaders/obj.vert.spv",
+                                                                      "builtin/shaders/obj.frag.spv");
+
+    obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
+    obj2attachment_mat.color_attachment_count = 2;
+    obj2attachment_mat.UpdateDescriptorSets(device);
+    obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+
+    std::shared_ptr<Shader> quad_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                                        device,
+                                                                        m_descriptor_allocator,
+                                                                        "builtin/shaders/quad.vert.spv",
+                                                                        "builtin/shaders/quad.frag.spv");
+
+    quad_mat         = Material(physical_device, device, quad_shader_ptr);
+    quad_mat.subpass = 1;
+    quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+
+    // Create quad model
+    std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+                                      1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
+    std::vector<uint16_t> indices  = {0, 1, 2, 0, 2, 3};
+
+    quad_model = std::move(Model(physical_device,
+                                  device,
+                                  command_pool,
+                                  queue,
+                                  vertices,
+                                  indices,
+                                  quad_mat.shader_ptr->per_vertex_attributes));
+}
+```
+
+例如这里的 `attachment_descriptions` `color_attachment_references` `input_attachment_references` 都应该是由各个 subpass 分别添加的
+
+`subpass_descriptions` `dependencies` 更不用说了
+
+各个 subpass 都添加完了之后，render pass 再 create
+
+#### 其他
+
+##### 附件不需要为 frames in flight 而备份
+
+[Why is a single depth buffer sufficient for multiple frames in flight?](https://www.reddit.com/r/vulkan/comments/aavxl4/why_is_a_single_depth_buffer_sufficient_for/)
+
+[What exactly is the definition of "frames in flight"?](https://www.reddit.com/r/vulkan/comments/nbu94q/what_exactly_is_the_definition_of_frames_in_flight/)
+
+虽然我们有飞行中的多个帧 multiple frames in flight，但是这并不意味着我们在同时渲染多个帧
+
+实际上，multiple frames in flight 的意思是，一个帧具有三个阶段
+
+1. 记录命令缓冲，上传数据
+   
+2. GPU 渲染
+
+3. 呈现到屏幕
+
+我们可以有两个帧同时位于不同的阶段，但是我们不会有两个帧同时位于同一个阶段
+
+所以我们在给 frame buffer 提供 `vk::raii::ImageView` 引用的时候，多个 frame buffer 引用不同的 swapchain 的 image view，但是引用同一个深度缓冲
+
+那么如果你再添加其他附件，也是无需为了多个 frame buffer 而备份的
+
+## 常见错误
+
+### CreateInfo 可能引用了局部变量
+
+比如某个 `CreateInfo` 需要 `&BufferInfo`
+
+这个 `BufferInfo` 是当前函数的局部变量
+
+在当前函数中创建完 `CreateInfo`，并不是立即使用，而是存到 `vector` 中留待后用
+
+那么在离开函数的时候，`BufferInfo` 销毁，存在 `vector` 中的 `CreateInfo` 就出错了
+
+别人引用了局部变量 `BufferInfo` 怎么没出错？因为他们创建出来 `CreateInfo` 之后就立即使用了
+
+### 从 RAII 类转型成非 RAII 类
+
+从 RAII 类转型成非 RAII 类，并且使用 `std::move` 来移动资源所有权，这种方法不一定能达成转移资源的目的
+
+例如：
+
+```cpp
+// header file
+std::vector<vk::DescriptorSet> descriptor_sets;
+
+// source file
+vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
+    *descriptor_pool, descriptorSetLayouts.size(), descriptorSetLayouts.data());
+vk::raii::DescriptorSets raii_descriptor_sets(logical_device, descriptor_set_allocate_info);
+
+for (size_t i = 0; i < raii_descriptor_sets.size(); ++i)
+{
+    descriptor_sets.push_back(*std::move(raii_descriptor_sets[i]));
+}
+```
+
+关键在于转型到的非 RAII 类并不是出于 RAII 的目的设计的，所以可能不会提供移动构造函数，这样，即使使用了 `std::move`，其实仍然是把 `std::move` 产生的左值当作右值传给了拷贝构造函数
+
+而拷贝构造函数一般只是共享了这个资源。因此，在离开作用域之后，RAII 类析构，其中的资源没有转移，因此就析构掉了资源，同时非 RAII 类即使没有被析构，其中的资源也已经无效了
+
+### Ring buffer 的大小
+
+不知道为什么，给负责存储 uniform buffer data 的 Ring buffer 分配 32 KB 就没问题，但是分配 32MB 就会很卡
+
+### 在 stl 容器中使用 vk 类
+
+有些 vk 类没有实现移动构造和拷贝构造，用于 stl 容器中会，在容器扩容的时候会丢失数据，例如 `vk::WriteDescriptorSet`

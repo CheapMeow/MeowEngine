@@ -51,6 +51,8 @@ namespace Meow
          */
         std::tuple<uint8_t*, uint32_t> ReadBinaryFile(std::string const& filepath);
 
+        std::tuple<uint32_t, uint32_t> GetImageFileWidthHeight(std::string const& filepath);
+
         /**
          * @brief Read image file by relative path.
          *

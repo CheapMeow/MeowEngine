@@ -37,7 +37,9 @@ namespace Meow
         ~RingUniformBuffer()
         {
             mapped_data_ptr = nullptr;
-            buffer_data_ptr->device_memory.unmapMemory();
+            if (buffer_data_ptr != nullptr)
+                buffer_data_ptr->device_memory.unmapMemory();
+            buffer_data_ptr = nullptr;
         }
 
         uint64_t AllocateMemory(uint64_t size)
@@ -98,22 +100,24 @@ namespace Meow
 
         void SetLocalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size);
 
-        void SetStorageBuffer(const std::string&          name,
+        void SetStorageBuffer(vk::raii::Device const&     logical_device,
+                              const std::string&          name,
                               vk::raii::Buffer const&     buffer,
                               vk::DeviceSize              range            = VK_WHOLE_SIZE,
                               vk::raii::BufferView const* raii_buffer_view = nullptr);
 
-        void SetImage(const std::string& name, TextureData& texture_data);
-
-        void UpdateDescriptorSets(vk::raii::Device const& logical_device);
+        void SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data);
 
         void BindPipeline(vk::raii::CommandBuffer const& command_buffer);
 
         void BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index);
 
-    private:
-        std::shared_ptr<Shader> shader_ptr = nullptr;
+    public:
+        std::shared_ptr<Shader> shader_ptr             = nullptr;
+        int                     color_attachment_count = 1;
+        int                     subpass                = 0;
 
+    private:
         RingUniformBuffer ring_buffer = nullptr;
 
         vk::raii::Pipeline graphics_pipeline = nullptr;

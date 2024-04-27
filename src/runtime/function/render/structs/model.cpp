@@ -14,21 +14,61 @@
 
 namespace Meow
 {
-    /**
-     * @brief Load model from file using assimp.
-     *
-     * Use aiProcess_PreTransformVertices when importing, so model node doesn't need to save local transform matrix.
-     *
-     * If you keep local transform matrix of model node, it means you should create uniform buffer for each model node.
-     * Then when draw a mesh once you should update buffer data once.
-     */
+    Model::Model(vk::raii::PhysicalDevice const& physical_device,
+                 vk::raii::Device const&         device,
+                 vk::raii::CommandPool const&    command_pool,
+                 vk::raii::Queue const&          queue,
+                 std::vector<float>&             vertices,
+                 std::vector<uint16_t>&          indices,
+                 std::vector<VertexAttribute>    attributes,
+                 vk::IndexType                   index_type)
+    {
+        uint32_t        stride    = VertexAttributesToSize(attributes);
+        ModelPrimitive* primitive = new ModelPrimitive();
+        primitive->vertices       = vertices;
+        primitive->indices        = indices;
+        primitive->vertex_count   = vertices.size() / stride * 4;
+
+        if (vertices.size() > 0)
+        {
+            primitive->vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
+                                                                          device,
+                                                                          command_pool,
+                                                                          queue,
+                                                                          vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                                                          primitive->vertices);
+        }
+        if (indices.size() > 0)
+        {
+            primitive->index_buffer_ptr = std::make_shared<IndexBuffer>(physical_device,
+                                                                        device,
+                                                                        command_pool,
+                                                                        queue,
+                                                                        vk::MemoryPropertyFlagBits::eDeviceLocal,
+                                                                        primitive->indices);
+        }
+
+        ModelMesh* mesh = new ModelMesh();
+        mesh->primitives.push_back(primitive);
+        mesh->bounding.min = glm::vec3(-1.0f, -1.0f, 0.0f);
+        mesh->bounding.max = glm::vec3(1.0f, 1.0f, 0.0f);
+
+        root_node       = new ModelNode();
+        root_node->name = "RootNode";
+        root_node->meshes.push_back(mesh);
+        root_node->local_matrix = glm::mat4(1.0f);
+        mesh->link_node         = root_node;
+
+        meshes.push_back(mesh);
+    }
+
     Model::Model(vk::raii::PhysicalDevice const& physical_device,
                  vk::raii::Device const&         device,
                  vk::raii::CommandPool const&    command_pool,
                  vk::raii::Queue const&          queue,
                  const std::string&              file_path,
                  std::vector<VertexAttribute>    attributes,
-                 vk::IndexType                   index_type = vk::IndexType::eUint16)
+                 vk::IndexType                   index_type)
     {
         this->attributes = attributes;
 

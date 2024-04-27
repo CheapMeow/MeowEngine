@@ -11,27 +11,24 @@ namespace Meow
     void ResourceSystem::Start()
     {
         // TODO: Image size should be analysised?
-        // std::shared_ptr<TextureData> diffuse_texture = LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
-        // m_materials["Default Material"] =
+        // std::shared_ptr<TextureData> diffuse_texture = LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
+        // 4096}); m_materials["Default Material"] =
         //     std::make_shared<Material>(g_runtime_global_context.render_system->CreateMaterial(
-        //         "builtin/shaders/textured_mesh_without_vertex_color.vert.spv", "builtin/shaders/textured_mesh_without_vertex_color.frag.spv", diffuse_texture));
+        //         "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
+        //         "builtin/shaders/textured_mesh_without_vertex_color.frag.spv", diffuse_texture));
     }
 
     void ResourceSystem::Update(float frame_time) {}
 
-    std::shared_ptr<TextureData> ResourceSystem::LoadTexture(const std::string& filepath, vk::Extent2D const& extent)
+    std::shared_ptr<TextureData> ResourceSystem::LoadTexture(const std::string& filepath)
     {
-        std::shared_ptr<TextureData> texture_data_ptr =
-            std::make_shared<TextureData>(g_runtime_global_context.render_system->CreateTextureData(extent));
-
+        std::shared_ptr<TextureData> texture_ptr = g_runtime_global_context.render_system->CreateImageFromFile(filepath);
         g_runtime_global_context.render_system->EnQueueRenderCommand(
-            [texture_data_ptr, filepath](vk::raii::CommandBuffer const& command_buffer) {
-                texture_data_ptr->LoadImageFromFile(command_buffer, filepath);
+            [texture_ptr](vk::raii::CommandBuffer const& command_buffer) {
+                texture_ptr->TransitLayout(command_buffer);
             });
 
-        m_textures[filepath] = texture_data_ptr;
-
-        return texture_data_ptr;
+        return m_textures[filepath];
     }
 
     std::shared_ptr<TextureData> ResourceSystem::GetTexture(const std::string& filepath)

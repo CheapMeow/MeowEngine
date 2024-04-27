@@ -10,6 +10,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include <cstdint>
+#include <list>
 #include <unordered_map>
 
 namespace Meow
@@ -181,12 +182,6 @@ namespace Meow
 
         vk::raii::DescriptorSets descriptor_sets = nullptr;
 
-        // vector storing temp info and temp WriteDescriptorSet
-
-        std::vector<vk::DescriptorBufferInfo> descriptor_buffer_infos;
-        std::vector<vk::DescriptorImageInfo>  descriptor_image_infos;
-        std::vector<vk::WriteDescriptorSet>   write_descriptor_sets;
-
         Shader() {}
 
         Shader(vk::raii::PhysicalDevice const& gpu,
@@ -199,14 +194,13 @@ namespace Meow
                std::string                     tesc_shader_file_path = "",
                std::string                     tese_shader_file_path = "");
 
-        void PushBufferWrite(const std::string&          name,
-                             vk::raii::Buffer const&     buffer,
-                             vk::DeviceSize              range            = VK_WHOLE_SIZE,
-                             vk::raii::BufferView const* raii_buffer_view = nullptr);
+        void SetBuffer(vk::raii::Device const&     logical_device,
+                       const std::string&          name,
+                       vk::raii::Buffer const&     buffer,
+                       vk::DeviceSize              range            = VK_WHOLE_SIZE,
+                       vk::raii::BufferView const* raii_buffer_view = nullptr);
 
-        void PushImageWrite(const std::string& name, TextureData& texture_data);
-
-        void UpdateDescriptorSets(vk::raii::Device const& logical_device);
+        void SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data);
 
     private:
         bool CreateShaderModuleAndGetMeta(

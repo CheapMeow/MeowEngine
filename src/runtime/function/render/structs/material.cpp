@@ -30,8 +30,8 @@ namespace Meow
             if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer ||
                 it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
             {
-                shader_ptr->PushBufferWrite(it->first, ring_buffer.buffer_data_ptr->buffer, it->second.bufferSize);
-                shader_ptr->UpdateDescriptorSets(logical_device);
+                shader_ptr->SetBuffer(
+                    logical_device, it->first, ring_buffer.buffer_data_ptr->buffer, it->second.bufferSize);
             }
         }
     }
@@ -146,19 +146,23 @@ namespace Meow
 
         vk::ColorComponentFlags color_component_flags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-        vk::PipelineColorBlendAttachmentState pipeline_color_blend_attachment_state(false,
-                                                                                    vk::BlendFactor::eOne,
-                                                                                    vk::BlendFactor::eZero,
-                                                                                    vk::BlendOp::eAdd,
-                                                                                    vk::BlendFactor::eOne,
-                                                                                    vk::BlendFactor::eZero,
-                                                                                    vk::BlendOp::eAdd,
-                                                                                    color_component_flags);
+        std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
+        for (int i = 0; i < color_attachment_count; ++i)
+        {
+            pipeline_color_blend_attachment_states.emplace_back(false,
+                                                                vk::BlendFactor::eOne,
+                                                                vk::BlendFactor::eZero,
+                                                                vk::BlendOp::eAdd,
+                                                                vk::BlendFactor::eOne,
+                                                                vk::BlendFactor::eZero,
+                                                                vk::BlendOp::eAdd,
+                                                                color_component_flags);
+        }
         vk::PipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_info(
             vk::PipelineColorBlendStateCreateFlags(),
             false,
             vk::LogicOp::eNoOp,
-            pipeline_color_blend_attachment_state,
+            pipeline_color_blend_attachment_states,
             {{1.0f, 1.0f, 1.0f, 1.0f}});
 
         std::array<vk::DynamicState, 2>    dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
@@ -166,19 +170,21 @@ namespace Meow
                                                                               dynamic_states);
 
         vk::raii::PipelineCache        pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
-        vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info(vk::PipelineCreateFlags(),
-                                                                     pipeline_shader_stage_create_infos,
-                                                                     &pipeline_vertex_input_state_create_info,
-                                                                     &pipeline_input_assembly_state_create_info,
-                                                                     nullptr,
-                                                                     &pipeline_viewport_state_create_info,
-                                                                     &pipeline_rasterization_state_create_info,
-                                                                     &pipeline_multisample_state_create_info,
-                                                                     &pipeline_depth_stencil_state_create_info,
-                                                                     &pipeline_color_blend_state_create_info,
-                                                                     &pipeline_dynamic_state_create_info,
-                                                                     *shader_ptr->pipeline_layout,
-                                                                     *render_pass);
+        vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info(
+            vk::PipelineCreateFlags(),                  /* flags */
+            pipeline_shader_stage_create_infos,         /* pStages */
+            &pipeline_vertex_input_state_create_info,   /* pVertexInputState */
+            &pipeline_input_assembly_state_create_info, /* pInputAssemblyState */
+            nullptr,                                    /* pTessellationState */
+            &pipeline_viewport_state_create_info,       /* pViewportState */
+            &pipeline_rasterization_state_create_info,  /* pRasterizationState */
+            &pipeline_multisample_state_create_info,    /* pMultisampleState */
+            &pipeline_depth_stencil_state_create_info,  /* pDepthStencilState */
+            &pipeline_color_blend_state_create_info,    /* pColorBlendState */
+            &pipeline_dynamic_state_create_info,        /* pDynamicState */
+            *shader_ptr->pipeline_layout,               /* layout */
+            *render_pass,                               /* renderPass */
+            subpass);                                   /* subpass */
 
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
@@ -336,22 +342,18 @@ namespace Meow
         per_obj_dynamic_offsets[obj_count][buffer_meta_iter->second.dynamic_offset_index] = (uint32_t)ringOffset;
     }
 
-    void Material::SetStorageBuffer(const std::string&          name,
+    void Material::SetStorageBuffer(vk::raii::Device const&     logical_device,
+                                    const std::string&          name,
                                     vk::raii::Buffer const&     buffer,
                                     vk::DeviceSize              range,
                                     vk::raii::BufferView const* raii_buffer_view)
     {
-        shader_ptr->PushBufferWrite(name, buffer, range, raii_buffer_view);
+        shader_ptr->SetBuffer(logical_device, name, buffer, range, raii_buffer_view);
     }
 
-    void Material::SetImage(const std::string& name, TextureData& texture_data)
+    void Material::SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data)
     {
-        shader_ptr->PushImageWrite(name, texture_data);
-    }
-
-    void Material::UpdateDescriptorSets(vk::raii::Device const& logical_device)
-    {
-        shader_ptr->UpdateDescriptorSets(logical_device);
+        shader_ptr->SetImage(logical_device, name, texture_data);
     }
 
     void Material::BindPipeline(vk::raii::CommandBuffer const& command_buffer)

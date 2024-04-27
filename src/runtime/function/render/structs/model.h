@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/base/non_copyable.h"
 #include "core/math/bounding_box.h"
 #include "vertex_attribute.h"
 
@@ -15,7 +16,7 @@
 
 namespace Meow
 {
-    struct Model
+    struct Model : NonCopyable
     {
         typedef std::unordered_map<std::string, ModelNode*> NodesMap;
         typedef std::unordered_map<std::string, ModelBone*> BonesMap;
@@ -35,13 +36,64 @@ namespace Meow
 
         bool loadSkin = false;
 
+        Model(std::nullptr_t) {};
+
+        Model(Model&& rhs) noexcept
+        {
+            std::swap(root_node, rhs.root_node);
+            std::swap(linear_nodes, rhs.linear_nodes);
+            std::swap(meshes, rhs.meshes);
+            std::swap(nodes_map, rhs.nodes_map);
+            std::swap(bones, rhs.bones);
+            std::swap(bones_map, rhs.bones_map);
+            std::swap(attributes, rhs.attributes);
+            std::swap(animations, rhs.animations);
+            animIndex = rhs.animIndex;
+            loadSkin  = rhs.loadSkin;
+        }
+
+        Model& operator=(Model&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                std::swap(root_node, rhs.root_node);
+                std::swap(linear_nodes, rhs.linear_nodes);
+                std::swap(meshes, rhs.meshes);
+                std::swap(nodes_map, rhs.nodes_map);
+                std::swap(bones, rhs.bones);
+                std::swap(bones_map, rhs.bones_map);
+                std::swap(attributes, rhs.attributes);
+                std::swap(animations, rhs.animations);
+                animIndex = rhs.animIndex;
+                loadSkin  = rhs.loadSkin;
+            }
+            return *this;
+        }
+
+        Model(vk::raii::PhysicalDevice const& physical_device,
+              vk::raii::Device const&         device,
+              vk::raii::CommandPool const&    command_pool,
+              vk::raii::Queue const&          queue,
+              std::vector<float>&             vertices,
+              std::vector<uint16_t>&          indices,
+              std::vector<VertexAttribute>    attributes,
+              vk::IndexType                   index_type = vk::IndexType::eUint16);
+
+        /**
+         * @brief Load model from file using assimp.
+         *
+         * Use aiProcess_PreTransformVertices when importing, so model node doesn't need to save local transform matrix.
+         *
+         * If you keep local transform matrix of model node, it means you should create uniform buffer for each model
+         * node. Then when draw a mesh once you should update buffer data once.
+         */
         Model(vk::raii::PhysicalDevice const& physical_device,
               vk::raii::Device const&         device,
               vk::raii::CommandPool const&    command_pool,
               vk::raii::Queue const&          queue,
               const std::string&              file_path,
               std::vector<VertexAttribute>    attributes,
-              vk::IndexType                   index_type);
+              vk::IndexType                   index_type = vk::IndexType::eUint16);
 
         ~Model()
         {

@@ -16,8 +16,10 @@ namespace Meow
 
         TextureData(vk::raii::PhysicalDevice const& physical_device,
                     vk::raii::Device const&         device,
+                    vk::Format                      format_              = vk::Format::eR8G8B8A8Unorm,
                     vk::Extent2D const&             extent_              = {256, 256},
                     vk::ImageUsageFlags             usage_flags          = {},
+                    vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
                     vk::FormatFeatureFlags          format_feature_flags = {},
                     bool                            anisotropy_enable    = false,
                     bool                            force_staging        = false);
@@ -41,6 +43,15 @@ namespace Meow
             TransitLayout(command_buffer);
         }
 
-        bool LoadImageFromFile(vk::raii::CommandBuffer const& command_buffer, std::string const& filepath);
+        static std::shared_ptr<TextureData>
+        CreateFromFile(vk::raii::PhysicalDevice const& physical_device,
+                       vk::raii::Device const&         device,
+                       std::string const&              filepath,
+                       vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                       vk::ImageUsageFlags             usage_flags          = {},
+                       vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                       vk::FormatFeatureFlags          format_feature_flags = {},
+                       bool                            anisotropy_enable    = false,
+                       bool                            force_staging        = false);
     };
 } // namespace Meow

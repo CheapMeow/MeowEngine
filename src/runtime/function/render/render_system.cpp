@@ -181,17 +181,6 @@ namespace Meow
 #endif
     }
 
-    void RenderSystem::CreateDepthBuffer()
-    {
-        m_depth_buffer_data = DepthBufferData(m_gpu, m_logical_device, vk::Format::eD16Unorm, m_surface_data.extent);
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Depth Image";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eImage, GetVulkanHandle(*m_depth_buffer_data.image), object_name.c_str(), nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-    }
-
     void RenderSystem::CreateDescriptorAllocator()
     {
         // create a descriptor pool
@@ -210,14 +199,6 @@ namespace Meow
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
         m_descriptor_allocator = DescriptorAllocatorGrowable(m_logical_device, 1000, pool_sizes);
-    }
-
-    void RenderSystem::CreateRenderPass()
-    {
-        vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        m_deferred_pass         = DeferredPass(m_logical_device, color_format, m_depth_buffer_data.format);
-        m_deferred_pass.RefreshFrameBuffers(
-            m_logical_device, m_swapchain_data.image_views, &m_depth_buffer_data.image_view, m_surface_data.extent);
     }
 
     void RenderSystem::CreatePerFrameData()
@@ -291,6 +272,16 @@ namespace Meow
         }
     }
 
+    void RenderSystem::CreateRenderPass()
+    {
+        m_deferred_pass = DeferredPass(m_gpu,
+                                       m_logical_device,
+                                       m_surface_data,
+                                       m_upload_context.command_pool,
+                                       m_graphics_queue,
+                                       m_descriptor_allocator);
+    }
+
     void RenderSystem::InitImGui()
     {
         std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
@@ -342,7 +333,7 @@ namespace Meow
         init_info.QueueFamily               = m_graphics_queue_family_index;
         init_info.Queue                     = *m_graphics_queue;
         init_info.DescriptorPool            = *m_imgui_descriptor_pool;
-        init_info.Subpass                   = 0;
+        init_info.Subpass                   = 2; // TODO: it should be determined by render pass
         init_info.MinImageCount             = k_max_frames_in_flight;
         init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
@@ -373,6 +364,9 @@ namespace Meow
 
     void RenderSystem::RecreateSwapChain()
     {
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
         m_logical_device.waitIdle();
 
         ImGui_ImplVulkan_Shutdown();
@@ -380,16 +374,13 @@ namespace Meow
         ImGui::DestroyContext();
 
         m_per_frame_data.clear();
-        m_deferred_pass.framebuffers.clear();
-        m_depth_buffer_data = nullptr;
-        m_swapchain_data    = nullptr;
-        m_surface_data      = nullptr;
+        m_swapchain_data = nullptr;
+        m_surface_data   = nullptr;
 
         CreateSurface();
         CreateSwapChian();
-        CreateDepthBuffer();
         m_deferred_pass.RefreshFrameBuffers(
-            m_logical_device, m_swapchain_data.image_views, &m_depth_buffer_data.image_view, m_surface_data.extent);
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         CreatePerFrameData();
         InitImGui();
     }
@@ -405,10 +396,9 @@ namespace Meow
         CreateLogicalDevice();
         CreateSwapChian();
         CreateUploadContext();
-        CreateDepthBuffer();
         CreateDescriptorAllocator();
-        CreateRenderPass();
         CreatePerFrameData();
+        CreateRenderPass();
         InitImGui();
     }
 
@@ -430,6 +420,15 @@ namespace Meow
 
     void RenderSystem::Start()
     {
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
+        // initialize render pass in Start()
+        // but not in CreateRenderPass()
+        // because EnQueueRenderCommand need available g_runtime_global_context.render_system
+        m_deferred_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+
         // TODO: creating entity should be obstract
         const auto camera_entity = g_runtime_global_context.registry.create();
         auto&      camera_transform_component =
@@ -458,18 +457,9 @@ namespace Meow
         camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
         // glm::lookAt
 
-        diffuse_texture =
-            g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096, 4096});
-        std::shared_ptr<Shader> shader_ptr =
-            std::make_shared<Shader>(m_gpu,
-                                     m_logical_device,
-                                     m_descriptor_allocator,
-                                     "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
-                                     "builtin/shaders/textured_mesh_without_vertex_color.frag.spv");
-        testMat = Material(m_gpu, m_logical_device, shader_ptr);
-        testMat.SetImage("diffuseMap", *diffuse_texture);
-        testMat.UpdateDescriptorSets(m_logical_device);
-        testMat.CreatePipeline(m_logical_device, m_deferred_pass.render_pass, vk::FrontFace::eClockwise, true);
+        // diffuse_texture =
+        //     g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
+        //     4096});
     }
 
     /**
@@ -561,14 +551,6 @@ namespace Meow
 
         UBOData ubo_data;
 
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-        {
-            // TODO: temp
-            ubo_data.model = transfrom_component.GetTransform();
-            ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-
         for (auto [entity, transfrom_component, camera_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, const Camera3DComponent>().each())
         {
@@ -589,6 +571,31 @@ namespace Meow
             }
         }
 
+        // Update mesh uniform
+
+        m_deferred_pass.obj2attachment_mat.BeginFrame();
+        for (auto [entity, transfrom_component, model_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        {
+            ubo_data.model = transfrom_component.GetTransform();
+            ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
+            {
+                m_deferred_pass.obj2attachment_mat.BeginObject();
+                m_deferred_pass.obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
+                m_deferred_pass.obj2attachment_mat.EndObject();
+            }
+        }
+        m_deferred_pass.obj2attachment_mat.EndFrame();
+
+        m_deferred_pass.quad_mat.BeginFrame();
+        m_deferred_pass.quad_mat.BeginObject();
+        m_deferred_pass.quad_mat.SetLocalUniformBuffer(
+            "param", &m_deferred_pass.debug_para, sizeof(m_deferred_pass.debug_para));
+        m_deferred_pass.quad_mat.EndObject();
+        m_deferred_pass.quad_mat.EndFrame();
+
         // ------------------- ImGui -------------------
 
         // TODO: temp
@@ -604,23 +611,22 @@ namespace Meow
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("MeowEngine");
+
+        // debug
+        ImGui::Combo("Attachment",
+                     &m_deferred_pass.debug_para.attachmentIndex,
+                     m_deferred_pass.debug_names.data(),
+                     m_deferred_pass.debug_names.size());
+        ImGui::SliderFloat("Z-Near", &m_deferred_pass.debug_para.zNear, 0.1f, 3000.0f);
+        ImGui::SliderFloat("Z-Far", &m_deferred_pass.debug_para.zFar, 0.1f, 6000.0f);
+
+        if (m_deferred_pass.debug_para.zNear >= m_deferred_pass.debug_para.zFar)
+        {
+            m_deferred_pass.debug_para.zNear = m_deferred_pass.debug_para.zFar * 0.5f;
+        }
+
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
-
-        // Update mesh uniform
-
-        testMat.BeginFrame();
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-        {
-            for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
-            {
-                testMat.BeginObject();
-                testMat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
-                testMat.EndObject();
-            }
-        }
-        testMat.EndFrame();
 
         // ------------------- render -------------------
 
@@ -647,13 +653,22 @@ namespace Meow
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
-                testMat.BindPipeline(cmd_buffer);
+                m_deferred_pass.obj2attachment_mat.BindPipeline(cmd_buffer);
 
-                for (int32_t meshIndex = 0; meshIndex < model_component.model.meshes.size(); ++meshIndex)
+                for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
                 {
-                    testMat.BindDescriptorSets(cmd_buffer, meshIndex);
-                    model_component.model.meshes[meshIndex]->BindDrawCmd(cmd_buffer);
+                    m_deferred_pass.obj2attachment_mat.BindDescriptorSets(cmd_buffer, i);
+                    model_component.model.meshes[i]->BindDrawCmd(cmd_buffer);
                 }
+            }
+
+            cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
+
+            m_deferred_pass.quad_mat.BindPipeline(cmd_buffer);
+            for (int32_t i = 0; i < m_deferred_pass.quad_model.meshes.size(); ++i)
+            {
+                m_deferred_pass.quad_mat.BindDescriptorSets(cmd_buffer, i);
+                m_deferred_pass.quad_model.meshes[i]->BindDrawCmd(cmd_buffer);
             }
 
             ImGui::Render();
@@ -678,4 +693,8 @@ namespace Meow
         m_pending_commands.push(command);
     }
 
+    std::shared_ptr<TextureData> RenderSystem::CreateImageFromFile(const std::string& filepath)
+    {
+        return TextureData::CreateFromFile(m_gpu, m_logical_device, filepath);
+    }
 } // namespace Meow
