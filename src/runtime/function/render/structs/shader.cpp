@@ -161,12 +161,12 @@ namespace Meow
     {
         for (int32_t i = 0; i < resources.uniform_buffers.size(); ++i)
         {
-            spirv_cross::Resource& res                     = resources.uniform_buffers[i];
-            spirv_cross::SPIRType  type                    = compiler.get_type(res.type_id);
-            spirv_cross::SPIRType  base_type               = compiler.get_type(res.base_type_id);
-            const std::string&     var_name                = compiler.get_name(res.id);
-            const std::string&     type_name               = compiler.get_name(res.base_type_id);
-            uint32_t               uniformBufferStructSize = (uint32_t)compiler.get_declared_struct_size(type);
+            spirv_cross::Resource& res                        = resources.uniform_buffers[i];
+            spirv_cross::SPIRType  type                       = compiler.get_type(res.type_id);
+            spirv_cross::SPIRType  base_type                  = compiler.get_type(res.base_type_id);
+            const std::string&     var_name                   = compiler.get_name(res.id);
+            const std::string&     type_name                  = compiler.get_name(res.base_type_id);
+            uint32_t               uniform_buffer_struct_size = (uint32_t)compiler.get_declared_struct_size(type);
 
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
@@ -192,7 +192,7 @@ namespace Meow
                 BufferMeta buffer_meta     = {};
                 buffer_meta.set            = set;
                 buffer_meta.binding        = binding;
-                buffer_meta.bufferSize     = uniformBufferStructSize;
+                buffer_meta.bufferSize     = uniform_buffer_struct_size;
                 buffer_meta.stageFlags     = stageFlags;
                 buffer_meta.descriptorType = set_layout_binding.descriptorType;
                 buffer_meta_map.insert(std::make_pair(var_name, buffer_meta));
@@ -541,8 +541,7 @@ namespace Meow
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
         {
-            // TODO: support log format
-            // EDITOR_ERROR("Failed write buffer, %s not found!", name.c_str());
+            RUNTIME_ERROR("Failed write buffer, {} not found!", name);
             return;
         }
 
@@ -578,8 +577,7 @@ namespace Meow
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
         {
-            // TODO: support log format
-            // EDITOR_ERROR("Failed write buffer, %s not found!", name.c_str());
+            RUNTIME_ERROR("Failed write buffer, {} not found!", name);
             return;
         }
 

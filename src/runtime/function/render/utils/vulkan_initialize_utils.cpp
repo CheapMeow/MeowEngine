@@ -188,7 +188,7 @@ namespace Meow
             }
         }
 
-        RUNTIME_ERROR(error_str.str());
+        RUNTIME_ERROR("{}", error_str.str());
 
         return VK_FALSE;
     }
@@ -267,7 +267,7 @@ namespace Meow
             ss << extension.extensionName << ", ";
 
         ss << "\n\n";
-        RUNTIME_INFO(ss.str());
+        RUNTIME_INFO("{}", ss.str());
     }
 
     /**

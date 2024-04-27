@@ -268,7 +268,7 @@ namespace Meow
             {
                 if (offset == std::numeric_limits<uint32_t>::max())
                 {
-                    RUNTIME_ERROR("Uniform not set\n");
+                    RUNTIME_ERROR("Uniform not set");
                 }
             }
         }
@@ -281,16 +281,13 @@ namespace Meow
         auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
         if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
         {
-            // TODO: format log
-            // MLOGE("Uniform %s not found.", name.c_str());
+            RUNTIME_ERROR("Uniform {} not found.", name);
             return;
         }
 
         if (buffer_meta_iter->second.bufferSize != size)
         {
-            // TODO: format log
-            // MLOGE("Uniform %s size not match, dst=%ud src=%ud", name.c_str(), it->second.dataSize, size);
-            return;
+            RUNTIME_WARN("Uniform {} size not match, dst={} src={}", name, buffer_meta_iter->second.bufferSize, size);
         }
 
         // store data into info class instance
@@ -319,16 +316,13 @@ namespace Meow
         auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
         if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
         {
-            // TODO: format log
-            // MLOGE("Uniform %s not found.", name.c_str());
+            RUNTIME_ERROR("Uniform {} not found.", name);
             return;
         }
 
         if (buffer_meta_iter->second.bufferSize != size)
         {
-            // TODO: format log
-            // MLOGE("Uniform %s size not match, dst=%ud src=%ud", name.c_str(), it->second.dataSize, size);
-            return;
+            RUNTIME_WARN("Uniform {} size not match, dst={} src={}", name, buffer_meta_iter->second.bufferSize, size);
         }
 
         // copy local uniform buffer to ring buffer
