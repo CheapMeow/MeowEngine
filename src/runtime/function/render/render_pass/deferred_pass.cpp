@@ -215,10 +215,7 @@ namespace Meow
                         {},
                         false,
                         true);
-        g_runtime_global_context.render_system->EnQueueRenderCommand(
-            [this](vk::raii::CommandBuffer const& command_buffer) {
-                this->m_color_attachment.TransitLayout(command_buffer);
-            });
+        m_color_attachment.TransitLayout(command_buffer);
 
         m_normal_attachment =
             TextureData(physical_device,
@@ -230,10 +227,7 @@ namespace Meow
                         {},
                         false,
                         true);
-        g_runtime_global_context.render_system->EnQueueRenderCommand(
-            [this](vk::raii::CommandBuffer const& command_buffer) {
-                this->m_normal_attachment.TransitLayout(command_buffer);
-            });
+        m_normal_attachment.TransitLayout(command_buffer);
 
         m_depth_attachment =
             TextureData(physical_device,
@@ -245,10 +239,7 @@ namespace Meow
                         {},
                         false,
                         true);
-        g_runtime_global_context.render_system->EnQueueRenderCommand(
-            [this](vk::raii::CommandBuffer const& command_buffer) {
-                this->m_depth_attachment.TransitLayout(command_buffer);
-            });
+        m_depth_attachment.TransitLayout(command_buffer);
 
         // Provide attachment information to frame buffer
 

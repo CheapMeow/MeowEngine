@@ -274,12 +274,17 @@ namespace Meow
 
     void RenderSystem::CreateRenderPass()
     {
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
         m_deferred_pass = DeferredPass(m_gpu,
                                        m_logical_device,
                                        m_surface_data,
                                        m_upload_context.command_pool,
                                        m_graphics_queue,
                                        m_descriptor_allocator);
+        m_deferred_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
     }
 
     void RenderSystem::InitImGui()
@@ -423,12 +428,6 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        // initialize render pass in Start()
-        // but not in CreateRenderPass()
-        // because EnQueueRenderCommand need available g_runtime_global_context.render_system
-        m_deferred_pass.RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
-
         // TODO: creating entity should be obstract
         const auto camera_entity = g_runtime_global_context.registry.create();
         auto&      camera_transform_component =
@@ -484,7 +483,6 @@ namespace Meow
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
 
-        cmd_buffer.reset();
         cmd_buffer.begin({});
         cmd_buffer.setViewport(0,
                                vk::Viewport(0.0f,
@@ -523,6 +521,7 @@ namespace Meow
 
         while (vk::Result::eTimeout == m_logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
             ;
+        cmd_buffer.reset();
         m_logical_device.resetFences({*in_flight_fence});
 
         vk::PresentInfoKHR present_info(
@@ -635,16 +634,6 @@ namespace Meow
             auto& per_frame_data = m_per_frame_data[m_current_frame_index];
             auto& cmd_buffer     = per_frame_data.command_buffer;
 
-            // Handling command after command buffer begin
-
-            while (!m_pending_commands.empty())
-            {
-                auto command = m_pending_commands.front();
-                m_pending_commands.pop();
-
-                command(cmd_buffer);
-            }
-
             // Draw mesh
 
             for (auto [entity, transfrom_component, model_component] :
@@ -668,6 +657,9 @@ namespace Meow
                 m_deferred_pass.quad_model.meshes[i]->BindDrawCmd(cmd_buffer);
             }
 
+            // TODO: nextSubpass should be controlled by render pass class?
+            cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
+
             ImGui::Render();
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
 
@@ -685,13 +677,14 @@ namespace Meow
         }
     }
 
-    void RenderSystem::EnQueueRenderCommand(std::function<void(vk::raii::CommandBuffer const&)> command)
-    {
-        m_pending_commands.push(command);
-    }
-
     std::shared_ptr<TextureData> RenderSystem::CreateImageFromFile(const std::string& filepath)
     {
-        return TextureData::CreateFromFile(m_gpu, m_logical_device, filepath);
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
+        std::shared_ptr<TextureData> texture_ptr = TextureData::CreateFromFile(m_gpu, m_logical_device, filepath);
+        texture_ptr->TransitLayout(cmd_buffer);
+
+        return texture_ptr;
     }
 } // namespace Meow

@@ -66,15 +66,7 @@ namespace Meow
         void Update(float frame_time);
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
-
-        /**
-         * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
-         * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
-         *
-         * @param command Function handler of render task.
-         */
-        void EnQueueRenderCommand(std::function<void(vk::raii::CommandBuffer const&)> command);
-
+        
         std::shared_ptr<TextureData> CreateImageFromFile(const std::string& filepath);
 
     private:
@@ -129,11 +121,5 @@ namespace Meow
 
         // TODO: temp texture
         std::shared_ptr<TextureData> diffuse_texture = nullptr;
-
-        /**
-         * @brief Commands can only be recorded into VkCommandBuffer after VkCommandBuffer.begin().
-         * So when out of range of VkCommandBuffer.begin() and .end(), store commands into a pending queue.
-         */
-        std::queue<std::function<void(vk::raii::CommandBuffer const&)>> m_pending_commands;
     };
 } // namespace Meow

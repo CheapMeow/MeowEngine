@@ -585,16 +585,22 @@ namespace Meow
         }
 
         vk::ImageSubresourceRange image_subresource_range(aspect_mask, 0, 1, 0, 1);
-        vk::ImageMemoryBarrier    image_memory_barrier(source_access_mask,
-                                                    destination_access_mask,
-                                                    old_image_layout,
-                                                    new_image_layout,
-                                                    VK_QUEUE_FAMILY_IGNORED,
-                                                    VK_QUEUE_FAMILY_IGNORED,
-                                                    image,
-                                                    image_subresource_range);
-        return command_buffer.pipelineBarrier(
-            source_stage, destination_stage, {}, nullptr, nullptr, image_memory_barrier);
+
+        vk::ImageMemoryBarrier image_memory_barrier(source_access_mask,       /* srcAccessMask */
+                                                    destination_access_mask,  /* dstAccessMask */
+                                                    old_image_layout,         /* oldLayout */
+                                                    new_image_layout,         /* newLayout */
+                                                    VK_QUEUE_FAMILY_IGNORED,  /* srcQueueFamilyIndex */
+                                                    VK_QUEUE_FAMILY_IGNORED,  /* dstQueueFamilyIndex */
+                                                    image,                    /* image */
+                                                    image_subresource_range); /* subresourceRange */
+
+        command_buffer.pipelineBarrier(source_stage,          /* srcStageMask */
+                                       destination_stage,     /* dstStageMask */
+                                       {},                    /* dependencyFlags */
+                                       nullptr,               /* pMemoryBarriers */
+                                       nullptr,               /* pBufferMemoryBarriers */
+                                       image_memory_barrier); /* pImageMemoryBarriers */
     }
 
     vk::raii::Pipeline

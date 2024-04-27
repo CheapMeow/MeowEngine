@@ -22,11 +22,8 @@ namespace Meow
 
     std::shared_ptr<TextureData> ResourceSystem::LoadTexture(const std::string& filepath)
     {
-        std::shared_ptr<TextureData> texture_ptr = g_runtime_global_context.render_system->CreateImageFromFile(filepath);
-        g_runtime_global_context.render_system->EnQueueRenderCommand(
-            [texture_ptr](vk::raii::CommandBuffer const& command_buffer) {
-                texture_ptr->TransitLayout(command_buffer);
-            });
+        std::shared_ptr<TextureData> texture_ptr =
+            g_runtime_global_context.render_system->CreateImageFromFile(filepath);
 
         return m_textures[filepath];
     }

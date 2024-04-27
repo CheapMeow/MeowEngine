@@ -68,6 +68,8 @@ namespace Meow
 
     void TextureData::TransitLayout(vk::raii::CommandBuffer const& command_buffer)
     {
+        command_buffer.begin({});
+
         if (need_staging)
         {
             // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
@@ -100,6 +102,8 @@ namespace Meow
                            vk::ImageLayout::ePreinitialized,
                            vk::ImageLayout::eShaderReadOnlyOptimal);
         }
+
+        command_buffer.end();
     }
 
     std::shared_ptr<TextureData> TextureData::CreateFromFile(vk::raii::PhysicalDevice const& physical_device,

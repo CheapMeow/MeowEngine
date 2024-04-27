@@ -20,6 +20,7 @@
   - [渲染通道 Render Pass](#渲染通道-render-pass)
     - [信息依赖](#信息依赖)
     - [结构设计](#结构设计)
+      - [pending command](#pending-command)
     - [其他](#其他)
       - [附件不需要为 frames in flight 而备份](#附件不需要为-frames-in-flight-而备份)
 - [常见错误](#常见错误)
@@ -672,7 +673,46 @@ DeferredPass::DeferredPass(vk::raii::PhysicalDevice const& physical_device,
 
 `VkClearValue` 也应该存储在 render pass 里面，一个 `VkClearValue` 对应一个 attachment
 
+什么时候使用 `cmd_buffer.nextSubpass(vk::SubpassContents::eInline);` 也应该由 render pass 来决定，因为他知道自己有多少个 subpass 
 
+##### pending command
+
+因为使用了 subpass，pending command 的执行位置需要额外考虑了
+
+例如我现在得到一个报错
+
+```
+[16:37:34] RUNTIME: Error: { Validation }:
+        messageIDName   = <VUID-vkCmdPipelineBarrier-None-07889>
+        messageIdNumber = -616663606
+        message         = <Validation Error: [ VUID-vkCmdPipelineBarrier-None-07889 ] Object 0: handle = 0x9fde6b0000000014, type = VK_OBJECT_TYPE_RENDER_PASS; | MessageID = 0xdb3e75ca | vkCmdPipelineBarrier():  Barriers cannot be set during subpass 0 of VkRenderPass 0x9fde6b0000000014[] with no self-dependency specified. The Vulkan spec states: If vkCmdPipelineBarrier is called within a render pass instance using a VkRenderPass object, the render pass must have been created with at least one subpass dependency that expresses a dependency from the current subpass to itself, does not include VK_DEPENDENCY_BY_REGION_BIT if this command does not, does not include VK_DEPENDENCY_VIEW_LOCAL_BIT if this command does not, and has synchronization scopes and access scopes that are all supersets of the scopes defined in this command (https://vulkan.lunarg.com/doc/view/1.3.275.0/windows/1.3-extensions/vkspec.html#VUID-vkCmdPipelineBarrier-None-07889)>
+        Objects:
+                Object 0
+                        objectType   = RenderPass
+                        objectHandle = 11519762544604479508
+```
+
+这个报错的意思是，如果我在某个 subpass 里面做 `vkCmdPipelineBarrier`，那么这个 render pass 中应该有一个 subpass dependency， `srcSubpass` `dstSubpass` 都是这个 subpass 自己
+
+如果真的要这么做，就有点复杂了我觉得。在自定义类里面，render pass 还要去管 command buffer 的事，有点耦合了。
+
+他看上去就像是，其实可以不在 render pass 里面做 `vkCmdPipelineBarrier`
+
+那么我为什么要这么做呢。因为我以前的遇到过错误是，command buffer 的使用需要在 command buffer 的录制阶段，然后我一看我的代码，只有 render pass 的 begin 和 end 之间有写 command buffer 的 begin 和 end，所以我就把所有跟 command buffer 有关的执行都存储起来，统一推迟到 render pass 里面执行，以此实现位于 command buffer 的 begin 和 end 之间
+
+现在我才突然发现，其实 command buffer 的 begin 和 end 跟 render pass 没有关系，倒不如说是为了 `cmd_buffer.beginRenderPass` 才需要启动 command buffer 的录制
+
+或许其实 command buffer 它本身就是一个 buffer，所以理论上就是要随时录制的，我这么做再加多一层肯定有问题
+
+所以我把那个 pending command 删了，要用到 command buffer 的地方直接录制就好了
+
+之后再看 command buffer 的使用，发现它的使用方法真的和我的想法一模一样。submit 之前，记录的命令就一直留在 command buffer 里面，submit 之后用 reset 清空就好了
+
+我之前都是在 render pass 的记录之前清空，那是因为简单案例里面，render pass 前面没有 command buffer 相关的其他东西
+
+现在搞懂之后觉得，应该是 submit 之后，wait for fence 结束之后 reset 最合理
+
+这样，一帧里面的所有命令都保存下来了
 
 #### 其他
 
