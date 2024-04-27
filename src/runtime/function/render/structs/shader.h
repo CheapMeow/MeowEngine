@@ -2,7 +2,7 @@
 
 #include "buffer_data.h"
 #include "descriptor_allocator_growable.h"
-#include "texture_data.hpp"
+#include "image_data.h"
 #include "ubo_data.h"
 #include "vertex_attribute.h"
 
@@ -200,7 +200,7 @@ namespace Meow
                        vk::DeviceSize              range            = VK_WHOLE_SIZE,
                        vk::raii::BufferView const* raii_buffer_view = nullptr);
 
-        void SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data);
+        void SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data);
 
     private:
         bool CreateShaderModuleAndGetMeta(

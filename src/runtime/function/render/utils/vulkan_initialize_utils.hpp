@@ -113,24 +113,4 @@ namespace Meow
         queue.submit(submit_info, nullptr);
         queue.waitIdle();
     }
-
-    void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,
-                        vk::Image                      image,
-                        vk::Format                     format,
-                        vk::ImageLayout                old_image_layout,
-                        vk::ImageLayout                new_image_layout);
-
-    vk::raii::Pipeline
-    MakeGraphicsPipeline(vk::raii::Device const&                             device,
-                         vk::raii::PipelineCache const&                      pipeline_cache,
-                         vk::raii::ShaderModule const&                       vertex_shader_module,
-                         vk::SpecializationInfo const*                       vertex_shader_specialization_info,
-                         vk::raii::ShaderModule const&                       fragment_shader_module,
-                         vk::SpecializationInfo const*                       fragment_shader_specialization_info,
-                         uint32_t                                            vertex_stride,
-                         std::vector<std::pair<vk::Format, uint32_t>> const& vertex_input_attribute_format_offset,
-                         vk::FrontFace                                       front_face,
-                         bool                                                depth_buffered,
-                         vk::raii::PipelineLayout const&                     pipeline_layout,
-                         vk::raii::RenderPass const&                         render_pass);
 } // namespace Meow

@@ -205,48 +205,48 @@ namespace Meow
         vk::Format color_format =
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
 
-        m_color_attachment =
-            TextureData(physical_device,
-                        device,
-                        color_format,
-                        extent,
-                        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment,
-                        vk::ImageAspectFlagBits::eColor,
-                        {},
-                        false,
-                        true);
-        m_color_attachment.TransitLayout(command_buffer);
+        m_color_attachment = ImageData::CreateTexture(physical_device,
+                                                      device,
+                                                      color_format,
+                                                      extent,
+                                                      vk::ImageUsageFlagBits::eColorAttachment |
+                                                          vk::ImageUsageFlagBits::eInputAttachment,
+                                                      vk::ImageAspectFlagBits::eColor,
+                                                      {},
+                                                      false,
+                                                      true);
+        m_color_attachment->TransitLayout(command_buffer);
 
-        m_normal_attachment =
-            TextureData(physical_device,
-                        device,
-                        vk::Format::eR8G8B8A8Unorm,
-                        extent,
-                        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eInputAttachment,
-                        vk::ImageAspectFlagBits::eColor,
-                        {},
-                        false,
-                        true);
-        m_normal_attachment.TransitLayout(command_buffer);
+        m_normal_attachment = ImageData::CreateTexture(physical_device,
+                                                       device,
+                                                       vk::Format::eR8G8B8A8Unorm,
+                                                       extent,
+                                                       vk::ImageUsageFlagBits::eColorAttachment |
+                                                           vk::ImageUsageFlagBits::eInputAttachment,
+                                                       vk::ImageAspectFlagBits::eColor,
+                                                       {},
+                                                       false,
+                                                       true);
+        m_normal_attachment->TransitLayout(command_buffer);
 
-        m_depth_attachment =
-            TextureData(physical_device,
-                        device,
-                        depth_format,
-                        extent,
-                        vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eInputAttachment,
-                        vk::ImageAspectFlagBits::eDepth,
-                        {},
-                        false,
-                        true);
-        m_depth_attachment.TransitLayout(command_buffer);
+        m_depth_attachment = ImageData::CreateTexture(physical_device,
+                                                      device,
+                                                      depth_format,
+                                                      extent,
+                                                      vk::ImageUsageFlagBits::eDepthStencilAttachment |
+                                                          vk::ImageUsageFlagBits::eInputAttachment,
+                                                      vk::ImageAspectFlagBits::eDepth,
+                                                      {},
+                                                      false,
+                                                      true);
+        m_depth_attachment->TransitLayout(command_buffer);
 
         // Provide attachment information to frame buffer
 
         vk::ImageView attachments[4];
-        attachments[1] = *m_color_attachment.image_data.image_view;
-        attachments[2] = *m_normal_attachment.image_data.image_view;
-        attachments[3] = *m_depth_attachment.image_data.image_view;
+        attachments[1] = *m_color_attachment->image_view;
+        attachments[2] = *m_normal_attachment->image_view;
+        attachments[3] = *m_depth_attachment->image_view;
 
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
@@ -265,8 +265,8 @@ namespace Meow
 
         // Update descriptor set
 
-        quad_mat.SetImage(device, "inputColor", m_color_attachment);
-        quad_mat.SetImage(device, "inputNormal", m_normal_attachment);
-        quad_mat.SetImage(device, "inputDepth", m_depth_attachment);
+        quad_mat.SetImage(device, "inputColor", *m_color_attachment);
+        quad_mat.SetImage(device, "inputNormal", *m_normal_attachment);
+        quad_mat.SetImage(device, "inputDepth", *m_depth_attachment);
     }
 } // namespace Meow

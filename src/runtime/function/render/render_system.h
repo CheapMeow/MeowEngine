@@ -1,12 +1,11 @@
 #pragma once
 
 #include "function/render/structs/buffer_data.h"
-#include "function/render/structs/depth_buffer_data.h"
+#include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "function/render/structs/surface_data.h"
 #include "function/render/structs/swapchain_data.h"
-#include "function/render/structs/texture_data.hpp"
 #include "function/render/structs/ubo_data.h"
 #include "function/system.h"
 #include "function/window/window.h"
@@ -66,8 +65,8 @@ namespace Meow
         void Update(float frame_time);
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
-        
-        std::shared_ptr<TextureData> CreateImageFromFile(const std::string& filepath);
+
+        std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
 
     private:
         void CreateVulkanInstance();
@@ -120,6 +119,6 @@ namespace Meow
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
         // TODO: temp texture
-        std::shared_ptr<TextureData> diffuse_texture = nullptr;
+        std::shared_ptr<ImageData> diffuse_texture = nullptr;
     };
 } // namespace Meow

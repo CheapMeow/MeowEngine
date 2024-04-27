@@ -1,11 +1,11 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
+#include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
 #include "function/render/structs/surface_data.h"
-#include "function/render/structs/texture_data.hpp"
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -86,12 +86,13 @@ namespace Meow
         std::vector<vk::raii::Framebuffer> framebuffers;
 
         std::array<vk::ClearValue, 4> clear_values;
+
     private:
         vk::Format              depth_format = vk::Format::eD16Unorm;
         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
 
-        TextureData m_color_attachment  = nullptr;
-        TextureData m_normal_attachment = nullptr;
-        TextureData m_depth_attachment  = nullptr;
+        std::shared_ptr<ImageData> m_color_attachment  = nullptr;
+        std::shared_ptr<ImageData> m_normal_attachment = nullptr;
+        std::shared_ptr<ImageData> m_depth_attachment  = nullptr;
     };
 } // namespace Meow

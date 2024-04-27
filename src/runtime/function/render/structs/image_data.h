@@ -1,51 +1,74 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
+#include "function/render/structs/buffer_data.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
 
 namespace Meow
 {
     struct ImageData : NonCopyable
     {
+    public:
         // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
         // destructor of the ImageData, the order of DeviceMemory and Image here matters
         vk::Format             format;
+        vk::Extent2D           extent;
         vk::raii::DeviceMemory device_memory = nullptr;
         vk::raii::Image        image         = nullptr;
         vk::raii::ImageView    image_view    = nullptr;
-
-        ImageData(vk::raii::PhysicalDevice const& physical_device,
-                  vk::raii::Device const&         device,
-                  vk::Format                      format_,
-                  vk::Extent2D const&             extent,
-                  vk::ImageTiling                 tiling,
-                  vk::ImageUsageFlags             usage,
-                  vk::ImageLayout                 initial_layout,
-                  vk::MemoryPropertyFlags         memory_properties,
-                  vk::ImageAspectFlags            aspect_mask)
-            : format(format_)
-            , image(device,
-                    {vk::ImageCreateFlags(),
-                     vk::ImageType::e2D,
-                     format,
-                     vk::Extent3D(extent, 1),
-                     1,
-                     1,
-                     vk::SampleCountFlagBits::e1,
-                     tiling,
-                     usage | vk::ImageUsageFlagBits::eSampled,
-                     vk::SharingMode::eExclusive,
-                     {},
-                     initial_layout})
-        {
-            device_memory = AllocateDeviceMemory(
-                device, physical_device.getMemoryProperties(), image.getMemoryRequirements(), memory_properties);
-            image.bindMemory(*device_memory, 0);
-            image_view = vk::raii::ImageView(
-                device,
-                vk::ImageViewCreateInfo({}, *image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
-        }
+        vk::raii::Sampler      sampler       = nullptr;
+        bool                   need_staging;
+        BufferData             staging_buffer_data = nullptr;
 
         ImageData(std::nullptr_t) {}
+
+        /**
+         * @brief Set the Image Layout.
+         *
+         * If an image is not initialized in any specific layout, so we need to do a layout transition.
+         *
+         * Such as you need the driver puts the texture into Linear layout,
+         * which is the best for copying data from a buffer into a texture.
+         *
+         * To perform layout transitions, we need to use pipeline barriers. Pipeline barriers can control how the GPU
+         * overlaps commands before and after the barrier, but if you do pipeline barriers with image barriers, the
+         * driver can also transform the image to the correct formats and layouts.
+         *
+         * @param command_buffer Usually use command buffer in upload context
+         * @param old_image_layout Old image layout
+         * @param new_image_layout New image layout
+         */
+        void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,
+                            vk::ImageLayout                old_image_layout,
+                            vk::ImageLayout                new_image_layout);
+
+        void TransitLayout(vk::raii::CommandBuffer const& command_buffer);
+
+        static std::shared_ptr<ImageData> CreateDepthBuffer(vk::raii::PhysicalDevice const& physical_device,
+                                                            vk::raii::Device const&         device,
+                                                            vk::Format                      format,
+                                                            vk::Extent2D const&             extent);
+
+        static std::shared_ptr<ImageData>
+        CreateTexture(vk::raii::PhysicalDevice const& physical_device,
+                      vk::raii::Device const&         device,
+                      vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                      vk::Extent2D const&             extent               = {256, 256},
+                      vk::ImageUsageFlags             usage_flags          = {},
+                      vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                      vk::FormatFeatureFlags          format_feature_flags = {},
+                      bool                            anisotropy_enable    = false,
+                      bool                            force_staging        = false);
+
+        static std::shared_ptr<ImageData>
+        CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
+                              vk::raii::Device const&         device,
+                              std::string const&              filepath,
+                              vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                              vk::ImageUsageFlags             usage_flags          = {},
+                              vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                              vk::FormatFeatureFlags          format_feature_flags = {},
+                              bool                            anisotropy_enable    = false,
+                              bool                            force_staging        = false);
     };
 } // namespace Meow

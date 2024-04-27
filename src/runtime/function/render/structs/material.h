@@ -106,7 +106,7 @@ namespace Meow
                               vk::DeviceSize              range            = VK_WHOLE_SIZE,
                               vk::raii::BufferView const* raii_buffer_view = nullptr);
 
-        void SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data);
+        void SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data);
 
         void BindPipeline(vk::raii::CommandBuffer const& command_buffer);
 

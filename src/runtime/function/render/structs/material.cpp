@@ -345,9 +345,9 @@ namespace Meow
         shader_ptr->SetBuffer(logical_device, name, buffer, range, raii_buffer_view);
     }
 
-    void Material::SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data)
+    void Material::SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data)
     {
-        shader_ptr->SetImage(logical_device, name, texture_data);
+        shader_ptr->SetImage(logical_device, name, image_data);
     }
 
     void Material::BindPipeline(vk::raii::CommandBuffer const& command_buffer)

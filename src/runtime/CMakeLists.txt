@@ -30,7 +30,6 @@ set(RUNTIME_HEADER_FILES
     function/render/render_system.h
     function/render/render_pass/deferred_pass.h
     function/render/structs/buffer_data.h
-    function/render/structs/depth_buffer_data.h
     function/render/structs/descriptor_allocator_growable.h
     function/render/structs/image_data.h
     function/render/structs/index_buffer.h
@@ -46,7 +45,6 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
-    function/render/structs/texture_data.hpp
     function/render/structs/ubo_data.h
     function/render/structs/vertex_attribute.h
     function/render/structs/vertex_buffer.h
@@ -70,11 +68,11 @@ set(RUNTIME_SOURCE_FILES
     function/render/render_system.cpp
     function/render/render_pass/deferred_pass.cpp
     function/render/structs/descriptor_allocator_growable.cpp
+    function/render/structs/image_data.cpp
     function/render/structs/material.cpp
     function/render/structs/model.cpp
     function/render/structs/model_node.cpp
     function/render/structs/shader.cpp
-    function/render/structs/texture_data.cpp
     function/render/structs/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
@@ -82,7 +80,8 @@ set(RUNTIME_SOURCE_FILES
     function/window/window.cpp
     function/window/window_system.cpp)
 
-file(GLOB_RECURSE RUNTIME_SOURCE_FILES1 CONFIGURE_DEPENDS ${SRC_ROOT_DIR}/runtime/*.cpp)
+file(GLOB_RECURSE RUNTIME_SOURCE_FILES1 CONFIGURE_DEPENDS
+     ${SRC_ROOT_DIR}/runtime/*.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES}
                                                       ${RUNTIME_SOURCE_FILES})

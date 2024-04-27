@@ -677,12 +677,12 @@ namespace Meow
         }
     }
 
-    std::shared_ptr<TextureData> RenderSystem::CreateImageFromFile(const std::string& filepath)
+    std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& filepath)
     {
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        std::shared_ptr<TextureData> texture_ptr = TextureData::CreateFromFile(m_gpu, m_logical_device, filepath);
+        std::shared_ptr<ImageData> texture_ptr = ImageData::CreateTextureFromFile(m_gpu, m_logical_device, filepath);
         texture_ptr->TransitLayout(cmd_buffer);
 
         return texture_ptr;

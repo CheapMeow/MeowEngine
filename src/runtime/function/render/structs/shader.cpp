@@ -572,7 +572,7 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::SetImage(vk::raii::Device const& logical_device, const std::string& name, TextureData& texture_data)
+    void Shader::SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -584,7 +584,7 @@ namespace Meow
         auto bindInfo = it->second;
 
         vk::DescriptorImageInfo descriptor_image_info(
-            *texture_data.sampler, *texture_data.image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
+            *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         vk::WriteDescriptorSet write_descriptor_set(
             *descriptor_sets[bindInfo.set],                                     // dstSet

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "function/render/structs/image_data.h"
 #include "function/render/structs/shader.h"
-#include "function/render/structs/texture_data.hpp"
 #include "function/system.h"
 
 #include <unordered_map>
@@ -36,9 +36,9 @@ namespace Meow
 
         void Update(float frame_time);
 
-        std::shared_ptr<TextureData> LoadTexture(const std::string& filepath);
+        std::shared_ptr<ImageData> LoadTexture(const std::string& filepath);
 
-        std::shared_ptr<TextureData> GetTexture(const std::string& filepath);
+        std::shared_ptr<ImageData> GetTexture(const std::string& filepath);
 
         // bool LoadMaterial(const std::string& filepath);
 
@@ -46,9 +46,9 @@ namespace Meow
 
     private:
         /**
-         * @brief Relative path - TextureData
+         * @brief Relative path - ImageData
          */
-        std::unordered_map<std::string, std::shared_ptr<TextureData>> m_textures;
+        std::unordered_map<std::string, std::shared_ptr<ImageData>> m_textures;
 
         // /**
         //  * @brief Relative path - Material

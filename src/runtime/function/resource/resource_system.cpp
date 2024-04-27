@@ -11,7 +11,7 @@ namespace Meow
     void ResourceSystem::Start()
     {
         // TODO: Image size should be analysised?
-        // std::shared_ptr<TextureData> diffuse_texture = LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
+        // std::shared_ptr<ImageData> diffuse_texture = LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
         // 4096}); m_materials["Default Material"] =
         //     std::make_shared<Material>(g_runtime_global_context.render_system->CreateMaterial(
         //         "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
@@ -20,15 +20,15 @@ namespace Meow
 
     void ResourceSystem::Update(float frame_time) {}
 
-    std::shared_ptr<TextureData> ResourceSystem::LoadTexture(const std::string& filepath)
+    std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& filepath)
     {
-        std::shared_ptr<TextureData> texture_ptr =
-            g_runtime_global_context.render_system->CreateImageFromFile(filepath);
+        std::shared_ptr<ImageData> texture_ptr =
+            g_runtime_global_context.render_system->CreateTextureFromFile(filepath);
 
         return m_textures[filepath];
     }
 
-    std::shared_ptr<TextureData> ResourceSystem::GetTexture(const std::string& filepath)
+    std::shared_ptr<ImageData> ResourceSystem::GetTexture(const std::string& filepath)
     {
         if (m_textures.find(filepath) == m_textures.end())
             return nullptr;
