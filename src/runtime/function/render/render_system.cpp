@@ -494,13 +494,10 @@ namespace Meow
                                             0.0f,
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
-        std::array<vk::ClearValue, 2> clear_values;
-        clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
-        clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
         vk::RenderPassBeginInfo render_pass_begin_info(*m_deferred_pass.render_pass,
                                                        *m_deferred_pass.framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
-                                                       clear_values);
+                                                       m_deferred_pass.clear_values);
         cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
         return true;
     }

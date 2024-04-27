@@ -85,6 +85,7 @@ namespace Meow
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
 
+        std::array<vk::ClearValue, 4> clear_values;
     private:
         vk::Format              depth_format = vk::Format::eD16Unorm;
         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;

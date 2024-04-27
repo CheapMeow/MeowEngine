@@ -670,6 +670,10 @@ DeferredPass::DeferredPass(vk::raii::PhysicalDevice const& physical_device,
 
 各个 subpass 都添加完了之后，render pass 再 create
 
+`VkClearValue` 也应该存储在 render pass 里面，一个 `VkClearValue` 对应一个 attachment
+
+
+
 #### 其他
 
 ##### 附件不需要为 frames in flight 而备份
