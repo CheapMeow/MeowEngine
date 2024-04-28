@@ -6,8 +6,8 @@ layout (input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput i
 
 layout (binding = 3) uniform ParamBlock
 {
-	int attachmentIndex;
 	vec3 padding;
+	int attachmentIndex;
 } param;
 
 layout (location = 0) in vec2 inUV0;

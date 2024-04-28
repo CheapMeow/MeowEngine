@@ -13,10 +13,10 @@ namespace Meow
 {
     struct AttachmentParamBlock
     {
-        int   attachmentIndex;
         float zNear;
         float zFar;
         float padding;
+        int   attachmentIndex;
     };
 
     class DeferredPass : NonCopyable
