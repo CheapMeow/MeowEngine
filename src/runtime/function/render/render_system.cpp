@@ -338,12 +338,17 @@ namespace Meow
         init_info.QueueFamily               = m_graphics_queue_family_index;
         init_info.Queue                     = *m_graphics_queue;
         init_info.DescriptorPool            = *m_imgui_descriptor_pool;
-        init_info.Subpass                   = 2; // TODO: it should be determined by render pass
+        init_info.Subpass                   = 0; // TODO: it should be determined by render pass
         init_info.MinImageCount             = k_max_frames_in_flight;
         init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
 
-        ImGui_ImplVulkan_Init(&init_info, *m_deferred_pass.render_pass);
+        // Because in ImGui docking branch, each viewport has its own `render pass`, but they doesn't have their
+        // own `pipeline`. They use the `pipeline` created from the `render pass` pass in `ImGui_ImplVulkan_Init`. So
+        // the `render pass` pass in `ImGui_ImplVulkan_Init` should be compatiable with the `render pass` used in other
+        // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
+        // with those in viewports
+        ImGui_ImplVulkan_Init(&init_info, *m_deferred_pass.imgui_pass);
 
         // Upload Fonts
         {
@@ -657,16 +662,12 @@ namespace Meow
                 m_deferred_pass.quad_model.meshes[i]->BindDrawCmd(cmd_buffer);
             }
 
-            // TODO: nextSubpass should be controlled by render pass class?
-            cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
-
             ImGui::Render();
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
 
             // Specially for docking branch
             // Update and Render additional Platform Windows
             ImGuiIO& io = ImGui::GetIO();
-            (void)io;
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
                 ImGui::UpdatePlatformWindows();
@@ -682,7 +683,8 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        std::shared_ptr<ImageData> texture_ptr = ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, filepath);
+        std::shared_ptr<ImageData> texture_ptr =
+            ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, filepath);
 
         return texture_ptr;
     }

@@ -32,6 +32,7 @@ namespace Meow
             debug_para = rhs.debug_para;
             std::swap(debug_names, rhs.debug_names);
             std::swap(render_pass, rhs.render_pass);
+            std::swap(imgui_pass, rhs.imgui_pass);
             std::swap(framebuffers, rhs.framebuffers);
             depth_format = rhs.depth_format;
             sample_count = rhs.sample_count;
@@ -50,6 +51,7 @@ namespace Meow
                 debug_para = rhs.debug_para;
                 std::swap(debug_names, rhs.debug_names);
                 std::swap(render_pass, rhs.render_pass);
+                std::swap(imgui_pass, rhs.imgui_pass);
                 std::swap(framebuffers, rhs.framebuffers);
                 depth_format = rhs.depth_format;
                 sample_count = rhs.sample_count;
@@ -86,6 +88,8 @@ namespace Meow
         std::vector<vk::raii::Framebuffer> framebuffers;
 
         std::array<vk::ClearValue, 4> clear_values;
+        
+        vk::raii::RenderPass imgui_pass = nullptr;
 
     private:
         vk::Format              depth_format = vk::Format::eD16Unorm;
