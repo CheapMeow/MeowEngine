@@ -205,41 +205,38 @@ namespace Meow
         vk::Format color_format =
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
 
-        m_color_attachment = ImageData::CreateTexture(physical_device,
-                                                      device,
-                                                      color_format,
-                                                      extent,
-                                                      vk::ImageUsageFlagBits::eColorAttachment |
-                                                          vk::ImageUsageFlagBits::eInputAttachment,
-                                                      vk::ImageAspectFlagBits::eColor,
-                                                      {},
-                                                      false,
-                                                      true);
-        m_color_attachment->TransitLayout(command_buffer);
+        m_color_attachment = ImageData::CreateAttachment(physical_device,
+                                                         device,
+                                                         command_buffer,
+                                                         color_format,
+                                                         extent,
+                                                         vk::ImageUsageFlagBits::eColorAttachment |
+                                                             vk::ImageUsageFlagBits::eInputAttachment,
+                                                         vk::ImageAspectFlagBits::eColor,
+                                                         {},
+                                                         false);
 
-        m_normal_attachment = ImageData::CreateTexture(physical_device,
-                                                       device,
-                                                       vk::Format::eR8G8B8A8Unorm,
-                                                       extent,
-                                                       vk::ImageUsageFlagBits::eColorAttachment |
-                                                           vk::ImageUsageFlagBits::eInputAttachment,
-                                                       vk::ImageAspectFlagBits::eColor,
-                                                       {},
-                                                       false,
-                                                       true);
-        m_normal_attachment->TransitLayout(command_buffer);
+        m_normal_attachment = ImageData::CreateAttachment(physical_device,
+                                                          device,
+                                                          command_buffer,
+                                                          vk::Format::eR8G8B8A8Unorm,
+                                                          extent,
+                                                          vk::ImageUsageFlagBits::eColorAttachment |
+                                                              vk::ImageUsageFlagBits::eInputAttachment,
+                                                          vk::ImageAspectFlagBits::eColor,
+                                                          {},
+                                                          false);
 
-        m_depth_attachment = ImageData::CreateTexture(physical_device,
-                                                      device,
-                                                      depth_format,
-                                                      extent,
-                                                      vk::ImageUsageFlagBits::eDepthStencilAttachment |
-                                                          vk::ImageUsageFlagBits::eInputAttachment,
-                                                      vk::ImageAspectFlagBits::eDepth,
-                                                      {},
-                                                      false,
-                                                      true);
-        m_depth_attachment->TransitLayout(command_buffer);
+        m_depth_attachment = ImageData::CreateAttachment(physical_device,
+                                                         device,
+                                                         command_buffer,
+                                                         depth_format,
+                                                         extent,
+                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment |
+                                                             vk::ImageUsageFlagBits::eInputAttachment,
+                                                         vk::ImageAspectFlagBits::eDepth,
+                                                         {},
+                                                         false);
 
         // Provide attachment information to frame buffer
 

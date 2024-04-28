@@ -1,5 +1,6 @@
 - [构建](#构建)
 - [渲染数据结构](#渲染数据结构)
+  - [图像数据类 ImageData](#图像数据类-imagedata)
   - [着色器类 Shader](#着色器类-shader)
     - [反编译顶点属性，缓冲区和纹理输入](#反编译顶点属性缓冲区和纹理输入)
     - [使用 pool 数量可变的 Descriptor Allocator](#使用-pool-数量可变的-descriptor-allocator)
@@ -48,6 +49,14 @@
 做一个 CMakeLists.template 获取文件列表，替换进去，产生 CMakeList，还能加个格式化
 
 ## 渲染数据结构
+
+### 图像数据类 ImageData
+
+不同的图像所包含的渲染数据类型是一样的，都是 `vk::raii::Image` `vk::raii::ImageView` `vk::raii::Sampler` 那些
+
+但是不同的图像的创建配置，图像布局的转换会不一样
+
+所以使用工厂模式来创建图像
 
 ### 着色器类 Shader
 

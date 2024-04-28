@@ -9,10 +9,23 @@ namespace Meow
     struct ImageData : NonCopyable
     {
     public:
-        // the DeviceMemory should be destroyed before the Image it is bound to; to get that order with the standard
-        // destructor of the ImageData, the order of DeviceMemory and Image here matters
-        vk::Format             format;
-        vk::Extent2D           extent;
+        vk::Format   format;
+        vk::Extent2D extent;
+        /**
+         * @brief `ImageAspectFlags` should be stored because it is only known in specific ctor, and it can't be
+         * deducted from other information in other places. For example, in `SetImageLayout`, if you haven't store
+         * `ImageAspectFlags`, then you should deduct ImageAspectFlags from new_image_layout, if `new_image_layout ==
+         * vk::ImageLayout::eDepthStencilAttachmentOptimal` then you set `vk::ImageAspectFlagBits::eDepth`, otherwise
+         * you set `vk::ImageAspectFlagBits::eColor`. But
+         *
+         */
+        vk::ImageAspectFlags aspect_mask;
+
+        /**
+         * @brief The `vk::raii::DeviceMemory` should be destroyed before the `vk::raii::Image` it is bound to; to get
+         * that order with the standard destructor of the `ImageData`, the order of `vk::raii::DeviceMemory` and
+         * `vk::raii::Image` here matters
+         */
         vk::raii::DeviceMemory device_memory = nullptr;
         vk::raii::Image        image         = nullptr;
         vk::raii::ImageView    image_view    = nullptr;
@@ -46,6 +59,7 @@ namespace Meow
 
         static std::shared_ptr<ImageData> CreateDepthBuffer(vk::raii::PhysicalDevice const& physical_device,
                                                             vk::raii::Device const&         device,
+                                                            vk::raii::CommandBuffer const&  command_buffer,
                                                             vk::Format                      format,
                                                             vk::Extent2D const&             extent);
 
@@ -63,6 +77,7 @@ namespace Meow
         static std::shared_ptr<ImageData>
         CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
                               vk::raii::Device const&         device,
+                              vk::raii::CommandBuffer const&  command_buffer,
                               std::string const&              filepath,
                               vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                               vk::ImageUsageFlags             usage_flags          = {},
@@ -70,5 +85,16 @@ namespace Meow
                               vk::FormatFeatureFlags          format_feature_flags = {},
                               bool                            anisotropy_enable    = false,
                               bool                            force_staging        = false);
+
+        static std::shared_ptr<ImageData>
+        CreateAttachment(vk::raii::PhysicalDevice const& physical_device,
+                         vk::raii::Device const&         device,
+                         vk::raii::CommandBuffer const&  command_buffer,
+                         vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                         vk::Extent2D const&             extent               = {256, 256},
+                         vk::ImageUsageFlags             usage_flags          = {},
+                         vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                         vk::FormatFeatureFlags          format_feature_flags = {},
+                         bool                            anisotropy_enable    = false);
     };
 } // namespace Meow
