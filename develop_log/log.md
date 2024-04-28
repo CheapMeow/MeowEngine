@@ -2,6 +2,7 @@
 - [渲染数据结构](#渲染数据结构)
   - [图像数据类 ImageData](#图像数据类-imagedata)
   - [着色器类 Shader](#着色器类-shader)
+    - [直接规定了 uniform buffer 为 dynamic](#直接规定了-uniform-buffer-为-dynamic)
     - [反编译顶点属性，缓冲区和纹理输入](#反编译顶点属性缓冲区和纹理输入)
     - [使用 pool 数量可变的 Descriptor Allocator](#使用-pool-数量可变的-descriptor-allocator)
     - [分配 descriptor set](#分配-descriptor-set)
@@ -59,6 +60,14 @@
 所以使用工厂模式来创建图像
 
 ### 着色器类 Shader
+
+#### 直接规定了 uniform buffer 为 dynamic
+
+如果一个 descriptor set 里面没有 dynamic uniform buffer 类型的 descriptor，但是在 bind descriptor sets 又传入了动态偏移，就会出错
+
+为了统一非 dynamic buffer 和 dynamic buffer 的 bind descriptor sets 的逻辑，直接令所有找到的 uniform buffer 都是 dynamic 了
+
+这样可能导致内存浪费，比如一个用于 debug 的材质，它只需要一个 block，但是为了支持 dynamic 却给他分配了 32KB 的内存
 
 #### 反编译顶点属性，缓冲区和纹理输入
 

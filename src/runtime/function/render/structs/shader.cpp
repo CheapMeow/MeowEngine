@@ -171,17 +171,9 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            // Convention: If expecting to use dynamic uniform buffer,
-            // uniform name in shader should contain "Dynamic", for example:
-            // [layout (binding = 0) uniform MVPDynamicBlock]
+            // Convention: Always use dynamic uniform buffer
             vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding,
-                (type_name.find("Dynamic") != std::string::npos || use_dynamic_uniform_buffer) ?
-                    vk::DescriptorType::eUniformBufferDynamic :
-                    vk::DescriptorType::eUniformBuffer,
-                1,
-                stageFlags,
-                nullptr};
+                binding, vk::DescriptorType::eUniformBufferDynamic, 1, stageFlags, nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 

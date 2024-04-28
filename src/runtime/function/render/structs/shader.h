@@ -135,6 +135,11 @@ namespace Meow
         std::vector<DescriptorSetLayoutMeta>         metas;
     };
 
+    /**
+     * @brief Always use dynamic uniform buffer. It may lead to memory waste. For example, one debug material only need
+     * one parameter block uniform buffer, but the Material class still allocate 32KB ring buffer for it.
+     * TODO: support un-dynamic
+     */
     struct Shader
     {
         typedef std::vector<vk::VertexInputBindingDescription>   InputBindingsVector;
@@ -158,8 +163,6 @@ namespace Meow
         bool is_comp_shader_valid = false;
         bool is_tesc_shader_valid = false;
         bool is_tese_shader_valid = false;
-
-        bool use_dynamic_uniform_buffer = false;
 
         DescriptorSetLayoutMetas set_layout_metas;
 
