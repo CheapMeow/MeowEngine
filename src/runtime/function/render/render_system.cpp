@@ -454,8 +454,7 @@ namespace Meow
             m_upload_context.command_pool,
             m_graphics_queue,
             "builtin/models/backpack/backpack.obj",
-            std::vector<VertexAttribute> {
-                VertexAttribute::VA_Position, VertexAttribute::VA_Normal, VertexAttribute::VA_UV0});
+            m_deferred_pass.obj2attachment_mat.shader_ptr->per_vertex_attributes);
 
         BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
         glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
