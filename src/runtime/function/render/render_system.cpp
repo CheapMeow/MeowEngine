@@ -330,6 +330,13 @@ namespace Meow
         }
 
         // Setup Platform/Renderer backends
+
+        // Because in ImGui docking branch, each viewport has its own `render pass`, but they doesn't have their
+        // own `pipeline`. They use the `pipeline` created from the `render pass` pass in `ImGui_ImplVulkan_Init`. So
+        // the `render pass` pass in `ImGui_ImplVulkan_Init` should be compatiable with the `render pass` used in other
+        // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
+        // with those in viewports
+
         ImGui_ImplGlfw_InitForVulkan(g_runtime_global_context.window_system->m_window->GetGLFWWindow(), true);
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance                  = *m_vulkan_instance;
@@ -338,17 +345,13 @@ namespace Meow
         init_info.QueueFamily               = m_graphics_queue_family_index;
         init_info.Queue                     = *m_graphics_queue;
         init_info.DescriptorPool            = *m_imgui_descriptor_pool;
-        init_info.Subpass                   = 0; // TODO: it should be determined by render pass
+        init_info.Subpass                   = 0;
         init_info.MinImageCount             = k_max_frames_in_flight;
         init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
+        init_info.RenderPass                = *m_deferred_pass.imgui_pass;
 
-        // Because in ImGui docking branch, each viewport has its own `render pass`, but they doesn't have their
-        // own `pipeline`. They use the `pipeline` created from the `render pass` pass in `ImGui_ImplVulkan_Init`. So
-        // the `render pass` pass in `ImGui_ImplVulkan_Init` should be compatiable with the `render pass` used in other
-        // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
-        // with those in viewports
-        ImGui_ImplVulkan_Init(&init_info, *m_deferred_pass.imgui_pass);
+        ImGui_ImplVulkan_Init(&init_info);
 
         // Upload Fonts
         {
@@ -360,7 +363,7 @@ namespace Meow
             cmd_pool.reset();
             cmd_buffer.begin({});
 
-            ImGui_ImplVulkan_CreateFontsTexture(*cmd_buffer);
+            ImGui_ImplVulkan_CreateFontsTexture();
 
             vk::SubmitInfo submit_info({}, {}, *cmd_buffer, {});
 
@@ -368,7 +371,6 @@ namespace Meow
             m_graphics_queue.submit(submit_info);
 
             m_logical_device.waitIdle();
-            ImGui_ImplVulkan_DestroyFontUploadObjects();
         }
     }
 

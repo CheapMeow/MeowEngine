@@ -105,8 +105,9 @@ target_compile_definitions(
           VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from
                                            # vulkan hpp
           NOMINMAX # for std::numeric_limits<double>::min() and max()
-          # _DISABLE_STRING_ANNOTATION # for ASAN _DISABLE_VECTOR_ANNOTATION #
-          # for ASAN
+          GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
+          # _DISABLE_STRING_ANNOTATION # for ASAN 
+          # _DISABLE_VECTOR_ANNOTATION # for ASAN
 )
 
 # being a cross-platform target, we enforce standards conformance on MSVC
