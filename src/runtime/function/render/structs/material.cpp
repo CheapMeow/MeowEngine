@@ -149,14 +149,14 @@ namespace Meow
         std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
         for (int i = 0; i < color_attachment_count; ++i)
         {
-            pipeline_color_blend_attachment_states.emplace_back(false,
-                                                                vk::BlendFactor::eOne,
-                                                                vk::BlendFactor::eZero,
-                                                                vk::BlendOp::eAdd,
-                                                                vk::BlendFactor::eOne,
-                                                                vk::BlendFactor::eZero,
-                                                                vk::BlendOp::eAdd,
-                                                                color_component_flags);
+            pipeline_color_blend_attachment_states.emplace_back(false,                  /* blendEnable */
+                                                                vk::BlendFactor::eOne,  /* srcColorBlendFactor */
+                                                                vk::BlendFactor::eZero, /* dstColorBlendFactor */
+                                                                vk::BlendOp::eAdd,      /* colorBlendOp */
+                                                                vk::BlendFactor::eOne,  /* srcAlphaBlendFactor */
+                                                                vk::BlendFactor::eZero, /* dstAlphaBlendFactor */
+                                                                vk::BlendOp::eAdd,      /* alphaBlendOp */
+                                                                color_component_flags); /* colorWriteMask */
         }
         vk::PipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_info(
             vk::PipelineColorBlendStateCreateFlags(),

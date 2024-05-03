@@ -2,6 +2,7 @@
 
 #include "buffer_data.h"
 #include "core/base/alignment.h"
+#include "core/base/non_copyable.h"
 #include "shader.h"
 
 #include <limits>
@@ -11,7 +12,7 @@
 
 namespace Meow
 {
-    struct RingUniformBuffer
+    struct RingUniformBuffer : NonCopyable
     {
         std::shared_ptr<BufferData> buffer_data_ptr  = nullptr;
         void*                       mapped_data_ptr  = nullptr;
@@ -20,6 +21,29 @@ namespace Meow
         uint32_t                    min_alignment    = 0;
 
         RingUniformBuffer(std::nullptr_t) {}
+
+        RingUniformBuffer(RingUniformBuffer&& rhs) noexcept
+        {
+            std::swap(buffer_data_ptr, rhs.buffer_data_ptr);
+            std::swap(mapped_data_ptr, rhs.mapped_data_ptr);
+            this->buffer_size      = rhs.buffer_size;
+            this->allocated_memory = rhs.allocated_memory;
+            this->min_alignment    = rhs.min_alignment;
+        }
+
+        RingUniformBuffer& operator=(RingUniformBuffer&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                std::swap(buffer_data_ptr, rhs.buffer_data_ptr);
+                std::swap(mapped_data_ptr, rhs.mapped_data_ptr);
+                this->buffer_size      = rhs.buffer_size;
+                this->allocated_memory = rhs.allocated_memory;
+                this->min_alignment    = rhs.min_alignment;
+            }
+
+            return *this;
+        }
 
         RingUniformBuffer(vk::raii::PhysicalDevice const& physical_device, vk::raii::Device const& logical_device)
         {
