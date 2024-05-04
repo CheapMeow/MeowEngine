@@ -98,7 +98,7 @@ namespace Meow
         uint32_t             dynamic_offset = std::numeric_limits<uint32_t>::max();
     };
 
-    class Material
+    class Material : NonCopyable
     {
     public:
         Material(std::nullptr_t) {}
@@ -106,6 +106,39 @@ namespace Meow
         Material(vk::raii::PhysicalDevice const& physical_device,
                  vk::raii::Device const&         logical_device,
                  std::shared_ptr<Shader>         shader_ptr);
+
+        Material(Material&& rhs) noexcept
+        {
+            std::swap(shader_ptr, rhs.shader_ptr);
+            this->color_attachment_count = rhs.color_attachment_count;
+            this->subpass                = rhs.subpass;
+            std::swap(ring_buffer, rhs.ring_buffer);
+            std::swap(graphics_pipeline, rhs.graphics_pipeline);
+            this->actived   = rhs.actived;
+            this->obj_count = rhs.obj_count;
+            std::swap(global_uniform_buffer_infos, rhs.global_uniform_buffer_infos);
+            std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
+            std::swap(descriptor_sets, rhs.descriptor_sets);
+        }
+
+        Material& operator=(Material&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                std::swap(shader_ptr, rhs.shader_ptr);
+                this->color_attachment_count = rhs.color_attachment_count;
+                this->subpass                = rhs.subpass;
+                std::swap(ring_buffer, rhs.ring_buffer);
+                std::swap(graphics_pipeline, rhs.graphics_pipeline);
+                this->actived   = rhs.actived;
+                this->obj_count = rhs.obj_count;
+                std::swap(global_uniform_buffer_infos, rhs.global_uniform_buffer_infos);
+                std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
+                std::swap(descriptor_sets, rhs.descriptor_sets);
+            }
+
+            return *this;
+        }
 
         void CreatePipeline(vk::raii::Device const&     logical_device,
                             vk::raii::RenderPass const& render_pass,

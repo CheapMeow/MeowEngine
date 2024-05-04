@@ -69,6 +69,19 @@ namespace Meow
                      vk::raii::Queue const&          queue,
                      DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
+        ~DeferredPass()
+        {
+            obj2attachment_mat = nullptr;
+            quad_mat           = nullptr;
+            quad_model         = nullptr;
+            render_pass        = nullptr;
+            framebuffers.clear();
+            imgui_pass          = nullptr;
+            m_color_attachment  = nullptr;
+            m_normal_attachment = nullptr;
+            m_depth_attachment  = nullptr;
+        }
+
         void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                  vk::raii::Device const&                 device,
                                  vk::raii::CommandBuffer const&          command_buffer,
@@ -88,7 +101,7 @@ namespace Meow
         std::vector<vk::raii::Framebuffer> framebuffers;
 
         std::array<vk::ClearValue, 4> clear_values;
-        
+
         vk::raii::RenderPass imgui_pass = nullptr;
 
     private:

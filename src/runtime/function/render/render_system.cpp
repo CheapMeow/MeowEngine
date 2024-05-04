@@ -428,6 +428,23 @@ namespace Meow
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
+
+        diffuse_texture         = nullptr;
+        m_imgui_descriptor_pool = nullptr;
+        m_per_frame_data.clear();
+        m_deferred_pass        = nullptr;
+        m_descriptor_allocator = nullptr;
+        m_upload_context       = nullptr;
+        m_swapchain_data       = nullptr;
+        m_present_queue        = nullptr;
+        m_graphics_queue       = nullptr;
+        m_logical_device       = nullptr;
+        m_surface_data         = nullptr;
+        m_gpu                  = nullptr;
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        m_debug_utils_messenger = nullptr;
+#endif
+        m_vulkan_instance = nullptr;
     }
 
     void RenderSystem::Start()
