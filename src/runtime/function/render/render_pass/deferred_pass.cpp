@@ -112,7 +112,7 @@ namespace Meow
                                   vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
                                   vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
                                   vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
-        // quad renderering pass -> imgui pass
+        // quad renderering pass -> externel
         dependencies.emplace_back(1,                                                 /* srcSubpass */
                                   VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
                                   vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */

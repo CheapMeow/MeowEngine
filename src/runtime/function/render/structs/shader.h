@@ -14,7 +14,6 @@
 #include <list>
 #include <unordered_map>
 
-
 namespace Meow
 {
     struct VertexAttributeMeta
@@ -144,6 +143,7 @@ namespace Meow
      */
     struct Shader
     {
+    public:
         typedef std::vector<vk::VertexInputBindingDescription>   InputBindingsVector;
         typedef std::vector<vk::VertexInputAttributeDescription> InputAttributesVector;
 
@@ -187,6 +187,11 @@ namespace Meow
 
         vk::raii::DescriptorSets descriptor_sets = nullptr;
 
+    private:
+        vk::Device                        m_device     = {};
+        vk::raii::DeviceDispatcher const* m_dispatcher = nullptr;
+
+    public:
         Shader() {}
 
         Shader(vk::raii::PhysicalDevice const& gpu,
@@ -201,34 +206,15 @@ namespace Meow
 
         ~Shader()
         {
-            vert_shader_module = nullptr;
-            frag_shader_module = nullptr;
-            geom_shader_module = nullptr;
-            comp_shader_module = nullptr;
-            tesc_shader_module = nullptr;
-            tese_shader_module = nullptr;
-
-            vertex_attribute_metas.clear();
-            buffer_meta_map.clear();
-            image_meta_map.clear();
-
-            per_vertex_attributes.clear();
-            instances_attributes.clear();
-
-            input_bindings.clear();
-            input_attributes.clear();
-
-            for(int i = 0; i < descriptor_set_layouts.size(); ++i){
-                std::cout << &(*descriptor_set_layouts[i]) << std::endl;
+            for (int i = 0; i < descriptor_set_layouts.size(); ++i)
+            {
+                m_dispatcher->vkDestroyDescriptorSetLayout(
+                    static_cast<VkDevice>(m_device),
+                    static_cast<VkDescriptorSetLayout>(descriptor_set_layouts[i]),
+                    nullptr);
             }
-            descriptor_set_layouts.clear();
-
-            pipeline_layout = nullptr;
-            descriptor_sets = nullptr;
-
-            std::cout << "~Shader()" << std::endl;
         }
-        
+
         void SetBuffer(vk::raii::Device const&     logical_device,
                        const std::string&          name,
                        vk::raii::Buffer const&     buffer,

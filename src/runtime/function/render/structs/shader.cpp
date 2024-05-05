@@ -14,6 +14,8 @@ namespace Meow
                    std::string                     comp_shader_file_path,
                    std::string                     tesc_shader_file_path,
                    std::string                     tese_shader_file_path)
+        : m_device(*logical_device)
+        , m_dispatcher(logical_device.getDispatcher())
     {
         std::vector<vk::PipelineShaderStageCreateInfo> pipeline_shader_stage_create_infos;
 
