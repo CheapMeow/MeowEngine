@@ -659,20 +659,7 @@ namespace Meow
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("MeowEngine");
 
-        // debug
-        ImGui::Combo("Attachment",
-                     &m_deferred_pass.debug_para.attachmentIndex,
-                     m_deferred_pass.debug_names.data(),
-                     m_deferred_pass.debug_names.size());
-        ImGui::SliderFloat("Z-Near", &m_deferred_pass.debug_para.zNear, 0.1f, 3000.0f);
-        ImGui::SliderFloat("Z-Far", &m_deferred_pass.debug_para.zFar, 0.1f, 6000.0f);
-
-        if (m_deferred_pass.debug_para.zNear >= m_deferred_pass.debug_para.zFar)
-        {
-            m_deferred_pass.debug_para.zNear = m_deferred_pass.debug_para.zFar * 0.5f;
-        }
-
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        m_render_pass_ptr->UpdateGUI();
 
         ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
 

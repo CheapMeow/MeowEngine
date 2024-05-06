@@ -89,16 +89,18 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
+        void UpdateGUI() override;
+
     public:
         Material obj2attachment_mat = nullptr;
         Material quad_mat           = nullptr;
         Model    quad_model         = nullptr;
 
-        AttachmentParamBlock     debug_para;
-        std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
-
     private:
         std::shared_ptr<ImageData> m_color_attachment  = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment = nullptr;
+
+        AttachmentParamBlock     debug_para;
+        std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
     };
 } // namespace Meow

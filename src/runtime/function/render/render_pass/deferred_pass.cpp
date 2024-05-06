@@ -7,6 +7,7 @@
 #include "function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 
 namespace Meow
 {
@@ -310,5 +311,20 @@ namespace Meow
         quad_mat.SetLocalUniformBuffer("param", &debug_para, sizeof(debug_para));
         quad_mat.EndObject();
         quad_mat.EndFrame();
+    }
+
+    void DeferredPass::UpdateGUI()
+    {
+        // debug
+        ImGui::Combo("Attachment", &debug_para.attachmentIndex, debug_names.data(), debug_names.size());
+        ImGui::SliderFloat("Z-Near", &debug_para.zNear, 0.1f, 3000.0f);
+        ImGui::SliderFloat("Z-Far", &debug_para.zFar, 0.1f, 6000.0f);
+
+        if (debug_para.zNear >= debug_para.zFar)
+        {
+            debug_para.zNear = debug_para.zFar * 0.5f;
+        }
+
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
 } // namespace Meow

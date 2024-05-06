@@ -62,6 +62,8 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
+        void UpdateGUI() override;
+        
     public:
         Material forward_mat = nullptr;
     };

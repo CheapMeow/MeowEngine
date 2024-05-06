@@ -7,6 +7,7 @@
 #include "function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 
 namespace Meow
 {
@@ -196,5 +197,10 @@ namespace Meow
             }
         }
         forward_mat.EndFrame();
+    }
+
+    void ForwardPass::UpdateGUI()
+    {
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     }
 } // namespace Meow

@@ -26,6 +26,8 @@ namespace Meow
 
         virtual void UpdateUniformBuffer() {}
 
+        virtual void UpdateGUI() {}
+
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
         std::vector<vk::ClearValue>        clear_values;
