@@ -4,7 +4,6 @@
 #include "function/components/3d/camera/camera_3d_component.h"
 #include "function/components/3d/model/model_component.h"
 #include "function/components/3d/transform/transform_3d_component.h"
-#include "function/components/shared/pawn_component.h"
 #include "function/global/runtime_global_context.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
 
@@ -642,54 +641,7 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        // ------------------- camera -------------------
-
-        UBOData ubo_data;
-
-        for (auto [entity, transfrom_component, camera_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, const Camera3DComponent>().each())
-        {
-            if (camera_component.is_main_camera)
-            {
-                glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
-
-                glm::mat4 view = glm::mat4(1.0f);
-                view           = glm::mat4_cast(glm::conjugate(transfrom_component.rotation)) * view;
-                view           = glm::translate(view, -transfrom_component.position);
-
-                ubo_data.view       = view;
-                ubo_data.projection = glm::perspectiveLH_ZO(camera_component.field_of_view,
-                                                            (float)window_size[0] / (float)window_size[1],
-                                                            camera_component.near_plane,
-                                                            camera_component.far_plane);
-                break;
-            }
-        }
-
-        // Update mesh uniform
-
-        m_deferred_pass.obj2attachment_mat.BeginFrame();
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-        {
-            ubo_data.model = transfrom_component.GetTransform();
-            ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
-            {
-                m_deferred_pass.obj2attachment_mat.BeginObject();
-                m_deferred_pass.obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
-                m_deferred_pass.obj2attachment_mat.EndObject();
-            }
-        }
-        m_deferred_pass.obj2attachment_mat.EndFrame();
-
-        m_deferred_pass.quad_mat.BeginFrame();
-        m_deferred_pass.quad_mat.BeginObject();
-        m_deferred_pass.quad_mat.SetLocalUniformBuffer(
-            "param", &m_deferred_pass.debug_para, sizeof(m_deferred_pass.debug_para));
-        m_deferred_pass.quad_mat.EndObject();
-        m_deferred_pass.quad_mat.EndFrame();
+        m_render_pass_ptr->UpdateUniformBuffer();
 
         // ------------------- ImGui -------------------
 

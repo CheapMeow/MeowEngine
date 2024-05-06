@@ -24,6 +24,8 @@ namespace Meow
                                          vk::Extent2D const&                     extent)
         {}
 
+        virtual void UpdateUniformBuffer() {}
+
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
         std::vector<vk::ClearValue>        clear_values;

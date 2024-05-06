@@ -58,7 +58,9 @@ namespace Meow
                                  vk::raii::CommandBuffer const&          command_buffer,
                                  SurfaceData&                            surface_data,
                                  std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                 vk::Extent2D const&                     extent);
+                                 vk::Extent2D const&                     extent) override;
+
+        void UpdateUniformBuffer() override;
 
     public:
         Material forward_mat = nullptr;
