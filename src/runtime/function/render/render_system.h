@@ -117,6 +117,8 @@ namespace Meow
         ForwardPass                 m_forward_pass         = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;
 
+        RenderPass* m_render_pass_ptr = nullptr;
+
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
         vk::raii::RenderPass     m_imgui_pass            = nullptr;

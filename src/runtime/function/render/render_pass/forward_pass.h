@@ -1,28 +1,26 @@
 #pragma once
 
-#include "core/base/non_copyable.h"
-#include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
-#include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
-#include "function/render/structs/surface_data.h"
-
-#include <vulkan/vulkan_raii.hpp>
+#include "render_pass.h"
 
 namespace Meow
 {
-    class ForwardPass : NonCopyable
+    class ForwardPass : public RenderPass
     {
     public:
-        ForwardPass(std::nullptr_t) {}
+        ForwardPass(std::nullptr_t)
+            : RenderPass(nullptr)
+        {}
 
         ForwardPass(ForwardPass&& rhs) noexcept
+            : RenderPass(nullptr)
         {
             std::swap(forward_mat, rhs.forward_mat);
             std::swap(render_pass, rhs.render_pass);
             std::swap(framebuffers, rhs.framebuffers);
-            depth_format = rhs.depth_format;
-            sample_count = rhs.sample_count;
+            m_depth_format = rhs.m_depth_format;
+            m_sample_count = rhs.m_sample_count;
             std::swap(m_depth_attachment, rhs.m_depth_attachment);
         }
 
@@ -33,8 +31,8 @@ namespace Meow
                 std::swap(forward_mat, rhs.forward_mat);
                 std::swap(render_pass, rhs.render_pass);
                 std::swap(framebuffers, rhs.framebuffers);
-                depth_format = rhs.depth_format;
-                sample_count = rhs.sample_count;
+                m_depth_format = rhs.m_depth_format;
+                m_sample_count = rhs.m_sample_count;
                 std::swap(m_depth_attachment, rhs.m_depth_attachment);
             }
             return *this;
@@ -64,16 +62,5 @@ namespace Meow
 
     public:
         Material forward_mat = nullptr;
-
-        vk::raii::RenderPass               render_pass = nullptr;
-        std::vector<vk::raii::Framebuffer> framebuffers;
-
-        std::array<vk::ClearValue, 2> clear_values;
-
-    private:
-        vk::Format              depth_format = vk::Format::eD16Unorm;
-        vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
-
-        std::shared_ptr<ImageData> m_depth_attachment = nullptr;
     };
 } // namespace Meow

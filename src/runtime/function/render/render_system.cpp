@@ -343,6 +343,8 @@ namespace Meow
                                                                imgui_dependency);            /* pDependencies */
 
         m_imgui_pass = vk::raii::RenderPass(m_logical_device, imgui_render_pass_create_info);
+
+        m_render_pass_ptr = &m_deferred_pass;
     }
 
     void RenderSystem::InitImGui()
@@ -449,9 +451,7 @@ namespace Meow
 
         CreateSurface();
         CreateSwapChian();
-        m_deferred_pass.RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers(
+        m_render_pass_ptr->RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         CreatePerFrameData();
         InitImGui();
@@ -588,10 +588,10 @@ namespace Meow
         // debug
         cmd_buffer.resetQueryPool(*m_query_pool, 0, 1);
 
-        vk::RenderPassBeginInfo render_pass_begin_info(*m_deferred_pass.render_pass,
-                                                       *m_deferred_pass.framebuffers[m_current_image_index],
+        vk::RenderPassBeginInfo render_pass_begin_info(*m_render_pass_ptr->render_pass,
+                                                       *m_render_pass_ptr->framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
-                                                       m_deferred_pass.clear_values);
+                                                       m_render_pass_ptr->clear_values);
         cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
         return true;
     }

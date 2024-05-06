@@ -28,6 +28,7 @@ set(RUNTIME_HEADER_FILES
     function/input/buttons/keyboard_input_button.h
     function/input/buttons/mouse_input_button.h
     function/render/render_system.h
+    function/render/render_pass/render_pass.h
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
     function/render/structs/buffer_data.h

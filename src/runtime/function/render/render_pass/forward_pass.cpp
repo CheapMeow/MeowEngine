@@ -9,6 +9,7 @@ namespace Meow
                              vk::raii::CommandPool const&    command_pool,
                              vk::raii::Queue const&          queue,
                              DescriptorAllocatorGrowable&    m_descriptor_allocator)
+        : RenderPass(nullptr)
     {
         // Create a set to store all information of attachments
 
@@ -20,7 +21,7 @@ namespace Meow
         // swap chain attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
                                              color_format,                     /* format */
-                                             sample_count,                     /* samples */
+                                             m_sample_count,                   /* samples */
                                              vk::AttachmentLoadOp::eClear,     /* loadOp */
                                              vk::AttachmentStoreOp::eStore,    /* storeOp */
                                              vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
@@ -29,8 +30,8 @@ namespace Meow
                                              vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
         // depth attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
-                                             depth_format,                                     /* format */
-                                             sample_count,                                     /* samples */
+                                             m_depth_format,                                   /* format */
+                                             m_sample_count,                                   /* samples */
                                              vk::AttachmentLoadOp::eClear,                     /* loadOp */
                                              vk::AttachmentStoreOp::eStore,                    /* storeOp */
                                              vk::AttachmentLoadOp::eClear,                     /* stencilLoadOp */
@@ -96,6 +97,7 @@ namespace Meow
         forward_mat = Material(physical_device, device, mesh_shader_ptr);
         forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
+        clear_values.resize(2);
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
     }
@@ -118,7 +120,7 @@ namespace Meow
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
                                                          command_buffer,
-                                                         depth_format,
+                                                         m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
                                                          vk::ImageAspectFlagBits::eDepth,

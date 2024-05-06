@@ -1,13 +1,9 @@
 #pragma once
 
-#include "core/base/non_copyable.h"
-#include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
-#include "function/render/structs/surface_data.h"
-
-#include <vulkan/vulkan_raii.hpp>
+#include "render_pass.h"
 
 namespace Meow
 {
@@ -19,12 +15,15 @@ namespace Meow
         int   attachmentIndex;
     };
 
-    class DeferredPass : NonCopyable
+    class DeferredPass : public RenderPass
     {
     public:
-        DeferredPass(std::nullptr_t) {}
+        DeferredPass(std::nullptr_t)
+            : RenderPass(nullptr)
+        {}
 
         DeferredPass(DeferredPass&& rhs) noexcept
+            : RenderPass(nullptr)
         {
             std::swap(obj2attachment_mat, rhs.obj2attachment_mat);
             std::swap(quad_mat, rhs.quad_mat);
@@ -33,8 +32,9 @@ namespace Meow
             std::swap(debug_names, rhs.debug_names);
             std::swap(render_pass, rhs.render_pass);
             std::swap(framebuffers, rhs.framebuffers);
-            depth_format = rhs.depth_format;
-            sample_count = rhs.sample_count;
+            std::swap(clear_values, rhs.clear_values);
+            m_depth_format = rhs.m_depth_format;
+            m_sample_count = rhs.m_sample_count;
             std::swap(m_color_attachment, rhs.m_color_attachment);
             std::swap(m_normal_attachment, rhs.m_normal_attachment);
             std::swap(m_depth_attachment, rhs.m_depth_attachment);
@@ -51,8 +51,9 @@ namespace Meow
                 std::swap(debug_names, rhs.debug_names);
                 std::swap(render_pass, rhs.render_pass);
                 std::swap(framebuffers, rhs.framebuffers);
-                depth_format = rhs.depth_format;
-                sample_count = rhs.sample_count;
+                std::swap(clear_values, rhs.clear_values);
+                m_depth_format = rhs.m_depth_format;
+                m_sample_count = rhs.m_sample_count;
                 std::swap(m_color_attachment, rhs.m_color_attachment);
                 std::swap(m_normal_attachment, rhs.m_normal_attachment);
                 std::swap(m_depth_attachment, rhs.m_depth_attachment);
@@ -94,17 +95,8 @@ namespace Meow
         AttachmentParamBlock     debug_para;
         std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
 
-        vk::raii::RenderPass               render_pass = nullptr;
-        std::vector<vk::raii::Framebuffer> framebuffers;
-
-        std::array<vk::ClearValue, 4> clear_values;
-
     private:
-        vk::Format              depth_format = vk::Format::eD16Unorm;
-        vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
-
         std::shared_ptr<ImageData> m_color_attachment  = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment = nullptr;
-        std::shared_ptr<ImageData> m_depth_attachment  = nullptr;
     };
 } // namespace Meow
