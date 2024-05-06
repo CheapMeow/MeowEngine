@@ -204,8 +204,7 @@ namespace Meow
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[2].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
-        clear_values[3].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
-        clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+        clear_values[3].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
     }
 
     void DeferredPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
