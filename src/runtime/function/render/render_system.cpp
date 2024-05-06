@@ -659,11 +659,11 @@ namespace Meow
 
             // Draw mesh
 
+            m_deferred_pass.obj2attachment_mat.BindPipeline(cmd_buffer);
+
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
-                m_deferred_pass.obj2attachment_mat.BindPipeline(cmd_buffer);
-
                 for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
                 {
                     m_deferred_pass.obj2attachment_mat.BindDescriptorSets(cmd_buffer, i);
@@ -674,6 +674,7 @@ namespace Meow
             cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
 
             m_deferred_pass.quad_mat.BindPipeline(cmd_buffer);
+            
             for (int32_t i = 0; i < m_deferred_pass.quad_model.meshes.size(); ++i)
             {
                 m_deferred_pass.quad_mat.BindDescriptorSets(cmd_buffer, i);

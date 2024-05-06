@@ -162,11 +162,11 @@ namespace Meow
                                                                 color_component_flags); /* colorWriteMask */
         }
         vk::PipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_info(
-            vk::PipelineColorBlendStateCreateFlags(),
-            false,
-            vk::LogicOp::eNoOp,
-            pipeline_color_blend_attachment_states,
-            {{1.0f, 1.0f, 1.0f, 1.0f}});
+            vk::PipelineColorBlendStateCreateFlags(), /* flags */
+            false,                                    /* logicOpEnable */
+            vk::LogicOp::eNoOp,                       /* logicOp */
+            pipeline_color_blend_attachment_states,   /* pAttachments */
+            {{1.0f, 1.0f, 1.0f, 1.0f}});              /* blendConstants */
 
         std::array<vk::DynamicState, 2>    dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(vk::PipelineDynamicStateCreateFlags(),
