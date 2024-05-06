@@ -100,7 +100,7 @@ namespace Meow
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
 
-        std::array<vk::ClearValue, 5> clear_values;
+        std::array<vk::ClearValue, 4> clear_values;
 
         vk::raii::RenderPass imgui_pass = nullptr;
 
