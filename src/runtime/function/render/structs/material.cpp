@@ -132,15 +132,18 @@ namespace Meow
 
         vk::PipelineMultisampleStateCreateInfo pipeline_multisample_state_create_info({}, vk::SampleCountFlagBits::e1);
 
-        vk::StencilOpState stencil_op_state(
-            vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
+        vk::StencilOpState stencil_op_state(vk::StencilOp::eKeep,    /* failOp */
+                                            vk::StencilOp::eKeep,    /* passOp */
+                                            vk::StencilOp::eKeep,    /* depthFailOp */
+                                            vk::CompareOp::eAlways); /* compareOp */
+
         vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info(
             vk::PipelineDepthStencilStateCreateFlags(), /* flags */
             depth_buffered,                             /* depthTestEnable */
             depth_buffered,                             /* depthWriteEnable */
             vk::CompareOp::eLessOrEqual,                /* depthCompareOp */
             false,                                      /* depthBoundsTestEnable */
-            false,                                      /* stencilTestEnable */
+            depth_buffered,                             /* stencilTestEnable */
             stencil_op_state,                           /* front */
             stencil_op_state);                          /* back */
 
