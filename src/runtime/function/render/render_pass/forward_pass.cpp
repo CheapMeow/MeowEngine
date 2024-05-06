@@ -102,12 +102,22 @@ namespace Meow
                                                                            "builtin/shaders/mesh.vert.spv",
                                                                            "builtin/shaders/mesh.frag.spv");
 
-        forward_mat = Material(physical_device, device, mesh_shader_ptr);
-        forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        m_forward_mat = Material(physical_device, device, mesh_shader_ptr);
+        m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
         clear_values.resize(2);
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+
+        // debug
+
+        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
+                                                        .queryCount         = 1,
+                                                        .pipelineStatistics = (1 << statisticCount) - 1};
+
+        enable_query = true;
+        query_pool   = device.createQueryPool(query_pool_create_info, nullptr);
     }
 
     void ForwardPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
@@ -182,7 +192,7 @@ namespace Meow
 
         // Update mesh uniform
 
-        forward_mat.BeginFrame();
+        m_forward_mat.BeginFrame();
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
         {
@@ -191,16 +201,53 @@ namespace Meow
 
             for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
             {
-                forward_mat.BeginObject();
-                forward_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
-                forward_mat.EndObject();
+                m_forward_mat.BeginObject();
+                m_forward_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
+                m_forward_mat.EndObject();
             }
         }
-        forward_mat.EndFrame();
+        m_forward_mat.EndFrame();
     }
 
     void ForwardPass::UpdateGUI()
     {
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    }
+
+    void ForwardPass::Draw(vk::raii::CommandBuffer const& command_buffer)
+    {
+        m_forward_mat.BindPipeline(command_buffer);
+
+        cur_query_count = 0;
+
+        for (auto [entity, transfrom_component, model_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        {
+            // debug
+            if (cur_query_count == 0)
+            {
+                command_buffer.beginQuery(*query_pool, 0, {});
+            }
+
+            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
+            {
+                m_forward_mat.BindDescriptorSets(command_buffer, i);
+                model_component.model.meshes[i]->BindDrawCmd(command_buffer);
+            }
+
+            // debug
+            if (cur_query_count == 0)
+            {
+                command_buffer.endQuery(*query_pool, 0);
+                cur_query_count++;
+            }
+        }
+    }
+
+    void ForwardPass::AfterRenderPass()
+    {
+        std::pair<vk::Result, std::vector<uint32_t>> query_results =
+            query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
+        invocationCount_fs_query_count = query_results.second[invocationCount_fs];
     }
 } // namespace Meow

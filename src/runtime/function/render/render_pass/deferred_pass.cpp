@@ -146,9 +146,9 @@ namespace Meow
                                                                           "builtin/shaders/obj.vert.spv",
                                                                           "builtin/shaders/obj.frag.spv");
 
-        obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
-        obj2attachment_mat.color_attachment_count = 2;
-        obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        m_obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
+        m_obj2attachment_mat.color_attachment_count = 2;
+        m_obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
         std::shared_ptr<Shader> quad_shader_ptr = std::make_shared<Shader>(physical_device,
                                                                            device,
@@ -156,22 +156,22 @@ namespace Meow
                                                                            "builtin/shaders/quad.vert.spv",
                                                                            "builtin/shaders/quad.frag.spv");
 
-        quad_mat         = Material(physical_device, device, quad_shader_ptr);
-        quad_mat.subpass = 1;
-        quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
+        m_quad_mat         = Material(physical_device, device, quad_shader_ptr);
+        m_quad_mat.subpass = 1;
+        m_quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
         std::vector<uint16_t> indices  = {0, 1, 2, 0, 2, 3};
 
-        quad_model = std::move(Model(physical_device,
-                                     device,
-                                     command_pool,
-                                     queue,
-                                     vertices,
-                                     indices,
-                                     quad_mat.shader_ptr->per_vertex_attributes));
+        m_quad_model = std::move(Model(physical_device,
+                                       device,
+                                       command_pool,
+                                       queue,
+                                       vertices,
+                                       indices,
+                                       m_quad_mat.shader_ptr->per_vertex_attributes));
 
         clear_values.resize(4);
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
@@ -179,7 +179,17 @@ namespace Meow
         clear_values[2].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[3].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        input_vertex_attributes = obj2attachment_mat.shader_ptr->per_vertex_attributes;
+        input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
+
+        // debug
+
+        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
+                                                        .queryCount         = 1,
+                                                        .pipelineStatistics = (1 << statisticCount) - 1};
+
+        enable_query = true;
+        query_pool   = device.createQueryPool(query_pool_create_info, nullptr);
     }
 
     void DeferredPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
@@ -259,9 +269,9 @@ namespace Meow
 
         // Update descriptor set
 
-        quad_mat.SetImage(device, "inputColor", *m_color_attachment);
-        quad_mat.SetImage(device, "inputNormal", *m_normal_attachment);
-        quad_mat.SetImage(device, "inputDepth", *m_depth_attachment);
+        m_quad_mat.SetImage(device, "inputColor", *m_color_attachment);
+        m_quad_mat.SetImage(device, "inputNormal", *m_normal_attachment);
+        m_quad_mat.SetImage(device, "inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -290,7 +300,7 @@ namespace Meow
 
         // Update mesh uniform
 
-        obj2attachment_mat.BeginFrame();
+        m_obj2attachment_mat.BeginFrame();
         for (auto [entity, transfrom_component, model_component] :
              g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
         {
@@ -299,18 +309,18 @@ namespace Meow
 
             for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
             {
-                obj2attachment_mat.BeginObject();
-                obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
-                obj2attachment_mat.EndObject();
+                m_obj2attachment_mat.BeginObject();
+                m_obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
+                m_obj2attachment_mat.EndObject();
             }
         }
-        obj2attachment_mat.EndFrame();
+        m_obj2attachment_mat.EndFrame();
 
-        quad_mat.BeginFrame();
-        quad_mat.BeginObject();
-        quad_mat.SetLocalUniformBuffer("param", &debug_para, sizeof(debug_para));
-        quad_mat.EndObject();
-        quad_mat.EndFrame();
+        m_quad_mat.BeginFrame();
+        m_quad_mat.BeginObject();
+        m_quad_mat.SetLocalUniformBuffer("param", &debug_para, sizeof(debug_para));
+        m_quad_mat.EndObject();
+        m_quad_mat.EndFrame();
     }
 
     void DeferredPass::UpdateGUI()
@@ -326,5 +336,54 @@ namespace Meow
         }
 
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
+    }
+
+    void DeferredPass::Draw(vk::raii::CommandBuffer const& command_buffer)
+    {
+        m_obj2attachment_mat.BindPipeline(command_buffer);
+
+        cur_query_count = 0;
+
+        for (auto [entity, transfrom_component, model_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        {
+            // debug
+            if (cur_query_count == 0)
+            {
+                command_buffer.beginQuery(*query_pool, 0, {});
+            }
+
+            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
+            {
+                m_obj2attachment_mat.BindDescriptorSets(command_buffer, i);
+                model_component.model.meshes[i]->BindDrawCmd(command_buffer);
+            }
+
+            // debug
+            if (cur_query_count == 0)
+            {
+                command_buffer.endQuery(*query_pool, 0);
+                cur_query_count++;
+            }
+        }
+
+        command_buffer.nextSubpass(vk::SubpassContents::eInline);
+
+        m_quad_mat.BindPipeline(command_buffer);
+
+        for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
+        {
+            m_quad_mat.BindDescriptorSets(command_buffer, i);
+            m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
+        }
+    }
+
+    void DeferredPass::AfterRenderPass()
+    {
+        std::pair<vk::Result, std::vector<uint32_t>> query_results =
+            query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
+        invocationCount_fs_query_count = query_results.second[invocationCount_fs];
     }
 } // namespace Meow

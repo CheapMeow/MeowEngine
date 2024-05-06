@@ -16,24 +16,32 @@ namespace Meow
         ForwardPass(ForwardPass&& rhs) noexcept
             : RenderPass(nullptr)
         {
-            std::swap(forward_mat, rhs.forward_mat);
+            std::swap(m_forward_mat, rhs.m_forward_mat);
             std::swap(render_pass, rhs.render_pass);
             std::swap(framebuffers, rhs.framebuffers);
+            std::swap(clear_values, rhs.clear_values);
+            std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
             m_depth_format = rhs.m_depth_format;
             m_sample_count = rhs.m_sample_count;
             std::swap(m_depth_attachment, rhs.m_depth_attachment);
+            std::swap(query_pool, rhs.query_pool);
+            enable_query = rhs.enable_query;
         }
 
         ForwardPass& operator=(ForwardPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                std::swap(forward_mat, rhs.forward_mat);
+                std::swap(m_forward_mat, rhs.m_forward_mat);
                 std::swap(render_pass, rhs.render_pass);
                 std::swap(framebuffers, rhs.framebuffers);
+                std::swap(clear_values, rhs.clear_values);
+                std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
                 m_depth_format = rhs.m_depth_format;
                 m_sample_count = rhs.m_sample_count;
                 std::swap(m_depth_attachment, rhs.m_depth_attachment);
+                std::swap(query_pool, rhs.query_pool);
+                enable_query = rhs.enable_query;
             }
             return *this;
         }
@@ -47,8 +55,8 @@ namespace Meow
 
         ~ForwardPass()
         {
-            forward_mat = nullptr;
-            render_pass = nullptr;
+            m_forward_mat = nullptr;
+            render_pass   = nullptr;
             framebuffers.clear();
             m_depth_attachment = nullptr;
         }
@@ -63,8 +71,12 @@ namespace Meow
         void UpdateUniformBuffer() override;
 
         void UpdateGUI() override;
-        
-    public:
-        Material forward_mat = nullptr;
+
+        void Draw(vk::raii::CommandBuffer const& command_buffer) override;
+
+        void AfterRenderPass() override;
+
+    private:
+        Material m_forward_mat = nullptr;
     };
 } // namespace Meow

@@ -488,7 +488,6 @@ namespace Meow
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 
-        m_query_pool            = nullptr;
         diffuse_texture         = nullptr;
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
@@ -511,12 +510,6 @@ namespace Meow
 
     void RenderSystem::Start()
     {
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 1,
-                                                        .pipelineStatistics = (1 << statisticCount) - 1};
-        m_query_pool = m_logical_device.createQueryPool(query_pool_create_info, nullptr);
-
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
@@ -532,14 +525,14 @@ namespace Meow
         // model_transform_component.global_transform =
         //     glm::rotate(model_transform_component.global_transform, glm::radians(180.0f), glm::vec3(0.0f, 1.0f,
         //     0.0f));
-        auto& model_component = g_runtime_global_context.registry.emplace<ModelComponent>(
-            model_entity,
-            m_gpu,
-            m_logical_device,
-            m_upload_context.command_pool,
-            m_graphics_queue,
-            "builtin/models/backpack/backpack.obj",
-            m_deferred_pass.obj2attachment_mat.shader_ptr->per_vertex_attributes);
+        auto& model_component =
+            g_runtime_global_context.registry.emplace<ModelComponent>(model_entity,
+                                                                      m_gpu,
+                                                                      m_logical_device,
+                                                                      m_upload_context.command_pool,
+                                                                      m_graphics_queue,
+                                                                      "builtin/models/backpack/backpack.obj",
+                                                                      m_render_pass_ptr->input_vertex_attributes);
 
         BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
         glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
@@ -585,7 +578,8 @@ namespace Meow
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
         // debug
-        cmd_buffer.resetQueryPool(*m_query_pool, 0, 1);
+        if (m_render_pass_ptr->enable_query)
+            cmd_buffer.resetQueryPool(*m_render_pass_ptr->query_pool, 0, 1);
 
         vk::RenderPassBeginInfo render_pass_begin_info(*m_render_pass_ptr->render_pass,
                                                        *m_render_pass_ptr->framebuffers[m_current_image_index],
@@ -645,9 +639,6 @@ namespace Meow
 
         // ------------------- ImGui -------------------
 
-        // TODO: temp
-        static bool show_demo_window = true;
-
         // Start the Dear ImGui frame
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -661,8 +652,6 @@ namespace Meow
 
         m_render_pass_ptr->UpdateGUI();
 
-        ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
-
         ImGui::End();
 
         // ------------------- render -------------------
@@ -672,44 +661,7 @@ namespace Meow
 
         if (StartRenderpass())
         {
-            // Draw mesh
-
-            m_deferred_pass.obj2attachment_mat.BindPipeline(cmd_buffer);
-
-            cur_query_count = 0;
-
-            for (auto [entity, transfrom_component, model_component] :
-                 g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
-            {
-                // debug
-                if (cur_query_count == 0)
-                {
-                    cmd_buffer.beginQuery(*m_query_pool, 0, {});
-                }
-
-                for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
-                {
-                    m_deferred_pass.obj2attachment_mat.BindDescriptorSets(cmd_buffer, i);
-                    model_component.model.meshes[i]->BindDrawCmd(cmd_buffer);
-                }
-
-                // debug
-                if (cur_query_count == 0)
-                {
-                    cmd_buffer.endQuery(*m_query_pool, 0);
-                    cur_query_count++;
-                }
-            }
-
-            cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
-
-            m_deferred_pass.quad_mat.BindPipeline(cmd_buffer);
-
-            for (int32_t i = 0; i < m_deferred_pass.quad_model.meshes.size(); ++i)
-            {
-                m_deferred_pass.quad_mat.BindDescriptorSets(cmd_buffer, i);
-                m_deferred_pass.quad_model.meshes[i]->BindDrawCmd(cmd_buffer);
-            }
+            m_render_pass_ptr->Draw(cmd_buffer);
 
             ImGui::Render();
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
@@ -725,10 +677,7 @@ namespace Meow
 
             EndRenderpass();
 
-            // debug
-            std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                m_query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
-            invocationCount_fs_query_count = query_results.second[invocationCount_fs];
+            m_render_pass_ptr->AfterRenderPass();
         }
     }
 
