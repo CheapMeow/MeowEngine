@@ -131,9 +131,16 @@ namespace Meow
         m_present_queue_family_index  = indexs.second;
 
         // Create a device with one queue
-        float                     queue_priority = 1.0f;
-        vk::DeviceQueueCreateInfo queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
-        vk::DeviceCreateInfo      device_info({}, queue_info, {}, k_required_device_extensions);
+        float                      queue_priority = 1.0f;
+        vk::DeviceQueueCreateInfo  queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
+        vk::PhysicalDeviceFeatures physical_device_feature;
+        physical_device_feature.pipelineStatisticsQuery = vk::True;
+
+        vk::DeviceCreateInfo device_info({},                           /* flags */
+                                         queue_info,                   /* queueCreateInfoCount */
+                                         {},                           /* ppEnabledLayerNames */
+                                         k_required_device_extensions, /* ppEnabledExtensionNames */
+                                         &physical_device_feature);    /* pEnabledFeatures */
         m_logical_device = vk::raii::Device(m_gpu, device_info);
 
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)
@@ -429,6 +436,7 @@ namespace Meow
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 
+        m_query_pool            = nullptr;
         diffuse_texture         = nullptr;
         m_imgui_descriptor_pool = nullptr;
         m_per_frame_data.clear();
@@ -449,6 +457,12 @@ namespace Meow
 
     void RenderSystem::Start()
     {
+        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
+                                                        .queryCount         = 1,
+                                                        .pipelineStatistics = (1 << statisticCount) - 1};
+        m_query_pool = m_logical_device.createQueryPool(query_pool_create_info, nullptr);
+
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
@@ -515,6 +529,10 @@ namespace Meow
                                             0.0f,
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
+
+        // debug
+        cmd_buffer.resetQueryPool(*m_query_pool, 0, 1);
+
         vk::RenderPassBeginInfo render_pass_begin_info(*m_deferred_pass.render_pass,
                                                        *m_deferred_pass.framebuffers[m_current_image_index],
                                                        vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
@@ -566,6 +584,9 @@ namespace Meow
 
     void RenderSystem::Update(float frame_time)
     {
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
         // ------------------- camera -------------------
 
         UBOData ubo_data;
@@ -645,6 +666,9 @@ namespace Meow
         }
 
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
+
         ImGui::End();
 
         // ------------------- render -------------------
@@ -654,27 +678,39 @@ namespace Meow
 
         if (StartRenderpass())
         {
-            auto& per_frame_data = m_per_frame_data[m_current_frame_index];
-            auto& cmd_buffer     = per_frame_data.command_buffer;
-
             // Draw mesh
 
             m_deferred_pass.obj2attachment_mat.BindPipeline(cmd_buffer);
 
+            cur_query_count = 0;
+
             for (auto [entity, transfrom_component, model_component] :
                  g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
             {
+                // debug
+                if (cur_query_count == 0)
+                {
+                    cmd_buffer.beginQuery(*m_query_pool, 0, {});
+                }
+
                 for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
                 {
                     m_deferred_pass.obj2attachment_mat.BindDescriptorSets(cmd_buffer, i);
                     model_component.model.meshes[i]->BindDrawCmd(cmd_buffer);
+                }
+
+                // debug
+                if (cur_query_count == 0)
+                {
+                    cmd_buffer.endQuery(*m_query_pool, 0);
+                    cur_query_count++;
                 }
             }
 
             cmd_buffer.nextSubpass(vk::SubpassContents::eInline);
 
             m_deferred_pass.quad_mat.BindPipeline(cmd_buffer);
-            
+
             for (int32_t i = 0; i < m_deferred_pass.quad_model.meshes.size(); ++i)
             {
                 m_deferred_pass.quad_mat.BindDescriptorSets(cmd_buffer, i);
@@ -694,6 +730,11 @@ namespace Meow
             }
 
             EndRenderpass();
+
+            // debug
+            std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                m_query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
+            invocationCount_fs_query_count = query_results.second[invocationCount_fs];
         }
     }
 

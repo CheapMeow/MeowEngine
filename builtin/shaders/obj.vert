@@ -27,4 +27,7 @@ void main()
 	outPosition = (uboMVP.modelMatrix * vec4(inPosition.xyz, 1.0)).xyz;
 
 	gl_Position = uboMVP.projectionMatrix * uboMVP.viewMatrix * uboMVP.modelMatrix * vec4(inPosition.xyz, 1.0);
+
+	// manual perspective divide
+	gl_Position = vec4(gl_Position.xyz / gl_Position.z, 0.5);
 }

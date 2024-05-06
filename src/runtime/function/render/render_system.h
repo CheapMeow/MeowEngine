@@ -120,5 +120,32 @@ namespace Meow
 
         // TODO: temp texture
         std::shared_ptr<ImageData> diffuse_texture = nullptr;
+
+        // debug
+        vk::raii::QueryPool m_query_pool = nullptr;
+        enum statisticName
+        {
+            // Input Assembly
+            vertexCount_ia,
+            primitiveCount_ia,
+            // Vertex Shader
+            invocationCount_vs,
+            // Geometry Shader
+            invocationCount_gs,
+            primitiveCount_gs,
+            invocationCount_clipping,
+            primitiveCount_clipping,
+            // Fragment Shader
+            invocationCount_fs,
+            // Tessellation
+            patchCount_tcs,
+            invocationCount_tes,
+            // Compute Shader
+            invocationCount_cs,
+            statisticCount
+        };
+        uint32_t statistics[statisticCount]     = {};
+        uint32_t cur_query_count                = 0;
+        uint32_t invocationCount_fs_query_count = 0;
     };
 } // namespace Meow
