@@ -488,7 +488,6 @@ namespace Meow
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 
-        diffuse_texture         = nullptr;
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
         m_per_frame_data.clear();
@@ -539,10 +538,6 @@ namespace Meow
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -50.0f);
         // glm::lookAt
-
-        // diffuse_texture =
-        //     g_runtime_global_context.resource_system->LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
-        //     4096});
     }
 
     /**
@@ -635,6 +630,12 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
+        // switch render pass
+        if (cur_render_pass == 0)
+            m_render_pass_ptr = &m_deferred_pass;
+        else if (cur_render_pass == 1)
+            m_render_pass_ptr = &m_forward_pass;
+
         m_render_pass_ptr->UpdateUniformBuffer();
 
         // ------------------- ImGui -------------------
@@ -649,6 +650,8 @@ namespace Meow
         ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("MeowEngine");
+
+        ImGui::Combo("Current Render Pass", &cur_render_pass, render_pass_names.data(), render_pass_names.size());
 
         m_render_pass_ptr->UpdateGUI();
 

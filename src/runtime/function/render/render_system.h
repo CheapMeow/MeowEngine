@@ -123,7 +123,7 @@ namespace Meow
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
         vk::raii::RenderPass     m_imgui_pass            = nullptr;
 
-        // TODO: temp texture
-        std::shared_ptr<ImageData> diffuse_texture = nullptr;
+        int                      cur_render_pass   = 0;
+        std::vector<const char*> render_pass_names = {"Deferred", "Forward"};
     };
 } // namespace Meow

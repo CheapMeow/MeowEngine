@@ -212,6 +212,7 @@ namespace Meow
     void ForwardPass::UpdateGUI()
     {
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
     }
 
     void ForwardPass::Draw(vk::raii::CommandBuffer const& command_buffer)
