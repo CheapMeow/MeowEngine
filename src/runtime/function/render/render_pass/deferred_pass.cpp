@@ -32,7 +32,7 @@ namespace Meow
                                              color_format,                              /* format */
                                              sample_count,                              /* samples */
                                              vk::AttachmentLoadOp::eClear,              /* loadOp */
-                                             vk::AttachmentStoreOp::eDontCare,          /* storeOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
                                              vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
                                              vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
                                              vk::ImageLayout::eUndefined,               /* initialLayout */
@@ -42,7 +42,7 @@ namespace Meow
                                              vk::Format::eR8G8B8A8Unorm,                /* format */
                                              sample_count,                              /* samples */
                                              vk::AttachmentLoadOp::eClear,              /* loadOp */
-                                             vk::AttachmentStoreOp::eDontCare,          /* storeOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
                                              vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
                                              vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
                                              vk::ImageLayout::eUndefined,               /* initialLayout */
@@ -52,9 +52,9 @@ namespace Meow
                                              depth_format,                                     /* format */
                                              sample_count,                                     /* samples */
                                              vk::AttachmentLoadOp::eClear,                     /* loadOp */
-                                             vk::AttachmentStoreOp::eDontCare,                 /* storeOp */
-                                             vk::AttachmentLoadOp::eDontCare,                  /* stencilLoadOp */
-                                             vk::AttachmentStoreOp::eDontCare,                 /* stencilStoreOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* storeOp */
+                                             vk::AttachmentLoadOp::eClear,                     /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* stencilStoreOp */
                                              vk::ImageLayout::eUndefined,                      /* initialLayout */
                                              vk::ImageLayout::eDepthStencilAttachmentOptimal); /* finalLayout */
 
@@ -186,7 +186,7 @@ namespace Meow
 
         quad_mat         = Material(physical_device, device, quad_shader_ptr);
         quad_mat.subpass = 1;
-        quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,

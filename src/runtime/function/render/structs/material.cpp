@@ -135,14 +135,14 @@ namespace Meow
         vk::StencilOpState stencil_op_state(
             vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::StencilOp::eKeep, vk::CompareOp::eAlways);
         vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info(
-            vk::PipelineDepthStencilStateCreateFlags(),
-            depth_buffered,
-            depth_buffered,
-            vk::CompareOp::eLessOrEqual,
-            false,
-            false,
-            stencil_op_state,
-            stencil_op_state);
+            vk::PipelineDepthStencilStateCreateFlags(), /* flags */
+            depth_buffered,                             /* depthTestEnable */
+            depth_buffered,                             /* depthWriteEnable */
+            vk::CompareOp::eLessOrEqual,                /* depthCompareOp */
+            false,                                      /* depthBoundsTestEnable */
+            false,                                      /* stencilTestEnable */
+            stencil_op_state,                           /* front */
+            stencil_op_state);                          /* back */
 
         vk::ColorComponentFlags color_component_flags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
