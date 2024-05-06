@@ -10,6 +10,7 @@
 #include "function/system.h"
 #include "function/window/window.h"
 #include "render_pass/deferred_pass.h"
+#include "render_pass/forward_pass.h"
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -113,13 +114,18 @@ namespace Meow
         UploadContext               m_upload_context       = nullptr;
         DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         DeferredPass                m_deferred_pass        = nullptr;
+        ForwardPass                 m_forward_pass         = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
+        vk::raii::RenderPass     m_imgui_pass            = nullptr;
 
         // TODO: temp texture
         std::shared_ptr<ImageData> diffuse_texture = nullptr;
+
+        // debug
+        int cur_render_pass = 0;
 
         // debug
         vk::raii::QueryPool m_query_pool = nullptr;

@@ -29,6 +29,7 @@ set(RUNTIME_HEADER_FILES
     function/input/buttons/mouse_input_button.h
     function/render/render_system.h
     function/render/render_pass/deferred_pass.h
+    function/render/render_pass/forward_pass.h
     function/render/structs/buffer_data.h
     function/render/structs/descriptor_allocator_growable.h
     function/render/structs/image_data.h
@@ -67,6 +68,7 @@ set(RUNTIME_SOURCE_FILES
     function/input/buttons/mouse_input_button.cpp
     function/render/render_system.cpp
     function/render/render_pass/deferred_pass.cpp
+    function/render/render_pass/forward_pass.cpp
     function/render/structs/descriptor_allocator_growable.cpp
     function/render/structs/image_data.cpp
     function/render/structs/material.cpp

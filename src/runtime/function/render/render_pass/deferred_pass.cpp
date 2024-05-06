@@ -129,43 +129,6 @@ namespace Meow
 
         render_pass = vk::raii::RenderPass(device, render_pass_create_info);
 
-        // ImGui render pass
-
-        // swap chain attachment
-        vk::AttachmentDescription imgui_attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
-                                                               color_format,                     /* format */
-                                                               sample_count,                     /* samples */
-                                                               vk::AttachmentLoadOp::eClear,     /* loadOp */
-                                                               vk::AttachmentStoreOp::eStore,    /* storeOp */
-                                                               vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
-                                                               vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                                                               vk::ImageLayout::eUndefined,      /* initialLayout */
-                                                               vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
-
-        vk::SubpassDescription imgui_subpass_description(
-            vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
-                                   vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
-                                   {},                               /* pInputAttachments */
-                                   swapchain_attachment_reference,   /* pColorAttachments */
-                                   {},                               /* pResolveAttachments */
-                                   {},                               /* pDepthStencilAttachment */
-                                   nullptr));                        /* pPreserveAttachments */
-
-        vk::SubpassDependency imgui_dependency(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
-                                               0,                                                 /* dstSubpass */
-                                               vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
-                                               vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
-                                               {},                                                /* srcAccessMask */
-                                               vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
-                                               {});                                               /* dependencyFlags */
-
-        vk::RenderPassCreateInfo imgui_render_pass_create_info(vk::RenderPassCreateFlags(),  /* flags */
-                                                               imgui_attachment_description, /* pAttachments */
-                                                               imgui_subpass_description,    /* pSubpasses */
-                                                               imgui_dependency);            /* pDependencies */
-
-        imgui_pass = vk::raii::RenderPass(device, imgui_render_pass_create_info);
-
         // Create Material
 
         std::shared_ptr<Shader> obj_shader_ptr = std::make_shared<Shader>(physical_device,

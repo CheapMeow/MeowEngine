@@ -1,0 +1,148 @@
+#include "forward_pass.h"
+#include "function/global/runtime_global_context.h"
+
+namespace Meow
+{
+    ForwardPass::ForwardPass(vk::raii::PhysicalDevice const& physical_device,
+                             vk::raii::Device const&         device,
+                             SurfaceData&                    surface_data,
+                             vk::raii::CommandPool const&    command_pool,
+                             vk::raii::Queue const&          queue,
+                             DescriptorAllocatorGrowable&    m_descriptor_allocator)
+    {
+        // Create a set to store all information of attachments
+
+        vk::Format color_format =
+            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
+        assert(color_format != vk::Format::eUndefined);
+
+        std::vector<vk::AttachmentDescription> attachment_descriptions;
+        // swap chain attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
+                                             color_format,                     /* format */
+                                             sample_count,                     /* samples */
+                                             vk::AttachmentLoadOp::eClear,     /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,    /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,      /* initialLayout */
+                                             vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+        // depth attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
+                                             depth_format,                                     /* format */
+                                             sample_count,                                     /* samples */
+                                             vk::AttachmentLoadOp::eClear,                     /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* storeOp */
+                                             vk::AttachmentLoadOp::eClear,                     /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,                      /* initialLayout */
+                                             vk::ImageLayout::eDepthStencilAttachmentOptimal); /* finalLayout */
+
+        // Create reference to attachment information set
+
+        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+        vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+        // Create subpass
+
+        std::vector<vk::SubpassDescription> subpass_descriptions;
+        // obj2attachment pass
+        subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                              vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                              {},                               /* pInputAttachments */
+                                                              swapchain_attachment_reference,   /* pColorAttachments */
+                                                              {},                          /* pResolveAttachments */
+                                                              &depth_attachment_reference, /* pDepthStencilAttachment */
+                                                              nullptr));                   /* pPreserveAttachments */
+
+        // Create subpass dependency
+
+        std::vector<vk::SubpassDependency> dependencies;
+        // externel -> forward pass
+        dependencies.emplace_back(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+                                  0,                                                 /* dstSubpass */
+                                  vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
+                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+                                  vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
+                                  vk::AccessFlagBits::eColorAttachmentWrite |
+                                      vk::AccessFlagBits::eColorAttachmentRead, /* dstAccessMask */
+                                  vk::DependencyFlagBits::eByRegion);           /* dependencyFlags */
+        // forward -> externel
+        dependencies.emplace_back(0,                                                 /* srcSubpass */
+                                  VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                                  vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
+                                  vk::AccessFlagBits::eColorAttachmentWrite |
+                                      vk::AccessFlagBits::eColorAttachmentRead, /* srcAccessMask */
+                                  vk::AccessFlagBits::eMemoryRead,              /* dstAccessMask */
+                                  vk::DependencyFlagBits::eByRegion);           /* dependencyFlags */
+
+        // Create render pass
+        vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
+                                                         attachment_descriptions,     /* pAttachments */
+                                                         subpass_descriptions,        /* pSubpasses */
+                                                         dependencies);               /* pDependencies */
+
+        render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+
+        // Create Material
+
+        std::shared_ptr<Shader> mesh_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                                           device,
+                                                                           m_descriptor_allocator,
+                                                                           "builtin/shaders/mesh.vert.spv",
+                                                                           "builtin/shaders/mesh.frag.spv");
+
+        forward_mat = Material(physical_device, device, mesh_shader_ptr);
+        forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+
+        clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
+        clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+    }
+
+    void ForwardPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
+                                          vk::raii::Device const&                 device,
+                                          vk::raii::CommandBuffer const&          command_buffer,
+                                          SurfaceData&                            surface_data,
+                                          std::vector<vk::raii::ImageView> const& swapchain_image_views,
+                                          vk::Extent2D const&                     extent)
+    {
+        // clear
+
+        framebuffers.clear();
+
+        m_depth_attachment = nullptr;
+
+        // Create attachment
+
+        m_depth_attachment = ImageData::CreateAttachment(physical_device,
+                                                         device,
+                                                         command_buffer,
+                                                         depth_format,
+                                                         extent,
+                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                                                         vk::ImageAspectFlagBits::eDepth,
+                                                         {},
+                                                         false);
+
+        // Provide attachment information to frame buffer
+
+        vk::ImageView attachments[2];
+        attachments[1] = *m_depth_attachment->image_view;
+
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          2,                            /* attachmentCount */
+                                                          attachments,                  /* pAttachments */
+                                                          extent.width,                 /* width */
+                                                          extent.height,                /* height */
+                                                          1);                           /* layers */
+
+        framebuffers.reserve(swapchain_image_views.size());
+        for (auto const& imageView : swapchain_image_views)
+        {
+            attachments[0] = *imageView;
+            framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
+        }
+    }
+} // namespace Meow

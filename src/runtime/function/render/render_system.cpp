@@ -292,6 +292,57 @@ namespace Meow
                                        m_descriptor_allocator);
         m_deferred_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+
+        m_forward_pass = ForwardPass(m_gpu,
+                                     m_logical_device,
+                                     m_surface_data,
+                                     m_upload_context.command_pool,
+                                     m_graphics_queue,
+                                     m_descriptor_allocator);
+        m_forward_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+
+        // ImGui render pass
+
+        vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        assert(color_format != vk::Format::eUndefined);
+
+        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+        // swap chain attachment
+        vk::AttachmentDescription imgui_attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
+                                                               color_format,                     /* format */
+                                                               vk::SampleCountFlagBits::e1,      /* samples */
+                                                               vk::AttachmentLoadOp::eClear,     /* loadOp */
+                                                               vk::AttachmentStoreOp::eStore,    /* storeOp */
+                                                               vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                                                               vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                                                               vk::ImageLayout::eUndefined,      /* initialLayout */
+                                                               vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+
+        vk::SubpassDescription imgui_subpass_description(
+            vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                   vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                   {},                               /* pInputAttachments */
+                                   swapchain_attachment_reference,   /* pColorAttachments */
+                                   {},                               /* pResolveAttachments */
+                                   {},                               /* pDepthStencilAttachment */
+                                   nullptr));                        /* pPreserveAttachments */
+
+        vk::SubpassDependency imgui_dependency(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+                                               0,                                                 /* dstSubpass */
+                                               vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                                               vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+                                               {},                                                /* srcAccessMask */
+                                               vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                                               {});                                               /* dependencyFlags */
+
+        vk::RenderPassCreateInfo imgui_render_pass_create_info(vk::RenderPassCreateFlags(),  /* flags */
+                                                               imgui_attachment_description, /* pAttachments */
+                                                               imgui_subpass_description,    /* pSubpasses */
+                                                               imgui_dependency);            /* pDependencies */
+
+        m_imgui_pass = vk::raii::RenderPass(m_logical_device, imgui_render_pass_create_info);
     }
 
     void RenderSystem::InitImGui()
@@ -356,7 +407,7 @@ namespace Meow
         init_info.MinImageCount             = k_max_frames_in_flight;
         init_info.ImageCount                = k_max_frames_in_flight;
         init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
-        init_info.RenderPass                = *m_deferred_pass.imgui_pass;
+        init_info.RenderPass                = *m_imgui_pass;
 
         ImGui_ImplVulkan_Init(&init_info);
 
@@ -400,6 +451,8 @@ namespace Meow
         CreateSwapChian();
         m_deferred_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         CreatePerFrameData();
         InitImGui();
     }
@@ -438,8 +491,10 @@ namespace Meow
 
         m_query_pool            = nullptr;
         diffuse_texture         = nullptr;
+        m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
         m_per_frame_data.clear();
+        m_forward_pass         = nullptr;
         m_deferred_pass        = nullptr;
         m_descriptor_allocator = nullptr;
         m_upload_context       = nullptr;

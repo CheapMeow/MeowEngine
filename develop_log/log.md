@@ -31,6 +31,7 @@
   - [从 RAII 类转型成非 RAII 类](#从-raii-类转型成非-raii-类)
   - [Ring buffer 的大小](#ring-buffer-的大小)
   - [在 stl 容器中使用 vk 类](#在-stl-容器中使用-vk-类)
+  - [使用之前先 Reset](#使用之前先-reset)
 
 ## 构建
 
@@ -813,3 +814,7 @@ for (size_t i = 0; i < raii_descriptor_sets.size(); ++i)
 ### 在 stl 容器中使用 vk 类
 
 有些 vk 类没有实现移动构造和拷贝构造，用于 stl 容器中会，在容器扩容的时候会丢失数据，例如 `vk::WriteDescriptorSet`
+
+### 使用之前先 Reset
+
+比如 `QueryPool` 我确实是在 BeginQuery 之前 Reset 了，但是我是单独开一个 command buffer 的 begin 和 end 包裹这个 Reset，不是和开启 render pass 的 command buffer 的 begin 和 end 一起，这也会出现错误，还必须要在一起
