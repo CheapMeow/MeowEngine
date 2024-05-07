@@ -210,20 +210,20 @@ namespace Meow
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
-            m_LightDatas.lights[i].position.x = glm::linearRand<float>(-10.0f, 10.0f);
-            m_LightDatas.lights[i].position.y = glm::linearRand<float>(-10.0f, 10.0f);
-            m_LightDatas.lights[i].position.z = glm::linearRand<float>(-10.0f, 10.0f);
+            m_LightDatas.lights[i].position.x = glm::linearRand<float>(-2.0f, 2.0f);
+            m_LightDatas.lights[i].position.y = glm::linearRand<float>(-2.0f, 2.0f);
+            m_LightDatas.lights[i].position.z = glm::linearRand<float>(-2.0f, 2.0f);
 
-            m_LightDatas.lights[i].color.x = glm::linearRand<float>(0.0f, 1.0f);
-            m_LightDatas.lights[i].color.y = glm::linearRand<float>(0.0f, 1.0f);
-            m_LightDatas.lights[i].color.z = glm::linearRand<float>(0.0f, 1.0f);
+            m_LightDatas.lights[i].color.x = glm::linearRand<float>(0.0f, 0.5f);
+            m_LightDatas.lights[i].color.y = glm::linearRand<float>(0.0f, 0.5f);
+            m_LightDatas.lights[i].color.z = glm::linearRand<float>(0.0f, 0.5f);
 
-            m_LightDatas.lights[i].radius = glm::linearRand<float>(50.0f, 200.0f);
+            m_LightDatas.lights[i].radius = glm::linearRand<float>(0.0f, 2.0f);
 
             m_LightInfos.position[i]  = m_LightDatas.lights[i].position;
             m_LightInfos.direction[i] = m_LightInfos.position[i];
             m_LightInfos.direction[i] = glm::normalize(m_LightInfos.direction[i]);
-            m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(0.0f, 5.0f);
+            m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(1.0f, 2.0f);
         }
     }
 
@@ -372,13 +372,10 @@ namespace Meow
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
-            float bias = glm::sin(Time::GetTime() * m_LightInfos.speed[i]) / 5.0f;
-            m_LightDatas.lights[i].position.x =
-                m_LightInfos.position[i].x + bias * m_LightInfos.direction[i].x * 500.0f;
-            m_LightDatas.lights[i].position.y =
-                m_LightInfos.position[i].y + bias * m_LightInfos.direction[i].y * 500.0f;
-            m_LightDatas.lights[i].position.z =
-                m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z * 500.0f;
+            float bias                        = glm::sin(Time::GetTime() * m_LightInfos.speed[i]) / 5.0f;
+            m_LightDatas.lights[i].position.x = m_LightInfos.position[i].x + bias * m_LightInfos.direction[i].x;
+            m_LightDatas.lights[i].position.y = m_LightInfos.position[i].y + bias * m_LightInfos.direction[i].y;
+            m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
         m_quad_mat.BeginFrame();
