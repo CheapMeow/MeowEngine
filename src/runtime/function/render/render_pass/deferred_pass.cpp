@@ -1,5 +1,6 @@
 #include "deferred_pass.h"
 
+#include "core/time/time.h"
 #include "function/components/3d/camera/camera_3d_component.h"
 #include "function/components/3d/model/model_component.h"
 #include "function/components/3d/transform/transform_3d_component.h"
@@ -7,6 +8,7 @@
 #include "function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
 #include <imgui.h>
 
 namespace Meow
@@ -56,6 +58,16 @@ namespace Meow
                                              vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
                                              vk::ImageLayout::eUndefined,               /* initialLayout */
                                              vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
+        // position attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                             vk::Format::eR16G16B16A16Sfloat,           /* format */
+                                             m_sample_count,                            /* samples */
+                                             vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,               /* initialLayout */
+                                             vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
         // depth attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
                                              m_depth_format,                                   /* format */
@@ -74,13 +86,15 @@ namespace Meow
         std::vector<vk::AttachmentReference> color_attachment_references;
         color_attachment_references.emplace_back(1, vk::ImageLayout::eColorAttachmentOptimal);
         color_attachment_references.emplace_back(2, vk::ImageLayout::eColorAttachmentOptimal);
+        color_attachment_references.emplace_back(3, vk::ImageLayout::eColorAttachmentOptimal);
 
-        vk::AttachmentReference depth_attachment_reference(3, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        vk::AttachmentReference depth_attachment_reference(4, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
         std::vector<vk::AttachmentReference> input_attachment_references;
         input_attachment_references.emplace_back(1, vk::ImageLayout::eShaderReadOnlyOptimal);
         input_attachment_references.emplace_back(2, vk::ImageLayout::eShaderReadOnlyOptimal);
         input_attachment_references.emplace_back(3, vk::ImageLayout::eShaderReadOnlyOptimal);
+        input_attachment_references.emplace_back(4, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         // Create subpass
 
@@ -147,7 +161,7 @@ namespace Meow
                                                                           "builtin/shaders/obj.frag.spv");
 
         m_obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
-        m_obj2attachment_mat.color_attachment_count = 2;
+        m_obj2attachment_mat.color_attachment_count = 3;
         m_obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
         std::shared_ptr<Shader> quad_shader_ptr = std::make_shared<Shader>(physical_device,
@@ -173,11 +187,12 @@ namespace Meow
                                        indices,
                                        m_quad_mat.shader_ptr->per_vertex_attributes));
 
-        clear_values.resize(4);
+        clear_values.resize(5);
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[2].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
-        clear_values[3].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+        clear_values[3].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
 
@@ -190,6 +205,26 @@ namespace Meow
 
         enable_query = true;
         query_pool   = device.createQueryPool(query_pool_create_info, nullptr);
+
+        // init light
+
+        for (int32_t i = 0; i < k_num_lights; ++i)
+        {
+            m_LightDatas.lights[i].position.x = glm::linearRand<float>(-10.0f, 10.0f);
+            m_LightDatas.lights[i].position.y = glm::linearRand<float>(-10.0f, 10.0f);
+            m_LightDatas.lights[i].position.z = glm::linearRand<float>(-10.0f, 10.0f);
+
+            m_LightDatas.lights[i].color.x = glm::linearRand<float>(0.0f, 1.0f);
+            m_LightDatas.lights[i].color.y = glm::linearRand<float>(0.0f, 1.0f);
+            m_LightDatas.lights[i].color.z = glm::linearRand<float>(0.0f, 1.0f);
+
+            m_LightDatas.lights[i].radius = glm::linearRand<float>(50.0f, 200.0f);
+
+            m_LightInfos.position[i]  = m_LightDatas.lights[i].position;
+            m_LightInfos.direction[i] = m_LightInfos.position[i];
+            m_LightInfos.direction[i] = glm::normalize(m_LightInfos.direction[i]);
+            m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(0.0f, 5.0f);
+        }
     }
 
     void DeferredPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
@@ -203,9 +238,10 @@ namespace Meow
 
         framebuffers.clear();
 
-        m_color_attachment  = nullptr;
-        m_normal_attachment = nullptr;
-        m_depth_attachment  = nullptr;
+        m_color_attachment    = nullptr;
+        m_normal_attachment   = nullptr;
+        m_position_attachment = nullptr;
+        m_depth_attachment    = nullptr;
 
         // Create attachment
 
@@ -234,6 +270,17 @@ namespace Meow
                                                           {},
                                                           false);
 
+        m_position_attachment = ImageData::CreateAttachment(physical_device,
+                                                            device,
+                                                            command_buffer,
+                                                            vk::Format::eR16G16B16A16Sfloat,
+                                                            extent,
+                                                            vk::ImageUsageFlagBits::eColorAttachment |
+                                                                vk::ImageUsageFlagBits::eInputAttachment,
+                                                            vk::ImageAspectFlagBits::eColor,
+                                                            {},
+                                                            false);
+
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
                                                          command_buffer,
@@ -247,14 +294,15 @@ namespace Meow
 
         // Provide attachment information to frame buffer
 
-        vk::ImageView attachments[4];
+        vk::ImageView attachments[5];
         attachments[1] = *m_color_attachment->image_view;
         attachments[2] = *m_normal_attachment->image_view;
-        attachments[3] = *m_depth_attachment->image_view;
+        attachments[3] = *m_position_attachment->image_view;
+        attachments[4] = *m_depth_attachment->image_view;
 
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
-                                                          4,                            /* attachmentCount */
+                                                          5,                            /* attachmentCount */
                                                           attachments,                  /* pAttachments */
                                                           extent.width,                 /* width */
                                                           extent.height,                /* height */
@@ -271,6 +319,7 @@ namespace Meow
 
         m_quad_mat.SetImage(device, "inputColor", *m_color_attachment);
         m_quad_mat.SetImage(device, "inputNormal", *m_normal_attachment);
+        m_quad_mat.SetImage(device, "inputPosition", *m_position_attachment);
         m_quad_mat.SetImage(device, "inputDepth", *m_depth_attachment);
     }
 
@@ -319,9 +368,22 @@ namespace Meow
         }
         m_obj2attachment_mat.EndFrame();
 
+        // update light
+
+        for (int32_t i = 0; i < k_num_lights; ++i)
+        {
+            float bias = glm::sin(Time::GetTime() * m_LightInfos.speed[i]) / 5.0f;
+            m_LightDatas.lights[i].position.x =
+                m_LightInfos.position[i].x + bias * m_LightInfos.direction[i].x * 500.0f;
+            m_LightDatas.lights[i].position.y =
+                m_LightInfos.position[i].y + bias * m_LightInfos.direction[i].y * 500.0f;
+            m_LightDatas.lights[i].position.z =
+                m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z * 500.0f;
+        }
+
         m_quad_mat.BeginFrame();
         m_quad_mat.BeginObject();
-        m_quad_mat.SetLocalUniformBuffer("param", &debug_para, sizeof(debug_para));
+        m_quad_mat.SetLocalUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
         m_quad_mat.EndObject();
         m_quad_mat.EndFrame();
     }

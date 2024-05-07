@@ -7,9 +7,30 @@
 
 namespace Meow
 {
+    const int k_num_lights = 64;
+
+    struct PointLight
+    {
+        glm::vec4 position;
+        glm::vec3 color;
+        float     radius;
+    };
+
+    struct LightSpawnBlock
+    {
+        glm::vec3 position[k_num_lights];
+        glm::vec3 direction[k_num_lights];
+        float     speed[k_num_lights];
+    };
+
+    struct LightDataBlock
+    {
+        PointLight lights[k_num_lights];
+    };
+
     struct AttachmentParamBlock
     {
-        float zNear           = 300.0f;
+        float zNear           = 5.0f;
         float zFar            = 3000.0f;
         float padding         = 0.0f;
         int   attachmentIndex = 0;
@@ -39,8 +60,11 @@ namespace Meow
             std::swap(m_color_attachment, rhs.m_color_attachment);
             std::swap(m_normal_attachment, rhs.m_normal_attachment);
             std::swap(m_depth_attachment, rhs.m_depth_attachment);
+            std::swap(m_position_attachment, rhs.m_position_attachment);
             std::swap(query_pool, rhs.query_pool);
             enable_query = rhs.enable_query;
+            std::swap(m_LightDatas, rhs.m_LightDatas);
+            std::swap(m_LightInfos, rhs.m_LightInfos);
         }
 
         DeferredPass& operator=(DeferredPass&& rhs) noexcept
@@ -61,8 +85,11 @@ namespace Meow
                 std::swap(m_color_attachment, rhs.m_color_attachment);
                 std::swap(m_normal_attachment, rhs.m_normal_attachment);
                 std::swap(m_depth_attachment, rhs.m_depth_attachment);
+                std::swap(m_position_attachment, rhs.m_position_attachment);
                 std::swap(query_pool, rhs.query_pool);
                 enable_query = rhs.enable_query;
+                std::swap(m_LightDatas, rhs.m_LightDatas);
+                std::swap(m_LightInfos, rhs.m_LightInfos);
             }
             return *this;
         }
@@ -106,10 +133,14 @@ namespace Meow
         Material m_quad_mat           = nullptr;
         Model    m_quad_model         = nullptr;
 
-        std::shared_ptr<ImageData> m_color_attachment  = nullptr;
-        std::shared_ptr<ImageData> m_normal_attachment = nullptr;
+        std::shared_ptr<ImageData> m_color_attachment    = nullptr;
+        std::shared_ptr<ImageData> m_normal_attachment   = nullptr;
+        std::shared_ptr<ImageData> m_position_attachment = nullptr;
 
         AttachmentParamBlock     debug_para;
         std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
+
+        LightDataBlock  m_LightDatas;
+        LightSpawnBlock m_LightInfos;
     };
 } // namespace Meow
