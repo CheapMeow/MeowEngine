@@ -27,6 +27,4 @@ void main()
 	} else {
 		outFragColor = vec4(inUV0, 0.0, 1.0);
 	}
-
-	outFragColor = subpassLoad(inputColor);
 }
