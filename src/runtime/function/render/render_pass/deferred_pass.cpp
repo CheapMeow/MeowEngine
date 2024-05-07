@@ -174,9 +174,9 @@ namespace Meow
                                        m_quad_mat.shader_ptr->per_vertex_attributes));
 
         clear_values.resize(4);
-        clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
-        clear_values[1].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
-        clear_values[2].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
+        clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values[1].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values[2].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[3].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
