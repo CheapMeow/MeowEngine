@@ -9,10 +9,10 @@ namespace Meow
 {
     struct AttachmentParamBlock
     {
-        float zNear;
-        float zFar;
-        float padding;
-        int   attachmentIndex;
+        float zNear           = 300.0f;
+        float zFar            = 3000.0f;
+        float padding         = 0.0f;
+        int   attachmentIndex = 0;
     };
 
     class DeferredPass : public RenderPass

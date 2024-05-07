@@ -279,7 +279,7 @@ namespace Meow
         UBOData ubo_data;
 
         for (auto [entity, transfrom_component, camera_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, const Camera3DComponent>().each())
+             g_runtime_global_context.registry.view<const Transform3DComponent, Camera3DComponent>().each())
         {
             if (camera_component.is_main_camera)
             {
@@ -288,6 +288,9 @@ namespace Meow
                 glm::mat4 view = glm::mat4(1.0f);
                 view           = glm::mat4_cast(glm::conjugate(transfrom_component.rotation)) * view;
                 view           = glm::translate(view, -transfrom_component.position);
+
+                camera_component.near_plane = debug_para.zNear;
+                camera_component.far_plane  = debug_para.zFar;
 
                 ubo_data.view       = view;
                 ubo_data.projection = glm::perspectiveLH_ZO(camera_component.field_of_view,
