@@ -645,9 +645,6 @@ namespace Meow
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code
-        // to learn more about Dear ImGui!).
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("MeowEngine");
 
@@ -672,6 +669,7 @@ namespace Meow
             // Specially for docking branch
             // Update and Render additional Platform Windows
             ImGuiIO& io = ImGui::GetIO();
+            (void)io;
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
                 ImGui::UpdatePlatformWindows();
