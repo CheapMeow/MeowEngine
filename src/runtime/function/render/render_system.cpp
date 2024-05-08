@@ -645,14 +645,7 @@ namespace Meow
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
-        ImGui::Begin("MeowEngine");
-
-        ImGui::Combo("Current Render Pass", &cur_render_pass, render_pass_names.data(), render_pass_names.size());
-
         m_render_pass_ptr->UpdateGUI();
-
-        ImGui::End();
 
         // ------------------- render -------------------
 

@@ -28,14 +28,6 @@ namespace Meow
         PointLight lights[k_num_lights];
     };
 
-    struct AttachmentParamBlock
-    {
-        float zNear           = 5.0f;
-        float zFar            = 3000.0f;
-        float padding         = 0.0f;
-        int   attachmentIndex = 0;
-    };
-
     class DeferredPass : public RenderPass
     {
     public:
@@ -49,8 +41,6 @@ namespace Meow
             std::swap(m_obj2attachment_mat, rhs.m_obj2attachment_mat);
             std::swap(m_quad_mat, rhs.m_quad_mat);
             std::swap(m_quad_model, rhs.m_quad_model);
-            debug_para = rhs.debug_para;
-            std::swap(debug_names, rhs.debug_names);
             std::swap(render_pass, rhs.render_pass);
             std::swap(framebuffers, rhs.framebuffers);
             std::swap(clear_values, rhs.clear_values);
@@ -74,8 +64,6 @@ namespace Meow
                 std::swap(m_obj2attachment_mat, rhs.m_obj2attachment_mat);
                 std::swap(m_quad_mat, rhs.m_quad_mat);
                 std::swap(m_quad_model, rhs.m_quad_model);
-                debug_para = rhs.debug_para;
-                std::swap(debug_names, rhs.debug_names);
                 std::swap(render_pass, rhs.render_pass);
                 std::swap(framebuffers, rhs.framebuffers);
                 std::swap(clear_values, rhs.clear_values);
@@ -136,9 +124,6 @@ namespace Meow
         std::shared_ptr<ImageData> m_color_attachment    = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment   = nullptr;
         std::shared_ptr<ImageData> m_position_attachment = nullptr;
-
-        AttachmentParamBlock     debug_para;
-        std::vector<const char*> debug_names = {"Color", "Depth", "Normal"};
 
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;

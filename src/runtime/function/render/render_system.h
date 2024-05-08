@@ -69,6 +69,9 @@ namespace Meow
 
         std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
 
+        int                      cur_render_pass   = 0;
+        std::vector<const char*> render_pass_names = {"Deferred", "Forward"};
+
     private:
         void CreateVulkanInstance();
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
@@ -122,8 +125,5 @@ namespace Meow
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
         vk::raii::RenderPass     m_imgui_pass            = nullptr;
-
-        int                      cur_render_pass   = 0;
-        std::vector<const char*> render_pass_names = {"Deferred", "Forward"};
     };
 } // namespace Meow

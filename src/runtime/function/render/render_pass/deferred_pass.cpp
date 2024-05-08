@@ -338,9 +338,6 @@ namespace Meow
                 view           = glm::mat4_cast(glm::conjugate(transfrom_component.rotation)) * view;
                 view           = glm::translate(view, -transfrom_component.position);
 
-                camera_component.near_plane = debug_para.zNear;
-                camera_component.far_plane  = debug_para.zFar;
-
                 ubo_data.view       = view;
                 ubo_data.projection = glm::perspectiveLH_ZO(camera_component.field_of_view,
                                                             (float)window_size[0] / (float)window_size[1],
@@ -387,19 +384,19 @@ namespace Meow
 
     void DeferredPass::UpdateGUI()
     {
-        // debug
-        ImGui::Combo("Attachment", &debug_para.attachmentIndex, debug_names.data(), debug_names.size());
-        ImGui::SliderFloat("Z-Near", &debug_para.zNear, 0.1f, 3000.0f);
-        ImGui::SliderFloat("Z-Far", &debug_para.zFar, 0.1f, 6000.0f);
+        ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Deferred Pass");
 
-        if (debug_para.zNear >= debug_para.zFar)
-        {
-            debug_para.zNear = debug_para.zFar * 0.5f;
-        }
+        ImGui::Combo("Current Render Pass",
+                     &g_runtime_global_context.render_system->cur_render_pass,
+                     g_runtime_global_context.render_system->render_pass_names.data(),
+                     g_runtime_global_context.render_system->render_pass_names.size());
 
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
         ImGui::Text("invocationCount_fs = %d", invocationCount_fs_query_count);
+
+        ImGui::End();
     }
 
     void DeferredPass::Draw(vk::raii::CommandBuffer const& command_buffer)
