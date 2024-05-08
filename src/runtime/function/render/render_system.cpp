@@ -417,10 +417,14 @@ namespace Meow
 
         CreateSurface();
         CreateSwapChian();
-        m_render_pass_ptr->RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         CreatePerFrameData();
         InitImGui();
+        m_deferred_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+        m_imgui_pass.RefreshFrameBuffers(
+            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
     }
 
     RenderSystem::RenderSystem()
