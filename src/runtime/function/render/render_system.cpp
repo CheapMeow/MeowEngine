@@ -301,14 +301,48 @@ namespace Meow
         m_forward_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
 
-        m_imgui_pass = ImguiPass(m_gpu,
-                                 m_logical_device,
-                                 m_surface_data,
-                                 m_upload_context.command_pool,
-                                 m_graphics_queue,
-                                 m_descriptor_allocator);
-        m_imgui_pass.RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+        // // ImGui render pass
+
+        // vk::Format color_format = PickSurfaceFormat((m_gpu).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        // assert(color_format != vk::Format::eUndefined);
+
+        // vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+        // // swap chain attachment
+        // vk::AttachmentDescription imgui_attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
+        //                                                        color_format,                     /* format */
+        //                                                        vk::SampleCountFlagBits::e1,      /* samples */
+        //                                                        vk::AttachmentLoadOp::eClear,     /* loadOp */
+        //                                                        vk::AttachmentStoreOp::eStore,    /* storeOp */
+        //                                                        vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+        //                                                        vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+        //                                                        vk::ImageLayout::eUndefined,      /* initialLayout */
+        //                                                        vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+
+        // vk::SubpassDescription imgui_subpass_description(
+        //     vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+        //                            vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+        //                            {},                               /* pInputAttachments */
+        //                            swapchain_attachment_reference,   /* pColorAttachments */
+        //                            {},                               /* pResolveAttachments */
+        //                            {},                               /* pDepthStencilAttachment */
+        //                            nullptr));                        /* pPreserveAttachments */
+
+        // vk::SubpassDependency imgui_dependency(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+        //                                        0,                                                 /* dstSubpass */
+        //                                        vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+        //                                        vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+        //                                        {},                                                /* srcAccessMask */
+        //                                        vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+        //                                        {});                                               /* dependencyFlags
+        //                                        */
+
+        // vk::RenderPassCreateInfo imgui_render_pass_create_info(vk::RenderPassCreateFlags(),  /* flags */
+        //                                                        imgui_attachment_description, /* pAttachments */
+        //                                                        imgui_subpass_description,    /* pSubpasses */
+        //                                                        imgui_dependency);            /* pDependencies */
+
+        // m_imgui_pass = vk::raii::RenderPass(m_logical_device, imgui_render_pass_create_info);
 
         m_render_pass_ptr = &m_deferred_pass;
     }
@@ -383,8 +417,10 @@ namespace Meow
         {
             // Use any command queue
             auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+            auto& cmd_pool       = per_frame_data.command_pool;
             auto& cmd_buffer     = per_frame_data.command_buffer;
 
+            cmd_pool.reset();
             cmd_buffer.begin({});
 
             ImGui_ImplVulkan_CreateFontsTexture();
@@ -395,7 +431,6 @@ namespace Meow
             m_graphics_queue.submit(submit_info);
 
             m_logical_device.waitIdle();
-            cmd_buffer.reset();
         }
     }
 
@@ -406,9 +441,9 @@ namespace Meow
 
         m_logical_device.waitIdle();
 
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
+        // ImGui_ImplVulkan_Shutdown();
+        // ImGui_ImplGlfw_Shutdown();
+        // ImGui::DestroyContext();
 
         m_per_frame_data.clear();
         m_swapchain_data = nullptr;
@@ -416,14 +451,10 @@ namespace Meow
 
         CreateSurface();
         CreateSwapChian();
-        m_forward_pass.RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
-        m_deferred_pass.RefreshFrameBuffers(
-            m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
-        m_imgui_pass.RefreshFrameBuffers(
+        m_render_pass_ptr->RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         CreatePerFrameData();
-        InitImGui();
+        // InitImGui();
     }
 
     RenderSystem::RenderSystem()
@@ -440,7 +471,7 @@ namespace Meow
         CreateDescriptorAllocator();
         CreatePerFrameData();
         CreateRenderPass();
-        InitImGui();
+        // InitImGui();
     }
 
     RenderSystem::~RenderSystem()
@@ -454,9 +485,9 @@ namespace Meow
         auto camera_view = g_runtime_global_context.registry.view<Transform3DComponent, Camera3DComponent>();
         g_runtime_global_context.registry.destroy(camera_view.begin(), camera_view.end());
 
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
+        // ImGui_ImplVulkan_Shutdown();
+        // ImGui_ImplGlfw_Shutdown();
+        // ImGui::DestroyContext();
 
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
@@ -510,23 +541,14 @@ namespace Meow
         // glm::lookAt
     }
 
-    void RenderSystem::Update(float frame_time)
+    /**
+     * @brief Begin command buffer and render pass. Set viewport and scissor.
+     */
+    bool RenderSystem::StartRenderpass()
     {
-        auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
-        auto& cmd_buffer                = per_frame_data.command_buffer;
-        auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
-        auto& render_finished_semaphore = per_frame_data.render_finished_semaphore;
-        auto& in_flight_fence           = per_frame_data.in_flight_fence;
-
-        // switch render pass
-        if (cur_render_pass == 0)
-            m_render_pass_ptr = &m_deferred_pass;
-        else if (cur_render_pass == 1)
-            m_render_pass_ptr = &m_forward_pass;
-
-        m_render_pass_ptr->UpdateUniformBuffer();
-
-        // ------------------- render -------------------
+        auto& per_frame_data           = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer               = per_frame_data.command_buffer;
+        auto& image_acquired_semaphore = per_frame_data.image_acquired_semaphore;
 
         vk::Result result;
         std::tie(result, m_current_image_index) =
@@ -536,7 +558,7 @@ namespace Meow
         {
             m_framebuffer_resized = false;
             RecreateSwapChain();
-            return;
+            return false;
         }
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
@@ -551,14 +573,32 @@ namespace Meow
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
+        // debug
+        // if (m_render_pass_ptr->enable_query)
+        //     cmd_buffer.resetQueryPool(*m_render_pass_ptr->query_pool, 0, 1);
+
+        // vk::RenderPassBeginInfo render_pass_begin_info(*m_render_pass_ptr->render_pass,
+        //                                                *m_render_pass_ptr->framebuffers[m_current_image_index],
+        //                                                vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent),
+        //                                                m_render_pass_ptr->clear_values);
+        // cmd_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+
         m_render_pass_ptr->Start(cmd_buffer, m_surface_data, m_current_frame_index);
-        m_render_pass_ptr->Draw(cmd_buffer);
-        m_render_pass_ptr->End(cmd_buffer);
+        return true;
+    }
 
-        // m_imgui_pass.Start(cmd_buffer, m_surface_data, m_current_frame_index);
-        // m_imgui_pass.Draw(cmd_buffer);
-        // m_imgui_pass.End(cmd_buffer);
+    /**
+     * @brief End render pass and command buffer. Submit graphics queue. Present.
+     */
+    void RenderSystem::EndRenderpass()
+    {
+        auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer                = per_frame_data.command_buffer;
+        auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
+        auto& render_finished_semaphore = per_frame_data.render_finished_semaphore;
+        auto& in_flight_fence           = per_frame_data.in_flight_fence;
 
+        cmd_buffer.endRenderPass();
         cmd_buffer.end();
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -573,8 +613,8 @@ namespace Meow
 
         vk::PresentInfoKHR present_info(
             *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
-        vk::Result result2 = m_present_queue.presentKHR(present_info);
-        switch (result2)
+        vk::Result result = m_present_queue.presentKHR(present_info);
+        switch (result)
         {
             case vk::Result::eSuccess:
                 break;
@@ -586,8 +626,56 @@ namespace Meow
         }
 
         m_current_frame_index = (m_current_frame_index + 1) % k_max_frames_in_flight;
+    }
 
-        m_render_pass_ptr->AfterRenderPass();
+    void RenderSystem::Update(float frame_time)
+    {
+        auto& per_frame_data = m_per_frame_data[m_current_frame_index];
+        auto& cmd_buffer     = per_frame_data.command_buffer;
+
+        // switch render pass
+        if (cur_render_pass == 0)
+            m_render_pass_ptr = &m_deferred_pass;
+        else if (cur_render_pass == 1)
+            m_render_pass_ptr = &m_forward_pass;
+
+        m_render_pass_ptr->UpdateUniformBuffer();
+
+        // ------------------- ImGui -------------------
+
+        // // Start the Dear ImGui frame
+        // ImGui_ImplVulkan_NewFrame();
+        // ImGui_ImplGlfw_NewFrame();
+        // ImGui::NewFrame();
+
+        // m_render_pass_ptr->UpdateGUI();
+
+        // ------------------- render -------------------
+
+        // TODO: Try UpdateUniformBuffer after Render pass begin
+        // UpdateUniformBuffer(ubo_data);
+
+        if (StartRenderpass())
+        {
+            m_render_pass_ptr->Draw(cmd_buffer);
+
+            // ImGui::Render();
+            // ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *cmd_buffer);
+
+            // // Specially for docking branch
+            // // Update and Render additional Platform Windows
+            // ImGuiIO& io = ImGui::GetIO();
+            // (void)io;
+            // if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            // {
+            //     ImGui::UpdatePlatformWindows();
+            //     ImGui::RenderPlatformWindowsDefault();
+            // }
+
+            EndRenderpass();
+
+            m_render_pass_ptr->AfterRenderPass();
+        }
     }
 
     std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& filepath)
