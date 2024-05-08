@@ -89,9 +89,6 @@ namespace Meow
         void InitImGui();
         void RecreateSwapChain();
 
-        bool StartRenderpass();
-        void EndRenderpass();
-
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
         const uint64_t                 k_fence_timeout              = 100000000;
         const uint32_t                 k_max_frames_in_flight       = 2;
