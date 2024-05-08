@@ -26,9 +26,13 @@ namespace Meow
 
         virtual void UpdateUniformBuffer() {}
 
-        virtual void UpdateGUI() {}
+        virtual void Start(vk::raii::CommandBuffer const& command_buffer,
+                           Meow::SurfaceData const&       surface_data,
+                           uint32_t                       current_frame_index);
 
         virtual void Draw(vk::raii::CommandBuffer const& command_buffer) {}
+
+        virtual void End(vk::raii::CommandBuffer const& command_buffer) { command_buffer.endRenderPass(); }
 
         virtual void AfterRenderPass() {}
 

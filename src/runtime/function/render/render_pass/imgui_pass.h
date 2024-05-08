@@ -6,17 +6,16 @@
 
 namespace Meow
 {
-    class ForwardPass : public RenderPass
+    class ImguiPass : public RenderPass
     {
     public:
-        ForwardPass(std::nullptr_t)
+        ImguiPass(std::nullptr_t)
             : RenderPass(nullptr)
         {}
 
-        ForwardPass(ForwardPass&& rhs) noexcept
+        ImguiPass(ImguiPass&& rhs) noexcept
             : RenderPass(nullptr)
         {
-            std::swap(m_forward_mat, rhs.m_forward_mat);
             std::swap(render_pass, rhs.render_pass);
             std::swap(framebuffers, rhs.framebuffers);
             std::swap(clear_values, rhs.clear_values);
@@ -28,11 +27,10 @@ namespace Meow
             enable_query = rhs.enable_query;
         }
 
-        ForwardPass& operator=(ForwardPass&& rhs) noexcept
+        ImguiPass& operator=(ImguiPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                std::swap(m_forward_mat, rhs.m_forward_mat);
                 std::swap(render_pass, rhs.render_pass);
                 std::swap(framebuffers, rhs.framebuffers);
                 std::swap(clear_values, rhs.clear_values);
@@ -46,17 +44,16 @@ namespace Meow
             return *this;
         }
 
-        ForwardPass(vk::raii::PhysicalDevice const& physical_device,
-                    vk::raii::Device const&         device,
-                    SurfaceData&                    surface_data,
-                    vk::raii::CommandPool const&    command_pool,
-                    vk::raii::Queue const&          queue,
-                    DescriptorAllocatorGrowable&    m_descriptor_allocator);
+        ImguiPass(vk::raii::PhysicalDevice const& physical_device,
+                  vk::raii::Device const&         device,
+                  SurfaceData&                    surface_data,
+                  vk::raii::CommandPool const&    command_pool,
+                  vk::raii::Queue const&          queue,
+                  DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
-        ~ForwardPass()
+        ~ImguiPass()
         {
-            m_forward_mat = nullptr;
-            render_pass   = nullptr;
+            render_pass = nullptr;
             framebuffers.clear();
             m_depth_attachment = nullptr;
         }
@@ -68,13 +65,10 @@ namespace Meow
                                  std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                  vk::Extent2D const&                     extent) override;
 
-        void UpdateUniformBuffer() override;
+        void Start(vk::raii::CommandBuffer const& command_buffer,
+                   Meow::SurfaceData const&       surface_data,
+                   uint32_t                       current_frame_index) override;
 
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
-
-        void AfterRenderPass() override;
-
-    private:
-        Material m_forward_mat = nullptr;
     };
 } // namespace Meow

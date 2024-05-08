@@ -110,8 +110,6 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
-        void UpdateGUI() override;
-
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
 
         void AfterRenderPass() override;
