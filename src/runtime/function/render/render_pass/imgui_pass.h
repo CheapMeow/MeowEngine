@@ -67,7 +67,7 @@ namespace Meow
 
         void Start(vk::raii::CommandBuffer const& command_buffer,
                    Meow::SurfaceData const&       surface_data,
-                   uint32_t                       current_frame_index) override;
+                   uint32_t                       current_image_index) override;
 
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
     };

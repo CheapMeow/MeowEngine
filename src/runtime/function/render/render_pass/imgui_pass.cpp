@@ -96,7 +96,7 @@ namespace Meow
 
     void ImguiPass::Start(vk::raii::CommandBuffer const& command_buffer,
                           Meow::SurfaceData const&       surface_data,
-                          uint32_t                       current_frame_index)
+                          uint32_t                       current_image_index)
     {
         // Start the Dear ImGui frame
         ImGui_ImplVulkan_NewFrame();
@@ -116,7 +116,7 @@ namespace Meow
 
         ImGui::End();
 
-        RenderPass::Start(command_buffer, surface_data, current_frame_index);
+        RenderPass::Start(command_buffer, surface_data, current_image_index);
     }
 
     void ImguiPass::Draw(vk::raii::CommandBuffer const& command_buffer)
