@@ -1,7 +1,9 @@
 #include "engine.h"
 #include "core/log/log.h"
+#include "core/reflect/reflect.hpp"
 #include "core/time/time.h"
 #include "function/global/runtime_global_context.h"
+#include "generated/register_all.h"
 
 #include <iostream>
 
@@ -9,6 +11,8 @@ namespace Meow
 {
     bool MeowEngine::Init()
     {
+        RegisterAll();
+
         Log::Init();
 
         // TODO: Init Dependencies graph
@@ -84,5 +88,7 @@ namespace Meow
         g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.window_system   = nullptr;
         g_runtime_global_context.file_system     = nullptr;
+
+        reflect::ClearRegistry();
     }
 } // namespace Meow

@@ -11,10 +11,23 @@ set(ENGINE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SRC_ROOT_DIR ${ENGINE_ROOT_DIR}/src)
 set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
 
+set(CODE_GENERATOR_NAME CodeGenerator)
+set(GENERATED_FILE_TARGET_NAME generate_register_all)
 set(RUNTIME_NAME MeowRuntime)
 set(EDITOR_NAME MeowEditor)
 
 include(cmake/Utils.cmake)
+
+add_subdirectory(src/code_generator)
+add_custom_command(
+  OUTPUT ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
+  COMMAND ${CODE_GENERATOR_NAME} ${SRC_ROOT_DIR}/runtime ${SRC_ROOT_DIR}/runtime/generated
+  DEPENDS ${CODE_GENERATOR_NAME}
+  COMMENT "Generating register_all.cpp"
+)
+add_custom_target(${GENERATED_FILE_TARGET_NAME}
+    DEPENDS ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
+)
 
 add_subdirectory(src/3rdparty)
 add_subdirectory(src/runtime)
@@ -36,7 +49,7 @@ endif()
 # Set all 3rd party project to one folder
 get_all_targets(ALL_TAR_LIST)
 foreach(TAR ${ALL_TAR_LIST})
-  if("${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
+  if("${TAR}" STREQUAL "${CODE_GENERATOR_NAME}" OR "${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
     continue()
   endif()
 

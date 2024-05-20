@@ -53,3 +53,7 @@ endif()
 if(NOT TARGET EnTT::EnTT)
     add_subdirectory(entt)
 endif()
+
+if(NOT TARGET EnTT::EnTT)
+    add_subdirectory(entt)
+endif()

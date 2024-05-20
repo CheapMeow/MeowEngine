@@ -7,6 +7,11 @@ set(RUNTIME_HEADER_FILES
     core/math/assimp_glm_helper.h
     core/math/bounding_box.h
     core/math/math.h
+    core/reflect/macros.h
+    core/reflect/reflect.hpp
+    core/reflect/reflect_pointer.hpp
+    core/reflect/type_descriptor_builder.hpp
+    core/reflect/unsafe_any.hpp
     core/time/time.h
     function/system.h
     function/camera/camera_system.h
@@ -56,10 +61,13 @@ set(RUNTIME_HEADER_FILES
     function/resource/resource_system.h
     function/resource/resource_info/model_res_info.h
     function/window/window.h
-    function/window/window_system.h)
+    function/window/window_system.h
+    generated/register_all.h)
 set(RUNTIME_SOURCE_FILES
     engine.cpp
     core/log/log.cpp
+    core/reflect/reflect.cpp
+    core/reflect/type_descriptor_builder.cpp
     function/camera/camera_system.cpp
     function/file/file_system.cpp
     function/global/runtime_global_context.cpp
@@ -84,16 +92,15 @@ set(RUNTIME_SOURCE_FILES
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp
     function/window/window.cpp
-    function/window/window_system.cpp)
-
-file(GLOB_RECURSE RUNTIME_SOURCE_FILES1 CONFIGURE_DEPENDS
-     ${SRC_ROOT_DIR}/runtime/*.cpp)
+    function/window/window_system.cpp
+    generated/register_all.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES}
                                                       ${RUNTIME_SOURCE_FILES})
 
 add_library(${RUNTIME_NAME} SHARED ${RUNTIME_HEADER_FILES}
                                    ${RUNTIME_SOURCE_FILES})
+add_dependencies(${RUNTIME_NAME} ${GENERATED_FILE_TARGET_NAME})
 
 set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")

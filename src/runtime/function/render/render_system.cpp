@@ -509,6 +509,16 @@ namespace Meow
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
         // glm::lookAt
+
+        // test for reflection
+        for (auto [entity, transfrom_component, camera_component] :
+             g_runtime_global_context.registry.view<const Transform3DComponent, Camera3DComponent>().each())
+        {
+            if (camera_component.is_main_camera)
+            {
+                // ...
+            }
+        }
     }
 
     void RenderSystem::Update(float frame_time)
