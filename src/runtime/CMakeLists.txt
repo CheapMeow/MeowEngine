@@ -183,7 +183,3 @@ target_include_directories(${RUNTIME_NAME}
 
 target_link_libraries(${RUNTIME_NAME} PUBLIC imgui)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
-
-target_link_libraries(${RUNTIME_NAME} PUBLIC EnTT::EnTT)
-target_include_directories(${RUNTIME_NAME}
-                           PUBLIC ${3RD_PARTY_ROOT_DIR}/entt/src)
