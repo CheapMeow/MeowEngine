@@ -482,7 +482,7 @@ namespace Meow
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
         if (!level_ptr)
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
@@ -490,7 +490,7 @@ namespace Meow
         m_main_camera_id                          = level_ptr->CreateObject();
         std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(m_main_camera_id).lock();
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
         if (!camera_go_ptr)
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
@@ -499,7 +499,7 @@ namespace Meow
             camera_go_ptr->AddComponent<Transform3DComponent>({}).lock();
         camera_go_ptr->AddComponent<Camera3DComponent>({});
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
         if (!transform_comp_ptr)
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
@@ -507,7 +507,7 @@ namespace Meow
         GameObjectID                model_go_id  = level_ptr->CreateObject();
         std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
         if (!model_go_ptr)
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
@@ -528,7 +528,7 @@ namespace Meow
             GameObjectID                model_go_id1  = level_ptr->CreateObject();
             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
             if (!model_go_ptr1)
                 RUNTIME_ERROR("GameObject is invalid!");
 #endif

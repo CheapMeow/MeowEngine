@@ -330,7 +330,7 @@ namespace Meow
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
 
-#ifdef MEOW_DEUBG
+#ifdef MEOW_DEBUG
         if (!level_ptr)
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
