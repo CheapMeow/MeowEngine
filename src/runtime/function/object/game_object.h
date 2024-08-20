@@ -46,11 +46,14 @@ namespace Meow
         }
 
         template<typename TComponent>
-        std::weak_ptr<TComponent> AddComponent(std::shared_ptr<TComponent> component_ptr)
+        std::weak_ptr<TComponent> TryAddComponent(std::shared_ptr<TComponent> component_ptr)
         {
 #ifdef MEOW_DEBUG
             if (!component_ptr)
+            {
                 RUNTIME_ERROR("shared ptr is invalid!");
+                return std::shared_ptr<TComponent>(nullptr);
+            }
 #endif
 
             const std::string component_type_name = typeid(TComponent).name();
@@ -59,7 +62,10 @@ namespace Meow
             for (const auto& refl_component : m_refl_components)
             {
                 if (refl_component.type_name == component_type_name)
+                {
                     RUNTIME_ERROR("Component already exists: {}", component_type_name);
+                    return std::shared_ptr<TComponent>(nullptr);
+                }
             }
 
             // Add the component to the container
@@ -67,7 +73,10 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
             if (m_refl_components.size() < 1)
+            {
                 RUNTIME_ERROR("m_refl_components is empty!");
+                return std::shared_ptr<TComponent>(nullptr);
+            }
 #endif
 
             return std::dynamic_pointer_cast<TComponent>(m_refl_components[m_refl_components.size() - 1].shared_ptr);
