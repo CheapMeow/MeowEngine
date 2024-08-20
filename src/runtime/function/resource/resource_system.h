@@ -34,7 +34,7 @@ namespace Meow
 
         void Start() override;
 
-        void Update(float frame_time);
+        void Tick(float dt) override;
 
         std::shared_ptr<ImageData> LoadTexture(const std::string& filepath);
 

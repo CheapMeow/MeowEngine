@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pch.h"
+
 #include "core/base/non_copyable.h"
 #include "input_axis.h"
 #include "input_button.h"

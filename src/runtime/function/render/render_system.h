@@ -1,5 +1,8 @@
 #pragma once
 
+#include "pch.h"
+
+#include "function/object/game_object.h"
 #include "function/render/structs/buffer_data.h"
 #include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
@@ -64,14 +67,20 @@ namespace Meow
 
         void Start() override;
 
-        void Update(float frame_time);
+        void Tick(float dt) override;
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
 
         std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
 
+        std::shared_ptr<Model> CreateModelFromFile(const std::string&           file_path,
+                                                   std::vector<VertexAttribute> attributes,
+                                                   vk::IndexType                index_type = vk::IndexType::eUint16);
+
         int                      cur_render_pass   = 0;
         std::vector<const char*> render_pass_names = {"Deferred", "Forward"};
+
+        GameObjectID m_main_camera_id;
 
     private:
         void CreateVulkanInstance();
@@ -123,5 +132,9 @@ namespace Meow
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
+
+        // resources
+
+        std::vector<std::shared_ptr<Model>> m_models;
     };
 } // namespace Meow

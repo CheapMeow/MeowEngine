@@ -37,15 +37,6 @@ add_subdirectory(src/editor)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT
                                                             ${EDITOR_NAME})
 
-# Docs only available if this is the main app
-find_package(Doxygen)
-if(Doxygen_FOUND)
-  message(STATUS "Found Doxygen, building docs")
-  add_subdirectory(docs)
-else()
-  message(STATUS "Doxygen not found, not building docs")
-endif()
-
 # Set all 3rd party project to one folder
 get_all_targets(ALL_TAR_LIST)
 foreach(TAR ${ALL_TAR_LIST})

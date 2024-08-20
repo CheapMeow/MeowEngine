@@ -1,5 +1,6 @@
 set(RUNTIME_HEADER_FILES
     engine.h
+    pch.h
     core/base/alignment.h
     core/base/macro.h
     core/base/non_copyable.h
@@ -10,33 +11,35 @@ set(RUNTIME_HEADER_FILES
     core/reflect/macros.h
     core/reflect/reflect.hpp
     core/reflect/reflect_pointer.hpp
-    core/reflect/type_descriptor_builder.hpp
+    core/reflect/type_descriptor_builder.hpp       
     core/reflect/unsafe_any.hpp
     core/time/time.h
     function/system.h
-    function/camera/camera_system.h
     function/components/component.h
-    function/components/3d/camera/camera_3d_component.h
-    function/components/3d/model/model_component.h
-    function/components/3d/transform/transform_3d_component.h
-    function/components/shared/pawn_component.h
-    function/components/shared/scene_tree_proxy_component.h
-    function/components/shared/uuid_component.h
+    function/components/camera/camera_3d_component.h
+    function/components/model/model_component.h 
+    function/components/transform/transform_3d_component.h
+    function/components/shared/pawn_component.h    
+    function/components/shared/uuid_component.h    
     function/file/file_system.h
-    function/global/runtime_global_context.h
+    function/global/runtime_global_context.h       
     function/input/input_axis.h
     function/input/input_button.h
     function/input/input_enum.h
     function/input/input_scheme.h
     function/input/input_system.h
     function/input/axes/mouse_input_axis.h
-    function/input/buttons/keyboard_input_button.h
-    function/input/buttons/mouse_input_button.h
+    function/input/buttons/keyboard_input_button.h 
+    function/input/buttons/mouse_input_button.h    
+    function/level/level.h
+    function/level/level_system.h
+    function/object/game_object.h
+    function/object/object_id_allocator.h
     function/render/render_system.h
-    function/render/render_pass/deferred_pass.h
-    function/render/render_pass/forward_pass.h
-    function/render/render_pass/imgui_pass.h
-    function/render/render_pass/render_pass.h
+    function/render/render_pass/deferred_pass.h    
+    function/render/render_pass/forward_pass.h     
+    function/render/render_pass/imgui_pass.h       
+    function/render/render_pass/render_pass.h      
     function/render/structs/buffer_data.h
     function/render/structs/descriptor_allocator_growable.h
     function/render/structs/image_data.h
@@ -47,17 +50,17 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/model_bone.h
     function/render/structs/model_mesh.h
     function/render/structs/model_node.h
-    function/render/structs/model_primitive.h
-    function/render/structs/pipeline_info.h
+    function/render/structs/model_primitive.h      
+    function/render/structs/pipeline_info.h        
     function/render/structs/primitive.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
-    function/render/structs/swapchain_data.h
+    function/render/structs/swapchain_data.h       
     function/render/structs/ubo_data.h
-    function/render/structs/vertex_attribute.h
-    function/render/structs/vertex_buffer.h
+    function/render/structs/vertex_attribute.h     
+    function/render/structs/vertex_buffer.h        
     function/render/utils/vulkan_initialize_utils.hpp
-    function/render/utils/vulkan_shader_utils.hpp
+    function/render/utils/vulkan_shader_utils.hpp  
     function/resource/resource_system.h
     function/resource/resource_info/model_res_info.h
     function/window/window.h
@@ -67,27 +70,31 @@ set(RUNTIME_SOURCE_FILES
     engine.cpp
     core/log/log.cpp
     core/reflect/reflect.cpp
-    core/reflect/type_descriptor_builder.cpp
-    function/camera/camera_system.cpp
+    core/reflect/type_descriptor_builder.cpp       
+    function/components/camera/camera_3d_component.cpp
     function/file/file_system.cpp
-    function/global/runtime_global_context.cpp
+    function/global/runtime_global_context.cpp     
     function/input/input_scheme.cpp
     function/input/input_system.cpp
-    function/input/axes/mouse_input_axis.cpp
+    function/input/axes/mouse_input_axis.cpp       
     function/input/buttons/keyboard_input_button.cpp
-    function/input/buttons/mouse_input_button.cpp
+    function/input/buttons/mouse_input_button.cpp  
+    function/level/level.cpp
+    function/level/level_system.cpp
+    function/object/game_object.cpp
+    function/object/object_id_allocator.cpp        
     function/render/render_system.cpp
-    function/render/render_pass/deferred_pass.cpp
-    function/render/render_pass/forward_pass.cpp
-    function/render/render_pass/imgui_pass.cpp
-    function/render/render_pass/render_pass.cpp
+    function/render/render_pass/deferred_pass.cpp  
+    function/render/render_pass/forward_pass.cpp   
+    function/render/render_pass/imgui_pass.cpp     
+    function/render/render_pass/render_pass.cpp    
     function/render/structs/descriptor_allocator_growable.cpp
     function/render/structs/image_data.cpp
     function/render/structs/material.cpp
     function/render/structs/model.cpp
     function/render/structs/model_node.cpp
     function/render/structs/shader.cpp
-    function/render/structs/vertex_attribute.cpp
+    function/render/structs/vertex_attribute.cpp   
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp

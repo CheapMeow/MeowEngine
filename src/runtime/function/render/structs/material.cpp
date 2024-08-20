@@ -1,5 +1,4 @@
 #include "material.h"
-#include "core/log/log.h"
 
 #include <algorithm>
 

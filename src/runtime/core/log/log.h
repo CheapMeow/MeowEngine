@@ -2,8 +2,9 @@
 
 #include "core/base/macro.h"
 
-#include <memory>
 #include <format>
+#include <memory>
+
 
 // This ignores all warnings raised inside External headers
 #pragma warning(push, 0)
@@ -44,3 +45,9 @@ namespace Meow
 #define EDITOR_WARN(...)     ::Meow::Log::GetEditorLogger()->warn(std::format(__VA_ARGS__))
 #define EDITOR_ERROR(...)    ::Meow::Log::GetEditorLogger()->error(std::format(__VA_ARGS__))
 #define EDITOR_CRITICAL(...) ::Meow::Log::GetEditorLogger()->critical(std::format(__VA_ARGS__))
+
+#ifndef MEOW_DEBUG
+#    define ASSERT(statement)
+#else
+#    define ASSERT(statement) assert(statement)
+#endif

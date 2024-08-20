@@ -1,12 +1,12 @@
 #include "input_system.h"
 
-#include "core/log/log.h"
-#include "function/components/3d/transform/transform_3d_component.h"
 #include "function/components/shared/pawn_component.h"
+#include "function/components/transform/transform_3d_component.h"
 #include "function/global/runtime_global_context.h"
 #include "function/input/axes/mouse_input_axis.h"
 #include "function/input/buttons/keyboard_input_button.h"
 #include "function/input/buttons/mouse_input_button.h"
+
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -47,7 +47,7 @@ namespace Meow
         m_current_scheme->AddAxis("MouseY", std::make_unique<MouseInputAxis>(1));
     }
 
-    void InputSystem::Update(float frame_time) {}
+    void InputSystem::Tick(float dt) {}
 
     InputScheme* InputSystem::GetScheme(const std::string& name) const
     {

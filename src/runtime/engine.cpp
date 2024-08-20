@@ -1,5 +1,6 @@
+
 #include "engine.h"
-#include "core/log/log.h"
+
 #include "core/reflect/reflect.hpp"
 #include "core/time/time.h"
 #include "function/global/runtime_global_context.h"
@@ -20,19 +21,19 @@ namespace Meow
         g_runtime_global_context.resource_system = std::make_shared<ResourceSystem>();
         g_runtime_global_context.window_system   = std::make_shared<WindowSystem>();
         g_runtime_global_context.input_system    = std::make_shared<InputSystem>();
-        g_runtime_global_context.camera_system   = std::make_shared<CameraSystem>();
         g_runtime_global_context.render_system   = std::make_shared<RenderSystem>();
+        g_runtime_global_context.level_system    = std::make_shared<LevelSystem>();
 
         return true;
     }
 
     bool MeowEngine::Start()
     {
+        g_runtime_global_context.level_system->Start();
         g_runtime_global_context.file_system->Start();
         g_runtime_global_context.resource_system->Start();
         g_runtime_global_context.window_system->Start();
         g_runtime_global_context.input_system->Start();
-        g_runtime_global_context.camera_system->Start();
         g_runtime_global_context.render_system->Start();
 
         return true;
@@ -50,15 +51,15 @@ namespace Meow
 
         //     m_accumulator += frameTime;
 
-        //     while (m_accumulator >= m_phyics_fixed_delta_time)
+        //     while (m_accumulator >= m_phyics_fixed_dt)
         //     {
         //         previousState = currentState;
-        //         integrate(currentState, m_phyics_time, m_phyics_fixed_delta_time);
-        //         m_phyics_time += m_phyics_fixed_delta_time;
-        //         m_accumulator -= m_phyics_fixed_delta_time;
+        //         integrate(currentState, m_phyics_time, m_phyics_fixed_dt);
+        //         m_phyics_time += m_phyics_fixed_dt;
+        //         m_accumulator -= m_phyics_fixed_dt;
         //     }
 
-        //     const double alpha = m_accumulator / m_phyics_fixed_delta_time;
+        //     const double alpha = m_accumulator / m_phyics_fixed_dt;
 
         //     State state = currentState * alpha + previousState * (1.0 - alpha);
 
@@ -66,25 +67,25 @@ namespace Meow
         // }
         while (g_runtime_global_context.running)
         {
-            float curr_time  = Time::GetTime();
-            float frame_time = curr_time - m_last_time;
-            m_last_time      = curr_time;
+            float curr_time = Time::GetTime();
+            float dt        = curr_time - m_last_time;
+            m_last_time     = curr_time;
 
             // TODO: Update Dependencies graph
-            g_runtime_global_context.resource_system->Update(frame_time);
-            g_runtime_global_context.window_system->Update(frame_time);
-            g_runtime_global_context.input_system->Update(frame_time);
-            g_runtime_global_context.camera_system->Update(frame_time);
-            g_runtime_global_context.render_system->Update(frame_time);
+            g_runtime_global_context.resource_system->Tick(dt);
+            g_runtime_global_context.window_system->Tick(dt);
+            g_runtime_global_context.input_system->Tick(dt);
+            g_runtime_global_context.render_system->Tick(dt);
+            g_runtime_global_context.level_system->Tick(dt);
         }
     }
 
     void MeowEngine::ShutDown()
     {
         // TODO: ShutDown Dependencies graph
+        g_runtime_global_context.level_system    = nullptr;
         g_runtime_global_context.resource_system = nullptr;
         g_runtime_global_context.render_system   = nullptr;
-        g_runtime_global_context.camera_system   = nullptr;
         g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.window_system   = nullptr;
         g_runtime_global_context.file_system     = nullptr;

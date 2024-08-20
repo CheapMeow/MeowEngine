@@ -204,7 +204,7 @@ namespace Meow
         m_closed = true;
     }
 
-    void Window::Update(float dt)
+    void Window::Tick(float dt)
     {
         glfwSwapBuffers(m_glfw_window);
         glfwPollEvents();

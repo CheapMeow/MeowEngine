@@ -1,6 +1,5 @@
 #include "shader.h"
 
-#include "core/log/log.h"
 #include "function/global/runtime_global_context.h"
 
 namespace Meow

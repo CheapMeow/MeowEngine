@@ -1,7 +1,5 @@
 #include "input_scheme.h"
 
-#include "core/log/log.h"
-
 namespace Meow
 {
     InputAxis* InputScheme::GetAxis(const std::string& name)

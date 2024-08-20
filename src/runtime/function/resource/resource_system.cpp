@@ -18,7 +18,7 @@ namespace Meow
         //         "builtin/shaders/textured_mesh_without_vertex_color.frag.spv", diffuse_texture));
     }
 
-    void ResourceSystem::Update(float frame_time) {}
+    void ResourceSystem::Tick(float dt) {}
 
     std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& filepath)
     {

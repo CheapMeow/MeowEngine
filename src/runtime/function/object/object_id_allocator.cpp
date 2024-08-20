@@ -1,8 +1,8 @@
 #include "object_id_allocator.h"
 
-#include "core/log/log.h"
+#include "pch.h"
 
-namespace Piccolo
+namespace Meow
 {
     std::atomic<GameObjectID> ObjectIDAllocator::m_next_id {0};
 
@@ -17,5 +17,4 @@ namespace Piccolo
 
         return new_object_ret;
     }
-
-} // namespace Piccolo
+} // namespace Meow

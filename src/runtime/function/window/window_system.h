@@ -15,7 +15,7 @@ namespace Meow
 
         void Start() override;
 
-        void Update(float frame_time);
+        void Tick(float dt) override;
 
         std::shared_ptr<Window> m_window;
     };

@@ -1,15 +1,16 @@
 #include "render_system.h"
 
-#include "core/log/log.h"
-#include "function/components/3d/camera/camera_3d_component.h"
-#include "function/components/3d/model/model_component.h"
-#include "function/components/3d/transform/transform_3d_component.h"
+#include "function/components/camera/camera_3d_component.h"
+#include "function/components/model/model_component.h"
+#include "function/components/transform/transform_3d_component.h"
 #include "function/global/runtime_global_context.h"
+#include "function/level/level.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/random.hpp>
 #include <imgui.h>
 #include <volk.h>
 
@@ -448,12 +449,8 @@ namespace Meow
     {
         m_logical_device.waitIdle();
 
-        // TODO: deleting entity should be obstract
-        auto model_view = g_runtime_global_context.registry.view<Transform3DComponent, ModelComponent>();
-        g_runtime_global_context.registry.destroy(model_view.begin(), model_view.end());
-
-        auto camera_view = g_runtime_global_context.registry.view<Transform3DComponent, Camera3DComponent>();
-        g_runtime_global_context.registry.destroy(camera_view.begin(), camera_view.end());
+        // delete mdoel before vulkan resources
+        m_models.clear();
 
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
@@ -483,45 +480,70 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        // TODO: creating entity should be obstract
-        const auto camera_entity = g_runtime_global_context.registry.create();
-        auto&      camera_transform_component =
-            g_runtime_global_context.registry.emplace<Transform3DComponent>(camera_entity);
-        auto& camera_component          = g_runtime_global_context.registry.emplace<Camera3DComponent>(camera_entity);
-        camera_component.is_main_camera = true;
+        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
 
-        const auto model_entity = g_runtime_global_context.registry.create();
-        g_runtime_global_context.registry.emplace<Transform3DComponent>(model_entity);
-        // model_transform_component.global_transform =
-        //     glm::rotate(model_transform_component.global_transform, glm::radians(180.0f), glm::vec3(0.0f, 1.0f,
-        //     0.0f));
-        auto& model_component =
-            g_runtime_global_context.registry.emplace<ModelComponent>(model_entity,
-                                                                      m_gpu,
-                                                                      m_logical_device,
-                                                                      m_upload_context.command_pool,
-                                                                      m_graphics_queue,
-                                                                      "builtin/models/backpack/backpack.obj",
-                                                                      m_render_pass_ptr->input_vertex_attributes);
+#ifdef MEOW_DEUBG
+        if (!level_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+#endif
 
-        BoundingBox model_bounding          = model_component.model.root_node->GetBounds();
-        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
-        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
-        camera_transform_component.position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
-        // glm::lookAt
+        m_main_camera_id                          = level_ptr->CreateObject();
+        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(m_main_camera_id).lock();
 
-        // test for reflection
-        for (auto [entity, transfrom_component, camera_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, Camera3DComponent>().each())
+#ifdef MEOW_DEUBG
+        if (!camera_go_ptr)
+            RUNTIME_ERROR("GameObject is invalid!");
+#endif
+
+        std::shared_ptr<Transform3DComponent> transform_comp_ptr =
+            camera_go_ptr->AddComponent<Transform3DComponent>({}).lock();
+        camera_go_ptr->AddComponent<Camera3DComponent>({});
+
+#ifdef MEOW_DEUBG
+        if (!transform_comp_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+#endif
+
+        GameObjectID                model_go_id  = level_ptr->CreateObject();
+        std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
+
+#ifdef MEOW_DEUBG
+        if (!model_go_ptr)
+            RUNTIME_ERROR("GameObject is invalid!");
+#endif
+        model_go_ptr->AddComponent<Transform3DComponent>({});
+        std::shared_ptr<ModelComponent> model_comp_ptr =
+            model_go_ptr
+                ->AddComponent<ModelComponent>(std::make_shared<ModelComponent>(
+                    "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes))
+                .lock();
+
+        BoundingBox model_bounding   = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
+        glm::vec3   bound_size       = model_bounding.max - model_bounding.min;
+        glm::vec3   bound_center     = model_bounding.min + bound_size * 0.5f;
+        transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
+
+        for (int i = 0; i < 20; i++)
         {
-            if (camera_component.is_main_camera)
-            {
-                // ...
-            }
+            GameObjectID                model_go_id1  = level_ptr->CreateObject();
+            std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
+
+#ifdef MEOW_DEUBG
+            if (!model_go_ptr1)
+                RUNTIME_ERROR("GameObject is invalid!");
+#endif
+            std::shared_ptr<Transform3DComponent> transform_comp_ptr1 =
+                model_go_ptr1->AddComponent<Transform3DComponent>({}).lock();
+            model_go_ptr1->AddComponent<ModelComponent>(std::make_shared<ModelComponent>(
+                "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
+
+            transform_comp_ptr1->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
+                                                      10.0 * glm::linearRand(-1.0f, 1.0f),
+                                                      10.0 * glm::linearRand(-1.0f, 1.0f));
         }
     }
 
-    void RenderSystem::Update(float frame_time)
+    void RenderSystem::Tick(float dt)
     {
         auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer                = per_frame_data.command_buffer;
@@ -610,5 +632,27 @@ namespace Meow
             ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, filepath);
 
         return texture_ptr;
+    }
+
+    std::shared_ptr<Model> RenderSystem::CreateModelFromFile(const std::string&           file_path,
+                                                             std::vector<VertexAttribute> attributes,
+                                                             vk::IndexType                index_type)
+    {
+        m_models.emplace_back(std::make_shared<Model>(m_gpu,
+                                                      m_logical_device,
+                                                      m_upload_context.command_pool,
+                                                      m_present_queue,
+                                                      file_path,
+                                                      attributes,
+                                                      index_type));
+
+#ifdef MEOW_DEBUG
+        if (m_models.size() < 1)
+            RUNTIME_ERROR("m_models is empty!");
+        if (!m_models[m_models.size() - 1])
+            RUNTIME_ERROR("shared ptr is invalid!");
+#endif
+
+        return m_models[m_models.size() - 1];
     }
 } // namespace Meow

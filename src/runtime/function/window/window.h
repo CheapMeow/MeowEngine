@@ -21,7 +21,7 @@ namespace Meow
         Window(std::size_t id);
         ~Window();
 
-        void Update(float dt);
+        void Tick(float dt);
 
         /**
          * Gets the size of the window in pixels.

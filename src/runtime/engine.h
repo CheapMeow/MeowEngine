@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pch.h"
+
 #include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "function/system.h"
@@ -34,6 +36,6 @@ namespace Meow
         float m_last_time = 0.0;
         // float m_accumulator          = 0.0;
         // float m_phyics_time           = 0.0;
-        // float m_phyics_fixed_delta_time = 1.0 / 60.0;
+        // float m_phyics_fixed_dt = 1.0 / 60.0;
     };
 } // namespace Meow

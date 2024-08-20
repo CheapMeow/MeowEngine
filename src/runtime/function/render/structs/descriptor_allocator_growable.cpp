@@ -1,7 +1,5 @@
 #include "descriptor_allocator_growable.h"
 
-#include "core/log/log.h"
-
 namespace Meow
 {
     void DescriptorAllocatorGrowable::ClearPools(vk::raii::Device const& device)

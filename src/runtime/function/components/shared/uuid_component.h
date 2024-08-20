@@ -6,8 +6,9 @@
 
 namespace Meow
 {
-    struct UUIDComponent : Component
+    class UUIDComponent : public Component
     {
+    public:
         uint32_t m_uuid;
     };
 

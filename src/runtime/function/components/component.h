@@ -1,9 +1,18 @@
 #pragma once
 
+#include <memory>
+
 namespace Meow
 {
-    struct Component
+    class GameObject;
+
+    class Component
     {
-        std::weak_ptr<GObject> m_parent_object
+    public:
+        virtual void Start() {};
+        virtual void Tick(float dt) {};
+
+    protected:
+        std::weak_ptr<GameObject> m_parent_object;
     };
 } // namespace Meow

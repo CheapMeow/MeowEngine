@@ -12,7 +12,7 @@ namespace Meow
 
         void Start() override;
 
-        void Update(float frame_time);
+        void Tick(float dt) override;
 
         InputScheme* GetScheme() const { return m_current_scheme; }
         InputScheme* GetScheme(const std::string& name) const;

@@ -1,5 +1,4 @@
 #include "vulkan_initialize_utils.hpp"
-#include "core/log/log.h"
 
 #include <cassert>
 #include <iomanip>

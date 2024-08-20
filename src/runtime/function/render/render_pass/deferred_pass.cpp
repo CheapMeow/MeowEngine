@@ -1,10 +1,11 @@
 #include "deferred_pass.h"
 
 #include "core/time/time.h"
-#include "function/components/3d/camera/camera_3d_component.h"
-#include "function/components/3d/model/model_component.h"
-#include "function/components/3d/transform/transform_3d_component.h"
+#include "function/components/camera/camera_3d_component.h"
+#include "function/components/model/model_component.h"
+#include "function/components/transform/transform_3d_component.h"
 #include "function/global/runtime_global_context.h"
+#include "function/object/game_object.h"
 #include "function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -327,36 +328,67 @@ namespace Meow
     {
         UBOData ubo_data;
 
-        for (auto [entity, transfrom_component, camera_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, Camera3DComponent>().each())
-        {
-            if (camera_component.is_main_camera)
-            {
-                glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
+        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
 
-                glm::mat4 view = glm::mat4(1.0f);
-                view           = glm::mat4_cast(glm::conjugate(transfrom_component.rotation)) * view;
-                view           = glm::translate(view, -transfrom_component.position);
+#ifdef MEOW_DEUBG
+        if (!level_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+#endif
 
-                ubo_data.view       = view;
-                ubo_data.projection = glm::perspectiveLH_ZO(camera_component.field_of_view,
-                                                            (float)window_size[0] / (float)window_size[1],
-                                                            camera_component.near_plane,
-                                                            camera_component.far_plane);
-                break;
-            }
-        }
+        std::shared_ptr<GameObject> camera_go_ptr =
+            level_ptr->GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
+        std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
+            camera_go_ptr->TryGetComponent<Transform3DComponent>().lock();
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr = camera_go_ptr->TryGetComponent<Camera3DComponent>().lock();
+
+#ifdef MEOW_DEBUG
+        if (!camera_go_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+        if (!transfrom_comp_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+        if (!camera_comp_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+#endif
+
+        glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
+
+        glm::mat4 view = glm::mat4(1.0f);
+        view           = glm::mat4_cast(glm::conjugate(transfrom_comp_ptr->rotation)) * view;
+        view           = glm::translate(view, -transfrom_comp_ptr->position);
+
+        ubo_data.view       = view;
+        ubo_data.projection = glm::perspectiveLH_ZO(camera_comp_ptr->field_of_view,
+                                                    (float)window_size[0] / (float)window_size[1],
+                                                    camera_comp_ptr->near_plane,
+                                                    camera_comp_ptr->far_plane);
 
         // Update mesh uniform
 
         m_obj2attachment_mat.BeginFrame();
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
+        for (const auto& kv : all_gameobjects_map)
         {
-            ubo_data.model = transfrom_component.GetTransform();
+            std::shared_ptr<GameObject>           model_go_ptr = kv.second;
+            std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
+                model_go_ptr->TryGetComponent<Transform3DComponent>().lock();
+            std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryGetComponent<ModelComponent>().lock();
+
+            if (!transfrom_comp_ptr2 || !model_comp_ptr)
+                continue;
+
+#ifdef MEOW_DEBUG
+            if (!model_go_ptr)
+                RUNTIME_ERROR("shared ptr is invalid!");
+            if (!transfrom_comp_ptr2)
+                RUNTIME_ERROR("shared ptr is invalid!");
+            if (!model_comp_ptr)
+                RUNTIME_ERROR("shared ptr is invalid!");
+#endif
+
+            ubo_data.model = transfrom_comp_ptr2->GetTransform();
             ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
+            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BeginObject();
                 m_obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
@@ -388,19 +420,26 @@ namespace Meow
 
         cur_query_count = 0;
 
-        for (auto [entity, transfrom_component, model_component] :
-             g_runtime_global_context.registry.view<const Transform3DComponent, ModelComponent>().each())
+        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        const auto&            all_gameobjects_map = level_ptr->GetAllGameObjects();
+        for (const auto& kv : all_gameobjects_map)
         {
+            std::shared_ptr<GameObject>     model_go_ptr   = kv.second;
+            std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryGetComponent<ModelComponent>().lock();
+
+            if (!model_comp_ptr)
+                continue;
+
             // debug
             if (cur_query_count == 0)
             {
                 command_buffer.beginQuery(*query_pool, 0, {});
             }
 
-            for (int32_t i = 0; i < model_component.model.meshes.size(); ++i)
+            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BindDescriptorSets(command_buffer, i);
-                model_component.model.meshes[i]->BindDrawCmd(command_buffer);
+                model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
             }
 
             // debug

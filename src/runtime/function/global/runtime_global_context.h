@@ -1,6 +1,5 @@
 #pragma once
 
-#include "function/camera/camera_system.h"
 #include "function/file/file_system.h"
 #include "function/input/input_system.h"
 #include "function/level/level_system.h"
@@ -21,7 +20,6 @@ namespace Meow
         std::shared_ptr<WindowSystem>   window_system   = nullptr;
         std::shared_ptr<InputSystem>    input_system    = nullptr;
         std::shared_ptr<FileSystem>     file_system     = nullptr;
-        std::shared_ptr<CameraSystem>   camera_system   = nullptr;
         std::shared_ptr<RenderSystem>   render_system   = nullptr;
         std::shared_ptr<LevelSystem>    level_system    = nullptr;
     };

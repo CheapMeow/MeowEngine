@@ -16,5 +16,5 @@ namespace Meow
 
     void WindowSystem::Start() {}
 
-    void WindowSystem::Update(float frame_time) { m_window->Update(frame_time); }
+    void WindowSystem::Tick(float dt) { m_window->Tick(dt); }
 } // namespace Meow

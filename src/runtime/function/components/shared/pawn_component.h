@@ -4,8 +4,9 @@
 
 namespace Meow
 {
-    struct PawnComponent : Component
+    class PawnComponent : public Component
     {
+    public:
         bool is_player = false;
     };
 

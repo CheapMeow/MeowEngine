@@ -17,6 +17,11 @@ namespace Meow
         template<typename T>
         struct refl_shared_ptr
         {
+            refl_shared_ptr(const std::string& name, std::shared_ptr<T> ptr)
+                : type_name(name)
+                , shared_ptr(ptr)
+            {}
+
             refl_shared_ptr() {}
 
             refl_shared_ptr(refl_shared_ptr& rhs) noexcept
