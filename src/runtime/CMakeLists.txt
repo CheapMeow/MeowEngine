@@ -15,7 +15,6 @@ set(RUNTIME_HEADER_FILES
     core/reflect/unsafe_any.hpp
     core/time/time.h
     function/system.h
-    function/components/component.h
     function/components/camera/camera_3d_component.h
     function/components/model/model_component.h 
     function/components/transform/transform_3d_component.h

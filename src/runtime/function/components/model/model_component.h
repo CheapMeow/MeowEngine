@@ -1,7 +1,7 @@
 #pragma once
 
-#include "function/components/component.h"
 #include "function/global/runtime_global_context.h"
+#include "function/object/game_object.h"
 #include "function/render/structs/model.h"
 
 #include <vector>

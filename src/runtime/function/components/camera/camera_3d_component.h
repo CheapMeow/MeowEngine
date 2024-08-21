@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/reflect/macros.h"
-#include "function/components/component.h"
 #include "function/components/transform/transform_3d_component.h"
+#include "function/object/game_object.h"
 
 #include <glm/glm.hpp>
 

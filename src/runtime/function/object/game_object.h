@@ -7,11 +7,22 @@
 
 namespace Meow
 {
-    class Component;
+    class GameObject;
+
+    class Component
+    {
+    public:
+        std::weak_ptr<GameObject> m_parent_object;
+
+        virtual void Start() {};
+        virtual void Tick(float dt) {};
+    };
 
     class GameObject
     {
     public:
+        std::weak_ptr<GameObject> self_weak_ptr;
+
         GameObject(GameObjectID id)
             : m_id {id}
         {}
@@ -79,7 +90,12 @@ namespace Meow
             }
 #endif
 
-            return std::dynamic_pointer_cast<TComponent>(m_refl_components[m_refl_components.size() - 1].shared_ptr);
+            // set parent gameobject
+
+            component_ptr->m_parent_object = self_weak_ptr;
+            component_ptr->Start();
+
+            return component_ptr;
         }
 
     protected:

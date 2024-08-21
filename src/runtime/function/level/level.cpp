@@ -37,6 +37,7 @@ namespace Meow
         }
 
         m_gameobjects.insert({object_id, gobject});
+        gobject->self_weak_ptr = gobject;
 
         return object_id;
     }

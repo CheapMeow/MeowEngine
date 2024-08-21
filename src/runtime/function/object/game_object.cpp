@@ -1,7 +1,5 @@
 #include "game_object.h"
 
-#include "function/components/component.h"
-
 namespace Meow
 {
     void GameObject::Tick(float dt)

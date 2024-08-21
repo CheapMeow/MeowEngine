@@ -495,14 +495,19 @@ namespace Meow
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
 
-        std::shared_ptr<Transform3DComponent> transform_comp_ptr =
+        std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
             camera_go_ptr->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
-        camera_go_ptr->TryAddComponent<Camera3DComponent>(std::make_shared<Camera3DComponent>());
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
+            camera_go_ptr->TryAddComponent<Camera3DComponent>(std::make_shared<Camera3DComponent>()).lock();
 
 #ifdef MEOW_DEBUG
-        if (!transform_comp_ptr)
+        if (!camera_transform_comp_ptr)
+            RUNTIME_ERROR("shared ptr is invalid!");
+        if (!camera_comp_ptr)
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
+
+        camera_comp_ptr->camera_mode = CameraMode::Free;
 
         GameObjectID                model_go_id  = level_ptr->CreateObject();
         std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
@@ -518,29 +523,29 @@ namespace Meow
                     "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes))
                 .lock();
 
-        BoundingBox model_bounding   = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
-        glm::vec3   bound_size       = model_bounding.max - model_bounding.min;
-        glm::vec3   bound_center     = model_bounding.min + bound_size * 0.5f;
-        transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
+        BoundingBox model_bounding          = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
+        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
+        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
+        camera_transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
 
-        for (int i = 0; i < 20; i++)
-        {
-            GameObjectID                model_go_id1  = level_ptr->CreateObject();
-            std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
+//         for (int i = 0; i < 20; i++)
+//         {
+//             GameObjectID                model_go_id1  = level_ptr->CreateObject();
+//             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
-#ifdef MEOW_DEBUG
-            if (!model_go_ptr1)
-                RUNTIME_ERROR("GameObject is invalid!");
-#endif
-            std::shared_ptr<Transform3DComponent> transform_comp_ptr1 =
-                model_go_ptr1->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
-            model_go_ptr1->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
-                "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
+// #ifdef MEOW_DEBUG
+//             if (!model_go_ptr1)
+//                 RUNTIME_ERROR("GameObject is invalid!");
+// #endif
+//             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
+//                 model_go_ptr1->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
+//             model_go_ptr1->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
+//                 "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
 
-            transform_comp_ptr1->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                      10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                      10.0 * glm::linearRand(-1.0f, 1.0f));
-        }
+//             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
+//                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
+//                                                            10.0 * glm::linearRand(-1.0f, 1.0f));
+//         }
     }
 
     void RenderSystem::Tick(float dt)

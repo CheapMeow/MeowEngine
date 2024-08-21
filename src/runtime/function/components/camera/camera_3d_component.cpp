@@ -6,7 +6,12 @@
 
 namespace Meow
 {
-    void Camera3DComponent::Start() { m_transform = m_parent_object.lock()->TryGetComponent<Transform3DComponent>(); }
+    void Camera3DComponent::Start()
+    {
+        if (!m_parent_object.lock())
+            RUNTIME_INFO("Not Found!");
+        m_transform = m_parent_object.lock()->TryGetComponent<Transform3DComponent>();
+    }
 
     void Camera3DComponent::Tick(float dt)
     {
