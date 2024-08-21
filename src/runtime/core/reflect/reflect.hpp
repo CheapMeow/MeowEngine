@@ -20,36 +20,54 @@ namespace Meow
         public:
             FieldAccessor() = default;
 
-            template<typename C, typename T>
-            FieldAccessor(T C::*var)
+            FieldAccessor(const FieldAccessor&)            = delete;
+            FieldAccessor& operator=(const FieldAccessor&) = delete;
+            FieldAccessor(FieldAccessor&&)                 = default;
+            FieldAccessor& operator=(FieldAccessor&&)      = default;
+
+            template<typename ClassType, typename FieldType>
+            FieldAccessor(const std::string& name, const std::string& type_name, FieldType ClassType::*field_ptr)
+                : m_name(name)
+                , m_type_name(type_name)
             {
-                m_getter = [var](std::any obj) -> std::any { return std::any_cast<const C*>(obj)->*var; };
-                m_setter = [var](std::any obj, std::any val) {
+                m_ptr_getter = [field_ptr](std::any obj) -> void* {
+                    return &(std::any_cast<ClassType*>(obj)->*field_ptr);
+                };
+                m_getter = [field_ptr](std::any obj) -> std::any { return std::any_cast<ClassType*>(obj)->*field_ptr; };
+                m_setter = [field_ptr](std::any obj, std::any val) {
                     // Syntax: https://stackoverflow.com/a/670744/12003165
                     // `obj.*field`
-                    auto* self = std::any_cast<C*>(obj);
-                    self->*var = std::any_cast<T>(val);
+                    auto* self       = std::any_cast<ClassType*>(obj);
+                    self->*field_ptr = std::any_cast<FieldType>(val);
                 };
             }
 
             const std::string& name() const { return m_name; }
 
-            template<typename T, typename C>
-            T GetValue(const C& c) const
+            const std::string& type_name() const { return m_type_name; }
+
+            template<typename ClassType>
+            void* GetValuePtr(ClassType* ins_ptr) const
             {
-                return std::any_cast<T>(m_getter(&c));
+                return m_ptr_getter(ins_ptr);
             }
 
-            template<typename C, typename T>
-            void SetValue(C& c, T val)
+            template<typename ClassType, typename FieldType>
+            FieldType GetValue(ClassType* ins_ptr) const
             {
-                m_setter(&c, val);
+                return std::any_cast<FieldType>(m_getter(ins_ptr));
+            }
+
+            template<typename ClassType, typename FieldType>
+            void SetValue(ClassType* ins_ptr, FieldType val)
+            {
+                m_setter(ins_ptr, val);
             }
 
         private:
-            friend class RawTypeDescriptorBuilder;
-
             std::string                             m_name;
+            std::string                             m_type_name;
+            std::function<void*(std::any)>          m_ptr_getter {nullptr};
             std::function<std::any(std::any)>       m_getter {nullptr};
             std::function<void(std::any, std::any)> m_setter {nullptr};
         };
@@ -59,47 +77,56 @@ namespace Meow
         public:
             MethodAccessor() = default;
 
-            template<typename C, typename R, typename... Args>
-            explicit MethodAccessor(R (C::*func)(Args...))
+            MethodAccessor(const MethodAccessor&)            = delete;
+            MethodAccessor& operator=(const MethodAccessor&) = delete;
+            MethodAccessor(MethodAccessor&&)                 = default;
+            MethodAccessor& operator=(MethodAccessor&&)      = default;
+
+            template<typename ClassType, typename ReturnType, typename... Args>
+            MethodAccessor(const std::string& name, ReturnType (ClassType::*func)(Args...))
+                : m_name(name)
             {
                 m_function = [this, func](std::any obj_args) -> std::any {
                     auto& warpped_args = *std::any_cast<std::array<UnsafeAny, sizeof...(Args) + 1>*>(obj_args);
-                    auto  tuple_args   = UnwarpAsTuple<C&, Args...>(warpped_args);
+                    auto  tuple_args   = UnwarpAsTuple<ClassType&, Args...>(warpped_args);
                     return std::apply(func, tuple_args);
                 };
                 m_args_number = sizeof...(Args);
             }
 
-            template<typename C, typename... Args>
-            explicit MethodAccessor(void (C::*func)(Args...))
+            template<typename ClassType, typename... Args>
+            MethodAccessor(const std::string& name, void (ClassType::*func)(Args...))
+                : m_name(name)
             {
                 m_function = [this, func](std::any obj_args) -> std::any {
                     auto& warpped_args = *std::any_cast<std::array<UnsafeAny, sizeof...(Args) + 1>*>(obj_args);
-                    auto  tuple_args   = UnwarpAsTuple<C&, Args...>(warpped_args);
+                    auto  tuple_args   = UnwarpAsTuple<ClassType&, Args...>(warpped_args);
                     std::apply(func, tuple_args);
                     return std::any {};
                 };
                 m_args_number = sizeof...(Args);
             }
 
-            template<typename C, typename R, typename... Args>
-            explicit MethodAccessor(R (C::*func)(Args...) const)
+            template<typename ClassType, typename ReturnType, typename... Args>
+            MethodAccessor(const std::string& name, ReturnType (ClassType::*func)(Args...) const)
+                : m_name(name)
             {
                 m_function = [this, func](std::any obj_args) -> std::any {
                     auto& warpped_args = *std::any_cast<std::array<UnsafeAny, sizeof...(Args) + 1>*>(obj_args);
-                    auto  tuple_args   = UnwarpAsTuple<const C&, Args...>(warpped_args);
+                    auto  tuple_args   = UnwarpAsTuple<const ClassType&, Args...>(warpped_args);
                     return std::apply(func, tuple_args);
                 };
                 m_is_const    = true;
                 m_args_number = sizeof...(Args);
             }
 
-            template<typename C, typename... Args>
-            explicit MethodAccessor(void (C::*func)(Args...) const)
+            template<typename ClassType, typename... Args>
+            MethodAccessor(const std::string& name, void (ClassType::*func)(Args...) const)
+                : m_name(name)
             {
                 m_function = [this, func](std::any obj_args) -> std::any {
                     auto& warpped_args = *std::any_cast<std::array<UnsafeAny, sizeof...(Args) + 1>*>(obj_args);
-                    auto  tuple_args   = UnwarpAsTuple<const C&, Args...>(warpped_args);
+                    auto  tuple_args   = UnwarpAsTuple<const ClassType&, Args...>(warpped_args);
                     std::apply(func, tuple_args);
                     return std::any {};
                 };
@@ -111,8 +138,8 @@ namespace Meow
 
             bool is_const() const { return m_is_const; }
 
-            template<typename C, typename... Args>
-            std::any Invoke(C& c, Args&&... args)
+            template<typename ClassType, typename... Args>
+            std::any Invoke(ClassType& c, Args&&... args)
             {
                 if (m_args_number != sizeof...(Args))
                 {
@@ -134,8 +161,6 @@ namespace Meow
             }
 
         private:
-            friend class RawTypeDescriptorBuilder;
-
             std::string                       m_name;
             std::function<std::any(std::any)> m_function {nullptr};
             bool                              m_is_const {false};
@@ -145,13 +170,24 @@ namespace Meow
         class TypeDescriptor
         {
         public:
+            TypeDescriptor() {}
+
+            TypeDescriptor(const std::string& name)
+                : m_name(name)
+            {}
+
+            TypeDescriptor(const TypeDescriptor&)            = delete;
+            TypeDescriptor& operator=(const TypeDescriptor&) = delete;
+            TypeDescriptor(TypeDescriptor&&)                 = default;
+            TypeDescriptor& operator=(TypeDescriptor&&)      = default;
+
             const std::string& name() const { return m_name; }
 
-            const std::vector<FieldAccessor>& fields() const { return m_fields; }
+            const std::vector<FieldAccessor>& GetFields() const { return m_fields; }
 
-            const std::vector<MethodAccessor>& methods() const { return m_methods; }
+            const std::vector<MethodAccessor>& GetMethods() const { return m_methods; }
 
-            FieldAccessor GetField(const std::string& name) const
+            const FieldAccessor& GetField(const std::string& name) const
             {
                 for (const auto& field : m_fields)
                 {
@@ -163,7 +199,7 @@ namespace Meow
                 return FieldAccessor {};
             }
 
-            MethodAccessor GetMethod(const std::string& name) const
+            const MethodAccessor& GetMethod(const std::string& name) const
             {
                 for (const auto& method : m_methods)
                 {
@@ -175,9 +211,11 @@ namespace Meow
                 return MethodAccessor {};
             }
 
-        private:
-            friend class RawTypeDescriptorBuilder;
+            void AddField(FieldAccessor&& field) { m_fields.emplace_back(std::move(field)); }
 
+            void AddMethod(MethodAccessor&& method) { m_methods.emplace_back(std::move(method)); }
+
+        private:
             std::string                 m_name;
             std::vector<FieldAccessor>  m_fields;
             std::vector<MethodAccessor> m_methods;
@@ -192,19 +230,23 @@ namespace Meow
                 return inst;
             }
 
-            TypeDescriptor* Find(const std::string& name);
+            bool HasType(const std::string& name)
+            {
+                return m_type_descriptor_map.find(name) != m_type_descriptor_map.end();
+            }
 
-            void Register(std::unique_ptr<TypeDescriptor> desc);
+            const TypeDescriptor& GetType(const std::string& name) { return m_type_descriptor_map.find(name)->second; }
 
-            void Clear();
+            void Register(TypeDescriptor&& desc)
+            {
+                if (HasType(desc.name()))
+                    return;
+
+                m_type_descriptor_map[desc.name()] = std::move(desc);
+            }
 
         private:
-            std::unordered_map<std::string, std::unique_ptr<TypeDescriptor>> m_type_descriptor_map;
+            std::unordered_map<std::string, TypeDescriptor> m_type_descriptor_map;
         };
-
-        TypeDescriptor& GetByName(const std::string& name);
-
-        void ClearRegistry();
-
     } // namespace reflect
 } // namespace Meow

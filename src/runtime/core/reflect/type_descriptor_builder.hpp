@@ -6,67 +6,45 @@ namespace Meow
 {
     namespace reflect
     {
-        class RawTypeDescriptorBuilder
-        {
-        public:
-            explicit RawTypeDescriptorBuilder(const std::string& name);
 
-            ~RawTypeDescriptorBuilder();
-            RawTypeDescriptorBuilder(const RawTypeDescriptorBuilder&)            = delete;
-            RawTypeDescriptorBuilder& operator=(const RawTypeDescriptorBuilder&) = delete;
-            RawTypeDescriptorBuilder(RawTypeDescriptorBuilder&&)                 = default;
-            RawTypeDescriptorBuilder& operator=(RawTypeDescriptorBuilder&&)      = default;
-
-            template<typename C, typename T>
-            void AddField(const std::string& name, T C::*var)
-            {
-                FieldAccessor field {var};
-                field.m_name = name;
-                m_type_descriptor->m_fields.push_back(std::move(field));
-            }
-
-            template<typename FUNC>
-            void AddMethod(const std::string& name, FUNC func)
-            {
-                MethodAccessor method {func};
-                method.m_name = name;
-                m_type_descriptor->m_methods.push_back(std::move(method));
-            }
-
-        private:
-            std::unique_ptr<TypeDescriptor> m_type_descriptor {nullptr};
-        };
-
-        template<typename T>
+        template<typename ClassType>
         class TypeDescriptorBuilder
         {
         public:
             explicit TypeDescriptorBuilder(const std::string& name)
-                : m_raw_builder(name)
+                : m_type_descriptor(name)
             {}
 
-            template<typename V>
-            TypeDescriptorBuilder& AddField(const std::string& name, V T::*var)
+            ~TypeDescriptorBuilder() { Registry::instance().Register(std::move(m_type_descriptor)); }
+
+            TypeDescriptorBuilder(const TypeDescriptorBuilder&)            = delete;
+            TypeDescriptorBuilder& operator=(const TypeDescriptorBuilder&) = delete;
+            TypeDescriptorBuilder(TypeDescriptorBuilder&&)                 = default;
+            TypeDescriptorBuilder& operator=(TypeDescriptorBuilder&&)      = default;
+
+            template<typename FieldType>
+            TypeDescriptorBuilder&
+            AddField(const std::string& name, const std::string& type_name, FieldType ClassType::*field_ptr)
             {
-                m_raw_builder.AddField(name, var);
+                m_type_descriptor.AddField({name, type_name, field_ptr});
                 return *this;
             }
 
-            template<typename FUNC>
-            TypeDescriptorBuilder& AddMethod(const std::string& name, FUNC func)
+            template<typename MethodType>
+            TypeDescriptorBuilder& AddMethod(const std::string& name, MethodType method)
             {
-                m_raw_builder.AddMethod(name, func);
+                m_type_descriptor.AddMethod({name, method});
                 return *this;
             }
 
         private:
-            RawTypeDescriptorBuilder m_raw_builder;
+            TypeDescriptor m_type_descriptor;
         };
 
-        template<typename T>
-        TypeDescriptorBuilder<T> AddClass(const std::string& name)
+        template<typename ClassType>
+        TypeDescriptorBuilder<ClassType> AddClass(const std::string& name)
         {
-            return TypeDescriptorBuilder<T> {name};
+            return TypeDescriptorBuilder<ClassType> {name};
         }
     } // namespace reflect
 

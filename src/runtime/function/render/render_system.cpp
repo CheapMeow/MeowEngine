@@ -1,8 +1,8 @@
 #include "render_system.h"
 
-#include "function/components/camera/camera_3d_component.h"
+#include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
-#include "function/components/transform/transform_3d_component.h"
+#include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_global_context.h"
 #include "function/level/level.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
@@ -528,24 +528,24 @@ namespace Meow
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
 
-//         for (int i = 0; i < 20; i++)
-//         {
-//             GameObjectID                model_go_id1  = level_ptr->CreateObject();
-//             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
+        //         for (int i = 0; i < 20; i++)
+        //         {
+        //             GameObjectID                model_go_id1  = level_ptr->CreateObject();
+        //             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
-// #ifdef MEOW_DEBUG
-//             if (!model_go_ptr1)
-//                 RUNTIME_ERROR("GameObject is invalid!");
-// #endif
-//             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-//                 model_go_ptr1->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
-//             model_go_ptr1->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
-//                 "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
+        // #ifdef MEOW_DEBUG
+        //             if (!model_go_ptr1)
+        //                 RUNTIME_ERROR("GameObject is invalid!");
+        // #endif
+        //             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
+        //                 model_go_ptr1->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
+        //             model_go_ptr1->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
+        //                 "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
 
-//             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
-//                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
-//                                                            10.0 * glm::linearRand(-1.0f, 1.0f));
-//         }
+        //             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
+        //                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
+        //                                                            10.0 * glm::linearRand(-1.0f, 1.0f));
+        //         }
     }
 
     void RenderSystem::Tick(float dt)

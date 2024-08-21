@@ -1,4 +1,4 @@
-#include "camera_3d_component.h"
+#include "camera_3d_component.hpp"
 
 #include "core/math/math.h"
 #include "function/global/runtime_global_context.h"

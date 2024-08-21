@@ -11,20 +11,38 @@ using namespace Meow;
 
 int main(int argc, char* argv[])
 {
-    if (argc != 3)
-    {
-        std::cout << "argc = " << argc << std::endl;
-        std::cout << "argv = " << std::endl;
-        for (int i = 0; i < argc; ++i)
-        {
-            std::cout << argv[i] << std::endl;
-        }
-        std::cerr << "Input argument should be <src_root> <output_root>." << std::endl;
-        exit(-1);
-    }
+    std::string include_path = "";
+    std::string src_root     = "";
+    std::string output_root  = "";
 
-    std::string src_root    = argv[1];
-    std::string output_root = argv[2];
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string arg(argv[i]);
+        if (arg.substr(0, 2) == "-S" && arg.size() > 2)
+        {
+            if (src_root.size() > 0)
+            {
+                std::cerr << "More than one -S<src_root>!" << std::endl;
+                return 1;
+            }
+            src_root = arg.substr(2);
+        }
+        else if (arg.substr(0, 2) == "-O" && arg.size() > 2)
+        {
+            if (output_root.size() > 0)
+            {
+                std::cerr << "More than one -O<output_root>!" << std::endl;
+                return 1;
+            }
+            output_root = arg.substr(2);
+        }
+        else if (arg.substr(0, 2) == "-I" && arg.size() > 2)
+        {
+            if (include_path.size() > 0)
+                include_path += " ";
+            include_path += arg;
+        }
+    }
 
     if (!std::filesystem::is_directory(src_root))
     {
@@ -36,6 +54,10 @@ int main(int argc, char* argv[])
         std::cerr << "output_root is invalid!" << std::endl;
         exit(-1);
     }
+
+    std::cout << "src_root is " << src_root << std::endl;
+    std::cout << "output_root is " << output_root << std::endl;
+    std::cout << "include_path is " << include_path << std::endl;
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
     std::vector<fs::path>           files;
@@ -51,7 +73,7 @@ int main(int argc, char* argv[])
     parser.Begin(src_root, output_root);
     for (int i = 0; i < files.size(); ++i)
     {
-        parser.ParseFile(files[i]);
+        parser.ParseFile(files[i], include_path);
     }
     parser.End();
 }

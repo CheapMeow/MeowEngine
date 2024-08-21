@@ -1,9 +1,9 @@
 #include "deferred_pass.h"
 
 #include "core/time/time.h"
-#include "function/components/camera/camera_3d_component.h"
+#include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
-#include "function/components/transform/transform_3d_component.h"
+#include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_global_context.h"
 #include "function/object/game_object.h"
 #include "function/render/structs/ubo_data.h"

@@ -89,7 +89,5 @@ namespace Meow
         g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.window_system   = nullptr;
         g_runtime_global_context.file_system     = nullptr;
-
-        reflect::ClearRegistry();
     }
 } // namespace Meow

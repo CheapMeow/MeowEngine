@@ -16,7 +16,7 @@ namespace Meow
     public:
         void Begin(const std::string& src_root, const std::string& output_path);
 
-        void ParseFile(const fs::path& path);
+        void ParseFile(const fs::path& path, const std::string& include_path);
 
         void End();
 

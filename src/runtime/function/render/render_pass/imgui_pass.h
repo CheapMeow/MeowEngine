@@ -1,17 +1,23 @@
 #pragma once
 
+#include "core/reflect/reflect_pointer.hpp"
+#include "function/object/game_object.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "render_pass.h"
+
+#include <functional>
+#include <glm/glm.hpp>
+#include <stack>
+#include <string>
+#include <unordered_map>
 
 namespace Meow
 {
     class ImguiPass : public RenderPass
     {
     public:
-        ImguiPass(std::nullptr_t)
-            : RenderPass(nullptr)
-        {}
+        ImguiPass(std::nullptr_t);
 
         ImguiPass(ImguiPass&& rhs) noexcept
             : RenderPass(nullptr)
@@ -70,5 +76,16 @@ namespace Meow
                    uint32_t                       current_image_index) override;
 
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
+
+    private:
+        void CreateGameObjectUI(const std::shared_ptr<GameObject> go);
+        void CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr);
+        void DrawVecControl(const std::string& label,
+                            glm::vec3&         values,
+                            float              reset_value  = 0.0f,
+                            float              column_width = 100.0f);
+
+        std::unordered_map<std::string, std::function<void(std::string, void*)>> m_editor_ui_creator;
+        std::stack<bool>                                                         m_tree_node_open_states;
     };
 } // namespace Meow

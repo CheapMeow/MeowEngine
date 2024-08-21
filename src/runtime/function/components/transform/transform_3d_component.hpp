@@ -7,12 +7,17 @@
 
 namespace Meow
 {
-    class Transform3DComponent : public Component
+    class [[reflectable_class()]] Transform3DComponent : public Component
     {
     public:
+        [[reflectable_field()]]
         glm::vec3 position = glm::vec3(0.0f);
+
+        [[reflectable_field()]]
         glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-        glm::vec3 scale    = glm::vec3(1.0f);
+
+        [[reflectable_field()]]
+        glm::vec3 scale = glm::vec3(1.0f);
 
         /**
          * @brief Get the Transform from position, rotation(quaternion) and scale

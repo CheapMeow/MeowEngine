@@ -36,13 +36,15 @@ namespace Meow
         include_stream << "#include \"core/reflect/type_descriptor_builder.hpp\"\n";
     }
 
-    void Parser::ParseFile(const fs::path& path)
+    void Parser::ParseFile(const fs::path& path, const std::string& include_path)
     {
         // traverse AST to find class
 
-        CXIndex           index            = clang_createIndex(0, 0);
-        std::string       include_src_path = "-I" + src_root_path.string();
-        const char*       args[2]          = {"-xc++", include_src_path.c_str()};
+        CXIndex     index   = clang_createIndex(0, 0);
+        const char* args[2] = {
+            "-xc++",
+            "-IE:/repositories/MeowEngine/src/runtime"}; // view .h as c++
+                                                                                                       // file
         CXTranslationUnit unit =
             clang_parseTranslationUnit(index, path.string().c_str(), args, 2, nullptr, 0, CXTranslationUnit_None);
         if (unit == nullptr)
@@ -161,6 +163,8 @@ namespace Meow
     {
         std::string class_name = toStdString(clang_getCursorSpelling(class_cursor));
 
+        std::cout << "Parsing " << class_name << std::endl;
+
         // avoid repeating registering
         if (class_name_set.find(class_name) != class_name_set.end())
         {
@@ -196,13 +200,16 @@ namespace Meow
                     {
                         if (clang_getCursorKind(parent) == CXCursor_FieldDecl)
                         {
+                            CXType      field_type      = clang_getCursorType(parent);
+                            std::string field_type_name = toStdString(clang_getTypeSpelling(field_type));
+
                             std::string field_name = toStdString(clang_getCursorSpelling(parent));
                             *(parse_context_ptr->stream_ptr)
-                                << "\n\t\t\t" << ".AddField(\"" << field_name << "\", &"
+                                << "\n\t\t\t" << ".AddField(\"" << field_name << "\", \"" << field_type_name << "\", &"
                                 << parse_context_ptr->class_name << "::" << field_name << ")";
                         }
                     }
-                    else if (annotations[0] == "reflectable_struct")
+                    else if (annotations[0] == "reflectable_method")
                     {
                         if (clang_getCursorKind(parent) == CXCursor_CXXMethod)
                         {
