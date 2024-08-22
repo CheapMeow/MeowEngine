@@ -14,7 +14,7 @@ namespace Meow
     {
         m_editor_ui_creator["TreeNodePush"] = [&](const std::string& name, void* value_ptr) {
             ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-            m_tree_node_open_states.push(ImGui::TreeNodeEx("root", flag));
+            m_tree_node_open_states.push(ImGui::TreeNodeEx(name.c_str(), flag));
         };
 
         m_editor_ui_creator["TreeNodePop"] = [&](const std::string& name, void* value_ptr) {
@@ -221,12 +221,12 @@ namespace Meow
 
     void ImguiPass::CreateGameObjectUI(const std::shared_ptr<GameObject> go)
     {
+        m_editor_ui_creator["TreeNodePush"](go->GetName(), nullptr);
         for (reflect::refl_shared_ptr<Component> comp_ptr : go->GetComponents())
         {
-            m_editor_ui_creator["TreeNodePush"](go->GetName(), nullptr);
             CreateLeafNodeUI(comp_ptr);
-            m_editor_ui_creator["TreeNodePop"](go->GetName(), nullptr);
         }
+        m_editor_ui_creator["TreeNodePop"](go->GetName(), nullptr);
     }
 
     void ImguiPass::CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr)

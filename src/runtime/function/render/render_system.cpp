@@ -495,6 +495,7 @@ namespace Meow
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
 
+        camera_go_ptr->SetName("Camera");
         std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
             camera_go_ptr
                 ->TryAddComponent<Transform3DComponent>("Transform3DComponent",
@@ -521,6 +522,7 @@ namespace Meow
         if (!model_go_ptr)
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
+        model_go_ptr->SetName("Backpack");
         model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
                                                             std::make_shared<Transform3DComponent>());
         std::shared_ptr<ModelComponent> model_comp_ptr =

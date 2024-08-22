@@ -97,7 +97,7 @@ namespace Meow
 
     protected:
         GameObjectID                                     m_id {k_invalid_gobject_id};
-        std::string                                      m_name;
+        std::string                                      m_name = "Default Object";
         std::vector<reflect::refl_shared_ptr<Component>> m_refl_components;
     };
 } // namespace Meow
