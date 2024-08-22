@@ -1,5 +1,4 @@
 #include "parser.h"
-#include "time_stamp_logger.h"
 
 #include <filesystem>
 #include <iostream>
@@ -15,7 +14,6 @@ int main(int argc, char* argv[])
     std::vector<std::string> include_paths;
     std::string              src_path    = "";
     std::string              output_path = "";
-    std::string              log_path    = "";
 
     int include_path_count = 0;
 
@@ -39,15 +37,6 @@ int main(int argc, char* argv[])
                 return 1;
             }
             output_path = arg.substr(2);
-        }
-        else if (arg.substr(0, 2) == "-L" && arg.size() > 2)
-        {
-            if (log_path.size() > 0)
-            {
-                std::cerr << "[CodeGenerator] More than one -L<log_path>!" << std::endl;
-                return 1;
-            }
-            log_path = arg.substr(2);
         }
         else if (arg.substr(0, 2) == "-I" && arg.size() > 2)
         {
@@ -77,18 +66,8 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    if (!fs::exists(log_path))
-    {
-        std::cout << "[CodeGenerator] log_path does not exist!" << std::endl;
-    }
-    else if (!fs::is_regular_file(log_path))
-    {
-        std::cout << "[CodeGenerator] log_path is not a file!" << std::endl;
-    }
-
     std::cout << "[CodeGenerator] src_path is" << std::endl << src_path << std::endl;
     std::cout << "[CodeGenerator] output_path is" << std::endl << output_path << std::endl;
-    std::cout << "[CodeGenerator] log_path is" << std::endl << log_path << std::endl;
     std::cout << "[CodeGenerator] include_path is" << std::endl;
     for (int i = 0; i < include_paths.size(); i++)
     {
@@ -96,7 +75,6 @@ int main(int argc, char* argv[])
     }
 
     Parser          parser;
-    TimeStampLogger logger;
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
     std::vector<fs::path>           files;
@@ -109,21 +87,10 @@ int main(int argc, char* argv[])
         }
     }
 
-    logger.LoadLog(log_path);
-    if (logger.IsModified(files))
+    parser.Begin(src_path, output_path);
+    for (int i = 0; i < files.size(); ++i)
     {
-        std::cout << "[CodeGenerator] Reflectable files are modified, begin parsing." << std::endl;
-
-        parser.Begin(src_path, output_path);
-        for (int i = 0; i < files.size(); ++i)
-        {
-            parser.ParseFile(files[i], include_paths);
-        }
-        parser.End();
-        logger.OutputLog(files, log_path);
+        parser.ParseFile(files[i], include_paths);
     }
-    else
-    {
-        std::cout << "[CodeGenerator] Reflectable files are not modified, skip parsing." << std::endl;
-    }
+    parser.End();
 }
