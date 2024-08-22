@@ -8,7 +8,7 @@ namespace Meow
         : m_key(key)
     {
         g_runtime_global_context.window_system->m_window->OnKey().connect(
-            this, [this](KeyCode key, InputAction action, uint8_t mods) {
+            [this](KeyCode key, InputAction action, uint8_t mods) {
                 if (m_key == key)
                 {
                     m_on_button(action, mods);

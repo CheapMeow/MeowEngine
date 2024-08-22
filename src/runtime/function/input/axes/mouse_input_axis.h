@@ -2,6 +2,8 @@
 
 #include "function/input/input_axis.h"
 
+#include <cstdint>
+
 namespace Meow
 {
     class MouseInputAxis : public InputAxis

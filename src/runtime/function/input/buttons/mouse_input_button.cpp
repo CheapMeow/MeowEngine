@@ -8,7 +8,7 @@ namespace Meow
         : m_button(button)
     {
         g_runtime_global_context.window_system->m_window->OnMouseButton().connect(
-            this, [this](MouseButtonCode button, InputAction action, uint8_t mods) {
+            [this](MouseButtonCode button, InputAction action, uint8_t mods) {
                 if (m_button == button)
                 {
                     m_on_button(action, mods);

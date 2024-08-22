@@ -1,10 +1,10 @@
 #pragma once
 
-#include <rocket.hpp>
+#include "core/signal/signal.hpp"
 
 namespace Meow
 {
-    class InputAxis : public rocket::trackable
+    class InputAxis
     {
     public:
         /**
@@ -17,7 +17,7 @@ namespace Meow
          * @brief Called when the axis changes value.
          * @return The delegate.
          */
-        rocket::signal<void(float)>& OnAxis() { return m_on_axis_singal; }
+        Signal<float>& OnAxis() { return m_on_axis_signal; }
 
         float GetScale() const { return m_scale; }
         void  SetScale(float scale) { m_scale = scale; }
@@ -26,8 +26,8 @@ namespace Meow
         void  SetOffset(float offset) { m_offset = offset; }
 
     protected:
-        rocket::signal<void(float)> m_on_axis_singal;
-        float                       m_scale  = 1.0f;
-        float                       m_offset = 0.0f;
+        Signal<float> m_on_axis_signal;
+        float         m_scale  = 1.0f;
+        float         m_offset = 0.0f;
     };
 } // namespace Meow

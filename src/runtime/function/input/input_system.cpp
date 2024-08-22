@@ -17,7 +17,7 @@ namespace Meow
      * The reason why we need a null scheme is, user may want to get axis or get button when input scheme is not
      * specified.
      *
-     * And, when user bind singal when input scheme is not specified, and then user switch to a new scheme,
+     * And, when user bind signal when input scheme is not specified, and then user switch to a new scheme,
      * we want to preserve signals to same name axes or buttons, from the current scheme to the new one.
      *
      * So if you don't have a scheme when input scheme is not specified, you can't store these information.

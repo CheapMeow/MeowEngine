@@ -13,6 +13,7 @@ set(RUNTIME_HEADER_FILES
     core/reflect/reflect_pointer.hpp
     core/reflect/type_descriptor_builder.hpp
     core/reflect/unsafe_any.hpp
+    core/signal/signal.hpp
     core/time/time.h
     function/system.h
     function/components/camera/camera_3d_component.hpp
@@ -140,8 +141,6 @@ target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
 target_include_directories(${RUNTIME_NAME}
                            PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
-
-target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/rocket)
 
 target_link_libraries(${RUNTIME_NAME} PUBLIC glm)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)

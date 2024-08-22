@@ -17,7 +17,7 @@ namespace Meow
             return;
 
         window->m_position = {xpos, ypos};
-        window->m_on_position_singal(window->m_position);
+        window->m_on_position_signal(window->m_position);
     }
 
     void CallbackWindowSize(GLFWwindow* glfwWindow, int32_t width, int32_t height)
@@ -29,12 +29,12 @@ namespace Meow
         if (window->m_fullscreen)
         {
             window->m_fullscreen_size = {width, height};
-            window->m_on_size_singal(window->m_fullscreen_size);
+            window->m_on_size_signal(window->m_fullscreen_size);
         }
         else
         {
             window->m_size = {width, height};
-            window->m_on_size_singal(window->m_size);
+            window->m_on_size_signal(window->m_size);
         }
     }
 

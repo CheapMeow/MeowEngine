@@ -12,7 +12,6 @@ add_executable(${CODE_GENERATOR_NAME} ${CODE_GENERATOR_HEADER_FILES} ${CODE_GENE
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 target_include_directories(${CODE_GENERATOR_NAME}
                            PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/rocket)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
 target_include_directories(${CODE_GENERATOR_NAME}
                            PUBLIC ${3RD_PARTY_ROOT_DIR}/glfw/include)

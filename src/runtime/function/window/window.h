@@ -1,12 +1,13 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
+#include "core/signal/signal.hpp"
 #include "function/input/input_enum.h"
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <glm/glm.hpp>
-#include <rocket.hpp>
+#include <string>
 
 namespace Meow
 {
@@ -219,108 +220,95 @@ namespace Meow
 
         /**
          * Called when the window is resized.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(glm::ivec2)>& OnSize() { return m_on_size_singal; }
+        Signal<glm::ivec2>& OnSize() { return m_on_size_signal; }
 
         /**
          * Called when the window is moved.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(glm::ivec2)>& OnPosition() { return m_on_position_singal; }
+        Signal<glm::ivec2>& OnPosition() { return m_on_position_signal; }
 
         /**
          * Called when the windows title changed.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(std::string)>& OnTitle() { return m_on_title_signal; }
+        Signal<std::string>& OnTitle() { return m_on_title_signal; }
 
         /**
          * Called when the window has toggled borderless on or off.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnBorderless() { return m_on_borderless_signal; }
+        Signal<bool>& OnBorderless() { return m_on_borderless_signal; }
 
         /**
          * Called when the window has toggled resizable on or off.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnResizable() { return m_on_resizable_signal; }
+        Signal<bool>& OnResizable() { return m_on_resizable_signal; }
 
         /**
          * Called when the window has toggled floating on or off.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnFloating() { return m_on_floating_signal; }
+        Signal<bool>& OnFloating() { return m_on_floating_signal; }
 
         /**
          * Called when the has gone fullscreen or windowed.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnFullscreen() { return m_on_fullscreen_signal; }
+        Signal<bool>& OnFullscreen() { return m_on_fullscreen_signal; }
 
         /**
          * Called when the window requests a close.
-         * @return The rocket::signal.
          */
-        rocket::signal<void()>& OnClose() { return m_on_close_signal; }
+        Signal<>& OnClose() { return m_on_close_signal; }
 
         /**
          * Called when the window is focused or unfocused.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnFocus() { return m_on_focus_signal; }
+        Signal<bool>& OnFocus() { return m_on_focus_signal; }
 
         /**
          * Called when the window is minimized or maximized.
-         * @return The rocket::signal.
          */
-        rocket::signal<void(bool)>& OnIconify() { return m_on_iconify_signal; }
+        Signal<bool>& OnIconify() { return m_on_iconify_signal; }
 
         /**
          * Called when the mouse enters the window.
          * @return The delegate.
          */
-        rocket::signal<void(bool)>& OnEnter() { return m_on_enter_signal; }
+        Signal<bool>& OnEnter() { return m_on_enter_signal; }
 
         /**
          * Called when a group of files/folders is dropped onto the window.
          * @return The delegate.
          */
-        rocket::signal<void(std::vector<std::string>)>& OnDrop() { return m_on_drop_signal; }
+        Signal<std::vector<std::string>>& OnDrop() { return m_on_drop_signal; }
 
         /**
          * Called when a key changes state.
          * @return The delegate.
          */
-        rocket::signal<void(KeyCode, InputAction, uint8_t)>& OnKey() { return m_on_key_signal; }
+        Signal<KeyCode, InputAction, uint8_t>& OnKey() { return m_on_key_signal; }
 
         /**
          * Called when a character has been typed.
          * @return The delegate.
          */
-        rocket::signal<void(char)>& OnChar() { return m_on_char_signal; }
+        Signal<char>& OnChar() { return m_on_char_signal; }
 
         /**
          * Called when a mouse button changes state.
          * @return The delegate.
          */
-        rocket::signal<void(MouseButtonCode, InputAction, uint8_t)>& OnMouseButton()
-        {
-            return m_on_mouse_button_signal;
-        }
+        Signal<MouseButtonCode, InputAction, uint8_t>& OnMouseButton() { return m_on_mouse_button_signal; }
 
         /**
          * Called when the mouse moves.
          * @return The delegate.
          */
-        rocket::signal<void(glm::vec2)>& OnMousePosition() { return m_on_mouse_position_signal; }
+        Signal<glm::vec2>& OnMousePosition() { return m_on_mouse_position_signal; }
 
         /**
          * Called when the scroll wheel changes.
          * @return The delegate.
          */
-        rocket::signal<void(glm::vec2)>& OnMouseScroll() { return m_on_mouse_scroll_signal; }
+        Signal<glm::vec2>& OnMouseScroll() { return m_on_mouse_scroll_signal; }
 
     private:
         friend void CallbackWindowPosition(GLFWwindow* glfwWindow, int32_t xpos, int32_t ypos);
@@ -367,22 +355,22 @@ namespace Meow
         glm::vec2 m_mouse_scroll;
         glm::vec2 m_mouse_scroll_delta;
 
-        rocket::signal<void(glm::ivec2)>                            m_on_size_singal;
-        rocket::signal<void(glm::ivec2)>                            m_on_position_singal;
-        rocket::signal<void(std::string)>                           m_on_title_signal;
-        rocket::signal<void(bool)>                                  m_on_borderless_signal;
-        rocket::signal<void(bool)>                                  m_on_resizable_signal;
-        rocket::signal<void(bool)>                                  m_on_floating_signal;
-        rocket::signal<void(bool)>                                  m_on_fullscreen_signal;
-        rocket::signal<void()>                                      m_on_close_signal;
-        rocket::signal<void(bool)>                                  m_on_focus_signal;
-        rocket::signal<void(bool)>                                  m_on_iconify_signal;
-        rocket::signal<void(bool)>                                  m_on_enter_signal;
-        rocket::signal<void(std::vector<std::string>)>              m_on_drop_signal;
-        rocket::signal<void(KeyCode, InputAction, uint8_t)>         m_on_key_signal;
-        rocket::signal<void(char)>                                  m_on_char_signal;
-        rocket::signal<void(MouseButtonCode, InputAction, uint8_t)> m_on_mouse_button_signal;
-        rocket::signal<void(glm::vec2)>                             m_on_mouse_position_signal;
-        rocket::signal<void(glm::vec2)>                             m_on_mouse_scroll_signal;
+        Signal<glm::ivec2>                            m_on_size_signal;
+        Signal<glm::ivec2>                            m_on_position_signal;
+        Signal<std::string>                           m_on_title_signal;
+        Signal<bool>                                  m_on_borderless_signal;
+        Signal<bool>                                  m_on_resizable_signal;
+        Signal<bool>                                  m_on_floating_signal;
+        Signal<bool>                                  m_on_fullscreen_signal;
+        Signal<>                                      m_on_close_signal;
+        Signal<bool>                                  m_on_focus_signal;
+        Signal<bool>                                  m_on_iconify_signal;
+        Signal<bool>                                  m_on_enter_signal;
+        Signal<std::vector<std::string>>              m_on_drop_signal;
+        Signal<KeyCode, InputAction, uint8_t>         m_on_key_signal;
+        Signal<char>                                  m_on_char_signal;
+        Signal<MouseButtonCode, InputAction, uint8_t> m_on_mouse_button_signal;
+        Signal<glm::vec2>                             m_on_mouse_position_signal;
+        Signal<glm::vec2>                             m_on_mouse_scroll_signal;
     };
 } // namespace Meow
