@@ -30,15 +30,11 @@ namespace Meow
                 : m_name(name)
                 , m_type_name(type_name)
             {
-                m_ptr_getter = [field_ptr](std::any obj) -> void* {
-                    return &(std::any_cast<ClassType*>(obj)->*field_ptr);
-                };
-                m_getter = [field_ptr](std::any obj) -> std::any { return std::any_cast<ClassType*>(obj)->*field_ptr; };
-                m_setter = [field_ptr](std::any obj, std::any val) {
-                    // Syntax: https://stackoverflow.com/a/670744/12003165
-                    // `obj.*field`
-                    auto* self       = std::any_cast<ClassType*>(obj);
-                    self->*field_ptr = std::any_cast<FieldType>(val);
+                m_getter = [field_ptr](void* obj) -> void* { return &(static_cast<ClassType*>(obj)->*field_ptr); };
+
+                m_setter = [field_ptr](void* obj, void* val) {
+                    ClassType* self  = static_cast<ClassType*>(obj);
+                    self->*field_ptr = *static_cast<FieldType*>(val);
                 };
             }
 
@@ -46,30 +42,19 @@ namespace Meow
 
             const std::string& type_name() const { return m_type_name; }
 
-            template<typename ClassType>
-            void* GetValuePtr(ClassType* ins_ptr) const
-            {
-                return m_ptr_getter(ins_ptr);
-            }
+            void* get(void* ins_ptr) const { return m_getter(ins_ptr); }
 
-            template<typename ClassType, typename FieldType>
-            FieldType GetValue(ClassType* ins_ptr) const
-            {
-                return std::any_cast<FieldType>(m_getter(ins_ptr));
-            }
-
-            template<typename ClassType, typename FieldType>
-            void SetValue(ClassType* ins_ptr, FieldType val)
+            template<typename FieldType>
+            void set(void* ins_ptr, FieldType* val)
             {
                 m_setter(ins_ptr, val);
             }
 
         private:
-            std::string                             m_name;
-            std::string                             m_type_name;
-            std::function<void*(std::any)>          m_ptr_getter {nullptr};
-            std::function<std::any(std::any)>       m_getter {nullptr};
-            std::function<void(std::any, std::any)> m_setter {nullptr};
+            std::string                       m_name;
+            std::string                       m_type_name;
+            std::function<void*(void*)>       m_getter {nullptr};
+            std::function<void(void*, void*)> m_setter {nullptr};
         };
 
         class MethodAccessor

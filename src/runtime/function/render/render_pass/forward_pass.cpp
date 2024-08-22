@@ -180,8 +180,9 @@ namespace Meow
         std::shared_ptr<GameObject> camera_go_ptr =
             level_ptr->GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
         std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
-            camera_go_ptr->TryGetComponent<Transform3DComponent>().lock();
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr = camera_go_ptr->TryGetComponent<Camera3DComponent>().lock();
+            camera_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent").lock();
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
+            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent").lock();
 
 #ifdef MEOW_DEBUG
         if (!camera_go_ptr)
@@ -212,8 +213,9 @@ namespace Meow
         {
             std::shared_ptr<GameObject>           model_go_ptr = kv.second;
             std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
-                model_go_ptr->TryGetComponent<Transform3DComponent>().lock();
-            std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryGetComponent<ModelComponent>().lock();
+                model_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent").lock();
+            std::shared_ptr<ModelComponent> model_comp_ptr =
+                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent").lock();
 
             if (!transfrom_comp_ptr2 || !model_comp_ptr)
                 continue;
@@ -250,8 +252,9 @@ namespace Meow
         const auto&            all_gameobjects_map = level_ptr->GetAllGameObjects();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>     model_go_ptr   = kv.second;
-            std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryGetComponent<ModelComponent>().lock();
+            std::shared_ptr<GameObject>     model_go_ptr = kv.second;
+            std::shared_ptr<ModelComponent> model_comp_ptr =
+                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent").lock();
 
             if (!model_comp_ptr)
                 continue;

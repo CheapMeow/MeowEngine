@@ -31,7 +31,7 @@ namespace Meow
         };
 
         m_editor_ui_creator["glm::quat"] = [&](const std::string& name, void* value_ptr) {
-            if (!m_tree_node_open_states.top())
+            if (!m_tree_node_open_states.empty() && !m_tree_node_open_states.top())
                 return;
 
             glm::quat& rotation = *static_cast<glm::quat*>(value_ptr);
@@ -48,7 +48,7 @@ namespace Meow
         };
 
         m_editor_ui_creator["bool"] = [&](const std::string& name, void* value_ptr) {
-            if (!m_tree_node_open_states.top())
+            if (!m_tree_node_open_states.empty() && !m_tree_node_open_states.top())
                 return;
 
             ImGui::Text("%s", name.c_str());
@@ -56,7 +56,7 @@ namespace Meow
         };
 
         m_editor_ui_creator["int"] = [&](const std::string& name, void* value_ptr) {
-            if (!m_tree_node_open_states.top())
+            if (!m_tree_node_open_states.empty() && !m_tree_node_open_states.top())
                 return;
 
             ImGui::Text("%s", name.c_str());
@@ -64,7 +64,7 @@ namespace Meow
         };
 
         m_editor_ui_creator["float"] = [&](const std::string& name, void* value_ptr) {
-            if (!m_tree_node_open_states.top())
+            if (!m_tree_node_open_states.empty() && !m_tree_node_open_states.top())
                 return;
 
             ImGui::Text("%s", name.c_str());
@@ -72,7 +72,7 @@ namespace Meow
         };
 
         m_editor_ui_creator["std::string"] = [&](const std::string& name, void* value_ptr) {
-            if (!m_tree_node_open_states.top())
+            if (!m_tree_node_open_states.empty() && !m_tree_node_open_states.top())
                 return;
 
             ImGui::Text("%s", name.c_str());
@@ -222,7 +222,11 @@ namespace Meow
     void ImguiPass::CreateGameObjectUI(const std::shared_ptr<GameObject> go)
     {
         for (reflect::refl_shared_ptr<Component> comp_ptr : go->GetComponents())
+        {
+            m_editor_ui_creator["TreeNodePush"](go->GetName(), nullptr);
             CreateLeafNodeUI(comp_ptr);
+            m_editor_ui_creator["TreeNodePop"](go->GetName(), nullptr);
+        }
     }
 
     void ImguiPass::CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr)
@@ -238,7 +242,7 @@ namespace Meow
             if (m_editor_ui_creator.find(field_accessor.type_name()) != m_editor_ui_creator.end())
             {
                 m_editor_ui_creator[field_accessor.type_name()](field_accessor.name(),
-                                                                field_accessor.GetValuePtr(comp_ptr.shared_ptr.get()));
+                                                                field_accessor.get(comp_ptr.shared_ptr.get()));
             }
         }
     }

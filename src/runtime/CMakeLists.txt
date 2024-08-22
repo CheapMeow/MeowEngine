@@ -4,7 +4,6 @@ set(RUNTIME_HEADER_FILES
     core/base/alignment.h
     core/base/macro.h
     core/base/non_copyable.h
-    core/base/string_utils.h
     core/log/log.h
     core/math/assimp_glm_helper.h
     core/math/bounding_box.h
@@ -68,7 +67,6 @@ set(RUNTIME_HEADER_FILES
     generated/register_all.h)
 set(RUNTIME_SOURCE_FILES
     engine.cpp
-    core/base/string_utils.cpp
     core/log/log.cpp
     function/components/camera/camera_3d_component.cpp
     function/file/file_system.cpp

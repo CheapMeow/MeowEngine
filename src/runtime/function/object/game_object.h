@@ -2,7 +2,6 @@
 
 #include "pch.h"
 
-#include "core/base/string_utils.h"
 #include "core/reflect/reflect_pointer.hpp"
 #include "object_id_allocator.h"
 
@@ -42,10 +41,8 @@ namespace Meow
         std::vector<reflect::refl_shared_ptr<Component>> GetComponents() { return m_refl_components; }
 
         template<typename TComponent>
-        std::weak_ptr<TComponent> TryGetComponent()
+        std::weak_ptr<TComponent> TryGetComponent(const std::string& component_type_name)
         {
-            const std::string component_type_name = RemoveClassAndNamespace(typeid(TComponent).name());
-
             for (auto& refl_component : m_refl_components)
             {
                 if (refl_component.type_name == component_type_name)
@@ -58,7 +55,8 @@ namespace Meow
         }
 
         template<typename TComponent>
-        std::weak_ptr<TComponent> TryAddComponent(std::shared_ptr<TComponent> component_ptr)
+        std::weak_ptr<TComponent> TryAddComponent(const std::string&          component_type_name,
+                                                  std::shared_ptr<TComponent> component_ptr)
         {
 #ifdef MEOW_DEBUG
             if (!component_ptr)
@@ -67,8 +65,6 @@ namespace Meow
                 return std::shared_ptr<TComponent>(nullptr);
             }
 #endif
-
-            const std::string component_type_name = RemoveClassAndNamespace(typeid(TComponent).name());
 
             // Check if a component of the same type already exists
             for (const auto& refl_component : m_refl_components)
@@ -82,8 +78,6 @@ namespace Meow
 
             // Add the component to the container
             m_refl_components.emplace_back(component_type_name, component_ptr);
-
-            RUNTIME_INFO("{} is added!", component_type_name.c_str());
 
 #ifdef MEOW_DEBUG
             if (m_refl_components.size() < 1)

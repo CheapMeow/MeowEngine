@@ -496,9 +496,14 @@ namespace Meow
 #endif
 
         std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
-            camera_go_ptr->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
+            camera_go_ptr
+                ->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+                                                        std::make_shared<Transform3DComponent>())
+                .lock();
         std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            camera_go_ptr->TryAddComponent<Camera3DComponent>(std::make_shared<Camera3DComponent>()).lock();
+            camera_go_ptr
+                ->TryAddComponent<Camera3DComponent>("Camera3DComponent", std::make_shared<Camera3DComponent>())
+                .lock();
 
 #ifdef MEOW_DEBUG
         if (!camera_transform_comp_ptr)
@@ -516,11 +521,14 @@ namespace Meow
         if (!model_go_ptr)
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>());
+        model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+                                                            std::make_shared<Transform3DComponent>());
         std::shared_ptr<ModelComponent> model_comp_ptr =
             model_go_ptr
-                ->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
-                    "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes))
+                ->TryAddComponent<ModelComponent>(
+                    "ModelComponent",
+                    std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                                                     m_render_pass_ptr->input_vertex_attributes))
                 .lock();
 
         BoundingBox model_bounding          = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
@@ -538,8 +546,10 @@ namespace Meow
         //                 RUNTIME_ERROR("GameObject is invalid!");
         // #endif
         //             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-        //                 model_go_ptr1->TryAddComponent<Transform3DComponent>(std::make_shared<Transform3DComponent>()).lock();
-        //             model_go_ptr1->TryAddComponent<ModelComponent>(std::make_shared<ModelComponent>(
+        //                 model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+        //                 std::make_shared<Transform3DComponent>()).lock();
+        //             model_go_ptr1->TryAddComponent<ModelComponent>("ModelComponent",
+        //             std::make_shared<ModelComponent>(
         //                 "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
 
         //             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
