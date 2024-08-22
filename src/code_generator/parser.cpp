@@ -25,7 +25,31 @@ namespace Meow
         return stream;
     }
 
-    void Parser::Begin(const std::string& src_root, const std::string& output_path)
+    bool Parser::ContainsReflectableKeywords(const fs::path& filePath)
+    {
+        std::ifstream file(filePath);
+        if (!file.is_open())
+        {
+            std::cerr << "Failed to open the file: " << filePath << std::endl;
+            return false;
+        }
+
+        std::string line;
+        while (std::getline(file, line))
+        {
+            if (line.find("reflectable_class") != std::string::npos ||
+                line.find("reflectable_struct") != std::string::npos ||
+                line.find("reflectable_field") != std::string::npos ||
+                line.find("reflectable_method") != std::string::npos)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void Parser::Begin(const std::string& src_path, const std::string& output_path)
     {
         if (is_recording)
         {
@@ -43,7 +67,7 @@ namespace Meow
         is_recording = true;
         class_name_set.clear();
 
-        src_root_path = fs::path(src_root);
+        this->src_path = fs::path(src_path);
 
         include_stream << "#include \"register_all.h\"\n\n";
         include_stream << "#include \"core/reflect/type_descriptor_builder.hpp\"\n";
@@ -170,7 +194,7 @@ namespace Meow
 
     void Parser::InsertIncludePath(const fs::path& path)
     {
-        fs::path    file_path_relative = fs::relative(path, src_root_path);
+        fs::path    file_path_relative = fs::relative(path, src_path);
         std::string include_path_rel   = file_path_relative.string();
         std::replace(include_path_rel.begin(), include_path_rel.end(), '\\', '/');
 

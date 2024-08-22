@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "time_stamp_logger.h"
 
 #include <filesystem>
 #include <iostream>
@@ -12,8 +13,9 @@ using namespace Meow;
 int main(int argc, char* argv[])
 {
     std::vector<std::string> include_paths;
-    std::string              src_root    = "";
-    std::string              output_root = "";
+    std::string              src_path    = "";
+    std::string              output_path = "";
+    std::string              log_path    = "";
 
     int include_path_count = 0;
 
@@ -22,21 +24,30 @@ int main(int argc, char* argv[])
         std::string arg(argv[i]);
         if (arg.substr(0, 2) == "-S" && arg.size() > 2)
         {
-            if (src_root.size() > 0)
+            if (src_path.size() > 0)
             {
-                std::cerr << "More than one -S<src_root>!" << std::endl;
+                std::cerr << "[CodeGenerator] More than one -S<src_path>!" << std::endl;
                 return 1;
             }
-            src_root = arg.substr(2);
+            src_path = arg.substr(2);
         }
         else if (arg.substr(0, 2) == "-O" && arg.size() > 2)
         {
-            if (output_root.size() > 0)
+            if (output_path.size() > 0)
             {
-                std::cerr << "More than one -O<output_root>!" << std::endl;
+                std::cerr << "[CodeGenerator] More than one -O<output_path>!" << std::endl;
                 return 1;
             }
-            output_root = arg.substr(2);
+            output_path = arg.substr(2);
+        }
+        else if (arg.substr(0, 2) == "-L" && arg.size() > 2)
+        {
+            if (log_path.size() > 0)
+            {
+                std::cerr << "[CodeGenerator] More than one -L<log_path>!" << std::endl;
+                return 1;
+            }
+            log_path = arg.substr(2);
         }
         else if (arg.substr(0, 2) == "-I" && arg.size() > 2)
         {
@@ -44,40 +55,75 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (!std::filesystem::is_directory(src_root))
+    if (!fs::exists(src_path))
     {
-        std::cerr << "src_root is invalid!" << std::endl;
+        std::cerr << "[CodeGenerator] src_path does not exist!" << std::endl;
         exit(-1);
     }
-    if (!std::filesystem::is_directory(output_root))
+    else if (!fs::is_directory(src_path))
     {
-        std::cerr << "output_root is invalid!" << std::endl;
+        std::cerr << "[CodeGenerator] src_path is not a directory!" << std::endl;
         exit(-1);
     }
 
-    std::cout << "[CodeGenerator] src_root is" << std::endl << src_root << std::endl;
-    std::cout << "[CodeGenerator] output_root is" << std::endl << output_root << std::endl;
+    if (!fs::exists(output_path))
+    {
+        std::cerr << "[CodeGenerator] output_path does not exist!" << std::endl;
+        exit(-1);
+    }
+    else if (!fs::is_directory(output_path))
+    {
+        std::cerr << "[CodeGenerator] output_path is not a directory!" << std::endl;
+        exit(-1);
+    }
+
+    if (!fs::exists(log_path))
+    {
+        std::cout << "[CodeGenerator] log_path does not exist!" << std::endl;
+    }
+    else if (!fs::is_regular_file(log_path))
+    {
+        std::cout << "[CodeGenerator] log_path is not a file!" << std::endl;
+    }
+
+    std::cout << "[CodeGenerator] src_path is" << std::endl << src_path << std::endl;
+    std::cout << "[CodeGenerator] output_path is" << std::endl << output_path << std::endl;
+    std::cout << "[CodeGenerator] log_path is" << std::endl << log_path << std::endl;
     std::cout << "[CodeGenerator] include_path is" << std::endl;
     for (int i = 0; i < include_paths.size(); i++)
     {
         std::cout << include_paths[i] << std::endl;
     }
 
+    Parser          parser;
+    TimeStampLogger logger;
+
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
     std::vector<fs::path>           files;
-    for (const auto& entry : fs::recursive_directory_iterator(src_root))
+    for (const auto& entry : fs::recursive_directory_iterator(src_path))
     {
         if (entry.is_regular_file() && suffixes.find(entry.path().extension().string()) != suffixes.end())
         {
-            files.push_back(entry.path());
+            if (parser.ContainsReflectableKeywords(entry.path()))
+                files.push_back(entry.path());
         }
     }
 
-    Parser parser;
-    parser.Begin(src_root, output_root);
-    for (int i = 0; i < files.size(); ++i)
+    logger.LoadLog(log_path);
+    if (logger.IsModified(files))
     {
-        parser.ParseFile(files[i], include_paths);
+        std::cout << "[CodeGenerator] Reflectable files are modified, begin parsing." << std::endl;
+
+        parser.Begin(src_path, output_path);
+        for (int i = 0; i < files.size(); ++i)
+        {
+            parser.ParseFile(files[i], include_paths);
+        }
+        parser.End();
+        logger.OutputLog(files, log_path);
     }
-    parser.End();
+    else
+    {
+        std::cout << "[CodeGenerator] Reflectable files are not modified, skip parsing." << std::endl;
+    }
 }

@@ -19,6 +19,9 @@ namespace Meow
         [[reflectable_field()]]
         glm::vec3 scale = glm::vec3(1.0f);
 
+        [[reflectable_field()]]
+        int x = 2;
+
         /**
          * @brief Get the Transform from position, rotation(quaternion) and scale
          *

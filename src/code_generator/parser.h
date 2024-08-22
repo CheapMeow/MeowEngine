@@ -14,6 +14,8 @@ namespace Meow
     class Parser
     {
     public:
+        bool ContainsReflectableKeywords(const fs::path& filePath);
+
         void Begin(const std::string& src_root, const std::string& output_path);
 
         void ParseFile(const fs::path& path, const std::vector<std::string>& include_paths);
@@ -32,7 +34,7 @@ namespace Meow
         bool                            is_recording = false;
         std::unordered_set<std::string> class_name_set;
 
-        fs::path          src_root_path;
+        fs::path          src_path;
         std::ofstream     output_file;
         std::stringstream include_stream;
         std::stringstream register_stream;

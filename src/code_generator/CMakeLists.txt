@@ -1,8 +1,10 @@
 set(CODE_GENERATOR_HEADER_FILES
-    parser.h)
+    parser.h
+    time_stamp_logger.h)
 set(CODE_GENERATOR_SOURCE_FILES
     main.cpp
-    parser.cpp)
+    parser.cpp
+    time_stamp_logger.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CODE_GENERATOR_HEADER_FILES}
                                                       ${CODE_GENERATOR_SOURCE_FILES})
@@ -38,19 +40,18 @@ target_link_libraries(${CODE_GENERATOR_NAME} PUBLIC $ENV{LLVM_DIR}/lib/libclang.
 target_include_directories(${CODE_GENERATOR_NAME}
                            PUBLIC $ENV{LLVM_DIR}/include)
 
+# Add a custom target to ensure the command is always executed
+add_custom_target(always_run ALL
+    COMMAND cmake -E echo
+    COMMENT "Running always_run command"
+)
+
 add_custom_command(
     OUTPUT ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
-    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_PATH_COLLECTION} "-S${SRC_ROOT_DIR}/runtime" "-O${SRC_ROOT_DIR}/runtime/generated"
-    DEPENDS ${CODE_GENERATOR_NAME} always_rebuild
+    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_PATH_COLLECTION} "-S${SRC_ROOT_DIR}/runtime" "-O${SRC_ROOT_DIR}/runtime/generated" "-L${CMAKE_BINARY_DIR}/code_generator.log"
+    DEPENDS ${CODE_GENERATOR_NAME} always_run
     COMMENT "Generating register_all.cpp"
 )
 add_custom_target(${GENERATED_FILE_TARGET_NAME}
     DEPENDS ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
-)
-
-# Dummy output which is never actually produced. Anything that depends on
-# this will always be rebuilt.
-add_custom_command(
-    OUTPUT always_rebuild
-    COMMAND cmake -E echo
 )
