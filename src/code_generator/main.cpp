@@ -11,9 +11,11 @@ using namespace Meow;
 
 int main(int argc, char* argv[])
 {
-    std::string include_path = "";
-    std::string src_root     = "";
-    std::string output_root  = "";
+    std::vector<std::string> include_paths;
+    std::string              src_root    = "";
+    std::string              output_root = "";
+
+    int include_path_count = 0;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -38,9 +40,7 @@ int main(int argc, char* argv[])
         }
         else if (arg.substr(0, 2) == "-I" && arg.size() > 2)
         {
-            if (include_path.size() > 0)
-                include_path += " ";
-            include_path += arg;
+            include_paths.push_back(arg);
         }
     }
 
@@ -55,9 +55,13 @@ int main(int argc, char* argv[])
         exit(-1);
     }
 
-    std::cout << "src_root is " << src_root << std::endl;
-    std::cout << "output_root is " << output_root << std::endl;
-    std::cout << "include_path is " << include_path << std::endl;
+    std::cout << "[CodeGenerator] src_root is" << std::endl << src_root << std::endl;
+    std::cout << "[CodeGenerator] output_root is" << std::endl << output_root << std::endl;
+    std::cout << "[CodeGenerator] include_path is" << std::endl;
+    for (int i = 0; i < include_paths.size(); i++)
+    {
+        std::cout << include_paths[i] << std::endl;
+    }
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
     std::vector<fs::path>           files;
@@ -73,7 +77,7 @@ int main(int argc, char* argv[])
     parser.Begin(src_root, output_root);
     for (int i = 0; i < files.size(); ++i)
     {
-        parser.ParseFile(files[i], include_path);
+        parser.ParseFile(files[i], include_paths);
     }
     parser.End();
 }

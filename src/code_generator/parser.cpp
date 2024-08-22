@@ -5,6 +5,19 @@
 
 namespace Meow
 {
+    void print_diagnostics(CXTranslationUnit TU)
+    {
+        unsigned numDiagnostics = clang_getNumDiagnostics(TU);
+        for (unsigned i = 0; i < numDiagnostics; ++i)
+        {
+            CXDiagnostic diag    = clang_getDiagnostic(TU, i);
+            CXString     diagStr = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
+            printf("Diagnostic %u: %s\n", i, clang_getCString(diagStr));
+            clang_disposeString(diagStr);
+            clang_disposeDiagnostic(diag);
+        }
+    }
+
     std::ostream& operator<<(std::ostream& stream, const CXString& str)
     {
         stream << clang_getCString(str);
@@ -36,22 +49,27 @@ namespace Meow
         include_stream << "#include \"core/reflect/type_descriptor_builder.hpp\"\n";
     }
 
-    void Parser::ParseFile(const fs::path& path, const std::string& include_path)
+    void Parser::ParseFile(const fs::path& path, const std::vector<std::string>& include_paths)
     {
         // traverse AST to find class
 
-        CXIndex     index   = clang_createIndex(0, 0);
-        const char* args[2] = {
-            "-xc++",
-            "-IE:/repositories/MeowEngine/src/runtime"}; // view .h as c++
-                                                                                                       // file
-        CXTranslationUnit unit =
-            clang_parseTranslationUnit(index, path.string().c_str(), args, 2, nullptr, 0, CXTranslationUnit_None);
+        CXIndex index = clang_createIndex(0, 0);
+
+        std::vector<const char*> all_args(1 + include_paths.size());
+        all_args[0] = "-xc++";
+        for (int i = 0; i < include_paths.size(); i++)
+        {
+            all_args[i + 1] = include_paths[i].c_str();
+        }
+        CXTranslationUnit unit = clang_parseTranslationUnit(
+            index, path.string().c_str(), all_args.data(), all_args.size(), nullptr, 0, CXTranslationUnit_None);
         if (unit == nullptr)
         {
             std::cerr << "Unable to parse translation unit. Quitting." << std::endl;
             exit(-1);
         }
+
+        // print_diagnostics(unit);
 
         std::vector<CXCursor> class_cursors;
 
@@ -163,7 +181,7 @@ namespace Meow
     {
         std::string class_name = toStdString(clang_getCursorSpelling(class_cursor));
 
-        std::cout << "Parsing " << class_name << std::endl;
+        std::cout << "[CodeGenerator] Parsing " << class_name << std::endl;
 
         // avoid repeating registering
         if (class_name_set.find(class_name) != class_name_set.end())

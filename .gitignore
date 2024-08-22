@@ -34,6 +34,8 @@
 .vs/
 bin/
 build/
+build-debug/
+build-release/
 .vscode/
 
 *.user

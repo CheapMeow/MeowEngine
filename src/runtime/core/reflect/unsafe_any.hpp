@@ -27,14 +27,6 @@ namespace Meow
                 }
             }
 
-            ~UnsafeAny()
-            {
-                if (!m_ref_type)
-                {
-                    delete m_storage;
-                }
-            }
-
             template<typename OutputClass>
             OutputClass Cast()
             {

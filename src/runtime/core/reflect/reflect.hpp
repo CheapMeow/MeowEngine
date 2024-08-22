@@ -187,30 +187,6 @@ namespace Meow
 
             const std::vector<MethodAccessor>& GetMethods() const { return m_methods; }
 
-            const FieldAccessor& GetField(const std::string& name) const
-            {
-                for (const auto& field : m_fields)
-                {
-                    if (field.name() == name)
-                    {
-                        return field;
-                    }
-                }
-                return FieldAccessor {};
-            }
-
-            const MethodAccessor& GetMethod(const std::string& name) const
-            {
-                for (const auto& method : m_methods)
-                {
-                    if (method.name() == name)
-                    {
-                        return method;
-                    }
-                }
-                return MethodAccessor {};
-            }
-
             void AddField(FieldAccessor&& field) { m_fields.emplace_back(std::move(field)); }
 
             void AddMethod(MethodAccessor&& method) { m_methods.emplace_back(std::move(method)); }

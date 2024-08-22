@@ -24,39 +24,10 @@ namespace Meow
 
             refl_shared_ptr() {}
 
-            refl_shared_ptr(refl_shared_ptr& rhs) noexcept
-            {
-                type_name  = rhs.type_name;
-                shared_ptr = rhs.shared_ptr;
-            }
-
-            refl_shared_ptr& operator=(refl_shared_ptr& rhs) noexcept
-            {
-                if (this != &rhs)
-                {
-                    type_name  = rhs.type_name;
-                    shared_ptr = rhs.shared_ptr;
-                }
-
-                return *this;
-            }
-
-            refl_shared_ptr(refl_shared_ptr&& rhs) noexcept
-            {
-                type_name = rhs.type_name;
-                std::swap(shared_ptr, rhs.shared_ptr);
-            }
-
-            refl_shared_ptr& operator=(refl_shared_ptr&& rhs) noexcept
-            {
-                if (this != &rhs)
-                {
-                    type_name = rhs.type_name;
-                    std::swap(shared_ptr, rhs.shared_ptr);
-                }
-
-                return *this;
-            }
+            refl_shared_ptr(const refl_shared_ptr&)            = default;
+            refl_shared_ptr& operator=(const refl_shared_ptr&) = default;
+            refl_shared_ptr(refl_shared_ptr&&)                 = default;
+            refl_shared_ptr& operator=(refl_shared_ptr&&)      = default;
 
             std::string        type_name {""};
             std::shared_ptr<T> shared_ptr {nullptr};

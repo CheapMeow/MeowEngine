@@ -8,9 +8,9 @@ namespace Meow
 	void RegisterAll()
 	{
 		reflect::AddClass<Transform3DComponent>("Transform3DComponent")
-			.AddField("position", "int", &Transform3DComponent::position)
-			.AddField("rotation", "int", &Transform3DComponent::rotation)
-			.AddField("scale", "int", &Transform3DComponent::scale);
+			.AddField("position", "glm::vec3", &Transform3DComponent::position)
+			.AddField("rotation", "glm::quat", &Transform3DComponent::rotation)
+			.AddField("scale", "glm::vec3", &Transform3DComponent::scale);
 
 		reflect::AddClass<Camera3DComponent>("Camera3DComponent")
 			.AddField("near_plane", "float", &Camera3DComponent::near_plane)

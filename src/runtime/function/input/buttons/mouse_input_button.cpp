@@ -1,5 +1,3 @@
-#pragma once
-
 #include "mouse_input_button.h"
 
 #include "function/global/runtime_global_context.h"
