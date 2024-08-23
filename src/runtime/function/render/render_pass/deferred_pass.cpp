@@ -1,6 +1,7 @@
 #include "deferred_pass.h"
 
-#include "core/time/time.h"
+#include "pch.h"
+
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
@@ -326,6 +327,8 @@ namespace Meow
 
     void DeferredPass::UpdateUniformBuffer()
     {
+        FUNCTION_TIMER();
+
         UBOData ubo_data;
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
@@ -418,6 +421,8 @@ namespace Meow
 
     void DeferredPass::Draw(vk::raii::CommandBuffer const& command_buffer)
     {
+        FUNCTION_TIMER();
+
         m_obj2attachment_mat.BindPipeline(command_buffer);
 
         cur_query_count = 0;
@@ -466,6 +471,8 @@ namespace Meow
 
     void DeferredPass::AfterRenderPass()
     {
+        FUNCTION_TIMER();
+
         std::pair<vk::Result, std::vector<uint32_t>> query_results =
             query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
         invocationCount_fs_query_count = query_results.second[invocationCount_fs];

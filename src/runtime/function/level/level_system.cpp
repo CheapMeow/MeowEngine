@@ -1,5 +1,7 @@
 #include "level_system.h"
 
+#include "pch.h"
+
 namespace Meow
 {
     void LevelSystem::Start()
@@ -10,6 +12,8 @@ namespace Meow
 
     void LevelSystem::Tick(float dt)
     {
+        FUNCTION_TIMER();
+
         if (std::shared_ptr<Level> level = m_current_active_level.lock())
         {
             level->Tick(dt);

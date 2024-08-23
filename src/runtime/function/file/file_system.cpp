@@ -14,6 +14,8 @@ namespace Meow
 
     std::tuple<uint8_t*, uint32_t> FileSystem::ReadBinaryFile(std::string const& filepath)
     {
+        FUNCTION_TIMER();
+
         if (!Exists(filepath))
         {
             return {nullptr, 0};
@@ -44,6 +46,8 @@ namespace Meow
 
     std::tuple<uint32_t, uint32_t> FileSystem::GetImageFileWidthHeight(std::string const& filepath)
     {
+        FUNCTION_TIMER();
+
         if (!Exists(filepath))
         {
             return {0, 0};
@@ -62,6 +66,8 @@ namespace Meow
 
     uint32_t FileSystem::ReadImageFileToPtr(std::string const& filepath, uint8_t* data_ptr)
     {
+        FUNCTION_TIMER();
+
         if (!Exists(filepath))
         {
             return 0;

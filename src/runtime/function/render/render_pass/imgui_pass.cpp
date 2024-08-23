@@ -176,6 +176,8 @@ namespace Meow
                           Meow::SurfaceData const&       surface_data,
                           uint32_t                       current_image_index)
     {
+        FUNCTION_TIMER();
+
         // Start the Dear ImGui frame
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -216,6 +218,8 @@ namespace Meow
 
     void ImguiPass::Draw(vk::raii::CommandBuffer const& command_buffer)
     {
+        FUNCTION_TIMER();
+
         ImGui::Render();
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *command_buffer);
 
@@ -232,6 +236,8 @@ namespace Meow
 
     void ImguiPass::CreateGameObjectUI(const std::shared_ptr<GameObject> go)
     {
+        FUNCTION_TIMER();
+
         m_editor_ui_creator["TreeNodePush"](go->GetName(), nullptr);
         for (reflect::refl_shared_ptr<Component> comp_ptr : go->GetComponents())
         {
@@ -242,6 +248,8 @@ namespace Meow
 
     void ImguiPass::CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr)
     {
+        FUNCTION_TIMER();
+
         if (!reflect::Registry::instance().HasType(comp_ptr.type_name))
             return;
 
@@ -260,6 +268,8 @@ namespace Meow
 
     void ImguiPass::DrawVecControl(const std::string& label, glm::vec3& values, float reset_value, float column_width)
     {
+        FUNCTION_TIMER();
+
         ImGui::PushID(label.c_str());
 
         ImGui::Columns(2);

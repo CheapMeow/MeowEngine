@@ -1,5 +1,7 @@
 #include "resource_system.h"
 
+#include "pch.h"
+
 #include "function/global/runtime_global_context.h"
 
 namespace Meow
@@ -22,6 +24,8 @@ namespace Meow
 
     std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& filepath)
     {
+        FUNCTION_TIMER();
+
         std::shared_ptr<ImageData> texture_ptr =
             g_runtime_global_context.render_system->CreateTextureFromFile(filepath);
 
@@ -30,6 +34,8 @@ namespace Meow
 
     std::shared_ptr<ImageData> ResourceSystem::GetTexture(const std::string& filepath)
     {
+        FUNCTION_TIMER();
+
         if (m_textures.find(filepath) == m_textures.end())
             return nullptr;
 

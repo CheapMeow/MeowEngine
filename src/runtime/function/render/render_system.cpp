@@ -1,5 +1,7 @@
 #include "render_system.h"
 
+#include "pch.h"
+
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
@@ -562,6 +564,8 @@ namespace Meow
 
     void RenderSystem::Tick(float dt)
     {
+        FUNCTION_TIMER();
+
         auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer                = per_frame_data.command_buffer;
         auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
@@ -642,6 +646,8 @@ namespace Meow
 
     std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& filepath)
     {
+        FUNCTION_TIMER();
+
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
@@ -655,6 +661,8 @@ namespace Meow
                                                              std::vector<VertexAttribute> attributes,
                                                              vk::IndexType                index_type)
     {
+        FUNCTION_TIMER();
+
         m_models.emplace_back(std::make_shared<Model>(m_gpu,
                                                       m_logical_device,
                                                       m_upload_context.command_pool,

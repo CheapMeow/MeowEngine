@@ -43,6 +43,8 @@ namespace Meow
         template<typename TComponent>
         std::weak_ptr<TComponent> TryGetComponent(const std::string& component_type_name)
         {
+            FUNCTION_TIMER();
+
             for (auto& refl_component : m_refl_components)
             {
                 if (refl_component.type_name == component_type_name)
@@ -58,6 +60,8 @@ namespace Meow
         std::weak_ptr<TComponent> TryAddComponent(const std::string&          component_type_name,
                                                   std::shared_ptr<TComponent> component_ptr)
         {
+            FUNCTION_TIMER();
+
 #ifdef MEOW_DEBUG
             if (!component_ptr)
             {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 #include "function/object/game_object.h"
 #include "function/render/structs/buffer_data.h"
 #include "function/render/structs/image_data.h"

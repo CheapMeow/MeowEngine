@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 #include "function/object/game_object.h"
 
 #include <unordered_map>

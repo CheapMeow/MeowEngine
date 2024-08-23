@@ -1,5 +1,7 @@
 #include "window_system.h"
 
+#include "pch.h"
+
 #include "function/global/runtime_global_context.h"
 
 namespace Meow
@@ -16,5 +18,10 @@ namespace Meow
 
     void WindowSystem::Start() {}
 
-    void WindowSystem::Tick(float dt) { m_window->Tick(dt); }
+    void WindowSystem::Tick(float dt)
+    {
+        FUNCTION_TIMER();
+
+        m_window->Tick(dt);
+    }
 } // namespace Meow
