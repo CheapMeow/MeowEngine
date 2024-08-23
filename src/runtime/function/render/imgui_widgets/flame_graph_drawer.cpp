@@ -16,23 +16,59 @@ namespace Meow
         if (window->SkipItems)
             return;
 
+        if (m_is_shapshot_enabled)
+            Draw_impl(m_curr_shapshot.scope_times,
+                      m_curr_shapshot.max_depth,
+                      m_curr_shapshot.global_start,
+                      m_curr_shapshot.graph_size);
+        else
+            Draw_impl(scope_times, max_depth, global_start, graph_size);
+
+        if (ImGui::Button("Capture Snapshot"))
+        {
+            m_is_shapshot_enabled        = true;
+            m_curr_shapshot.scope_times  = scope_times;
+            m_curr_shapshot.max_depth    = max_depth;
+            m_curr_shapshot.global_start = global_start;
+            m_curr_shapshot.graph_size   = graph_size;
+        }
+
+        if (m_is_shapshot_enabled)
+        {
+            ImGui::SameLine();
+            if (ImGui::Button("Leave Snapshot"))
+            {
+                m_is_shapshot_enabled = false;
+            }
+        }
+    }
+
+    void FlameGraphDrawer::Draw_impl(const std::vector<ScopeTimeData>& scope_times,
+                                     int                               max_depth,
+                                     std::chrono::microseconds         global_start,
+                                     ImVec2                            graph_size)
+    {
+        if (scope_times.size() == 0)
+            return;
+
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        if (window->SkipItems)
+            return;
+
         ImGuiContext&     g     = *GImGui;
         const ImGuiStyle& style = g.Style;
 
         const auto   blockHeight = ImGui::GetTextLineHeight() + (style.FramePadding.y * 2);
         const ImVec2 label_size  = ImGui::CalcTextSize("Testing", NULL, true);
         if (graph_size.x == 0.0f)
-            graph_size.x = ImGui::CalcItemWidth();
+            graph_size.x = ImGui::GetWindowWidth() - 2.0 * style.FramePadding.x;
         if (graph_size.y == 0.0f)
             graph_size.y = label_size.y + (style.FramePadding.y * 3) + blockHeight * (max_depth + 1);
 
         const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + graph_size);
         const ImRect inner_bb(frame_bb.Min + style.FramePadding, frame_bb.Max - style.FramePadding);
-        const ImRect total_bb(frame_bb.Min,
-                              frame_bb.Max +
-                                  ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0));
-        ImGui::ItemSize(total_bb, style.FramePadding.y);
-        if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
+        ImGui::ItemSize(frame_bb, style.FramePadding.y);
+        if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
             return;
 
         ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
@@ -85,5 +121,8 @@ namespace Meow
         {
             ImGui::SetTooltip("Total: %8.4g", frame_time.count() / 1000.0);
         }
+
+        ImGui::Columns();
     }
+
 } // namespace Meow

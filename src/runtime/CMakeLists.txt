@@ -38,6 +38,7 @@ set(RUNTIME_HEADER_FILES
     function/object/game_object.h
     function/object/object_id_allocator.h
     function/render/render_system.h
+    function/render/imgui_widgets/flame_graph_drawer.h
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
     function/render/render_pass/imgui_pass.h
@@ -61,7 +62,6 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/ubo_data.h
     function/render/structs/vertex_attribute.h
     function/render/structs/vertex_buffer.h
-    function/render/utils/flame_graph_drawer.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
     function/resource/resource_system.h
@@ -85,6 +85,7 @@ set(RUNTIME_SOURCE_FILES
     function/object/game_object.cpp
     function/object/object_id_allocator.cpp
     function/render/render_system.cpp
+    function/render/imgui_widgets/flame_graph_drawer.cpp
     function/render/render_pass/deferred_pass.cpp
     function/render/render_pass/forward_pass.cpp
     function/render/render_pass/imgui_pass.cpp
@@ -96,7 +97,6 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/model_node.cpp
     function/render/structs/shader.cpp
     function/render/structs/vertex_attribute.cpp
-    function/render/utils/flame_graph_drawer.cpp
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp

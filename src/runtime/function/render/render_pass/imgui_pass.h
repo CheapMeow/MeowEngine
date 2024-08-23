@@ -2,6 +2,7 @@
 
 #include "core/reflect/reflect_pointer.hpp"
 #include "function/object/game_object.h"
+#include "function/render/imgui_widgets/flame_graph_drawer.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "render_pass.h"
@@ -87,5 +88,7 @@ namespace Meow
 
         std::unordered_map<std::string, std::function<void(std::string, void*)>> m_editor_ui_creator;
         std::stack<bool>                                                         m_tree_node_open_states;
+
+        FlameGraphDrawer m_flame_graph_drawer;
     };
 } // namespace Meow

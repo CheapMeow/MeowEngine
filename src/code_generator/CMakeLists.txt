@@ -67,7 +67,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/ubo_data.h
     ../runtime/function/render/structs/vertex_attribute.h
     ../runtime/function/render/structs/vertex_buffer.h
-    ../runtime/function/render/utils/flame_graph_drawer.h
+    ../runtime/function/render/imgui_widgets/flame_graph_drawer.h
     ../runtime/function/render/utils/vulkan_initialize_utils.hpp
     ../runtime/function/render/utils/vulkan_shader_utils.hpp
     ../runtime/function/resource/resource_system.h

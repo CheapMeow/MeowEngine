@@ -3,7 +3,6 @@
 #include "pch.h"
 
 #include "function/global/runtime_global_context.h"
-#include "function/render/utils/flame_graph_drawer.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -207,9 +206,13 @@ namespace Meow
             CreateGameObjectUI(kv.second);
         }
 
-        FlameGraphDrawer::Draw(TimerSingleton::Get().GetScopeTimes(),
-                               TimerSingleton::Get().GetMaxDepth(),
-                               TimerSingleton::Get().GetGlobalStart());
+        ImGui::End();
+
+        ImGui::Begin("Flame Graph");
+
+        m_flame_graph_drawer.Draw(TimerSingleton::Get().GetScopeTimes(),
+                                  TimerSingleton::Get().GetMaxDepth(),
+                                  TimerSingleton::Get().GetGlobalStart());
 
         ImGui::End();
 
