@@ -20,7 +20,9 @@ set(HEADER_FILES_DEPEND
     ../runtime/core/reflect/type_descriptor_builder.hpp
     ../runtime/core/reflect/unsafe_any.hpp
     ../runtime/core/signal/signal.hpp
+    ../runtime/core/time/scope_time_data.h
     ../runtime/core/time/time.h
+    ../runtime/core/time/timer.h
     ../runtime/function/system.h
     ../runtime/function/components/camera/camera_3d_component.hpp
     ../runtime/function/components/model/model_component.h
@@ -65,6 +67,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/ubo_data.h
     ../runtime/function/render/structs/vertex_attribute.h
     ../runtime/function/render/structs/vertex_buffer.h
+    ../runtime/function/render/utils/flame_graph_drawer.h
     ../runtime/function/render/utils/vulkan_initialize_utils.hpp
     ../runtime/function/render/utils/vulkan_shader_utils.hpp
     ../runtime/function/resource/resource_system.h

@@ -1,8 +1,9 @@
 
 #include "engine.h"
 
+#include "pch.h"
+
 #include "core/reflect/reflect.hpp"
-#include "core/time/time.h"
 #include "function/global/runtime_global_context.h"
 #include "generated/register_all.h"
 
@@ -77,6 +78,8 @@ namespace Meow
             g_runtime_global_context.input_system->Tick(dt);
             g_runtime_global_context.render_system->Tick(dt);
             g_runtime_global_context.level_system->Tick(dt);
+
+            TimerSingleton::Get().Clear();
         }
     }
 

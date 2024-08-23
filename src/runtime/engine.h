@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 #include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "function/system.h"

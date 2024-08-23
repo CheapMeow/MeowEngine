@@ -17,6 +17,7 @@ target_compile_definitions(
           VULKAN_HPP_STORAGE_SHARED # using dll compiled from vulkan hpp. Only
                                     # one preprocessor is enough for
                                     # representing importing.
+          GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
 )
 
 target_include_directories(${EDITOR_NAME} PUBLIC ${SRC_ROOT_DIR}

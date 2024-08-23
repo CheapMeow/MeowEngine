@@ -27,6 +27,7 @@ target_compile_definitions(
                                            # vulkan hpp
           NOMINMAX # for std::numeric_limits<double>::min() and max()
           GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
+          IMGUI_DEFINE_MATH_OPERATORS
           # _DISABLE_STRING_ANNOTATION # for ASAN 
           # _DISABLE_VECTOR_ANNOTATION # for ASAN
 )

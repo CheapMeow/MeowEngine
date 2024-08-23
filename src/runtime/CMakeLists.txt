@@ -14,7 +14,9 @@ set(RUNTIME_HEADER_FILES
     core/reflect/type_descriptor_builder.hpp
     core/reflect/unsafe_any.hpp
     core/signal/signal.hpp
+    core/time/scope_time_data.h
     core/time/time.h
+    core/time/timer.h
     function/system.h
     function/components/camera/camera_3d_component.hpp
     function/components/model/model_component.h
@@ -59,6 +61,7 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/ubo_data.h
     function/render/structs/vertex_attribute.h
     function/render/structs/vertex_buffer.h
+    function/render/utils/flame_graph_drawer.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
     function/resource/resource_system.h
@@ -93,6 +96,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/model_node.cpp
     function/render/structs/shader.cpp
     function/render/structs/vertex_attribute.cpp
+    function/render/utils/flame_graph_drawer.cpp
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp
@@ -124,6 +128,7 @@ target_compile_definitions(
                                            # vulkan hpp
           NOMINMAX # for std::numeric_limits<double>::min() and max()
           GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
+          IMGUI_DEFINE_MATH_OPERATORS
           # _DISABLE_STRING_ANNOTATION # for ASAN 
           # _DISABLE_VECTOR_ANNOTATION # for ASAN
 )
