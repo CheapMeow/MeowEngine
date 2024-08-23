@@ -44,7 +44,11 @@ namespace Meow
 
             DrawVecControl(name, degrees_val);
 
-            rotation = glm::quat(degrees_val);
+            euler.x = glm::radians(degrees_val.x);
+            euler.y = glm::radians(degrees_val.y);
+            euler.z = glm::radians(degrees_val.z);
+
+            rotation = glm::quat(euler);
         };
 
         m_editor_ui_creator["bool"] = [&](const std::string& name, void* value_ptr) {
