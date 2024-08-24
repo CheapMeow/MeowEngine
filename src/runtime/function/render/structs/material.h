@@ -1,7 +1,5 @@
 #pragma once
 
-#include "pch.h"
-
 #include "buffer_data.h"
 #include "core/base/alignment.h"
 #include "core/base/non_copyable.h"

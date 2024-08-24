@@ -14,6 +14,19 @@ namespace Meow
     public:
         RenderPass(std::nullptr_t) {}
 
+        RenderPass(vk::raii::Device const& device);
+
+        RenderPass(RenderPass&& rhs) noexcept { swap(*this, rhs); }
+
+        RenderPass& operator=(RenderPass&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                swap(*this, rhs);
+            }
+            return *this;
+        }
+
         virtual ~RenderPass() {}
 
         virtual void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
@@ -32,47 +45,24 @@ namespace Meow
 
         virtual void Draw(vk::raii::CommandBuffer const& command_buffer) {}
 
-        virtual void End(vk::raii::CommandBuffer const& command_buffer) { command_buffer.endRenderPass(); }
+        virtual void End(vk::raii::CommandBuffer const& command_buffer);
 
-        virtual void AfterRenderPass() {}
+        virtual void AfterPresent();
+
+        friend void swap(RenderPass& lhs, RenderPass& rhs);
 
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
         std::vector<vk::ClearValue>        clear_values;
         std::vector<VertexAttribute>       input_vertex_attributes;
 
-        bool                enable_query = false;
-        vk::raii::QueryPool query_pool   = nullptr;
+        std::string         m_pass_name     = "Default Pass";
+        bool                m_query_enabled = true;
+        vk::raii::QueryPool query_pool      = nullptr;
 
     protected:
-        vk::Format              m_depth_format = vk::Format::eD16Unorm;
-        vk::SampleCountFlagBits m_sample_count = vk::SampleCountFlagBits::e1;
-
+        vk::Format                 m_depth_format     = vk::Format::eD16Unorm;
+        vk::SampleCountFlagBits    m_sample_count     = vk::SampleCountFlagBits::e1;
         std::shared_ptr<ImageData> m_depth_attachment = nullptr;
-
-        enum statisticName
-        {
-            // Input Assembly
-            vertexCount_ia,
-            primitiveCount_ia,
-            // Vertex Shader
-            invocationCount_vs,
-            // Geometry Shader
-            invocationCount_gs,
-            primitiveCount_gs,
-            invocationCount_clipping,
-            primitiveCount_clipping,
-            // Fragment Shader
-            invocationCount_fs,
-            // Tessellation
-            patchCount_tcs,
-            invocationCount_tes,
-            // Compute Shader
-            invocationCount_cs,
-            statisticCount
-        };
-        uint32_t statistics[statisticCount]     = {};
-        uint32_t cur_query_count                = 0;
-        uint32_t invocationCount_fs_query_count = 0;
     };
 } // namespace Meow

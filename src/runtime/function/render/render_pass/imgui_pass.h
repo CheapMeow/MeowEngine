@@ -1,69 +1,42 @@
 #pragma once
 
-#include "core/reflect/reflect_pointer.hpp"
-#include "function/object/game_object.h"
-#include "function/render/imgui_widgets/flame_graph_drawer.h"
+#include "core/signal/signal.hpp"
+#include "function/render/imgui_widgets/components_widget.h"
+#include "function/render/imgui_widgets/flame_graph_widget.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "render_pass.h"
 
-#include <functional>
-#include <glm/glm.hpp>
-#include <stack>
-#include <string>
-#include <unordered_map>
-
 namespace Meow
 {
-    class ImguiPass : public RenderPass
+    class ImGuiPass : public RenderPass
     {
     public:
-        ImguiPass(std::nullptr_t);
+        ImGuiPass(std::nullptr_t);
 
-        ImguiPass(ImguiPass&& rhs) noexcept
-            : RenderPass(nullptr)
+        ImGuiPass(ImGuiPass&& rhs) noexcept
+            : RenderPass(std::move(rhs))
         {
-            std::swap(render_pass, rhs.render_pass);
-            std::swap(framebuffers, rhs.framebuffers);
-            std::swap(clear_values, rhs.clear_values);
-            std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
-            m_depth_format = rhs.m_depth_format;
-            m_sample_count = rhs.m_sample_count;
-            std::swap(m_depth_attachment, rhs.m_depth_attachment);
-            std::swap(query_pool, rhs.query_pool);
-            enable_query = rhs.enable_query;
+            swap(*this, rhs);
         }
 
-        ImguiPass& operator=(ImguiPass&& rhs) noexcept
+        ImGuiPass& operator=(ImGuiPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                std::swap(render_pass, rhs.render_pass);
-                std::swap(framebuffers, rhs.framebuffers);
-                std::swap(clear_values, rhs.clear_values);
-                std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
-                m_depth_format = rhs.m_depth_format;
-                m_sample_count = rhs.m_sample_count;
-                std::swap(m_depth_attachment, rhs.m_depth_attachment);
-                std::swap(query_pool, rhs.query_pool);
-                enable_query = rhs.enable_query;
+                RenderPass::operator=(std::move(rhs));
+
+                swap(*this, rhs);
             }
             return *this;
         }
 
-        ImguiPass(vk::raii::PhysicalDevice const& physical_device,
+        ImGuiPass(vk::raii::PhysicalDevice const& physical_device,
                   vk::raii::Device const&         device,
                   SurfaceData&                    surface_data,
                   vk::raii::CommandPool const&    command_pool,
                   vk::raii::Queue const&          queue,
                   DescriptorAllocatorGrowable&    m_descriptor_allocator);
-
-        ~ImguiPass()
-        {
-            render_pass = nullptr;
-            framebuffers.clear();
-            m_depth_attachment = nullptr;
-        }
 
         void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                  vk::raii::Device const&                 device,
@@ -78,17 +51,16 @@ namespace Meow
 
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
 
+        Signal<int>& OnPassChanged() { return m_on_pass_changed; }
+
+        friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
+
     private:
-        void CreateGameObjectUI(const std::shared_ptr<GameObject> go);
-        void CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr);
-        void DrawVecControl(const std::string& label,
-                            glm::vec3&         values,
-                            float              reset_value  = 0.0f,
-                            float              column_width = 100.0f);
+        int                      m_cur_render_pass   = 0;
+        std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
+        Signal<int>              m_on_pass_changed;
 
-        std::unordered_map<std::string, std::function<void(std::string, void*)>> m_editor_ui_creator;
-        std::stack<bool>                                                         m_tree_node_open_states;
-
-        FlameGraphDrawer m_flame_graph_drawer;
+        ComponentsWidget m_components_widget;
+        FlameGraphWidget m_flame_graph_widget;
     };
 } // namespace Meow

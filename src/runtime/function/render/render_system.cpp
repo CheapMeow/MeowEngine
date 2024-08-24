@@ -43,7 +43,9 @@ namespace Meow
         required_validation_layers.insert(
             required_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
-        if (ValidateLayers(required_validation_layers, supported_validation_layers))
+
+        m_is_validation_layer_found = ValidateLayers(required_validation_layers, supported_validation_layers);
+        if (m_is_validation_layer_found)
         {
             RUNTIME_INFO("Enabled Validation Layers:");
             for (const auto& layer : required_validation_layers)
@@ -53,7 +55,7 @@ namespace Meow
         }
         else
         {
-            throw std::runtime_error("Required validation layers are missing.");
+            RUNTIME_ERROR("Required validation layers are missing.");
         }
 
         uint32_t               api_version = m_vulkan_context.enumerateInstanceVersion();
@@ -304,7 +306,7 @@ namespace Meow
         m_forward_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
 
-        m_imgui_pass = ImguiPass(m_gpu,
+        m_imgui_pass = ImGuiPass(m_gpu,
                                  m_logical_device,
                                  m_surface_data,
                                  m_upload_context.command_pool,
@@ -312,6 +314,17 @@ namespace Meow
                                  m_descriptor_allocator);
         m_imgui_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+
+        m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
+            // switch render pass
+            if (cur_render_pass == 0)
+                m_render_pass_ptr = &m_deferred_pass;
+            else if (cur_render_pass == 1)
+                m_render_pass_ptr = &m_forward_pass;
+
+            m_pipeline_stat_map.clear();
+            m_render_stat_map.clear();
+        });
 
         m_render_pass_ptr = &m_deferred_pass;
     }
@@ -550,16 +563,20 @@ namespace Meow
         //                 RUNTIME_ERROR("GameObject is invalid!");
         // #endif
         //             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-        //                 model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-        //                 std::make_shared<Transform3DComponent>()).lock();
-        //             model_go_ptr1->TryAddComponent<ModelComponent>("ModelComponent",
-        //             std::make_shared<ModelComponent>(
-        //                 "builtin/models/backpack/backpack.obj", m_render_pass_ptr->input_vertex_attributes));
+        //                 model_go_ptr1
+        //                     ->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+        //                                                             std::make_shared<Transform3DComponent>())
+        //                     .lock();
+        //             model_go_ptr1->TryAddComponent<ModelComponent>(
+        //                 "ModelComponent",
+        //                 std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+        //                                                  m_render_pass_ptr->input_vertex_attributes));
 
         //             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
         //                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
         //                                                            10.0 * glm::linearRand(-1.0f, 1.0f));
         //         }
+        //
     }
 
     void RenderSystem::Tick(float dt)
@@ -571,12 +588,6 @@ namespace Meow
         auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
         auto& render_finished_semaphore = per_frame_data.render_finished_semaphore;
         auto& in_flight_fence           = per_frame_data.in_flight_fence;
-
-        // switch render pass
-        if (cur_render_pass == 0)
-            m_render_pass_ptr = &m_deferred_pass;
-        else if (cur_render_pass == 1)
-            m_render_pass_ptr = &m_forward_pass;
 
         m_render_pass_ptr->UpdateUniformBuffer();
 
@@ -641,7 +652,8 @@ namespace Meow
 
         m_current_frame_index = (m_current_frame_index + 1) % k_max_frames_in_flight;
 
-        m_render_pass_ptr->AfterRenderPass();
+        m_render_pass_ptr->AfterPresent();
+        m_imgui_pass.AfterPresent();
     }
 
     std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& filepath)

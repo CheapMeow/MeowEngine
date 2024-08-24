@@ -38,12 +38,16 @@ set(RUNTIME_HEADER_FILES
     function/object/game_object.h
     function/object/object_id_allocator.h
     function/render/render_system.h
-    function/render/imgui_widgets/flame_graph_drawer.h
+    function/render/imgui_widgets/builtin_statistics_widget.h
+    function/render/imgui_widgets/components_widget.h
+    function/render/imgui_widgets/flame_graph_widget.h
+    function/render/imgui_widgets/pipeline_statistics_widget.h
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
     function/render/render_pass/imgui_pass.h
     function/render/render_pass/render_pass.h
     function/render/structs/buffer_data.h
+    function/render/structs/builtin_render_stat.h
     function/render/structs/descriptor_allocator_growable.h
     function/render/structs/image_data.h
     function/render/structs/index_buffer.h
@@ -85,7 +89,10 @@ set(RUNTIME_SOURCE_FILES
     function/object/game_object.cpp
     function/object/object_id_allocator.cpp
     function/render/render_system.cpp
-    function/render/imgui_widgets/flame_graph_drawer.cpp
+    function/render/imgui_widgets/builtin_statistics_widget.cpp
+    function/render/imgui_widgets/components_widget.cpp
+    function/render/imgui_widgets/flame_graph_widget.cpp
+    function/render/imgui_widgets/pipeline_statistics_widget.cpp
     function/render/render_pass/deferred_pass.cpp
     function/render/render_pass/forward_pass.cpp
     function/render/render_pass/imgui_pass.cpp
@@ -94,7 +101,9 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/image_data.cpp
     function/render/structs/material.cpp
     function/render/structs/model.cpp
+    function/render/structs/model_mesh.cpp
     function/render/structs/model_node.cpp
+    function/render/structs/model_primitive.cpp
     function/render/structs/shader.cpp
     function/render/structs/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp

@@ -19,8 +19,10 @@ namespace Meow
                              vk::raii::CommandPool const&    command_pool,
                              vk::raii::Queue const&          queue,
                              DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : RenderPass(nullptr)
+        : RenderPass(device)
     {
+        m_pass_name = "Forward Pass";
+
         // Create a set to store all information of attachments
 
         vk::Format color_format =
@@ -111,15 +113,14 @@ namespace Meow
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        // debug
+        // Debug
 
         VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
                                                         .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
                                                         .queryCount         = 1,
-                                                        .pipelineStatistics = (1 << statisticCount) - 1};
+                                                        .pipelineStatistics = (1 << 11) - 1};
 
-        enable_query = true;
-        query_pool   = device.createQueryPool(query_pool_create_info, nullptr);
+        query_pool = device.createQueryPool(query_pool_create_info, nullptr);
     }
 
     void ForwardPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
@@ -246,13 +247,28 @@ namespace Meow
         m_forward_mat.EndFrame();
     }
 
+    void ForwardPass::Start(vk::raii::CommandBuffer const& command_buffer,
+                            Meow::SurfaceData const&       surface_data,
+                            uint32_t                       current_image_index)
+    {
+        // Debug
+        if (m_query_enabled)
+            command_buffer.resetQueryPool(*query_pool, 0, 1);
+
+        m_render_stat.draw_call = 0;
+
+        RenderPass::Start(command_buffer, surface_data, current_image_index);
+    }
+
     void ForwardPass::Draw(vk::raii::CommandBuffer const& command_buffer)
     {
         FUNCTION_TIMER();
 
         m_forward_mat.BindPipeline(command_buffer);
 
-        cur_query_count = 0;
+        // Debug
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 0, {});
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllGameObjects();
@@ -265,33 +281,40 @@ namespace Meow
             if (!model_comp_ptr)
                 continue;
 
-            // debug
-            if (cur_query_count == 0)
-            {
-                command_buffer.beginQuery(*query_pool, 0, {});
-            }
-
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BindDescriptorSets(command_buffer, i);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
-            }
 
-            // debug
-            if (cur_query_count == 0)
-            {
-                command_buffer.endQuery(*query_pool, 0);
-                cur_query_count++;
+                ++m_render_stat.draw_call;
             }
         }
+
+        // Debug
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 0);
     }
 
-    void ForwardPass::AfterRenderPass()
+    void ForwardPass::AfterPresent()
     {
         FUNCTION_TIMER();
 
-        std::pair<vk::Result, std::vector<uint32_t>> query_results =
-            query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
-        invocationCount_fs_query_count = query_results.second[invocationCount_fs];
+        if (m_query_enabled)
+        {
+            std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                query_pool.getResults<uint32_t>(0, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
+
+            g_runtime_global_context.render_system->UploadPipelineStat(m_pass_name, query_results.second);
+        }
+
+        g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
+    }
+
+    void swap(ForwardPass& lhs, ForwardPass& rhs)
+    {
+        using std::swap;
+
+        swap(lhs.m_forward_mat, rhs.m_forward_mat);
+        swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

@@ -42,30 +42,6 @@ namespace Meow
 
     void MeowEngine::Run()
     {
-        // while (m_Running)
-        // {
-        //     double currTime  = Time::GetTime();
-        //     double frameTime = currTime - m_lastTime;
-        //     if (frameTime > 0.25)
-        //         frameTime = 0.25;
-        //     m_lastTime = currTime;
-
-        //     m_accumulator += frameTime;
-
-        //     while (m_accumulator >= m_phyics_fixed_dt)
-        //     {
-        //         previousState = currentState;
-        //         integrate(currentState, m_phyics_time, m_phyics_fixed_dt);
-        //         m_phyics_time += m_phyics_fixed_dt;
-        //         m_accumulator -= m_phyics_fixed_dt;
-        //     }
-
-        //     const double alpha = m_accumulator / m_phyics_fixed_dt;
-
-        //     State state = currentState * alpha + previousState * (1.0 - alpha);
-
-        //     render(state);
-        // }
         while (g_runtime_global_context.running)
         {
             float curr_time = Time::GetTime();

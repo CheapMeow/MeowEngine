@@ -39,29 +39,11 @@ namespace Meow
             , triangle_count(0)
         {}
 
-        void BindOnly(const vk::raii::CommandBuffer& cmd_buffer)
-        {
-            for (int i = 0; i < primitives.size(); ++i)
-            {
-                primitives[i]->BindOnly(cmd_buffer);
-            }
-        }
+        void BindOnly(const vk::raii::CommandBuffer& cmd_buffer);
 
-        void DrawOnly(const vk::raii::CommandBuffer& cmd_buffer)
-        {
-            for (int i = 0; i < primitives.size(); ++i)
-            {
-                primitives[i]->DrawOnly(cmd_buffer);
-            }
-        }
+        void DrawOnly(const vk::raii::CommandBuffer& cmd_buffer);
 
-        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer)
-        {
-            for (int i = 0; i < primitives.size(); ++i)
-            {
-                primitives[i]->BindDrawCmd(cmd_buffer);
-            }
-        }
+        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer);
 
         ~ModelMesh()
         {

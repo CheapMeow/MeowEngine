@@ -1,10 +1,12 @@
-#include "flame_graph_drawer.h"
+#include "flame_graph_widget.h"
 
 #include "imgui_internal.h"
 
+#include <glm/gtx/color_space.hpp>
+
 namespace Meow
 {
-    void FlameGraphDrawer::Draw(const std::vector<ScopeTimeData>& scope_times,
+    void FlameGraphWidget::Draw(const std::vector<ScopeTimeData>& scope_times,
                                 int                               max_depth,
                                 std::chrono::microseconds         global_start,
                                 ImVec2                            graph_size)
@@ -15,6 +17,8 @@ namespace Meow
         ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (window->SkipItems)
             return;
+
+        ImGui::Text("Flame Graph");
 
         if (m_is_shapshot_enabled)
             Draw_impl(m_curr_shapshot.scope_times,
@@ -43,7 +47,7 @@ namespace Meow
         }
     }
 
-    void FlameGraphDrawer::Draw_impl(const std::vector<ScopeTimeData>& scope_times,
+    void FlameGraphWidget::Draw_impl(const std::vector<ScopeTimeData>& scope_times,
                                      int                               max_depth,
                                      std::chrono::microseconds         global_start,
                                      ImVec2                            graph_size)
@@ -73,10 +77,30 @@ namespace Meow
 
         ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 
-        const ImU32 col_base            = ImGui::GetColorU32(ImGuiCol_PlotHistogram) & 0x77FFFFFF;
-        const ImU32 col_hovered         = ImGui::GetColorU32(ImGuiCol_PlotHistogramHovered) & 0x77FFFFFF;
-        const ImU32 col_outline_base    = ImGui::GetColorU32(ImGuiCol_PlotHistogram) & 0x7FFFFFFF;
-        const ImU32 col_outline_hovered = ImGui::GetColorU32(ImGuiCol_PlotHistogramHovered) & 0x7FFFFFFF;
+        std::vector<ImU32> col_base_table(max_depth + 1);
+        for (int i = 0; i < max_depth + 1; i++)
+        {
+            float        saturation_ratio = static_cast<float>(i + 1) / (max_depth + 1);
+            glm::vec3    red_rgb          = glm::rgbColor(glm::vec3(120.0, saturation_ratio, 0.5));
+            unsigned int alpha            = 255;
+            unsigned int red              = 255 * red_rgb.x;
+            unsigned int green            = 255 * red_rgb.y;
+            unsigned int blue             = 255 * red_rgb.z;
+            col_base_table[i]             = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        }
+        std::vector<ImU32> col_hovered_table(max_depth + 1);
+        for (int i = 0; i < max_depth + 1; i++)
+        {
+            float        saturation_ratio = static_cast<float>(i + 1) / (max_depth + 1);
+            glm::vec3    red_rgb          = glm::rgbColor(glm::vec3(120.0, saturation_ratio, 0.8));
+            unsigned int alpha            = 255;
+            unsigned int red              = 255 * red_rgb.x;
+            unsigned int green            = 255 * red_rgb.y;
+            unsigned int blue             = 255 * red_rgb.z;
+            col_hovered_table[i]          = (alpha << 24) | (red << 16) | (green << 8) | blue;
+        }
+        const ImU32 col_outline_base    = 0xFFFFFFFF;
+        const ImU32 col_outline_hovered = 0xFFFFFFFF;
 
         auto frame_time =
             scope_times[scope_times.size() - 1].start + scope_times[scope_times.size() - 1].duration - global_start;
@@ -87,6 +111,9 @@ namespace Meow
 
         for (const auto& scope_time : scope_times)
         {
+            const ImU32 col_base    = col_base_table[scope_time.depth];
+            const ImU32 col_hovered = col_hovered_table[scope_time.depth];
+
             auto start_time = scope_time.start - global_start;
 
             float start_x_percent = (double)start_time.count() / frame_time.count();

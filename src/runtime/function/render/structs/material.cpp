@@ -1,5 +1,7 @@
 #include "material.h"
 
+#include "pch.h"
+
 #include <algorithm>
 
 namespace Meow
@@ -40,6 +42,8 @@ namespace Meow
                                   vk::FrontFace               front_face,
                                   bool                        depth_buffered)
     {
+        FUNCTION_TIMER();
+
         std::vector<vk::PipelineShaderStageCreateInfo> pipeline_shader_stage_create_infos;
         if (shader_ptr->is_vert_shader_valid)
         {
@@ -193,6 +197,8 @@ namespace Meow
 
     void Material::BeginFrame()
     {
+        FUNCTION_TIMER();
+
         if (actived)
         {
             return;
@@ -224,6 +230,8 @@ namespace Meow
 
     void Material::EndFrame()
     {
+        FUNCTION_TIMER();
+
         actived = false;
 
         // if no object
@@ -246,6 +254,8 @@ namespace Meow
 
     void Material::BeginObject()
     {
+        FUNCTION_TIMER();
+
         per_obj_dynamic_offsets.push_back(
             std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
 
@@ -260,6 +270,8 @@ namespace Meow
 
     void Material::EndObject()
     {
+        FUNCTION_TIMER();
+
         // check if all dynamic offset is set
 
         // if there are objects
@@ -280,6 +292,8 @@ namespace Meow
 
     void Material::SetGlobalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
     {
+        FUNCTION_TIMER();
+
         auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
         if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
         {
@@ -315,6 +329,8 @@ namespace Meow
 
     void Material::SetLocalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
     {
+        FUNCTION_TIMER();
+
         auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
         if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
         {
@@ -344,21 +360,29 @@ namespace Meow
                                     vk::DeviceSize              range,
                                     vk::raii::BufferView const* raii_buffer_view)
     {
+        FUNCTION_TIMER();
+
         shader_ptr->SetBuffer(logical_device, name, buffer, range, raii_buffer_view);
     }
 
     void Material::SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data)
     {
+        FUNCTION_TIMER();
+
         shader_ptr->SetImage(logical_device, name, image_data);
     }
 
     void Material::BindPipeline(vk::raii::CommandBuffer const& command_buffer)
     {
+        FUNCTION_TIMER();
+
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
     void Material::BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index)
     {
+        FUNCTION_TIMER();
+
         if (obj_index >= per_obj_dynamic_offsets.size())
         {
             return;

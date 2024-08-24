@@ -2,6 +2,7 @@
 
 #include "function/object/game_object.h"
 #include "function/render/structs/buffer_data.h"
+#include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/image_data.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
@@ -69,14 +70,25 @@ namespace Meow
 
         void SetResized(bool resized) { m_framebuffer_resized = resized; }
 
+        void UploadPipelineStat(const std::string& pass_name, const std::vector<uint32_t>& stat)
+        {
+            m_pipeline_stat_map[pass_name] = stat;
+        }
+
+        const std::unordered_map<std::string, std::vector<uint32_t>>& GetPipelineStat() { return m_pipeline_stat_map; }
+
+        void UploadBuiltinRenderStat(const std::string& pass_name, BuiltinRenderStat stat)
+        {
+            m_render_stat_map[pass_name] = stat;
+        }
+
+        const std::unordered_map<std::string, BuiltinRenderStat>& GetBuiltinRenderStat() { return m_render_stat_map; }
+
         std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
 
         std::shared_ptr<Model> CreateModelFromFile(const std::string&           file_path,
                                                    std::vector<VertexAttribute> attributes,
                                                    vk::IndexType                index_type = vk::IndexType::eUint16);
-
-        int                      cur_render_pass   = 0;
-        std::vector<const char*> render_pass_names = {"Deferred", "Forward"};
 
         GameObjectID m_main_camera_id;
 
@@ -96,6 +108,7 @@ namespace Meow
         void InitImGui();
         void RecreateSwapChain();
 
+        bool                           m_is_validation_layer_found  = false;
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
         const uint64_t                 k_fence_timeout              = 100000000;
         const uint32_t                 k_max_frames_in_flight       = 2;
@@ -123,10 +136,12 @@ namespace Meow
         DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         DeferredPass                m_deferred_pass        = nullptr;
         ForwardPass                 m_forward_pass         = nullptr;
-        ImguiPass                   m_imgui_pass           = nullptr;
+        ImGuiPass                   m_imgui_pass           = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;
 
-        RenderPass* m_render_pass_ptr = nullptr;
+        RenderPass*                                            m_render_pass_ptr = nullptr;
+        std::unordered_map<std::string, std::vector<uint32_t>> m_pipeline_stat_map;
+        std::unordered_map<std::string, BuiltinRenderStat>     m_render_stat_map;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;

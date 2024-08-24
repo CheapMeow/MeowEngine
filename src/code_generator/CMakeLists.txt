@@ -44,11 +44,16 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/object/game_object.h
     ../runtime/function/object/object_id_allocator.h
     ../runtime/function/render/render_system.h
+    ../runtime/function/render/imgui_widgets/builtin_statistics_widget.h
+    ../runtime/function/render/imgui_widgets/components_widget.h
+    ../runtime/function/render/imgui_widgets/flame_graph_widget.h
+    ../runtime/function/render/imgui_widgets/pipeline_statistics_widget.h
     ../runtime/function/render/render_pass/deferred_pass.h
     ../runtime/function/render/render_pass/forward_pass.h
     ../runtime/function/render/render_pass/imgui_pass.h
     ../runtime/function/render/render_pass/render_pass.h
     ../runtime/function/render/structs/buffer_data.h
+    ../runtime/function/render/structs/builtin_render_stat.h
     ../runtime/function/render/structs/descriptor_allocator_growable.h
     ../runtime/function/render/structs/image_data.h
     ../runtime/function/render/structs/index_buffer.h
@@ -67,7 +72,6 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/ubo_data.h
     ../runtime/function/render/structs/vertex_attribute.h
     ../runtime/function/render/structs/vertex_buffer.h
-    ../runtime/function/render/imgui_widgets/flame_graph_drawer.h
     ../runtime/function/render/utils/vulkan_initialize_utils.hpp
     ../runtime/function/render/utils/vulkan_shader_utils.hpp
     ../runtime/function/resource/resource_system.h

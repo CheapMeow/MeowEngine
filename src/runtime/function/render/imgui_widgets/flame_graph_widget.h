@@ -15,7 +15,7 @@ namespace Meow
         ImVec2                     graph_size;
     };
 
-    class FlameGraphDrawer
+    class FlameGraphWidget
     {
     public:
         void Draw(const std::vector<ScopeTimeData>& scope_times,

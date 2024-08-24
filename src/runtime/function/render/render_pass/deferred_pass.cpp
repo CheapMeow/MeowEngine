@@ -21,8 +21,13 @@ namespace Meow
                                vk::raii::CommandPool const&    command_pool,
                                vk::raii::Queue const&          queue,
                                DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : RenderPass(nullptr)
+        : RenderPass(device)
     {
+        m_pass_name = "Deferred Pass";
+
+        m_pass_names[0] = m_pass_name + " - Obj2Attachment Subpass";
+        m_pass_names[1] = m_pass_name + " - Quad Subpass";
+
         // Create a set to store all information of attachments
 
         vk::Format color_format =
@@ -198,15 +203,14 @@ namespace Meow
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
 
-        // debug
+        // Debug
 
         VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
                                                         .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 1,
-                                                        .pipelineStatistics = (1 << statisticCount) - 1};
+                                                        .queryCount         = 2,
+                                                        .pipelineStatistics = (1 << 11) - 1};
 
-        enable_query = true;
-        query_pool   = device.createQueryPool(query_pool_create_info, nullptr);
+        query_pool = device.createQueryPool(query_pool_create_info, nullptr);
 
         // init light
 
@@ -419,13 +423,36 @@ namespace Meow
         m_quad_mat.EndFrame();
     }
 
+    void DeferredPass::Start(vk::raii::CommandBuffer const& command_buffer,
+                             Meow::SurfaceData const&       surface_data,
+                             uint32_t                       current_image_index)
+    {
+        // Debug
+        if (m_query_enabled)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                command_buffer.resetQueryPool(*query_pool, 0, 2);
+            }
+        }
+
+        RenderPass::Start(command_buffer, surface_data, current_image_index);
+
+        for (int i = 0; i < 2; i++)
+        {
+            m_render_stat[i].draw_call = 0;
+        }
+    }
+
     void DeferredPass::Draw(vk::raii::CommandBuffer const& command_buffer)
     {
         FUNCTION_TIMER();
 
         m_obj2attachment_mat.BindPipeline(command_buffer);
 
-        cur_query_count = 0;
+        // Debug
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 0, {});
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllGameObjects();
@@ -438,43 +465,75 @@ namespace Meow
             if (!model_comp_ptr)
                 continue;
 
-            // debug
-            if (cur_query_count == 0)
-            {
-                command_buffer.beginQuery(*query_pool, 0, {});
-            }
-
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BindDescriptorSets(command_buffer, i);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
-            }
 
-            // debug
-            if (cur_query_count == 0)
-            {
-                command_buffer.endQuery(*query_pool, 0);
-                cur_query_count++;
+                ++m_render_stat[0].draw_call;
             }
         }
+
+        // Debug
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 0);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_quad_mat.BindPipeline(command_buffer);
 
+        // Debug
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 1, {});
+
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
             m_quad_mat.BindDescriptorSets(command_buffer, i);
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
+
+            ++m_render_stat[1].draw_call;
         }
+
+        // Debug
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 1);
     }
 
-    void DeferredPass::AfterRenderPass()
+    void DeferredPass::AfterPresent()
     {
         FUNCTION_TIMER();
 
-        std::pair<vk::Result, std::vector<uint32_t>> query_results =
-            query_pool.getResults<uint32_t>(0, 1, sizeof(statistics), sizeof(statistics), {});
-        invocationCount_fs_query_count = query_results.second[invocationCount_fs];
+        if (m_query_enabled)
+        {
+            for (int i = 1; i >= 0; i--)
+            {
+                std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
+
+                g_runtime_global_context.render_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+            }
+        }
+
+        for (int i = 1; i >= 0; i--)
+            g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+    }
+
+    void swap(DeferredPass& lhs, DeferredPass& rhs)
+    {
+        using std::swap;
+
+        swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
+        swap(lhs.m_quad_mat, rhs.m_quad_mat);
+        swap(lhs.m_quad_model, rhs.m_quad_model);
+
+        swap(lhs.m_color_attachment, rhs.m_color_attachment);
+        swap(lhs.m_normal_attachment, rhs.m_normal_attachment);
+        swap(lhs.m_position_attachment, rhs.m_position_attachment);
+
+        swap(lhs.m_LightDatas, rhs.m_LightDatas);
+        swap(lhs.m_LightInfos, rhs.m_LightInfos);
+
+        swap(lhs.m_pass_names, rhs.m_pass_names);
+        swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

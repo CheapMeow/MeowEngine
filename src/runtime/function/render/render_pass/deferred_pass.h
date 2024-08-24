@@ -1,9 +1,11 @@
 #pragma once
 
+#include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
 #include "render_pass.h"
+
 
 namespace Meow
 {
@@ -35,59 +37,29 @@ namespace Meow
             : RenderPass(nullptr)
         {}
 
-        DeferredPass(DeferredPass&& rhs) noexcept
-            : RenderPass(nullptr)
-        {
-            std::swap(m_obj2attachment_mat, rhs.m_obj2attachment_mat);
-            std::swap(m_quad_mat, rhs.m_quad_mat);
-            std::swap(m_quad_model, rhs.m_quad_model);
-            std::swap(render_pass, rhs.render_pass);
-            std::swap(framebuffers, rhs.framebuffers);
-            std::swap(clear_values, rhs.clear_values);
-            std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
-            m_depth_format = rhs.m_depth_format;
-            m_sample_count = rhs.m_sample_count;
-            std::swap(m_color_attachment, rhs.m_color_attachment);
-            std::swap(m_normal_attachment, rhs.m_normal_attachment);
-            std::swap(m_depth_attachment, rhs.m_depth_attachment);
-            std::swap(m_position_attachment, rhs.m_position_attachment);
-            std::swap(query_pool, rhs.query_pool);
-            enable_query = rhs.enable_query;
-            std::swap(m_LightDatas, rhs.m_LightDatas);
-            std::swap(m_LightInfos, rhs.m_LightInfos);
-        }
-
-        DeferredPass& operator=(DeferredPass&& rhs) noexcept
-        {
-            if (this != &rhs)
-            {
-                std::swap(m_obj2attachment_mat, rhs.m_obj2attachment_mat);
-                std::swap(m_quad_mat, rhs.m_quad_mat);
-                std::swap(m_quad_model, rhs.m_quad_model);
-                std::swap(render_pass, rhs.render_pass);
-                std::swap(framebuffers, rhs.framebuffers);
-                std::swap(clear_values, rhs.clear_values);
-                std::swap(input_vertex_attributes, rhs.input_vertex_attributes);
-                m_depth_format = rhs.m_depth_format;
-                m_sample_count = rhs.m_sample_count;
-                std::swap(m_color_attachment, rhs.m_color_attachment);
-                std::swap(m_normal_attachment, rhs.m_normal_attachment);
-                std::swap(m_depth_attachment, rhs.m_depth_attachment);
-                std::swap(m_position_attachment, rhs.m_position_attachment);
-                std::swap(query_pool, rhs.query_pool);
-                enable_query = rhs.enable_query;
-                std::swap(m_LightDatas, rhs.m_LightDatas);
-                std::swap(m_LightInfos, rhs.m_LightInfos);
-            }
-            return *this;
-        }
-
         DeferredPass(vk::raii::PhysicalDevice const& physical_device,
                      vk::raii::Device const&         device,
                      SurfaceData&                    surface_data,
                      vk::raii::CommandPool const&    command_pool,
                      vk::raii::Queue const&          queue,
                      DescriptorAllocatorGrowable&    m_descriptor_allocator);
+
+        DeferredPass(DeferredPass&& rhs) noexcept
+            : RenderPass(std::move(rhs))
+        {
+            swap(*this, rhs);
+        }
+
+        DeferredPass& operator=(DeferredPass&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                RenderPass::operator=(std::move(rhs));
+
+                swap(*this, rhs);
+            }
+            return *this;
+        }
 
         ~DeferredPass()
         {
@@ -110,9 +82,15 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
+        void Start(vk::raii::CommandBuffer const& command_buffer,
+                   Meow::SurfaceData const&       surface_data,
+                   uint32_t                       current_image_index) override;
+
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
 
-        void AfterRenderPass() override;
+        void AfterPresent() override;
+
+        friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 
     private:
         Material m_obj2attachment_mat = nullptr;
@@ -125,5 +103,8 @@ namespace Meow
 
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
+
+        std::string       m_pass_names[2];
+        BuiltinRenderStat m_render_stat[2];
     };
 } // namespace Meow
