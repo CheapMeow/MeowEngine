@@ -45,8 +45,6 @@ namespace Meow
 
         void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer);
 
-        void Merge(ModelMesh& rhs);
-
         ~ModelMesh() { link_node = nullptr; }
     };
 

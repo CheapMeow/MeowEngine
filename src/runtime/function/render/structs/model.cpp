@@ -102,6 +102,102 @@ namespace Meow
         LoadBones(scene);
         LoadNode(physical_device, device, command_pool, queue, scene->mRootNode, scene);
         LoadAnim(scene);
+
+        // TODO: tooltip imgui
+        MergeAllMeshes(physical_device, device, command_pool, queue);
+    }
+
+    void Model::Update(float time, float delta)
+    {
+        if (animIndex == -1)
+        {
+            return;
+        }
+
+        ModelAnimation& animation = animations[animIndex];
+        animation.time += delta * animation.speed;
+
+        if (animation.time >= animation.duration)
+        {
+            animation.time = animation.time - animation.duration;
+        }
+
+        GotoAnimation(animation.time);
+    }
+
+    void Model::SetAnimation(size_t index)
+    {
+        if (index >= animations.size())
+        {
+            return;
+        }
+        if (index < 0)
+        {
+            return;
+        }
+        animIndex = index;
+    }
+
+    ModelAnimation& Model::GetAnimation(size_t index)
+    {
+        if (index == -1)
+        {
+            index = animIndex;
+        }
+        return animations[index];
+    }
+
+    void Model::GotoAnimation(float time)
+    {
+        if (animIndex == -1)
+        {
+            return;
+        }
+
+        ModelAnimation& animation = animations[animIndex];
+        animation.time            = glm::clamp(time, 0.0f, animation.duration);
+
+        // update nodes animation
+        for (auto it = animation.clips.begin(); it != animation.clips.end(); ++it)
+        {
+            ModelAnimationClip& clip = it->second;
+            ModelNode*          node = nodes_map[clip.node_name];
+
+            float alpha = 0.0f;
+
+            // rotation
+            glm::quat prevRot(0, 0, 0, 1);
+            glm::quat nextRot(0, 0, 0, 1);
+            clip.rotations.GetValue(animation.time, prevRot, nextRot, alpha);
+            glm::quat retRot = glm::lerp(prevRot, nextRot, alpha);
+
+            // position
+            glm::vec3 prevPos(0, 0, 0);
+            glm::vec3 nextPos(0, 0, 0);
+            clip.positions.GetValue(animation.time, prevPos, nextPos, alpha);
+            glm::vec3 retPos = glm::mix(prevPos, nextPos, alpha);
+
+            // scale
+            glm::vec3 prevScale(1, 1, 1);
+            glm::vec3 nextScale(1, 1, 1);
+            clip.scales.GetValue(animation.time, prevScale, nextScale, alpha);
+            glm::vec3 retScale = glm::mix(prevScale, nextScale, alpha);
+
+            node->local_matrix = glm::mat4(1.0f);
+            node->local_matrix = glm::scale(node->local_matrix, retScale);
+            node->local_matrix = glm::toMat4(retRot) * node->local_matrix;
+            node->local_matrix = glm::translate(node->local_matrix, retPos);
+        }
+
+        // update bones
+        for (size_t i = 0; i < bones.size(); ++i)
+        {
+            ModelBone* bone = bones[i];
+            ModelNode* node = nodes_map[bone->name];
+            // 注意行列矩阵的区别
+            bone->final_transform = bone->inverse_bind_pose;
+            bone->final_transform = node->GetGlobalMatrix() * bone->final_transform;
+        }
     }
 
     void SimplifyTexturePath(std::string& path)
@@ -144,6 +240,128 @@ namespace Meow
             material.specular = texture_path.C_Str();
             SimplifyTexturePath(material.specular);
         }
+    }
+
+    ModelNode* Model::LoadNode(vk::raii::PhysicalDevice const& physical_device,
+                               vk::raii::Device const&         device,
+                               vk::raii::CommandPool const&    command_pool,
+                               vk::raii::Queue const&          queue,
+                               const aiNode*                   aiNode,
+                               const aiScene*                  ai_scene)
+    {
+        ModelNode* model_node = new ModelNode();
+        model_node->name      = aiNode->mName.C_Str();
+
+        if (root_node == nullptr)
+        {
+            root_node = model_node;
+        }
+
+        // local matrix
+        model_node->local_matrix = AssimpGLMHelpers::ConvertMatrixToGLMFormat(aiNode->mTransformation);
+        // mesh
+        if (aiNode->mNumMeshes > 0)
+        {
+            for (size_t i = 0; i < aiNode->mNumMeshes; ++i)
+            {
+                ModelMesh* vkMesh = LoadMesh(
+                    physical_device, device, command_pool, queue, ai_scene->mMeshes[aiNode->mMeshes[i]], ai_scene);
+                vkMesh->link_node = model_node;
+                model_node->meshes.push_back(vkMesh);
+                meshes.push_back(vkMesh);
+            }
+        }
+
+        // nodes map
+        nodes_map.insert(std::make_pair(model_node->name, model_node));
+        linear_nodes.push_back(model_node);
+
+        // bones parent
+        size_t boneParentIndex = -1;
+        {
+            auto it = bones_map.find(model_node->name);
+            if (it != bones_map.end())
+            {
+                boneParentIndex = it->second->index;
+            }
+        }
+
+        // children node
+        for (size_t i = 0; i < (size_t)aiNode->mNumChildren; ++i)
+        {
+            ModelNode* childNode =
+                LoadNode(physical_device, device, command_pool, queue, aiNode->mChildren[i], ai_scene);
+            childNode->parent = model_node;
+            model_node->children.push_back(childNode);
+
+            // bones relationship
+            {
+                auto it = bones_map.find(childNode->name);
+                if (it != bones_map.end())
+                {
+                    it->second->parent = boneParentIndex;
+                }
+            }
+        }
+
+        return model_node;
+    }
+
+    ModelMesh* Model::LoadMesh(vk::raii::PhysicalDevice const& physical_device,
+                               vk::raii::Device const&         device,
+                               vk::raii::CommandPool const&    command_pool,
+                               vk::raii::Queue const&          queue,
+                               const aiMesh*                   ai_mesh,
+                               const aiScene*                  ai_scene)
+    {
+        ModelMesh* mesh = new ModelMesh();
+
+        // load material
+        aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
+        if (material)
+        {
+            FillMaterialTextures(material, mesh->material);
+        }
+
+        // load bones
+        std::unordered_map<size_t, ModelVertexSkin> skin_info_map;
+        if (ai_mesh->mNumBones > 0 && loadSkin)
+        {
+            LoadSkin(skin_info_map, mesh, ai_mesh, ai_scene);
+        }
+
+        // load vertex data
+        std::vector<float> vertices;
+        glm::vec3          mmin(
+            std::numeric_limits<float>().max(), std::numeric_limits<float>().max(), std::numeric_limits<float>().max());
+        glm::vec3 mmax(-std::numeric_limits<float>().max(),
+                       -std::numeric_limits<float>().max(),
+                       -std::numeric_limits<float>().max());
+        LoadVertexDatas(skin_info_map, vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
+
+        // load indices
+        std::vector<size_t> indices;
+        LoadIndices(indices, ai_mesh, ai_scene);
+
+        // load mesh
+        mesh->vertices = vertices;
+        for (uint32_t i = 0; i < indices.size(); ++i)
+        {
+            mesh->indices.push_back(indices[i]);
+        }
+
+        mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
+        mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
+        mesh->vertex_count   = ai_mesh->mNumVertices;
+        mesh->triangle_count = (size_t)mesh->indices.size() / 3;
+
+        mesh->bounding.min = mmin;
+        mesh->bounding.max = mmax;
+        mesh->bounding.UpdateCorners();
+
+        return mesh;
     }
 
     void Model::LoadBones(const aiScene* ai_scene)
@@ -413,129 +631,6 @@ namespace Meow
         }
     }
 
-    ModelMesh* Model::LoadMesh(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
-                               const aiMesh*                   ai_mesh,
-                               const aiScene*                  ai_scene)
-    {
-        ModelMesh* mesh = new ModelMesh();
-
-        // load material
-        aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
-        if (material)
-        {
-            FillMaterialTextures(material, mesh->material);
-        }
-
-        // load bones
-        std::unordered_map<size_t, ModelVertexSkin> skin_info_map;
-        if (ai_mesh->mNumBones > 0 && loadSkin)
-        {
-            LoadSkin(skin_info_map, mesh, ai_mesh, ai_scene);
-        }
-
-        // load vertex data
-        std::vector<float> vertices;
-        glm::vec3          mmin(
-            std::numeric_limits<float>().max(), std::numeric_limits<float>().max(), std::numeric_limits<float>().max());
-        glm::vec3 mmax(-std::numeric_limits<float>().max(),
-                       -std::numeric_limits<float>().max(),
-                       -std::numeric_limits<float>().max());
-        LoadVertexDatas(skin_info_map, vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
-
-        // load indices
-        std::vector<size_t> indices;
-        LoadIndices(indices, ai_mesh, ai_scene);
-
-        // load mesh
-        size_t stride  = (size_t)vertices.size() / ai_mesh->mNumVertices;
-        mesh->vertices = vertices;
-        for (uint32_t i = 0; i < indices.size(); ++i)
-        {
-            mesh->indices.push_back(indices[i]);
-        }
-
-        mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
-        mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
-        mesh->vertex_count   = (size_t)mesh->vertices.size() / stride;
-        mesh->triangle_count = (size_t)mesh->indices.size() / 3;
-
-        mesh->bounding.min = mmin;
-        mesh->bounding.max = mmax;
-        mesh->bounding.UpdateCorners();
-
-        return mesh;
-    }
-
-    ModelNode* Model::LoadNode(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
-                               const aiNode*                   aiNode,
-                               const aiScene*                  ai_scene)
-    {
-        ModelNode* model_node = new ModelNode();
-        model_node->name      = aiNode->mName.C_Str();
-
-        if (root_node == nullptr)
-        {
-            root_node = model_node;
-        }
-
-        // local matrix
-        model_node->local_matrix = AssimpGLMHelpers::ConvertMatrixToGLMFormat(aiNode->mTransformation);
-        // mesh
-        if (aiNode->mNumMeshes > 0)
-        {
-            for (size_t i = 0; i < aiNode->mNumMeshes; ++i)
-            {
-                ModelMesh* vkMesh = LoadMesh(
-                    physical_device, device, command_pool, queue, ai_scene->mMeshes[aiNode->mMeshes[i]], ai_scene);
-                vkMesh->link_node = model_node;
-                model_node->meshes.push_back(vkMesh);
-                meshes.push_back(vkMesh);
-            }
-        }
-
-        // nodes map
-        nodes_map.insert(std::make_pair(model_node->name, model_node));
-        linear_nodes.push_back(model_node);
-
-        // bones parent
-        size_t boneParentIndex = -1;
-        {
-            auto it = bones_map.find(model_node->name);
-            if (it != bones_map.end())
-            {
-                boneParentIndex = it->second->index;
-            }
-        }
-
-        // children node
-        for (size_t i = 0; i < (size_t)aiNode->mNumChildren; ++i)
-        {
-            ModelNode* childNode =
-                LoadNode(physical_device, device, command_pool, queue, aiNode->mChildren[i], ai_scene);
-            childNode->parent = model_node;
-            model_node->children.push_back(childNode);
-
-            // bones relationship
-            {
-                auto it = bones_map.find(childNode->name);
-                if (it != bones_map.end())
-                {
-                    it->second->parent = boneParentIndex;
-                }
-            }
-        }
-
-        return model_node;
-    }
-
     void Model::LoadAnim(const aiScene* ai_scene)
     {
         for (size_t i = 0; i < (size_t)ai_scene->mNumAnimations; ++i)
@@ -590,98 +685,77 @@ namespace Meow
         }
     }
 
-    void Model::GotoAnimation(float time)
+    void Model::MergeAllMeshes(vk::raii::PhysicalDevice const& physical_device,
+                               vk::raii::Device const&         device,
+                               vk::raii::CommandPool const&    command_pool,
+                               vk::raii::Queue const&          queue)
     {
-        if (animIndex == -1)
-        {
+        if (meshes.size() < 2)
             return;
-        }
 
-        ModelAnimation& animation = animations[animIndex];
-        animation.time            = glm::clamp(time, 0.0f, animation.duration);
+        ModelNode* new_node    = new ModelNode();
+        new_node->local_matrix = glm::mat4(1.0f);
 
-        // update nodes animation
-        for (auto it = animation.clips.begin(); it != animation.clips.end(); ++it)
+        ModelMesh* new_mesh = new ModelMesh();
+        new_node->meshes.push_back(new_mesh);
+
+        nodes_map.clear();
+        nodes_map.insert(std::make_pair(new_node->name, new_node));
+
+        int stride = VertexAttributesToSize(attributes) / sizeof(float);
+
+        for (int node_idx = 0; node_idx < linear_nodes.size(); node_idx++)
         {
-            ModelAnimationClip& clip = it->second;
-            ModelNode*          node = nodes_map[clip.node_name];
+            ModelNode* node = linear_nodes[node_idx];
 
-            float alpha = 0.0f;
+            for (int i = 0; i < node->meshes.size(); i++)
+            {
+                uint32_t old_vertex_count = new_mesh->vertex_count;
 
-            // rotation
-            glm::quat prevRot(0, 0, 0, 1);
-            glm::quat nextRot(0, 0, 0, 1);
-            clip.rotations.GetValue(animation.time, prevRot, nextRot, alpha);
-            glm::quat retRot = glm::lerp(prevRot, nextRot, alpha);
+                for (uint32_t j = 0; j < meshes[i]->vertices.size(); j += stride)
+                {
+                    glm::vec4 point(
+                        meshes[i]->vertices[j], meshes[i]->vertices[j + 1], meshes[i]->vertices[j + 2], 1.0f);
+                    glm::vec4 point_global = node->GetGlobalMatrix() * point;
 
-            // position
-            glm::vec3 prevPos(0, 0, 0);
-            glm::vec3 nextPos(0, 0, 0);
-            clip.positions.GetValue(animation.time, prevPos, nextPos, alpha);
-            glm::vec3 retPos = glm::mix(prevPos, nextPos, alpha);
+                    meshes[i]->vertices[j]     = point_global.x / point_global.w;
+                    meshes[i]->vertices[j + 1] = point_global.y / point_global.w;
+                    meshes[i]->vertices[j + 2] = point_global.z / point_global.w;
+                }
 
-            // scale
-            glm::vec3 prevScale(1, 1, 1);
-            glm::vec3 nextScale(1, 1, 1);
-            clip.scales.GetValue(animation.time, prevScale, nextScale, alpha);
-            glm::vec3 retScale = glm::mix(prevScale, nextScale, alpha);
+                for (uint32_t j = 0; j < meshes[i]->indices.size(); j++)
+                {
+                    meshes[i]->indices[j] += old_vertex_count;
+                }
 
-            node->local_matrix = glm::mat4(1.0f);
-            node->local_matrix = glm::scale(node->local_matrix, retScale);
-            node->local_matrix = glm::toMat4(retRot) * node->local_matrix;
-            node->local_matrix = glm::translate(node->local_matrix, retPos);
+                new_mesh->vertices.insert(
+                    new_mesh->vertices.end(), meshes[i]->vertices.begin(), meshes[i]->vertices.end());
+                new_mesh->indices.insert(new_mesh->indices.end(), meshes[i]->indices.begin(), meshes[i]->indices.end());
+
+                new_mesh->vertex_count += meshes[i]->vertex_count;
+                new_mesh->triangle_count += meshes[i]->triangle_count;
+                new_mesh->bounding.Merge(meshes[i]->bounding);
+            }
         }
 
-        // update bones
+        new_mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, new_mesh->vertices);
+        new_mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, new_mesh->indices);
+
+        delete root_node;
+        root_node       = new_node;
+        root_node->name = "Merged";
+
+        meshes.clear();
+        meshes.push_back(new_mesh);
+        linear_nodes.clear();
+        linear_nodes.push_back(new_node);
+
         for (size_t i = 0; i < bones.size(); ++i)
         {
-            ModelBone* bone = bones[i];
-            ModelNode* node = nodes_map[bone->name];
-            // 注意行列矩阵的区别
-            bone->final_transform = bone->inverse_bind_pose;
-            bone->final_transform = node->GetGlobalMatrix() * bone->final_transform;
+            delete bones[i];
         }
+        bones.clear();
     }
-
-    void Model::Update(float time, float delta)
-    {
-        if (animIndex == -1)
-        {
-            return;
-        }
-
-        ModelAnimation& animation = animations[animIndex];
-        animation.time += delta * animation.speed;
-
-        if (animation.time >= animation.duration)
-        {
-            animation.time = animation.time - animation.duration;
-        }
-
-        GotoAnimation(animation.time);
-    }
-
-    void Model::SetAnimation(size_t index)
-    {
-        if (index >= animations.size())
-        {
-            return;
-        }
-        if (index < 0)
-        {
-            return;
-        }
-        animIndex = index;
-    }
-
-    ModelAnimation& Model::GetAnimation(size_t index)
-    {
-        if (index == -1)
-        {
-            index = animIndex;
-        }
-        return animations[index];
-    }
-
-    void Model::MergeMesh() {}
 } // namespace Meow

@@ -46,10 +46,4 @@ namespace Meow
         BindOnly(cmd_buffer);
         DrawOnly(cmd_buffer);
     }
-
-    void ModelMesh::Merge(ModelMesh& rhs)
-    {
-        if (link_node != rhs.link_node)
-            return;
-    }
 }; // namespace Meow

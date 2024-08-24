@@ -150,6 +150,9 @@ namespace Meow
 
         void LoadAnim(const aiScene* ai_scene);
 
-        void MergeMesh();
+        void MergeAllMeshes(vk::raii::PhysicalDevice const& physical_device,
+                            vk::raii::Device const&         device,
+                            vk::raii::CommandPool const&    command_pool,
+                            vk::raii::Queue const&          queue);
     };
 } // namespace Meow
