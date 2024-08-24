@@ -19,37 +19,27 @@ namespace Meow
                  vk::raii::CommandPool const&    command_pool,
                  vk::raii::Queue const&          queue,
                  std::vector<float>&             vertices,
-                 std::vector<uint16_t>&          indices,
-                 std::vector<VertexAttribute>    attributes,
-                 vk::IndexType                   index_type)
+                 std::vector<uint32_t>&          indices,
+                 std::vector<VertexAttribute>    attributes)
     {
-        uint32_t        stride    = VertexAttributesToSize(attributes);
-        ModelPrimitive* primitive = new ModelPrimitive();
-        primitive->vertices       = vertices;
-        primitive->indices        = indices;
-        primitive->vertex_count   = vertices.size() / stride * 4;
+        vk::IndexType index_type = vk::IndexType::eUint32;
+        uint32_t      stride     = VertexAttributesToSize(attributes);
+        ModelMesh*    mesh       = new ModelMesh();
+        mesh->vertices           = vertices;
+        mesh->indices            = indices;
+        mesh->vertex_count       = vertices.size() / stride * 4;
 
         if (vertices.size() > 0)
         {
-            primitive->vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
-                                                                          device,
-                                                                          command_pool,
-                                                                          queue,
-                                                                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                          primitive->vertices);
+            mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
+                physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
         }
         if (indices.size() > 0)
         {
-            primitive->index_buffer_ptr = std::make_shared<IndexBuffer>(physical_device,
-                                                                        device,
-                                                                        command_pool,
-                                                                        queue,
-                                                                        vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                        primitive->indices);
+            mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
+                physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
         }
 
-        ModelMesh* mesh = new ModelMesh();
-        mesh->primitives.push_back(primitive);
         mesh->bounding.min = glm::vec3(-1.0f, -1.0f, 0.0f);
         mesh->bounding.max = glm::vec3(1.0f, 1.0f, 0.0f);
 
@@ -67,10 +57,10 @@ namespace Meow
                  vk::raii::CommandPool const&    command_pool,
                  vk::raii::Queue const&          queue,
                  const std::string&              file_path,
-                 std::vector<VertexAttribute>    attributes,
-                 vk::IndexType                   index_type)
+                 std::vector<VertexAttribute>    attributes)
     {
-        this->attributes = attributes;
+        vk::IndexType index_type = vk::IndexType::eUint32;
+        this->attributes         = attributes;
 
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
@@ -347,10 +337,10 @@ namespace Meow
                         size_t idx3       = skin.indices[3];
                         size_t pack_index = (idx0 << 24) + (idx1 << 16) + (idx2 << 8) + idx3;
 
-                        uint16_t weight0      = uint16_t(skin.weights[0] * 65535);
-                        uint16_t weight1      = uint16_t(skin.weights[1] * 65535);
-                        uint16_t weight2      = uint16_t(skin.weights[2] * 65535);
-                        uint16_t weight3      = uint16_t(skin.weights[3] * 65535);
+                        uint32_t weight0      = uint32_t(skin.weights[0] * 65535);
+                        uint32_t weight1      = uint32_t(skin.weights[1] * 65535);
+                        uint32_t weight2      = uint32_t(skin.weights[2] * 65535);
+                        uint32_t weight3      = uint32_t(skin.weights[3] * 65535);
                         size_t   pack_weight0 = (weight0 << 16) + weight1;
                         size_t   pack_weight1 = (weight2 << 16) + weight3;
 
@@ -423,108 +413,6 @@ namespace Meow
         }
     }
 
-    void Model::LoadPrimitives(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
-                               std::vector<float>&             vertices,
-                               std::vector<size_t>&            indices,
-                               ModelMesh*                      mesh,
-                               const aiMesh*                   aiMesh,
-                               const aiScene*                  ai_scene)
-    {
-        size_t stride = (size_t)vertices.size() / aiMesh->mNumVertices;
-
-        if (indices.size() > 65535)
-        {
-            std::unordered_map<size_t, size_t> indices_map;
-            ModelPrimitive*                    primitive = nullptr;
-
-            for (size_t i = 0; i < indices.size(); ++i)
-            {
-                size_t idx = indices[i];
-                if (primitive == nullptr)
-                {
-                    primitive = new ModelPrimitive();
-                    indices_map.clear();
-                    mesh->primitives.push_back(primitive);
-                }
-
-                size_t newIdx = 0;
-                auto   it     = indices_map.find(idx);
-                if (it == indices_map.end())
-                {
-                    size_t start = idx * stride;
-                    newIdx       = (size_t)primitive->vertices.size() / stride;
-                    primitive->vertices.insert(
-                        primitive->vertices.end(), vertices.begin() + start, vertices.begin() + start + stride);
-                    indices_map.insert(std::make_pair(idx, newIdx));
-                }
-                else
-                {
-                    newIdx = it->second;
-                }
-
-                primitive->indices.push_back(newIdx);
-
-                if (primitive->indices.size() == 65535)
-                {
-                    primitive = nullptr;
-                }
-            }
-
-            for (size_t i = 0; i < mesh->primitives.size(); ++i)
-            {
-                primitive                    = mesh->primitives[i];
-                primitive->vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
-                                                                              device,
-                                                                              command_pool,
-                                                                              queue,
-                                                                              vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                              primitive->vertices);
-                primitive->index_buffer_ptr  = std::make_shared<IndexBuffer>(physical_device,
-                                                                            device,
-                                                                            command_pool,
-                                                                            queue,
-                                                                            vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                            primitive->indices);
-            }
-        }
-        else
-        {
-            ModelPrimitive* primitive = new ModelPrimitive();
-            primitive->vertices       = vertices;
-            for (uint16_t i = 0; i < indices.size(); ++i)
-            {
-                primitive->indices.push_back(indices[i]);
-            }
-            mesh->primitives.push_back(primitive);
-
-            primitive->vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
-                                                                          device,
-                                                                          command_pool,
-                                                                          queue,
-                                                                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                          primitive->vertices);
-            primitive->index_buffer_ptr  = std::make_shared<IndexBuffer>(physical_device,
-                                                                        device,
-                                                                        command_pool,
-                                                                        queue,
-                                                                        vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                                        primitive->indices);
-        }
-
-        for (size_t i = 0; i < mesh->primitives.size(); ++i)
-        {
-            ModelPrimitive* primitive = mesh->primitives[i];
-            primitive->vertex_count   = (size_t)primitive->vertices.size() / stride;
-            primitive->triangle_num   = (size_t)primitive->indices.size() / 3;
-
-            mesh->vertex_count += primitive->vertex_count;
-            mesh->triangle_count += primitive->triangle_num;
-        }
-    }
-
     ModelMesh* Model::LoadMesh(vk::raii::PhysicalDevice const& physical_device,
                                vk::raii::Device const&         device,
                                vk::raii::CommandPool const&    command_pool,
@@ -561,8 +449,20 @@ namespace Meow
         std::vector<size_t> indices;
         LoadIndices(indices, ai_mesh, ai_scene);
 
-        // load primitives
-        LoadPrimitives(physical_device, device, command_pool, queue, vertices, indices, mesh, ai_mesh, ai_scene);
+        // load mesh
+        size_t stride  = (size_t)vertices.size() / ai_mesh->mNumVertices;
+        mesh->vertices = vertices;
+        for (uint32_t i = 0; i < indices.size(); ++i)
+        {
+            mesh->indices.push_back(indices[i]);
+        }
+
+        mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
+        mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
+            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
+        mesh->vertex_count   = (size_t)mesh->vertices.size() / stride;
+        mesh->triangle_count = (size_t)mesh->indices.size() / 3;
 
         mesh->bounding.min = mmin;
         mesh->bounding.max = mmax;
@@ -783,4 +683,5 @@ namespace Meow
         return animations[index];
     }
 
+    void Model::MergeMesh() {}
 } // namespace Meow

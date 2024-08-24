@@ -63,9 +63,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/model_bone.h
     ../runtime/function/render/structs/model_mesh.h
     ../runtime/function/render/structs/model_node.h
-    ../runtime/function/render/structs/model_primitive.h
     ../runtime/function/render/structs/pipeline_info.h
-    ../runtime/function/render/structs/primitive.h
     ../runtime/function/render/structs/shader.h
     ../runtime/function/render/structs/surface_data.h
     ../runtime/function/render/structs/swapchain_data.h

@@ -87,8 +87,7 @@ namespace Meow
         std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
 
         std::shared_ptr<Model> CreateModelFromFile(const std::string&           file_path,
-                                                   std::vector<VertexAttribute> attributes,
-                                                   vk::IndexType                index_type = vk::IndexType::eUint16);
+                                                   std::vector<VertexAttribute> attributes);
 
         GameObjectID m_main_camera_id;
 

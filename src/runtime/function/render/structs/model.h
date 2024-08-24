@@ -75,9 +75,8 @@ namespace Meow
               vk::raii::CommandPool const&    command_pool,
               vk::raii::Queue const&          queue,
               std::vector<float>&             vertices,
-              std::vector<uint16_t>&          indices,
-              std::vector<VertexAttribute>    attributes,
-              vk::IndexType                   index_type = vk::IndexType::eUint16);
+              std::vector<uint32_t>&          indices,
+              std::vector<VertexAttribute>    attributes);
 
         /**
          * @brief Load model from file using assimp.
@@ -92,8 +91,7 @@ namespace Meow
               vk::raii::CommandPool const&    command_pool,
               vk::raii::Queue const&          queue,
               const std::string&              file_path,
-              std::vector<VertexAttribute>    attributes,
-              vk::IndexType                   index_type = vk::IndexType::eUint16);
+              std::vector<VertexAttribute>    attributes);
 
         ~Model()
         {
@@ -150,16 +148,8 @@ namespace Meow
 
         void LoadIndices(std::vector<size_t>& indices, const aiMesh* ai_mesh, const aiScene* ai_scene);
 
-        void LoadPrimitives(vk::raii::PhysicalDevice const& physical_device,
-                            vk::raii::Device const&         device,
-                            vk::raii::CommandPool const&    command_pool,
-                            vk::raii::Queue const&          queue,
-                            std::vector<float>&             vertices,
-                            std::vector<size_t>&            indices,
-                            ModelMesh*                      mesh,
-                            const aiMesh*                   ai_mesh,
-                            const aiScene*                  ai_scene);
-
         void LoadAnim(const aiScene* ai_scene);
+
+        void MergeMesh();
     };
 } // namespace Meow

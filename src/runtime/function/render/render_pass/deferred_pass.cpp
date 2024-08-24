@@ -184,7 +184,7 @@ namespace Meow
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
-        std::vector<uint16_t> indices  = {0, 1, 2, 0, 2, 3};
+        std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
         m_quad_model = std::move(Model(physical_device,
                                        device,

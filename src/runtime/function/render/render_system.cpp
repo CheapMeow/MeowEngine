@@ -670,8 +670,7 @@ namespace Meow
     }
 
     std::shared_ptr<Model> RenderSystem::CreateModelFromFile(const std::string&           file_path,
-                                                             std::vector<VertexAttribute> attributes,
-                                                             vk::IndexType                index_type)
+                                                             std::vector<VertexAttribute> attributes)
     {
         FUNCTION_TIMER();
 
@@ -680,8 +679,7 @@ namespace Meow
                                                       m_upload_context.command_pool,
                                                       m_present_queue,
                                                       file_path,
-                                                      attributes,
-                                                      index_type));
+                                                      attributes));
 
 #ifdef MEOW_DEBUG
         if (m_models.size() < 1)
