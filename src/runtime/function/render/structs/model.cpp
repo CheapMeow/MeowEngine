@@ -1,5 +1,7 @@
 #include "model.h"
 
+#include "pch.h"
+
 #include "core/math/assimp_glm_helper.h"
 #include "function/global/runtime_global_context.h"
 
@@ -331,24 +333,20 @@ namespace Meow
         }
 
         // load vertex data
-        std::vector<float> vertices;
-        glm::vec3          mmin(
+        glm::vec3 mmin(
             std::numeric_limits<float>().max(), std::numeric_limits<float>().max(), std::numeric_limits<float>().max());
         glm::vec3 mmax(-std::numeric_limits<float>().max(),
                        -std::numeric_limits<float>().max(),
                        -std::numeric_limits<float>().max());
-        LoadVertexDatas(skin_info_map, vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
+
+        LoadVertexDatas(skin_info_map, mesh->vertices, mmax, mmin, mesh, ai_mesh, ai_scene);
+
+        mesh->bounding.min = mmin;
+        mesh->bounding.max = mmax;
+        mesh->bounding.UpdateCorners();
 
         // load indices
-        std::vector<size_t> indices;
-        LoadIndices(indices, ai_mesh, ai_scene);
-
-        // load mesh
-        mesh->vertices = vertices;
-        for (uint32_t i = 0; i < indices.size(); ++i)
-        {
-            mesh->indices.push_back(indices[i]);
-        }
+        LoadIndices(mesh->indices, ai_mesh, ai_scene);
 
         mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
             physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
@@ -356,10 +354,6 @@ namespace Meow
             physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
         mesh->vertex_count   = ai_mesh->mNumVertices;
         mesh->triangle_count = (size_t)mesh->indices.size() / 3;
-
-        mesh->bounding.min = mmin;
-        mesh->bounding.max = mmax;
-        mesh->bounding.UpdateCorners();
 
         return mesh;
     }
@@ -621,7 +615,7 @@ namespace Meow
         }
     }
 
-    void Model::LoadIndices(std::vector<size_t>& indices, const aiMesh* ai_mesh, const aiScene* ai_scene)
+    void Model::LoadIndices(std::vector<uint32_t>& indices, const aiMesh* ai_mesh, const aiScene* ai_scene)
     {
         for (size_t i = 0; i < (size_t)ai_mesh->mNumFaces; ++i)
         {
@@ -706,35 +700,39 @@ namespace Meow
 
         for (int node_idx = 0; node_idx < linear_nodes.size(); node_idx++)
         {
-            ModelNode* node = linear_nodes[node_idx];
+            ModelNode* cur_node = linear_nodes[node_idx];
 
-            for (int i = 0; i < node->meshes.size(); i++)
+            for (int i = 0; i < cur_node->meshes.size(); i++)
             {
-                uint32_t old_vertex_count = new_mesh->vertex_count;
+                ModelMesh* cur_node_mesh    = cur_node->meshes[i];
+                uint32_t   old_vertex_count = new_mesh->vertex_count;
 
-                for (uint32_t j = 0; j < meshes[i]->vertices.size(); j += stride)
+                for (uint32_t j = 0; j < cur_node_mesh->vertices.size(); j += stride)
                 {
-                    glm::vec4 point(
-                        meshes[i]->vertices[j], meshes[i]->vertices[j + 1], meshes[i]->vertices[j + 2], 1.0f);
-                    glm::vec4 point_global = node->GetGlobalMatrix() * point;
+                    glm::vec4 point(cur_node_mesh->vertices[j],
+                                    cur_node_mesh->vertices[j + 1],
+                                    cur_node_mesh->vertices[j + 2],
+                                    1.0f);
+                    glm::vec4 point_global = cur_node->GetGlobalMatrix() * point;
 
-                    meshes[i]->vertices[j]     = point_global.x / point_global.w;
-                    meshes[i]->vertices[j + 1] = point_global.y / point_global.w;
-                    meshes[i]->vertices[j + 2] = point_global.z / point_global.w;
+                    cur_node_mesh->vertices[j]     = point_global.x / point_global.w;
+                    cur_node_mesh->vertices[j + 1] = point_global.y / point_global.w;
+                    cur_node_mesh->vertices[j + 2] = point_global.z / point_global.w;
                 }
 
-                for (uint32_t j = 0; j < meshes[i]->indices.size(); j++)
+                for (uint32_t j = 0; j < cur_node_mesh->indices.size(); j++)
                 {
-                    meshes[i]->indices[j] += old_vertex_count;
+                    cur_node_mesh->indices[j] += old_vertex_count;
                 }
 
                 new_mesh->vertices.insert(
-                    new_mesh->vertices.end(), meshes[i]->vertices.begin(), meshes[i]->vertices.end());
-                new_mesh->indices.insert(new_mesh->indices.end(), meshes[i]->indices.begin(), meshes[i]->indices.end());
+                    new_mesh->vertices.end(), cur_node_mesh->vertices.begin(), cur_node_mesh->vertices.end());
+                new_mesh->indices.insert(
+                    new_mesh->indices.end(), cur_node_mesh->indices.begin(), cur_node_mesh->indices.end());
 
-                new_mesh->vertex_count += meshes[i]->vertex_count;
-                new_mesh->triangle_count += meshes[i]->triangle_count;
-                new_mesh->bounding.Merge(meshes[i]->bounding);
+                new_mesh->vertex_count += cur_node_mesh->vertex_count;
+                new_mesh->triangle_count += cur_node_mesh->triangle_count;
+                new_mesh->bounding.Merge(cur_node_mesh->bounding);
             }
         }
 

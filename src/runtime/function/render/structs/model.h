@@ -146,7 +146,7 @@ namespace Meow
                              const aiMesh*                                ai_mesh,
                              const aiScene*                               ai_scene);
 
-        void LoadIndices(std::vector<size_t>& indices, const aiMesh* ai_mesh, const aiScene* ai_scene);
+        void LoadIndices(std::vector<uint32_t>& indices, const aiMesh* ai_mesh, const aiScene* ai_scene);
 
         void LoadAnim(const aiScene* ai_scene);
 
