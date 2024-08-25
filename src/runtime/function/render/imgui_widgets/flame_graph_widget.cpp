@@ -19,33 +19,37 @@ namespace Meow
         if (window->SkipItems)
             return;
 
-        ImGui::Text("Flame Graph");
-
-        if (m_is_shapshot_enabled)
-            Draw_impl(m_curr_shapshot.scope_times,
-                      m_curr_shapshot.max_depth,
-                      m_curr_shapshot.global_start,
-                      id,
-                      m_curr_shapshot.graph_size);
-        else
-            Draw_impl(scope_times, max_depth, global_start, id, graph_size);
-
-        if (ImGui::Button(((std::string) "Capture Snapshot" + "##" + std::to_string(id++)).c_str()))
+        ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
+        if (ImGui::TreeNodeEx(((std::string) "Flame Graph" + +"##" + std::to_string(id++)).c_str(), flag))
         {
-            m_is_shapshot_enabled        = true;
-            m_curr_shapshot.scope_times  = scope_times;
-            m_curr_shapshot.max_depth    = max_depth;
-            m_curr_shapshot.global_start = global_start;
-            m_curr_shapshot.graph_size   = graph_size;
-        }
+            if (m_is_shapshot_enabled)
+                Draw_impl(m_curr_shapshot.scope_times,
+                          m_curr_shapshot.max_depth,
+                          m_curr_shapshot.global_start,
+                          id,
+                          m_curr_shapshot.graph_size);
+            else
+                Draw_impl(scope_times, max_depth, global_start, id, graph_size);
 
-        if (m_is_shapshot_enabled)
-        {
-            ImGui::SameLine();
-            if (ImGui::Button(((std::string) "Leave Snapshot" + "##" + std::to_string(id++)).c_str()))
+            if (ImGui::Button(((std::string) "Capture Snapshot" + "##" + std::to_string(id++)).c_str()))
             {
-                m_is_shapshot_enabled = false;
+                m_is_shapshot_enabled        = true;
+                m_curr_shapshot.scope_times  = scope_times;
+                m_curr_shapshot.max_depth    = max_depth;
+                m_curr_shapshot.global_start = global_start;
+                m_curr_shapshot.graph_size   = graph_size;
             }
+
+            if (m_is_shapshot_enabled)
+            {
+                ImGui::SameLine();
+                if (ImGui::Button(((std::string) "Leave Snapshot" + "##" + std::to_string(id++)).c_str()))
+                {
+                    m_is_shapshot_enabled = false;
+                }
+            }
+
+            ImGui::TreePop();
         }
     }
 

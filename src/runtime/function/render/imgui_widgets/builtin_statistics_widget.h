@@ -13,5 +13,11 @@ namespace Meow
     {
     public:
         static void Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat, size_t& id);
+
+    private:
+        static void DrawFrameStat(const BuiltinRenderStat& stat, size_t& id);
+        static void DrawVertexAttributesStat(const BuiltinRenderStat& stat, size_t& id);
+        static void DrawBufferStat(const BuiltinRenderStat& stat, size_t& id);
+        static void DrawImageStat(const BuiltinRenderStat& stat, size_t& id);
     };
 } // namespace Meow
