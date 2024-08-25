@@ -255,7 +255,7 @@ namespace Meow
             if (pos == std::string::npos)
                 continue;
 
-            std::string        vat_name_substr = var_name.substr(pos);
+            std::string        vat_name_substr = var_name.substr(pos + 2);
             VertexAttributeBit attribute       = to_enum(vat_name_substr);
             if (attribute == VertexAttributeBit::None)
             {
