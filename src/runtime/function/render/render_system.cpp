@@ -655,7 +655,7 @@ namespace Meow
         m_imgui_pass.AfterPresent();
     }
 
-    std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& filepath)
+    std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& file_path)
     {
         FUNCTION_TIMER();
 
@@ -663,13 +663,13 @@ namespace Meow
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
         std::shared_ptr<ImageData> texture_ptr =
-            ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, filepath);
+            ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, file_path);
 
         return texture_ptr;
     }
 
-    std::shared_ptr<Model> RenderSystem::CreateModelFromFile(const std::string&           file_path,
-                                                             std::vector<VertexAttribute> attributes)
+    std::shared_ptr<Model> RenderSystem::CreateModelFromFile(const std::string&          file_path,
+                                                             BitMask<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
 

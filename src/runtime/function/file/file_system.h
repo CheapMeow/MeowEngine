@@ -46,21 +46,21 @@ namespace Meow
         /**
          * @brief Read binary file by relative path.
          *
-         * @param filepath Relative path.
+         * @param file_path Relative path.
          * @return std::tuple<uint8_t*, uint32_t> data_ptr, data_size
          */
-        std::tuple<uint8_t*, uint32_t> ReadBinaryFile(std::string const& filepath);
+        std::tuple<uint8_t*, uint32_t> ReadBinaryFile(std::string const& file_path);
 
-        std::tuple<uint32_t, uint32_t> GetImageFileWidthHeight(std::string const& filepath);
+        std::tuple<uint32_t, uint32_t> GetImageFileWidthHeight(std::string const& file_path);
 
         /**
          * @brief Read image file by relative path.
          *
-         * @param filepath Relative path.
+         * @param file_path Relative path.
          * @param data_ptr Pointer to receive data loaded.
          * @return uint32_t Data size.
          */
-        uint32_t ReadImageFileToPtr(std::string const& filepath, uint8_t* data_ptr);
+        uint32_t ReadImageFileToPtr(std::string const& file_path, uint8_t* data_ptr);
 
     private:
         std::filesystem::path m_root_path;

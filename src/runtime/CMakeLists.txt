@@ -2,6 +2,7 @@ set(RUNTIME_HEADER_FILES
     engine.h
     pch.h
     core/base/alignment.h
+    core/base/bitmask.hpp
     core/base/macro.h
     core/base/non_copyable.h
     core/log/log.h

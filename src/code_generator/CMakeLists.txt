@@ -8,6 +8,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/engine.h
     ../runtime/pch.h
     ../runtime/core/base/alignment.h
+    ../runtime/core/base/bitmask.hpp
     ../runtime/core/base/macro.h
     ../runtime/core/base/non_copyable.h
     ../runtime/core/log/log.h

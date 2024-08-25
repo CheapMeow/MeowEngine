@@ -1,6 +1,8 @@
 #pragma once
 
+#include "core/base/bitmask.hpp"
 #include "function/render/structs/image_data.h"
+#include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
 #include "function/system.h"
 
@@ -36,13 +38,17 @@ namespace Meow
 
         void Tick(float dt) override;
 
-        std::shared_ptr<ImageData> LoadTexture(const std::string& filepath);
+        std::shared_ptr<ImageData> LoadTexture(const std::string& file_path);
 
-        std::shared_ptr<ImageData> GetTexture(const std::string& filepath);
+        std::shared_ptr<ImageData> GetTexture(const std::string& file_path);
 
-        // bool LoadMaterial(const std::string& filepath);
+        // bool LoadMaterial(const std::string& file_path);
 
-        // std::shared_ptr<Material> GetMaterial(const std::string& filepath);
+        // std::shared_ptr<Material> GetMaterial(const std::string& file_path);
+
+        std::shared_ptr<Model> LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
+
+        std::shared_ptr<Model> GetModel(const std::string& file_path);
 
     private:
         /**
@@ -54,5 +60,7 @@ namespace Meow
         //  * @brief Relative path - Material
         //  */
         // std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
+
+        std::unordered_map<std::string, std::shared_ptr<Model>> m_models;
     };
 } // namespace Meow

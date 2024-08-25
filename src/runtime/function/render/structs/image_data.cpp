@@ -161,8 +161,8 @@ namespace Meow
         vk::MemoryPropertyFlags requirements   = vk::MemoryPropertyFlagBits::eDeviceLocal;
         vk::ImageAspectFlags    aspect_mask    = vk::ImageAspectFlagBits::eDepth;
 
-        image_data_ptr->format = format;
-        image_data_ptr->extent = extent;
+        image_data_ptr->format      = format;
+        image_data_ptr->extent      = extent;
         image_data_ptr->aspect_mask = aspect_mask;
 
         // doesn't need sampler
@@ -212,8 +212,8 @@ namespace Meow
 
         // Create Texture
 
-        image_data_ptr->format = format;
-        image_data_ptr->extent = extent;
+        image_data_ptr->format      = format;
+        image_data_ptr->extent      = extent;
         image_data_ptr->aspect_mask = aspect_mask;
 
         vk::SamplerCreateInfo sampler_create_info({},
@@ -287,7 +287,7 @@ namespace Meow
     std::shared_ptr<ImageData> ImageData::CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
                                                                 vk::raii::Device const&         device,
                                                                 vk::raii::CommandBuffer const&  command_buffer,
-                                                                std::string const&              filepath,
+                                                                std::string const&              file_path,
                                                                 vk::Format                      format,
                                                                 vk::ImageUsageFlags             usage_flags,
                                                                 vk::ImageAspectFlags            aspect_mask,
@@ -295,7 +295,7 @@ namespace Meow
                                                                 bool                            anisotropy_enable,
                                                                 bool                            force_staging)
     {
-        auto [width, height] = g_runtime_global_context.file_system->GetImageFileWidthHeight(filepath);
+        auto [width, height] = g_runtime_global_context.file_system->GetImageFileWidthHeight(file_path);
         if (width == 0 || height == 0)
         {
             return nullptr;
@@ -318,7 +318,7 @@ namespace Meow
                              0, image_data_ptr->staging_buffer_data.buffer.getMemoryRequirements().size) :
                          image_data_ptr->device_memory.mapMemory(0, image_data_ptr->image.getMemoryRequirements().size);
 
-        if (g_runtime_global_context.file_system->ReadImageFileToPtr(filepath, static_cast<uint8_t*>(data)) == 0)
+        if (g_runtime_global_context.file_system->ReadImageFileToPtr(file_path, static_cast<uint8_t*>(data)) == 0)
             return nullptr;
 
         image_data_ptr->need_staging ? image_data_ptr->staging_buffer_data.device_memory.unmapMemory() :
@@ -377,10 +377,10 @@ namespace Meow
         vk::ImageLayout         initial_layout = vk::ImageLayout::eUndefined;
         vk::MemoryPropertyFlags requirements   = vk::MemoryPropertyFlagBits::eDeviceLocal;
 
-        image_data_ptr->format = format;
-        image_data_ptr->extent = extent;
+        image_data_ptr->format      = format;
+        image_data_ptr->extent      = extent;
         image_data_ptr->aspect_mask = aspect_mask;
-        
+
         // doesn't need sampler
 
         // Create Image

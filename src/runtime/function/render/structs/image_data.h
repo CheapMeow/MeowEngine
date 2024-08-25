@@ -78,7 +78,7 @@ namespace Meow
         CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
                               vk::raii::Device const&         device,
                               vk::raii::CommandBuffer const&  command_buffer,
-                              std::string const&              filepath,
+                              std::string const&              file_path,
                               vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                               vk::ImageUsageFlags             usage_flags          = {},
                               vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,

@@ -2,63 +2,62 @@
 
 namespace Meow
 {
-    uint32_t VertexAttributeToSize(VertexAttribute attribute)
+    uint32_t VertexAttributeToSize(VertexAttributeBit attribute)
     {
-        // count * sizeof(float)
-        if (attribute == VertexAttribute::VA_Position)
+        if (attribute == VertexAttributeBit::Position)
         {
             return 3 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_UV0)
+        if (attribute == VertexAttributeBit::UV0)
         {
             return 2 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_UV1)
+        if (attribute == VertexAttributeBit::UV1)
         {
             return 2 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_Normal)
+        if (attribute == VertexAttributeBit::Normal)
         {
             return 3 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_Tangent)
+        if (attribute == VertexAttributeBit::Tangent)
         {
             return 4 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_Color)
+        if (attribute == VertexAttributeBit::Color)
         {
             return 3 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_SkinWeight)
+        if (attribute == VertexAttributeBit::SkinWeight)
         {
             return 4 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_SkinIndex)
+        if (attribute == VertexAttributeBit::SkinIndex)
         {
             return 4 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_SkinPack)
+        if (attribute == VertexAttributeBit::SkinPack)
         {
             return 3 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_Custom0 || attribute == VertexAttribute::VA_Custom1 ||
-                 attribute == VertexAttribute::VA_Custom2 || attribute == VertexAttribute::VA_Custom3)
+        if (attribute == VertexAttributeBit::Custom0 || attribute == VertexAttributeBit::Custom1 ||
+            attribute == VertexAttributeBit::Custom2 || attribute == VertexAttributeBit::Custom3)
         {
             return 4 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat1)
+        if (attribute == VertexAttributeBit::InstanceFloat1)
         {
             return 1 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat2)
+        if (attribute == VertexAttributeBit::InstanceFloat2)
         {
             return 2 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat3)
+        if (attribute == VertexAttributeBit::InstanceFloat3)
         {
             return 3 * sizeof(float);
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat4)
+        if (attribute == VertexAttributeBit::InstanceFloat4)
         {
             return 4 * sizeof(float);
         }
@@ -66,76 +65,127 @@ namespace Meow
         return 0;
     }
 
-    uint32_t VertexAttributesToSize(const std::vector<VertexAttribute>& vertex_attributes)
+    uint32_t VertexAttributesToSize(BitMask<VertexAttributeBit> attributes)
     {
         uint32_t size = 0;
-        for (auto attribute : vertex_attributes)
+        if (attributes & VertexAttributeBit::Position)
         {
-            size += VertexAttributeToSize(attribute);
+            size += 3 * sizeof(float);
         }
-
-        assert(size > 0);
+        if (attributes & VertexAttributeBit::UV0)
+        {
+            size += 2 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::UV1)
+        {
+            size += 2 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::Normal)
+        {
+            size += 3 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::Tangent)
+        {
+            size += 4 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::Color)
+        {
+            size += 3 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::SkinWeight)
+        {
+            size += 4 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::SkinIndex)
+        {
+            size += 4 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::SkinPack)
+        {
+            size += 3 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::Custom0 || attributes & VertexAttributeBit::Custom1 ||
+            attributes & VertexAttributeBit::Custom2 || attributes & VertexAttributeBit::Custom3)
+        {
+            size += 4 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::InstanceFloat1)
+        {
+            size += 1 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::InstanceFloat2)
+        {
+            size += 2 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::InstanceFloat3)
+        {
+            size += 3 * sizeof(float);
+        }
+        if (attributes & VertexAttributeBit::InstanceFloat4)
+        {
+            size += 4 * sizeof(float);
+        }
 
         return size;
     }
 
-    vk::Format VertexAttributeToVkFormat(VertexAttribute attribute)
+    vk::Format VertexAttributeToVkFormat(VertexAttributeBit attribute)
     {
         vk::Format format = vk::Format::eR32G32B32Sfloat;
-        if (attribute == VertexAttribute::VA_Position)
+        if (attribute == VertexAttributeBit::Position)
         {
             format = vk::Format::eR32G32B32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_UV0)
+        else if (attribute == VertexAttributeBit::UV0)
         {
             format = vk::Format::eR32G32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_UV1)
+        else if (attribute == VertexAttributeBit::UV1)
         {
             format = vk::Format::eR32G32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_Normal)
+        else if (attribute == VertexAttributeBit::Normal)
         {
             format = vk::Format::eR32G32B32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_Tangent)
+        else if (attribute == VertexAttributeBit::Tangent)
         {
             format = vk::Format::eR32G32B32A32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_Color)
+        else if (attribute == VertexAttributeBit::Color)
         {
             format = vk::Format::eR32G32B32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_SkinPack)
+        else if (attribute == VertexAttributeBit::SkinPack)
         {
             format = vk::Format::eR32G32B32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_SkinWeight)
+        else if (attribute == VertexAttributeBit::SkinWeight)
         {
             format = vk::Format::eR32G32B32A32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_SkinIndex)
+        else if (attribute == VertexAttributeBit::SkinIndex)
         {
             format = vk::Format::eR32G32B32A32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_Custom0 || attribute == VertexAttribute::VA_Custom1 ||
-                 attribute == VertexAttribute::VA_Custom2 || attribute == VertexAttribute::VA_Custom3)
+        else if (attribute == VertexAttributeBit::Custom0 || attribute == VertexAttributeBit::Custom1 ||
+                 attribute == VertexAttributeBit::Custom2 || attribute == VertexAttributeBit::Custom3)
         {
             format = vk::Format::eR32G32B32A32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat1)
+        else if (attribute == VertexAttributeBit::InstanceFloat1)
         {
             format = vk::Format::eR32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat2)
+        else if (attribute == VertexAttributeBit::InstanceFloat2)
         {
             format = vk::Format::eR32G32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat3)
+        else if (attribute == VertexAttributeBit::InstanceFloat3)
         {
             format = vk::Format::eR32G32B32Sfloat;
         }
-        else if (attribute == VertexAttribute::VA_InstanceFloat4)
+        else if (attribute == VertexAttributeBit::InstanceFloat4)
         {
             format = vk::Format::eR32G32B32A32Sfloat;
         }
@@ -143,61 +193,61 @@ namespace Meow
         return format;
     }
 
-    VertexAttribute StringToVertexAttribute(const std::string& name)
+    VertexAttributeBit StringToVertexAttribute(const std::string& name)
     {
         if (name == "inPosition")
         {
-            return VertexAttribute::VA_Position;
+            return VertexAttributeBit::Position;
         }
         else if (name == "inUV0")
         {
-            return VertexAttribute::VA_UV0;
+            return VertexAttributeBit::UV0;
         }
         else if (name == "inUV1")
         {
-            return VertexAttribute::VA_UV1;
+            return VertexAttributeBit::UV1;
         }
         else if (name == "inNormal")
         {
-            return VertexAttribute::VA_Normal;
+            return VertexAttributeBit::Normal;
         }
         else if (name == "inTangent")
         {
-            return VertexAttribute::VA_Tangent;
+            return VertexAttributeBit::Tangent;
         }
         else if (name == "inColor")
         {
-            return VertexAttribute::VA_Color;
+            return VertexAttributeBit::Color;
         }
         else if (name == "inSkinWeight")
         {
-            return VertexAttribute::VA_SkinWeight;
+            return VertexAttributeBit::SkinWeight;
         }
         else if (name == "inSkinIndex")
         {
-            return VertexAttribute::VA_SkinIndex;
+            return VertexAttributeBit::SkinIndex;
         }
         else if (name == "inSkinPack")
         {
-            return VertexAttribute::VA_SkinPack;
+            return VertexAttributeBit::SkinPack;
         }
         else if (name == "inCustom0")
         {
-            return VertexAttribute::VA_Custom0;
+            return VertexAttributeBit::Custom0;
         }
         else if (name == "inCustom1")
         {
-            return VertexAttribute::VA_Custom1;
+            return VertexAttributeBit::Custom1;
         }
         else if (name == "inCustom2")
         {
-            return VertexAttribute::VA_Custom2;
+            return VertexAttributeBit::Custom2;
         }
         else if (name == "inCustom3")
         {
-            return VertexAttribute::VA_Custom3;
+            return VertexAttributeBit::Custom3;
         }
 
-        return VertexAttribute::VA_None;
+        return VertexAttributeBit::None;
     }
 } // namespace Meow

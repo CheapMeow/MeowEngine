@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/base/bitmask.hpp"
 #include "function/object/game_object.h"
 #include "function/render/structs/buffer_data.h"
 #include "function/render/structs/builtin_render_stat.h"
@@ -84,10 +85,10 @@ namespace Meow
 
         const std::unordered_map<std::string, BuiltinRenderStat>& GetBuiltinRenderStat() { return m_render_stat_map; }
 
-        std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& filepath);
+        std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& file_path);
 
-        std::shared_ptr<Model> CreateModelFromFile(const std::string&           file_path,
-                                                   std::vector<VertexAttribute> attributes);
+        std::shared_ptr<Model> CreateModelFromFile(const std::string&          file_path,
+                                                   BitMask<VertexAttributeBit> attributes);
 
         GameObjectID m_main_camera_id;
 

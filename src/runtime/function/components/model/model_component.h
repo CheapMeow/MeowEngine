@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/base/bitmask.hpp"
 #include "function/global/runtime_global_context.h"
 #include "function/object/game_object.h"
 #include "function/render/structs/model.h"
@@ -13,8 +14,7 @@ namespace Meow
     public:
         std::weak_ptr<Model> model_ptr;
 
-        ModelComponent(const std::string&           file_path,
-                       std::vector<VertexAttribute> attributes)
+        ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
         {
             model_ptr = g_runtime_global_context.render_system->CreateModelFromFile(file_path, attributes);
         }

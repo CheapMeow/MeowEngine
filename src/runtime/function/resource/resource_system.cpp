@@ -22,37 +22,62 @@ namespace Meow
 
     void ResourceSystem::Tick(float dt) {}
 
-    std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& filepath)
+    std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& file_path)
     {
         FUNCTION_TIMER();
 
         std::shared_ptr<ImageData> texture_ptr =
-            g_runtime_global_context.render_system->CreateTextureFromFile(filepath);
+            g_runtime_global_context.render_system->CreateTextureFromFile(file_path);
 
-        return m_textures[filepath];
+        m_textures[file_path] = texture_ptr;
+
+        return texture_ptr;
     }
 
-    std::shared_ptr<ImageData> ResourceSystem::GetTexture(const std::string& filepath)
+    std::shared_ptr<ImageData> ResourceSystem::GetTexture(const std::string& file_path)
     {
         FUNCTION_TIMER();
 
-        if (m_textures.find(filepath) == m_textures.end())
+        if (m_textures.find(file_path) == m_textures.end())
             return nullptr;
 
-        return m_textures[filepath];
+        return m_textures[file_path];
     }
 
-    // bool ResourceSystem::LoadMaterial(const std::string& filepath)
+    // bool ResourceSystem::LoadMaterial(const std::string& file_path)
     // {
     //     // Haven't implemented.
     //     return true;
     // }
 
-    // std::shared_ptr<Material> ResourceSystem::GetMaterial(const std::string& filepath)
+    // std::shared_ptr<Material> ResourceSystem::GetMaterial(const std::string& file_path)
     // {
-    //     if (m_materials.find(filepath) == m_materials.end())
+    //     if (m_materials.find(file_path) == m_materials.end())
     //         return nullptr;
 
-    //     return m_materials[filepath];
+    //     return m_materials[file_path];
     // }
+
+    std::shared_ptr<Model> ResourceSystem::LoadModel(const std::string&          file_path,
+                                                     BitMask<VertexAttributeBit> attributes)
+    {
+        FUNCTION_TIMER();
+
+        std::shared_ptr<Model> model_ptr =
+            g_runtime_global_context.render_system->CreateModelFromFile(file_path, attributes);
+
+        m_models[file_path] = model_ptr;
+
+        return model_ptr;
+    }
+
+    std::shared_ptr<Model> ResourceSystem::GetModel(const std::string& file_path)
+    {
+        FUNCTION_TIMER();
+
+        if (m_models.find(file_path) == m_models.end())
+            return nullptr;
+
+        return m_models[file_path];
+    }
 } // namespace Meow
