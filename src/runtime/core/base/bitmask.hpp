@@ -81,6 +81,8 @@ namespace Meow
 
         constexpr std::vector<BitType> split() const noexcept;
 
+        constexpr std::vector<int> split_pos() const noexcept;
+
         inline static BitMask<BitType> all_mask = BitType::ALL;
 
     private:
@@ -117,5 +119,24 @@ namespace Meow
         }
 
         return all_bits;
+    }
+
+    template<typename BitType>
+    constexpr std::vector<int> BitMask<BitType>::split_pos() const noexcept
+    {
+        std::vector<int> all_pos;
+
+        MaskType count = BitMask<BitType>::all_mask.count();
+
+        MaskType cur_mask = 0x1;
+        for (MaskType i = 0; i < count; i++)
+        {
+            if (cur_mask & m_mask)
+                all_pos.push_back(i);
+
+            cur_mask = cur_mask << 1;
+        }
+
+        return all_pos;
     }
 } // namespace Meow

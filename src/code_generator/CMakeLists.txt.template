@@ -1,8 +1,10 @@
 set(CODE_GENERATOR_HEADER_FILES
-    parser.h)
+    type_descriptor_parser.h
+    keyword_finder.h)
 set(CODE_GENERATOR_SOURCE_FILES
     main.cpp
-    parser.cpp)
+    type_descriptor_parser.cpp
+    keyword_finder.cpp)
 
 set(HEADER_FILES_DEPEND
 <all_headers_place_holder>)

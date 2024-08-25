@@ -250,4 +250,41 @@ namespace Meow
 
         return VertexAttributeBit::None;
     }
+
+    const std::string VertexAttributeToString(VertexAttributeBit bit)
+    {
+        switch (bit)
+        {
+            case VertexAttributeBit::Position:
+                return "inPosition";
+            case VertexAttributeBit::UV0:
+                return "inUV0";
+            case VertexAttributeBit::UV1:
+                return "inUV1";
+            case VertexAttributeBit::Normal:
+                return "inNormal";
+            case VertexAttributeBit::Tangent:
+                return "inTangent";
+            case VertexAttributeBit::Color:
+                return "inColor";
+            case VertexAttributeBit::SkinWeight:
+                return "inSkinWeight";
+            case VertexAttributeBit::SkinIndex:
+                return "inSkinIndex";
+            case VertexAttributeBit::SkinPack:
+                return "inSkinPack";
+            case VertexAttributeBit::Custom0:
+                return "inCustom0";
+            case VertexAttributeBit::Custom1:
+                return "inCustom1";
+            case VertexAttributeBit::Custom2:
+                return "inCustom2";
+            case VertexAttributeBit::Custom3:
+                return "inCustom3";
+            case VertexAttributeBit::None:
+                return "None";
+            default:
+                return "Unknown";
+        }
+    }
 } // namespace Meow

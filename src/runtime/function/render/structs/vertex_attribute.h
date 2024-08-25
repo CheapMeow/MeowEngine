@@ -32,5 +32,5 @@ namespace Meow
     uint32_t           VertexAttributesToSize(BitMask<VertexAttributeBit> attributes);
     vk::Format         VertexAttributeToVkFormat(VertexAttributeBit attribute);
     VertexAttributeBit StringToVertexAttribute(const std::string& name);
-
+    const std::string  VertexAttributeToString(VertexAttributeBit attribute);
 } // namespace Meow

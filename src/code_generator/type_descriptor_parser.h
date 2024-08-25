@@ -11,11 +11,9 @@ namespace fs = std::filesystem;
 
 namespace Meow
 {
-    class Parser
+    class TypeDescriptorParser
     {
     public:
-        bool ContainsReflectableKeywords(const fs::path& filePath);
-
         void Begin(const std::string& src_root, const std::string& output_path);
 
         void ParseFile(const fs::path& path, const std::vector<std::string>& include_paths);

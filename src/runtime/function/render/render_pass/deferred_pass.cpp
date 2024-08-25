@@ -181,11 +181,13 @@ namespace Meow
         m_quad_mat.subpass = 1;
         m_quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
 
-        m_render_stat[0].per_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
-        m_render_stat[0].instance_attributes   = m_obj2attachment_mat.shader_ptr->instance_attributes;
+        m_render_stat[0].vertex_attribute_metas = m_obj2attachment_mat.shader_ptr->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_obj2attachment_mat.shader_ptr->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_obj2attachment_mat.shader_ptr->image_meta_map;
 
-        m_render_stat[1].per_vertex_attributes = m_quad_mat.shader_ptr->per_vertex_attributes;
-        m_render_stat[1].instance_attributes   = m_quad_mat.shader_ptr->instance_attributes;
+        m_render_stat[1].vertex_attribute_metas = m_quad_mat.shader_ptr->vertex_attribute_metas;
+        m_render_stat[1].buffer_meta_map        = m_quad_mat.shader_ptr->buffer_meta_map;
+        m_render_stat[1].image_meta_map         = m_quad_mat.shader_ptr->image_meta_map;
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,

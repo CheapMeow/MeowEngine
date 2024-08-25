@@ -1,4 +1,5 @@
-#include "parser.h"
+#include "keyword_finder.h"
+#include "type_descriptor_parser.h"
 
 #include <filesystem>
 #include <iostream>
@@ -74,23 +75,31 @@ int main(int argc, char* argv[])
         std::cout << include_paths[i] << std::endl;
     }
 
-    Parser          parser;
+    TypeDescriptorParser type_descriptor_parser;
+
+    std::vector<fs::path> reflectable_files;
+    std::vector<fs::path> enum_files;
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
-    std::vector<fs::path>           files;
     for (const auto& entry : fs::recursive_directory_iterator(src_path))
     {
         if (entry.is_regular_file() && suffixes.find(entry.path().extension().string()) != suffixes.end())
         {
-            if (parser.ContainsReflectableKeywords(entry.path()))
-                files.push_back(entry.path());
+            auto result = KeywordFinder::Find(entry.path());
+            if (result.is_reflectable_found)
+                reflectable_files.push_back(entry.path());
+            if (result.is_enum_found)
+                enum_files.push_back(entry.path());
         }
     }
 
-    parser.Begin(src_path, output_path);
-    for (int i = 0; i < files.size(); ++i)
+    type_descriptor_parser.Begin(src_path, output_path);
+    for (int i = 0; i < reflectable_files.size(); ++i)
     {
-        parser.ParseFile(files[i], include_paths);
+        std::cout << "[CodeGenerator] Finding reflectable class in " << reflectable_files[i].string() << std::endl;
+        type_descriptor_parser.ParseFile(reflectable_files[i], include_paths);
     }
-    parser.End();
+    type_descriptor_parser.End();
+
+    return 0;
 }

@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "type_descriptor_parser.h"
 
 #include <algorithm>
 #include <functional>
@@ -25,35 +25,11 @@ namespace Meow
         return stream;
     }
 
-    bool Parser::ContainsReflectableKeywords(const fs::path& filePath)
-    {
-        std::ifstream file(filePath);
-        if (!file.is_open())
-        {
-            std::cerr << "Failed to open the file: " << filePath << std::endl;
-            return false;
-        }
-
-        std::string line;
-        while (std::getline(file, line))
-        {
-            if (line.find("reflectable_class") != std::string::npos ||
-                line.find("reflectable_struct") != std::string::npos ||
-                line.find("reflectable_field") != std::string::npos ||
-                line.find("reflectable_method") != std::string::npos)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    void Parser::Begin(const std::string& src_path, const std::string& output_path)
+    void TypeDescriptorParser::Begin(const std::string& src_path, const std::string& output_path)
     {
         if (is_recording)
         {
-            std::cerr << "Parser is already recording." << std::endl;
+            std::cerr << "TypeDescriptorParser is already recording." << std::endl;
             return;
         }
 
@@ -73,7 +49,7 @@ namespace Meow
         include_stream << "#include \"core/reflect/type_descriptor_builder.hpp\"\n";
     }
 
-    void Parser::ParseFile(const fs::path& path, const std::vector<std::string>& include_paths)
+    void TypeDescriptorParser::ParseFile(const fs::path& path, const std::vector<std::string>& include_paths)
     {
         // traverse AST to find class
 
@@ -148,11 +124,11 @@ namespace Meow
         clang_disposeIndex(index);
     }
 
-    void Parser::End()
+    void TypeDescriptorParser::End()
     {
         if (!is_recording)
         {
-            std::cerr << "Parser already ends recording." << std::endl;
+            std::cerr << "TypeDescriptorParser already ends recording." << std::endl;
             return;
         }
 
@@ -173,14 +149,14 @@ namespace Meow
         is_recording = false;
     }
 
-    std::string Parser::toStdString(CXString cxStr)
+    std::string TypeDescriptorParser::toStdString(CXString cxStr)
     {
         std::string result = clang_getCString(cxStr);
         clang_disposeString(cxStr);
         return result;
     }
 
-    std::vector<std::string> Parser::split(const std::string& text, char delim)
+    std::vector<std::string> TypeDescriptorParser::split(const std::string& text, char delim)
     {
         std::string              line;
         std::vector<std::string> vec;
@@ -192,7 +168,7 @@ namespace Meow
         return vec;
     }
 
-    void Parser::InsertIncludePath(const fs::path& path)
+    void TypeDescriptorParser::InsertIncludePath(const fs::path& path)
     {
         fs::path    file_path_relative = fs::relative(path, src_path);
         std::string include_path_rel   = file_path_relative.string();
@@ -201,7 +177,7 @@ namespace Meow
         include_stream << "#include \"" << include_path_rel << "\"\n";
     }
 
-    bool Parser::ParseClass(const fs::path& path, CXCursor class_cursor)
+    bool TypeDescriptorParser::ParseClass(const fs::path& path, CXCursor class_cursor)
     {
         std::string class_name = toStdString(clang_getCursorSpelling(class_cursor));
 
