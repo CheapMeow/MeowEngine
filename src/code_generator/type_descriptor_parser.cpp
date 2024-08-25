@@ -64,7 +64,7 @@ namespace Meow
                 if (clang_getCursorKind(c) == CXCursor_AnnotateAttr)
                 {
                     std::vector<std::string> annotations =
-                        LibclangUtils::split(LibclangUtils::toStdString(clang_getCursorSpelling(c)), ';');
+                        LibclangUtils::split(LibclangUtils::to_string(clang_getCursorSpelling(c)), ';');
                     if (annotations.size() == 0)
                         return CXChildVisit_Recurse;
 
@@ -143,7 +143,7 @@ namespace Meow
 
     bool TypeDescriptorParser::ParseClass(const fs::path& path, CXCursor class_cursor)
     {
-        std::string class_name = LibclangUtils::toStdString(clang_getCursorSpelling(class_cursor));
+        std::string class_name = LibclangUtils::to_string(clang_getCursorSpelling(class_cursor));
 
         std::cout << "[CodeGenerator] Parsing " << class_name << std::endl;
 
@@ -175,7 +175,7 @@ namespace Meow
                     ParseContext* parse_context_ptr = static_cast<ParseContext*>(client_data);
 
                     std::vector<std::string> annotations =
-                        LibclangUtils::split(LibclangUtils::toStdString(clang_getCursorSpelling(c)), ';');
+                        LibclangUtils::split(LibclangUtils::to_string(clang_getCursorSpelling(c)), ';');
                     if (annotations.size() == 0)
                         return CXChildVisit_Recurse;
 
@@ -184,9 +184,9 @@ namespace Meow
                         if (clang_getCursorKind(parent) == CXCursor_FieldDecl)
                         {
                             CXType      field_type      = clang_getCursorType(parent);
-                            std::string field_type_name = LibclangUtils::toStdString(clang_getTypeSpelling(field_type));
+                            std::string field_type_name = LibclangUtils::to_string(clang_getTypeSpelling(field_type));
 
-                            std::string field_name = LibclangUtils::toStdString(clang_getCursorSpelling(parent));
+                            std::string field_name = LibclangUtils::to_string(clang_getCursorSpelling(parent));
                             *(parse_context_ptr->stream_ptr)
                                 << "\n\t\t\t" << ".AddField(\"" << field_name << "\", \"" << field_type_name << "\", &"
                                 << parse_context_ptr->class_name << "::" << field_name << ")";
@@ -196,7 +196,7 @@ namespace Meow
                     {
                         if (clang_getCursorKind(parent) == CXCursor_CXXMethod)
                         {
-                            std::string method_name = LibclangUtils::toStdString(clang_getCursorSpelling(parent));
+                            std::string method_name = LibclangUtils::to_string(clang_getCursorSpelling(parent));
                             *(parse_context_ptr->stream_ptr)
                                 << "\n\t\t\t" << ".AddMethod(\"" << method_name << "\", &"
                                 << parse_context_ptr->class_name << "::" << method_name << ")";

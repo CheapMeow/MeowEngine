@@ -2,6 +2,7 @@
 
 #include "core/reflect/type_descriptor_builder.hpp"
 #include "function/components/camera/camera_3d_component.hpp"
+#include "function/components/model/model_component.h"
 
 namespace Meow
 {
@@ -17,6 +18,8 @@ namespace Meow
 			.AddField("far_plane", "float", &Camera3DComponent::far_plane)
 			.AddField("field_of_view", "float", &Camera3DComponent::field_of_view)
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
+
+		reflect::AddClass<ModelComponent>("ModelComponent");
 
 	}
 } // namespace Meow

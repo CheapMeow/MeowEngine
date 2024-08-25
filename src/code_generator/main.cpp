@@ -1,3 +1,4 @@
+#include "enum_parser.h"
 #include "keyword_finder.h"
 #include "type_descriptor_parser.h"
 
@@ -76,6 +77,7 @@ int main(int argc, char* argv[])
     }
 
     TypeDescriptorParser type_descriptor_parser;
+    EnumParser           enum_parser;
 
     std::vector<fs::path> reflectable_files;
     std::vector<fs::path> enum_files;
@@ -100,6 +102,14 @@ int main(int argc, char* argv[])
         type_descriptor_parser.ParseFile(reflectable_files[i], include_paths);
     }
     type_descriptor_parser.End();
+
+    enum_parser.Begin(src_path, output_path);
+    for (int i = 0; i < enum_files.size(); ++i)
+    {
+        std::cout << "[CodeGenerator] Finding enum in " << enum_files[i].string() << std::endl;
+        enum_parser.ParseFile(enum_files[i], include_paths);
+    }
+    enum_parser.End();
 
     return 0;
 }

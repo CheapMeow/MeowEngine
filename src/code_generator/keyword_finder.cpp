@@ -32,7 +32,7 @@ namespace Meow
 
             if (!result.is_enum_found)
             {
-                if (line.find("enum ") != std::string::npos)
+                if (line.find("reflectable_enum") != std::string::npos)
                 {
                     result.is_enum_found = true;
                 }

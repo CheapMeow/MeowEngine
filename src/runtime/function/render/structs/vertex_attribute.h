@@ -1,12 +1,14 @@
 #pragma once
 
 #include "core/base/bitmask.hpp"
+#include "core/reflect/macros.h"
+#include "generated/vertex_attribute_bit.gen.h"
+
 #include <vulkan/vulkan_raii.hpp>
 
 namespace Meow
 {
-    enum class VertexAttributeBit : uint32_t
-    {
+    enum class [[reflectable_enum()]] VertexAttributeBit : uint32_t {
         None           = 0x00000000,
         Position       = 0x00000001,
         UV0            = 0x00000002,
