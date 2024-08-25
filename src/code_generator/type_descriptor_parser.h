@@ -2,7 +2,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -21,10 +20,6 @@ namespace Meow
         void End();
 
     private:
-        static std::string toStdString(CXString cxStr);
-
-        static std::vector<std::string> split(const std::string& text, char delim);
-
         void InsertIncludePath(const fs::path& path);
 
         bool ParseClass(const fs::path& path, CXCursor class_cursor);
