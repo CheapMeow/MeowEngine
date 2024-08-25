@@ -62,5 +62,7 @@ namespace Meow
 
         ComponentsWidget m_components_widget;
         FlameGraphWidget m_flame_graph_widget;
+
+        size_t m_ui_id = 0;
     };
 } // namespace Meow

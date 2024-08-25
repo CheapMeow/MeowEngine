@@ -10,7 +10,7 @@ namespace Meow
     class PipelineStatisticsWidget
     {
     public:
-        static void Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat);
+        static void Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat, size_t& id);
 
     private:
         inline static std::string m_stat_names[11] = {"Vertex count in input assembly",

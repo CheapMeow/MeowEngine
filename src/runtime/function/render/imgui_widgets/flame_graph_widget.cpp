@@ -9,6 +9,7 @@ namespace Meow
     void FlameGraphWidget::Draw(const std::vector<ScopeTimeData>& scope_times,
                                 int                               max_depth,
                                 std::chrono::microseconds         global_start,
+                                size_t&                           id,
                                 ImVec2                            graph_size)
     {
         if (scope_times.size() == 0)
@@ -24,11 +25,12 @@ namespace Meow
             Draw_impl(m_curr_shapshot.scope_times,
                       m_curr_shapshot.max_depth,
                       m_curr_shapshot.global_start,
+                      id,
                       m_curr_shapshot.graph_size);
         else
-            Draw_impl(scope_times, max_depth, global_start, graph_size);
+            Draw_impl(scope_times, max_depth, global_start, id, graph_size);
 
-        if (ImGui::Button("Capture Snapshot"))
+        if (ImGui::Button(((std::string) "Capture Snapshot" + "##" + std::to_string(id++)).c_str()))
         {
             m_is_shapshot_enabled        = true;
             m_curr_shapshot.scope_times  = scope_times;
@@ -40,7 +42,7 @@ namespace Meow
         if (m_is_shapshot_enabled)
         {
             ImGui::SameLine();
-            if (ImGui::Button("Leave Snapshot"))
+            if (ImGui::Button(((std::string) "Leave Snapshot" + "##" + std::to_string(id++)).c_str()))
             {
                 m_is_shapshot_enabled = false;
             }
@@ -50,6 +52,7 @@ namespace Meow
     void FlameGraphWidget::Draw_impl(const std::vector<ScopeTimeData>& scope_times,
                                      int                               max_depth,
                                      std::chrono::microseconds         global_start,
+                                     size_t&                           id,
                                      ImVec2                            graph_size)
     {
         if (scope_times.size() == 0)

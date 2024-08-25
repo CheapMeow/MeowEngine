@@ -131,10 +131,12 @@ namespace Meow
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
 
+        m_ui_id = 0;
+
         const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
         for (const auto& kv : all_gameobjects_map)
         {
-            m_components_widget.CreateGameObjectUI(kv.second);
+            m_components_widget.CreateGameObjectUI(kv.second, m_ui_id);
         }
 
         ImGui::End();
@@ -143,12 +145,13 @@ namespace Meow
 
         m_flame_graph_widget.Draw(TimerSingleton::Get().GetScopeTimes(),
                                   TimerSingleton::Get().GetMaxDepth(),
-                                  TimerSingleton::Get().GetGlobalStart());
+                                  TimerSingleton::Get().GetGlobalStart(),
+                                  m_ui_id);
 
-        BuiltinStatisticsWidget::Draw(g_runtime_global_context.render_system->GetBuiltinRenderStat());
+        BuiltinStatisticsWidget::Draw(g_runtime_global_context.render_system->GetBuiltinRenderStat(), m_ui_id);
 
         if (m_query_enabled)
-            PipelineStatisticsWidget::Draw(g_runtime_global_context.render_system->GetPipelineStat());
+            PipelineStatisticsWidget::Draw(g_runtime_global_context.render_system->GetPipelineStat(), m_ui_id);
         else
             ImGui::Text("Pipeline Statistics is disabled.");
 

@@ -4,14 +4,14 @@
 
 namespace Meow
 {
-    void PipelineStatisticsWidget::Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat)
+    void PipelineStatisticsWidget::Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat, size_t& id)
     {
         ImGui::Text("Pipeline Statistics");
 
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
         for (const auto& pair : stat)
         {
-            if (ImGui::TreeNodeEx(pair.first.c_str(), flag))
+            if (ImGui::TreeNodeEx((pair.first + "##" + std::to_string(id++)).c_str(), flag))
             {
                 if (pair.second.size() < 11)
                     continue;

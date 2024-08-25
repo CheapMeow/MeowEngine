@@ -12,6 +12,6 @@ namespace Meow
     class BuiltinStatisticsWidget
     {
     public:
-        static void Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat);
+        static void Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat, size_t& id);
     };
 } // namespace Meow

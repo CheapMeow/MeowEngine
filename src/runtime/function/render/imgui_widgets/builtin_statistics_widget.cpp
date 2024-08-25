@@ -7,7 +7,7 @@
 
 namespace Meow
 {
-    void BuiltinStatisticsWidget::Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat)
+    void BuiltinStatisticsWidget::Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat, size_t& id)
     {
         ImGui::Text("Builtin Statistics");
 
@@ -17,7 +17,7 @@ namespace Meow
             const std::string& pass_name = pair.first;
             const auto&        stat      = pair.second;
 
-            if (ImGui::TreeNodeEx(pass_name.c_str(), flag))
+            if (ImGui::TreeNodeEx((pass_name + "##" + std::to_string(id++)).c_str(), flag))
             {
                 ImGui::Columns(2, "locations");
                 ImGui::Text("%s", "Draw call");
@@ -25,7 +25,7 @@ namespace Meow
                 ImGui::Text("%d", stat.draw_call);
                 ImGui::Columns();
 
-                if (ImGui::TreeNodeEx("Vertex Attributes", flag))
+                if (ImGui::TreeNodeEx(((std::string) "Vertex Attributes" + "##" + std::to_string(id++)).c_str(), flag))
                 {
                     ImGui::Columns(2, "locations");
                     ImGui::Text("%s", "Attribute Name");
@@ -44,7 +44,7 @@ namespace Meow
                     ImGui::TreePop();
                 }
 
-                if (ImGui::TreeNodeEx("Buffer", flag))
+                if (ImGui::TreeNodeEx(((std::string) "Buffer" + "##" + std::to_string(id++)).c_str(), flag))
                 {
                     ImGui::Columns(4, "locations");
                     ImGui::Text("%s", "Buffer Name");
@@ -90,7 +90,7 @@ namespace Meow
                     ImGui::TreePop();
                 }
 
-                if (ImGui::TreeNodeEx("Image", flag))
+                if (ImGui::TreeNodeEx(((std::string) "Image" + "##" + std::to_string(id++)).c_str(), flag))
                 {
                     ImGui::Columns(3, "locations");
                     ImGui::Text("%s", "Image Name");
