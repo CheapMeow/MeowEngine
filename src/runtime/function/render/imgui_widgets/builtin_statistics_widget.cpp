@@ -36,7 +36,7 @@ namespace Meow
                     for (const auto& meta : stat.vertex_attribute_metas)
                     {
                         ImGui::Columns(2, "locations");
-                        ImGui::Text("%s", VertexAttributeToString(meta.attribute).c_str());
+                        ImGui::Text("%s", to_string(meta.attribute).c_str());
                         ImGui::NextColumn();
                         ImGui::Text("%d", meta.location);
                         ImGui::Columns();

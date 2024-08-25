@@ -251,7 +251,12 @@ namespace Meow
 
             // Convection: input vertex name should be certain name, for example:
             // inPosition, inUV0, ...
-            VertexAttributeBit attribute = StringToVertexAttribute(var_name.c_str());
+            size_t pos = var_name.find("in");
+            if (pos == std::string::npos)
+                continue;
+
+            std::string        vat_name_substr = var_name.substr(pos);
+            VertexAttributeBit attribute       = to_enum(vat_name_substr);
             if (attribute == VertexAttributeBit::None)
             {
                 if (input_attribute_size == 1)

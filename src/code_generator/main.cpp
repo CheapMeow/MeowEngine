@@ -1,6 +1,5 @@
-#include "enum_parser.h"
 #include "keyword_finder.h"
-#include "type_descriptor_parser.h"
+#include "parser.h"
 
 #include <filesystem>
 #include <iostream>
@@ -76,11 +75,9 @@ int main(int argc, char* argv[])
         std::cout << include_paths[i] << std::endl;
     }
 
-    TypeDescriptorParser type_descriptor_parser;
-    EnumParser           enum_parser;
+    Parser parser;
 
-    std::vector<fs::path> reflectable_files;
-    std::vector<fs::path> enum_files;
+    std::vector<fs::path> files;
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
     for (const auto& entry : fs::recursive_directory_iterator(src_path))
@@ -88,28 +85,18 @@ int main(int argc, char* argv[])
         if (entry.is_regular_file() && suffixes.find(entry.path().extension().string()) != suffixes.end())
         {
             auto result = KeywordFinder::Find(entry.path());
-            if (result.is_reflectable_found)
-                reflectable_files.push_back(entry.path());
-            if (result.is_enum_found)
-                enum_files.push_back(entry.path());
+            if (result.is_reflectable_found || result.is_enum_found)
+                files.push_back(entry.path());
         }
     }
 
-    type_descriptor_parser.Begin(src_path, output_path);
-    for (int i = 0; i < reflectable_files.size(); ++i)
+    parser.Begin(src_path, output_path);
+    for (int i = 0; i < files.size(); ++i)
     {
-        std::cout << "[CodeGenerator] Finding reflectable class in " << reflectable_files[i].string() << std::endl;
-        type_descriptor_parser.ParseFile(reflectable_files[i], include_paths);
+        std::cout << "[CodeGenerator] Traversing " << files[i].string() << std::endl;
+        parser.ParseFile(files[i], include_paths);
     }
-    type_descriptor_parser.End();
-
-    enum_parser.Begin(src_path, output_path);
-    for (int i = 0; i < enum_files.size(); ++i)
-    {
-        std::cout << "[CodeGenerator] Finding enum in " << enum_files[i].string() << std::endl;
-        enum_parser.ParseFile(enum_files[i], include_paths);
-    }
-    enum_parser.End();
+    parser.End();
 
     return 0;
 }

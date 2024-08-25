@@ -1,12 +1,10 @@
 set(CODE_GENERATOR_HEADER_FILES
-    type_descriptor_parser.h
-    enum_parser.h
+    parser.h
     keyword_finder.h
     libclang_utils.h)
 set(CODE_GENERATOR_SOURCE_FILES
     main.cpp
-    type_descriptor_parser.cpp
-    enum_parser.cpp
+    parser.cpp
     keyword_finder.cpp
     libclang_utils.cpp)
 

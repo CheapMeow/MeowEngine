@@ -1,10 +1,13 @@
 #pragma once  
-  
+
+#include "core/reflect/macros.h"
+
+#include <cstdint>
 #include <string>  
   
 namespace Meow  
 {  
-    enum class VertexAttributeBit;  
+    enum class VertexAttributeBit : uint32_t;  
   
     VertexAttributeBit to_enum(const std::string& str);  
   
