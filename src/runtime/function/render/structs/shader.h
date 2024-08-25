@@ -178,7 +178,7 @@ namespace Meow
         uint32_t uniform_buffer_count = 0;
 
         BitMask<VertexAttributeBit> per_vertex_attributes;
-        BitMask<VertexAttributeBit> instances_attributes;
+        BitMask<VertexAttributeBit> instance_attributes;
 
         InputBindingsVector   input_bindings;
         InputAttributesVector input_attributes;

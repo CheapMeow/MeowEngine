@@ -109,6 +109,9 @@ namespace Meow
         m_forward_mat = Material(physical_device, device, mesh_shader_ptr);
         m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
+        m_render_stat.per_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
+        m_render_stat.instance_attributes   = m_forward_mat.shader_ptr->instance_attributes;
+
         clear_values.resize(2);
         clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);

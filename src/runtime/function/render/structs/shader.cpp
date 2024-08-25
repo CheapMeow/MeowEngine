@@ -367,14 +367,14 @@ namespace Meow
             vertex_attribute_metas.end(),
             [](const VertexAttributeMeta& a, const VertexAttributeMeta& b) -> bool { return a.location < b.location; });
 
-        // sort input_attributes to per_vertex_attributes and instances_attributes
+        // sort input_attributes to per_vertex_attributes and instance_attributes
         for (int32_t i = 0; i < vertex_attribute_metas.size(); ++i)
         {
             VertexAttributeBit attribute = vertex_attribute_metas[i].attribute;
             if (attribute == VertexAttributeBit::InstanceFloat1 || attribute == VertexAttributeBit::InstanceFloat2 ||
                 attribute == VertexAttributeBit::InstanceFloat3 || attribute == VertexAttributeBit::InstanceFloat4)
             {
-                instances_attributes |= attribute;
+                instance_attributes |= attribute;
             }
             else
             {
@@ -393,16 +393,16 @@ namespace Meow
             input_bindings.push_back(per_vertex_input_binding);
         }
 
-        if (instances_attributes.count() > 0)
+        if (instance_attributes.count() > 0)
         {
-            uint32_t                          stride = VertexAttributesToSize(instances_attributes);
+            uint32_t                          stride = VertexAttributesToSize(instance_attributes);
             vk::VertexInputBindingDescription instanceInputBinding {1, stride, vk::VertexInputRate::eInstance};
             input_bindings.push_back(instanceInputBinding);
         }
 
         // generate attributes info
         // first is per_vertex_attributes
-        // second is instances_attributes
+        // second is instance_attributes
         uint32_t location = 0;
         if (per_vertex_attributes.count() > 0)
         {
@@ -419,10 +419,10 @@ namespace Meow
             }
         }
 
-        if (instances_attributes.count() > 0)
+        if (instance_attributes.count() > 0)
         {
             uint32_t offset     = 0;
-            auto     attributes = instances_attributes.split();
+            auto     attributes = instance_attributes.split();
             for (int32_t i = 0; i < attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {

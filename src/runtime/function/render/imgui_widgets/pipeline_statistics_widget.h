@@ -13,16 +13,16 @@ namespace Meow
         static void Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat);
 
     private:
-        inline static std::string m_stat_name[11] = {"Vertex count in input assembly",
-                                                     "Primitives count in input assembly",
-                                                     "Vertex shader invocations",
-                                                     "Geometry shader invocations",
-                                                     "Primitives count in geometry shader",
-                                                     "Clipping invocations",
-                                                     "Clipping primtives",
-                                                     "Fragment shader invocations",
-                                                     "Tessellation control shader patches",
-                                                     "Tessellation evaluation shader invocations",
-                                                     "Compute shader invocations"};
+        inline static std::string m_stat_names[11] = {"Vertex count in input assembly",
+                                                      "Primitives count in input assembly",
+                                                      "Vertex shader invocations",
+                                                      "Geometry shader invocations",
+                                                      "Primitives count in geometry shader",
+                                                      "Clipping invocations",
+                                                      "Clipping primtives",
+                                                      "Fragment shader invocations",
+                                                      "Tessellation control shader patches",
+                                                      "Tessellation evaluation shader invocations",
+                                                      "Compute shader invocations"};
     };
 } // namespace Meow

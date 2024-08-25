@@ -19,7 +19,7 @@ namespace Meow
                 for (int i = 0; i < 11; i++)
                 {
                     ImGui::Columns(2, "locations");
-                    ImGui::Text("%s", m_stat_name[i].c_str());
+                    ImGui::Text("%s", m_stat_names[i].c_str());
                     ImGui::NextColumn();
                     ImGui::Text("%d", pair.second[i]);
                     ImGui::Columns();
