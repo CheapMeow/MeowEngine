@@ -3,6 +3,7 @@
 #include "pch.h"
 
 #include "buffer_data.h"
+#include "core/base/bitmask.hpp"
 #include "descriptor_allocator_growable.h"
 #include "image_data.h"
 #include "ubo_data.h"
@@ -20,8 +21,8 @@ namespace Meow
 {
     struct VertexAttributeMeta
     {
-        VertexAttribute attribute;
-        int32_t         location;
+        VertexAttributeBit attribute;
+        int32_t            location;
     };
 
     struct BufferMeta
@@ -176,8 +177,8 @@ namespace Meow
 
         uint32_t uniform_buffer_count = 0;
 
-        std::vector<VertexAttribute> per_vertex_attributes;
-        std::vector<VertexAttribute> instances_attributes;
+        BitMask<VertexAttributeBit> per_vertex_attributes;
+        BitMask<VertexAttributeBit> instances_attributes;
 
         InputBindingsVector   input_bindings;
         InputAttributesVector input_attributes;

@@ -22,7 +22,7 @@ namespace Meow
                  vk::raii::Queue const&          queue,
                  std::vector<float>&             vertices,
                  std::vector<uint32_t>&          indices,
-                 std::vector<VertexAttribute>    attributes)
+                 BitMask<VertexAttributeBit>     attributes)
     {
         vk::IndexType index_type = vk::IndexType::eUint32;
         uint32_t      stride     = VertexAttributesToSize(attributes);
@@ -59,39 +59,36 @@ namespace Meow
                  vk::raii::CommandPool const&    command_pool,
                  vk::raii::Queue const&          queue,
                  const std::string&              file_path,
-                 std::vector<VertexAttribute>    attributes)
+                 BitMask<VertexAttributeBit>     attributes)
     {
         vk::IndexType index_type = vk::IndexType::eUint32;
         this->attributes         = attributes;
 
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
-        for (size_t i = 0; i < attributes.size(); ++i)
+        if (attributes & VertexAttributeBit::Tangent)
         {
-            if (attributes[i] == VertexAttribute::VA_Tangent)
-            {
-                assimpFlags = assimpFlags | aiProcess_CalcTangentSpace;
-            }
-            else if (attributes[i] == VertexAttribute::VA_UV0)
-            {
-                assimpFlags = assimpFlags | aiProcess_GenUVCoords;
-            }
-            else if (attributes[i] == VertexAttribute::VA_Normal)
-            {
-                assimpFlags = assimpFlags | aiProcess_GenSmoothNormals;
-            }
-            else if (attributes[i] == VertexAttribute::VA_SkinIndex)
-            {
-                loadSkin = true;
-            }
-            else if (attributes[i] == VertexAttribute::VA_SkinWeight)
-            {
-                loadSkin = true;
-            }
-            else if (attributes[i] == VertexAttribute::VA_SkinPack)
-            {
-                loadSkin = true;
-            }
+            assimpFlags = assimpFlags | aiProcess_CalcTangentSpace;
+        }
+        else if (attributes & VertexAttributeBit::UV0)
+        {
+            assimpFlags = assimpFlags | aiProcess_GenUVCoords;
+        }
+        else if (attributes & VertexAttributeBit::Normal)
+        {
+            assimpFlags = assimpFlags | aiProcess_GenSmoothNormals;
+        }
+        else if (attributes & VertexAttributeBit::SkinIndex)
+        {
+            loadSkin = true;
+        }
+        else if (attributes & VertexAttributeBit::SkinWeight)
+        {
+            loadSkin = true;
+        }
+        else if (attributes & VertexAttributeBit::SkinPack)
+        {
+            loadSkin = true;
         }
 
         auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
@@ -464,153 +461,150 @@ namespace Meow
 
         for (size_t i = 0; i < (size_t)ai_mesh->mNumVertices; ++i)
         {
-            for (size_t j = 0; j < attributes.size(); ++j)
+            if (attributes & VertexAttributeBit::Position)
             {
-                if (attributes[j] == VertexAttribute::VA_Position)
-                {
-                    float v0 = ai_mesh->mVertices[i].x;
-                    float v1 = ai_mesh->mVertices[i].y;
-                    float v2 = ai_mesh->mVertices[i].z;
+                float v0 = ai_mesh->mVertices[i].x;
+                float v1 = ai_mesh->mVertices[i].y;
+                float v2 = ai_mesh->mVertices[i].z;
 
-                    vertices.push_back(v0);
-                    vertices.push_back(v1);
-                    vertices.push_back(v2);
+                vertices.push_back(v0);
+                vertices.push_back(v1);
+                vertices.push_back(v2);
 
-                    mmin.x = glm::min(v0, mmin.x);
-                    mmin.y = glm::min(v1, mmin.y);
-                    mmin.z = glm::min(v2, mmin.z);
-                    mmax.x = glm::max(v0, mmax.x);
-                    mmax.y = glm::max(v1, mmax.y);
-                    mmax.z = glm::max(v2, mmax.z);
-                }
-                else if (attributes[j] == VertexAttribute::VA_UV0)
+                mmin.x = glm::min(v0, mmin.x);
+                mmin.y = glm::min(v1, mmin.y);
+                mmin.z = glm::min(v2, mmin.z);
+                mmax.x = glm::max(v0, mmax.x);
+                mmax.y = glm::max(v1, mmax.y);
+                mmax.z = glm::max(v2, mmax.z);
+            }
+            else if (attributes & VertexAttributeBit::UV0)
+            {
+                if (ai_mesh->HasTextureCoords(0))
                 {
-                    if (ai_mesh->HasTextureCoords(0))
-                    {
-                        vertices.push_back(ai_mesh->mTextureCoords[0][i].x);
-                        vertices.push_back(ai_mesh->mTextureCoords[0][i].y);
-                    }
-                    else
-                    {
-                        vertices.push_back(0);
-                        vertices.push_back(0);
-                    }
+                    vertices.push_back(ai_mesh->mTextureCoords[0][i].x);
+                    vertices.push_back(ai_mesh->mTextureCoords[0][i].y);
                 }
-                else if (attributes[j] == VertexAttribute::VA_UV1)
+                else
                 {
-                    if (ai_mesh->HasTextureCoords(1))
-                    {
-                        vertices.push_back(ai_mesh->mTextureCoords[1][i].x);
-                        vertices.push_back(ai_mesh->mTextureCoords[1][i].y);
-                    }
-                    else
-                    {
-                        vertices.push_back(0);
-                        vertices.push_back(0);
-                    }
+                    vertices.push_back(0);
+                    vertices.push_back(0);
                 }
-                else if (attributes[j] == VertexAttribute::VA_Normal)
+            }
+            else if (attributes & VertexAttributeBit::UV1)
+            {
+                if (ai_mesh->HasTextureCoords(1))
                 {
-                    vertices.push_back(ai_mesh->mNormals[i].x);
-                    vertices.push_back(ai_mesh->mNormals[i].y);
-                    vertices.push_back(ai_mesh->mNormals[i].z);
+                    vertices.push_back(ai_mesh->mTextureCoords[1][i].x);
+                    vertices.push_back(ai_mesh->mTextureCoords[1][i].y);
                 }
-                else if (attributes[j] == VertexAttribute::VA_Tangent)
+                else
                 {
-                    vertices.push_back(ai_mesh->mTangents[i].x);
-                    vertices.push_back(ai_mesh->mTangents[i].y);
-                    vertices.push_back(ai_mesh->mTangents[i].z);
-                    vertices.push_back(1);
+                    vertices.push_back(0);
+                    vertices.push_back(0);
                 }
-                else if (attributes[j] == VertexAttribute::VA_Color)
+            }
+            else if (attributes & VertexAttributeBit::Normal)
+            {
+                vertices.push_back(ai_mesh->mNormals[i].x);
+                vertices.push_back(ai_mesh->mNormals[i].y);
+                vertices.push_back(ai_mesh->mNormals[i].z);
+            }
+            else if (attributes & VertexAttributeBit::Tangent)
+            {
+                vertices.push_back(ai_mesh->mTangents[i].x);
+                vertices.push_back(ai_mesh->mTangents[i].y);
+                vertices.push_back(ai_mesh->mTangents[i].z);
+                vertices.push_back(1);
+            }
+            else if (attributes & VertexAttributeBit::Color)
+            {
+                if (ai_mesh->HasVertexColors(i))
                 {
-                    if (ai_mesh->HasVertexColors(i))
-                    {
-                        vertices.push_back(ai_mesh->mColors[0][i].r);
-                        vertices.push_back(ai_mesh->mColors[0][i].g);
-                        vertices.push_back(ai_mesh->mColors[0][i].b);
-                    }
-                    else
-                    {
-                        vertices.push_back(defaultColor.x);
-                        vertices.push_back(defaultColor.y);
-                        vertices.push_back(defaultColor.z);
-                    }
+                    vertices.push_back(ai_mesh->mColors[0][i].r);
+                    vertices.push_back(ai_mesh->mColors[0][i].g);
+                    vertices.push_back(ai_mesh->mColors[0][i].b);
                 }
-                else if (attributes[j] == VertexAttribute::VA_SkinPack)
+                else
                 {
-                    if (mesh->isSkin)
-                    {
-                        ModelVertexSkin& skin = skin_info_map[i];
+                    vertices.push_back(defaultColor.x);
+                    vertices.push_back(defaultColor.y);
+                    vertices.push_back(defaultColor.z);
+                }
+            }
+            else if (attributes & VertexAttributeBit::SkinPack)
+            {
+                if (mesh->isSkin)
+                {
+                    ModelVertexSkin& skin = skin_info_map[i];
 
-                        size_t idx0       = skin.indices[0];
-                        size_t idx1       = skin.indices[1];
-                        size_t idx2       = skin.indices[2];
-                        size_t idx3       = skin.indices[3];
-                        size_t pack_index = (idx0 << 24) + (idx1 << 16) + (idx2 << 8) + idx3;
+                    size_t idx0       = skin.indices[0];
+                    size_t idx1       = skin.indices[1];
+                    size_t idx2       = skin.indices[2];
+                    size_t idx3       = skin.indices[3];
+                    size_t pack_index = (idx0 << 24) + (idx1 << 16) + (idx2 << 8) + idx3;
 
-                        uint32_t weight0      = uint32_t(skin.weights[0] * 65535);
-                        uint32_t weight1      = uint32_t(skin.weights[1] * 65535);
-                        uint32_t weight2      = uint32_t(skin.weights[2] * 65535);
-                        uint32_t weight3      = uint32_t(skin.weights[3] * 65535);
-                        size_t   pack_weight0 = (weight0 << 16) + weight1;
-                        size_t   pack_weight1 = (weight2 << 16) + weight3;
+                    uint32_t weight0      = uint32_t(skin.weights[0] * 65535);
+                    uint32_t weight1      = uint32_t(skin.weights[1] * 65535);
+                    uint32_t weight2      = uint32_t(skin.weights[2] * 65535);
+                    uint32_t weight3      = uint32_t(skin.weights[3] * 65535);
+                    size_t   pack_weight0 = (weight0 << 16) + weight1;
+                    size_t   pack_weight1 = (weight2 << 16) + weight3;
 
-                        vertices.push_back((float)pack_index);
-                        vertices.push_back((float)pack_weight0);
-                        vertices.push_back((float)pack_weight1);
-                    }
-                    else
-                    {
-                        vertices.push_back(0);
-                        vertices.push_back(65535);
-                        vertices.push_back(0);
-                    }
+                    vertices.push_back((float)pack_index);
+                    vertices.push_back((float)pack_weight0);
+                    vertices.push_back((float)pack_weight1);
                 }
-                else if (attributes[j] == VertexAttribute::VA_SkinIndex)
+                else
                 {
-                    if (mesh->isSkin)
-                    {
-                        ModelVertexSkin& skin = skin_info_map[i];
-                        vertices.push_back((float)skin.indices[0]);
-                        vertices.push_back((float)skin.indices[1]);
-                        vertices.push_back((float)skin.indices[2]);
-                        vertices.push_back((float)skin.indices[3]);
-                    }
-                    else
-                    {
-                        vertices.push_back(0);
-                        vertices.push_back(0);
-                        vertices.push_back(0);
-                        vertices.push_back(0);
-                    }
+                    vertices.push_back(0);
+                    vertices.push_back(65535);
+                    vertices.push_back(0);
                 }
-                else if (attributes[j] == VertexAttribute::VA_SkinWeight)
+            }
+            else if (attributes & VertexAttributeBit::SkinIndex)
+            {
+                if (mesh->isSkin)
                 {
-                    if (mesh->isSkin)
-                    {
-                        ModelVertexSkin& skin = skin_info_map[i];
-                        vertices.push_back(skin.weights[0]);
-                        vertices.push_back(skin.weights[1]);
-                        vertices.push_back(skin.weights[2]);
-                        vertices.push_back(skin.weights[3]);
-                    }
-                    else
-                    {
-                        vertices.push_back(1.0f);
-                        vertices.push_back(0.0f);
-                        vertices.push_back(0.0f);
-                        vertices.push_back(0.0f);
-                    }
+                    ModelVertexSkin& skin = skin_info_map[i];
+                    vertices.push_back((float)skin.indices[0]);
+                    vertices.push_back((float)skin.indices[1]);
+                    vertices.push_back((float)skin.indices[2]);
+                    vertices.push_back((float)skin.indices[3]);
                 }
-                else if (attributes[j] == VertexAttribute::VA_Custom0 || attributes[j] == VertexAttribute::VA_Custom1 ||
-                         attributes[j] == VertexAttribute::VA_Custom2 || attributes[j] == VertexAttribute::VA_Custom3)
+                else
                 {
-                    vertices.push_back(0.0f);
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                }
+            }
+            else if (attributes & VertexAttributeBit::SkinWeight)
+            {
+                if (mesh->isSkin)
+                {
+                    ModelVertexSkin& skin = skin_info_map[i];
+                    vertices.push_back(skin.weights[0]);
+                    vertices.push_back(skin.weights[1]);
+                    vertices.push_back(skin.weights[2]);
+                    vertices.push_back(skin.weights[3]);
+                }
+                else
+                {
+                    vertices.push_back(1.0f);
                     vertices.push_back(0.0f);
                     vertices.push_back(0.0f);
                     vertices.push_back(0.0f);
                 }
+            }
+            else if (attributes & VertexAttributeBit::Custom0 || attributes & VertexAttributeBit::Custom1 ||
+                     attributes & VertexAttributeBit::Custom2 || attributes & VertexAttributeBit::Custom3)
+            {
+                vertices.push_back(0.0f);
+                vertices.push_back(0.0f);
+                vertices.push_back(0.0f);
+                vertices.push_back(0.0f);
             }
         }
     }

@@ -251,24 +251,24 @@ namespace Meow
 
             // Convection: input vertex name should be certain name, for example:
             // inPosition, inUV0, ...
-            VertexAttribute attribute = StringToVertexAttribute(var_name.c_str());
-            if (attribute == VertexAttribute::VA_None)
+            VertexAttributeBit attribute = StringToVertexAttribute(var_name.c_str());
+            if (attribute == VertexAttributeBit::None)
             {
                 if (input_attribute_size == 1)
                 {
-                    attribute = VertexAttribute::VA_InstanceFloat1;
+                    attribute = VertexAttributeBit::InstanceFloat1;
                 }
                 else if (input_attribute_size == 2)
                 {
-                    attribute = VertexAttribute::VA_InstanceFloat2;
+                    attribute = VertexAttributeBit::InstanceFloat2;
                 }
                 else if (input_attribute_size == 3)
                 {
-                    attribute = VertexAttribute::VA_InstanceFloat3;
+                    attribute = VertexAttributeBit::InstanceFloat3;
                 }
                 else if (input_attribute_size == 4)
                 {
-                    attribute = VertexAttribute::VA_InstanceFloat4;
+                    attribute = VertexAttributeBit::InstanceFloat4;
                 }
                 // EDITOR_ERROR("Not found attribute : %s, treat as instance attribute : %d.", var_name.c_str(),
                 // int32(attribute));
@@ -370,15 +370,15 @@ namespace Meow
         // sort input_attributes to per_vertex_attributes and instances_attributes
         for (int32_t i = 0; i < vertex_attribute_metas.size(); ++i)
         {
-            VertexAttribute attribute = vertex_attribute_metas[i].attribute;
-            if (attribute == VA_InstanceFloat1 || attribute == VA_InstanceFloat2 || attribute == VA_InstanceFloat3 ||
-                attribute == VA_InstanceFloat4)
+            VertexAttributeBit attribute = vertex_attribute_metas[i].attribute;
+            if (attribute == VertexAttributeBit::InstanceFloat1 || attribute == VertexAttributeBit::InstanceFloat2 ||
+                attribute == VertexAttributeBit::InstanceFloat3 || attribute == VertexAttributeBit::InstanceFloat4)
             {
-                instances_attributes.push_back(attribute);
+                instances_attributes |= attribute;
             }
             else
             {
-                per_vertex_attributes.push_back(attribute);
+                per_vertex_attributes |= attribute;
             }
         }
 
@@ -386,24 +386,16 @@ namespace Meow
         // first is per_vertex_input_binding
         // second is instanceInputBinding
         input_bindings.resize(0);
-        if (per_vertex_attributes.size() > 0)
+        if (per_vertex_attributes.count() > 0)
         {
-            uint32_t stride = 0;
-            for (int32_t i = 0; i < per_vertex_attributes.size(); ++i)
-            {
-                stride += VertexAttributeToSize(per_vertex_attributes[i]);
-            }
+            uint32_t                          stride = VertexAttributesToSize(per_vertex_attributes);
             vk::VertexInputBindingDescription per_vertex_input_binding {0, stride, vk::VertexInputRate::eVertex};
             input_bindings.push_back(per_vertex_input_binding);
         }
 
-        if (instances_attributes.size() > 0)
+        if (instances_attributes.count() > 0)
         {
-            uint32_t stride = 0;
-            for (int32_t i = 0; i < instances_attributes.size(); ++i)
-            {
-                stride += VertexAttributeToSize(instances_attributes[i]);
-            }
+            uint32_t                          stride = VertexAttributesToSize(instances_attributes);
             vk::VertexInputBindingDescription instanceInputBinding {1, stride, vk::VertexInputRate::eInstance};
             input_bindings.push_back(instanceInputBinding);
         }
@@ -412,28 +404,30 @@ namespace Meow
         // first is per_vertex_attributes
         // second is instances_attributes
         uint32_t location = 0;
-        if (per_vertex_attributes.size() > 0)
+        if (per_vertex_attributes.count() > 0)
         {
-            uint32_t offset = 0;
-            for (int32_t i = 0; i < per_vertex_attributes.size(); ++i)
+            uint32_t offset     = 0;
+            auto     attributes = per_vertex_attributes.split();
+            for (int32_t i = 0; i < attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
-                    0, location, VertexAttributeToVkFormat(per_vertex_attributes[i]), offset};
-                offset += VertexAttributeToSize(per_vertex_attributes[i]);
+                    0, location, VertexAttributeToVkFormat(attributes[i]), offset};
+                offset += VertexAttributeToSize(attributes[i]);
                 input_attributes.push_back(input_attribute);
 
                 location += 1;
             }
         }
 
-        if (instances_attributes.size() > 0)
+        if (instances_attributes.count() > 0)
         {
-            uint32_t offset = 0;
-            for (int32_t i = 0; i < instances_attributes.size(); ++i)
+            uint32_t offset     = 0;
+            auto     attributes = instances_attributes.split();
+            for (int32_t i = 0; i < attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
-                    1, location, VertexAttributeToVkFormat(instances_attributes[i]), offset};
-                offset += VertexAttributeToSize(instances_attributes[i]);
+                    1, location, VertexAttributeToVkFormat(attributes[i]), offset};
+                offset += VertexAttributeToSize(attributes[i]);
                 input_attributes.push_back(input_attribute);
 
                 location += 1;

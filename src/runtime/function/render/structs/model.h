@@ -1,13 +1,13 @@
 #pragma once
 
+#include "core/base/bitmask.hpp"
 #include "core/base/non_copyable.h"
 #include "core/math/bounding_box.h"
-#include "vertex_attribute.h"
-
 #include "model_anim.h"
 #include "model_bone.h"
 #include "model_mesh.h"
 #include "model_node.h"
+#include "vertex_attribute.h"
 
 #include <assimp/scene.h>
 #include <glm/glm.hpp>
@@ -30,9 +30,9 @@ namespace Meow
         std::vector<ModelBone*> bones;
         BonesMap                bones_map;
 
-        std::vector<VertexAttribute> attributes;
-        std::vector<ModelAnimation>  animations;
-        size_t                       animIndex = -1;
+        BitMask<VertexAttributeBit> attributes;
+        std::vector<ModelAnimation> animations;
+        size_t                      animIndex = -1;
 
         bool loadSkin = false;
 
@@ -76,7 +76,7 @@ namespace Meow
               vk::raii::Queue const&          queue,
               std::vector<float>&             vertices,
               std::vector<uint32_t>&          indices,
-              std::vector<VertexAttribute>    attributes);
+              BitMask<VertexAttributeBit>     attributes);
 
         /**
          * @brief Load model from file using assimp.
@@ -91,7 +91,7 @@ namespace Meow
               vk::raii::CommandPool const&    command_pool,
               vk::raii::Queue const&          queue,
               const std::string&              file_path,
-              std::vector<VertexAttribute>    attributes);
+              BitMask<VertexAttributeBit>     attributes);
 
         ~Model()
         {

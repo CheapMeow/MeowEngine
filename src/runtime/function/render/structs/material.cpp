@@ -103,12 +103,13 @@ namespace Meow
         if (0 < vertex_stride)
         {
             uint32_t curr_offset = 0;
-            vertex_input_attribute_descriptions.reserve(shader_ptr->per_vertex_attributes.size());
-            for (uint32_t i = 0; i < shader_ptr->per_vertex_attributes.size(); i++)
+            vertex_input_attribute_descriptions.reserve(shader_ptr->per_vertex_attributes.count());
+            auto attributes = shader_ptr->per_vertex_attributes.split();
+            for (uint32_t i = 0; i < attributes.size(); i++)
             {
                 vertex_input_attribute_descriptions.emplace_back(
-                    i, 0, VertexAttributeToVkFormat(shader_ptr->per_vertex_attributes[i]), curr_offset);
-                curr_offset += VertexAttributeToSize(shader_ptr->per_vertex_attributes[i]);
+                    i, 0, VertexAttributeToVkFormat(attributes[i]), curr_offset);
+                curr_offset += VertexAttributeToSize(attributes[i]);
             }
             pipeline_vertex_input_state_create_info.setVertexBindingDescriptions(vertex_input_binding_description);
             pipeline_vertex_input_state_create_info.setVertexAttributeDescriptions(vertex_input_attribute_descriptions);
