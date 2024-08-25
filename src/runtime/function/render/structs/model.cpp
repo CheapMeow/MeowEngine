@@ -70,23 +70,23 @@ namespace Meow
         {
             assimpFlags = assimpFlags | aiProcess_CalcTangentSpace;
         }
-        else if (attributes & VertexAttributeBit::UV0)
+        if (attributes & VertexAttributeBit::UV0)
         {
             assimpFlags = assimpFlags | aiProcess_GenUVCoords;
         }
-        else if (attributes & VertexAttributeBit::Normal)
+        if (attributes & VertexAttributeBit::Normal)
         {
             assimpFlags = assimpFlags | aiProcess_GenSmoothNormals;
         }
-        else if (attributes & VertexAttributeBit::SkinIndex)
+        if (attributes & VertexAttributeBit::SkinIndex)
         {
             loadSkin = true;
         }
-        else if (attributes & VertexAttributeBit::SkinWeight)
+        if (attributes & VertexAttributeBit::SkinWeight)
         {
             loadSkin = true;
         }
-        else if (attributes & VertexAttributeBit::SkinPack)
+        if (attributes & VertexAttributeBit::SkinPack)
         {
             loadSkin = true;
         }
@@ -478,7 +478,7 @@ namespace Meow
                 mmax.y = glm::max(v1, mmax.y);
                 mmax.z = glm::max(v2, mmax.z);
             }
-            else if (attributes & VertexAttributeBit::UV0)
+            if (attributes & VertexAttributeBit::UV0)
             {
                 if (ai_mesh->HasTextureCoords(0))
                 {
@@ -491,7 +491,7 @@ namespace Meow
                     vertices.push_back(0);
                 }
             }
-            else if (attributes & VertexAttributeBit::UV1)
+            if (attributes & VertexAttributeBit::UV1)
             {
                 if (ai_mesh->HasTextureCoords(1))
                 {
@@ -504,20 +504,20 @@ namespace Meow
                     vertices.push_back(0);
                 }
             }
-            else if (attributes & VertexAttributeBit::Normal)
+            if (attributes & VertexAttributeBit::Normal)
             {
                 vertices.push_back(ai_mesh->mNormals[i].x);
                 vertices.push_back(ai_mesh->mNormals[i].y);
                 vertices.push_back(ai_mesh->mNormals[i].z);
             }
-            else if (attributes & VertexAttributeBit::Tangent)
+            if (attributes & VertexAttributeBit::Tangent)
             {
                 vertices.push_back(ai_mesh->mTangents[i].x);
                 vertices.push_back(ai_mesh->mTangents[i].y);
                 vertices.push_back(ai_mesh->mTangents[i].z);
                 vertices.push_back(1);
             }
-            else if (attributes & VertexAttributeBit::Color)
+            if (attributes & VertexAttributeBit::Color)
             {
                 if (ai_mesh->HasVertexColors(i))
                 {
@@ -532,7 +532,7 @@ namespace Meow
                     vertices.push_back(defaultColor.z);
                 }
             }
-            else if (attributes & VertexAttributeBit::SkinPack)
+            if (attributes & VertexAttributeBit::SkinPack)
             {
                 if (mesh->isSkin)
                 {
@@ -562,7 +562,7 @@ namespace Meow
                     vertices.push_back(0);
                 }
             }
-            else if (attributes & VertexAttributeBit::SkinIndex)
+            if (attributes & VertexAttributeBit::SkinIndex)
             {
                 if (mesh->isSkin)
                 {
@@ -580,7 +580,7 @@ namespace Meow
                     vertices.push_back(0);
                 }
             }
-            else if (attributes & VertexAttributeBit::SkinWeight)
+            if (attributes & VertexAttributeBit::SkinWeight)
             {
                 if (mesh->isSkin)
                 {
@@ -598,8 +598,8 @@ namespace Meow
                     vertices.push_back(0.0f);
                 }
             }
-            else if (attributes & VertexAttributeBit::Custom0 || attributes & VertexAttributeBit::Custom1 ||
-                     attributes & VertexAttributeBit::Custom2 || attributes & VertexAttributeBit::Custom3)
+            if (attributes & VertexAttributeBit::Custom0 || attributes & VertexAttributeBit::Custom1 ||
+                attributes & VertexAttributeBit::Custom2 || attributes & VertexAttributeBit::Custom3)
             {
                 vertices.push_back(0.0f);
                 vertices.push_back(0.0f);
