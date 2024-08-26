@@ -54,7 +54,6 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/imgui_widgets/flame_graph_widget.h
     ../runtime/function/render/imgui_widgets/game_objects_widget.h
     ../runtime/function/render/imgui_widgets/pipeline_statistics_widget.h
-    ../runtime/function/render/imgui_widgets/ring_buffer_widget.h
     ../runtime/function/render/imgui_widgets/spinner_widget.h
     ../runtime/function/render/render_pass/deferred_pass.h
     ../runtime/function/render/render_pass/forward_pass.h
@@ -72,6 +71,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/model_mesh.h
     ../runtime/function/render/structs/model_node.h
     ../runtime/function/render/structs/pipeline_info.h
+    ../runtime/function/render/structs/ring_uniform_buffer_stat.h
     ../runtime/function/render/structs/shader.h
     ../runtime/function/render/structs/surface_data.h
     ../runtime/function/render/structs/swapchain_data.h

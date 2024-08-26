@@ -85,16 +85,6 @@ namespace Meow
 
         const std::unordered_map<std::string, BuiltinRenderStat>& GetBuiltinRenderStat() { return m_render_stat_map; }
 
-        void UploadRingUniformBufferStat(const std::string& pass_name, RingUniformBufferStat stat)
-        {
-            m_ringbuf_stat_map[pass_name] = stat;
-        }
-
-        const std::unordered_map<std::string, RingUniformBufferStat>& GetRingUniformBufferStat()
-        {
-            return m_ringbuf_stat_map;
-        }
-
         std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& file_path);
 
         std::shared_ptr<Model> CreateModelFromFile(const std::string&          file_path,
@@ -152,7 +142,6 @@ namespace Meow
         RenderPass*                                            m_render_pass_ptr = nullptr;
         std::unordered_map<std::string, std::vector<uint32_t>> m_pipeline_stat_map;
         std::unordered_map<std::string, BuiltinRenderStat>     m_render_stat_map;
-        std::unordered_map<std::string, RingUniformBufferStat> m_ringbuf_stat_map;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;

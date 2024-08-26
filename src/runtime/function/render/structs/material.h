@@ -3,6 +3,7 @@
 #include "buffer_data.h"
 #include "core/base/alignment.h"
 #include "core/base/non_copyable.h"
+#include "ring_uniform_buffer_stat.h"
 #include "shader.h"
 
 #include <limits>
@@ -21,8 +22,8 @@ namespace Meow
         uint32_t                    min_alignment    = 0;
 
         // stat
-        uint64_t cur_begin;
-        uint64_t cur_usage;
+        uint64_t begin;
+        uint64_t usage;
 
         RingUniformBuffer(std::nullptr_t) {}
 
@@ -80,7 +81,7 @@ namespace Meow
 
                 // stat
                 new_memory_start = 0;
-                cur_usage        = size;
+                usage            = size;
 
                 return new_memory_start;
             }
@@ -92,18 +93,11 @@ namespace Meow
             allocated_memory = size;
 
             // stat
-            cur_begin = 0;
-            cur_usage = size;
+            begin = 0;
+            usage = size;
 
             return 0;
         }
-    };
-
-    struct RingUniformBufferStat
-    {
-        uint64_t cur_begin = 0;
-        uint64_t cur_usage = 0;
-        uint64_t max_size  = 0;
     };
 
     /**
@@ -192,7 +186,7 @@ namespace Meow
 
         const RingUniformBufferStat GetRingUniformBufferStat()
         {
-            return {ring_buffer.cur_begin, ring_buffer.cur_usage, ring_buffer.buffer_size};
+            return {ring_buffer.begin, ring_buffer.usage, ring_buffer.buffer_size};
         }
 
     public:

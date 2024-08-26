@@ -3,9 +3,7 @@
 #include "pch.h"
 
 #include "function/global/runtime_global_context.h"
-#include "function/render/imgui_widgets/builtin_statistics_widget.h"
 #include "function/render/imgui_widgets/pipeline_statistics_widget.h"
-#include "function/render/imgui_widgets/spinner_widget.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -152,9 +150,7 @@ namespace Meow
                                   TimerSingleton::Get().GetMaxDepth(),
                                   TimerSingleton::Get().GetGlobalStart());
 
-        m_ring_buffer_widget.Draw(g_runtime_global_context.render_system->GetRingUniformBufferStat());
-
-        BuiltinStatisticsWidget::Draw(g_runtime_global_context.render_system->GetBuiltinRenderStat());
+        m_builtin_stat_widget.Draw(g_runtime_global_context.render_system->GetBuiltinRenderStat());
 
         if (m_query_enabled)
             PipelineStatisticsWidget::Draw(g_runtime_global_context.render_system->GetPipelineStat());

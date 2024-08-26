@@ -311,9 +311,8 @@ namespace Meow
             g_runtime_global_context.render_system->UploadPipelineStat(m_pass_name, query_results.second);
         }
 
+        m_render_stat.ringbuf_stat = m_forward_mat.GetRingUniformBufferStat();
         g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
-        g_runtime_global_context.render_system->UploadRingUniformBufferStat(m_pass_name,
-                                                                            m_forward_mat.GetRingUniformBufferStat());
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)

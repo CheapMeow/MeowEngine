@@ -44,7 +44,6 @@ set(RUNTIME_HEADER_FILES
     function/render/imgui_widgets/flame_graph_widget.h
     function/render/imgui_widgets/game_objects_widget.h
     function/render/imgui_widgets/pipeline_statistics_widget.h
-    function/render/imgui_widgets/ring_buffer_widget.h
     function/render/imgui_widgets/spinner_widget.h
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
@@ -62,6 +61,7 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/model_mesh.h
     function/render/structs/model_node.h
     function/render/structs/pipeline_info.h
+    function/render/structs/ring_uniform_buffer_stat.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
@@ -97,7 +97,6 @@ set(RUNTIME_SOURCE_FILES
     function/render/imgui_widgets/flame_graph_widget.cpp
     function/render/imgui_widgets/game_objects_widget.cpp
     function/render/imgui_widgets/pipeline_statistics_widget.cpp
-    function/render/imgui_widgets/ring_buffer_widget.cpp
     function/render/imgui_widgets/spinner_widget.cpp
     function/render/render_pass/deferred_pass.cpp
     function/render/render_pass/forward_pass.cpp
