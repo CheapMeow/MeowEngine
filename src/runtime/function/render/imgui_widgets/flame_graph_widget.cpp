@@ -33,11 +33,8 @@ namespace Meow
 
             if (ImGui::Button("Capture Snapshot"))
             {
-                m_is_shapshot_enabled        = true;
-                m_curr_shapshot.scope_times  = scope_times;
-                m_curr_shapshot.max_depth    = max_depth;
-                m_curr_shapshot.global_start = global_start;
-                m_curr_shapshot.graph_size   = graph_size;
+                m_is_shapshot_enabled = true;
+                m_curr_shapshot       = {scope_times, max_depth, global_start, graph_size};
             }
 
             if (m_is_shapshot_enabled)
@@ -156,8 +153,6 @@ namespace Meow
         {
             ImGui::SetTooltip("Total: %8.4g", frame_time.count() / 1000.0);
         }
-
-        ImGui::Columns();
     }
 
 } // namespace Meow

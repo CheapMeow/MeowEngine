@@ -265,10 +265,13 @@ namespace Meow
             float start_x_percent = (double)cur_stat.begin / cur_stat.size;
             float end_x_percent   = (double)(cur_stat.begin + cur_stat.usage) / cur_stat.size;
 
+            float begin_pos_x = start_x_percent * inner_width;
+            float end_pos_x   = end_x_percent * inner_width;
+
             auto res_stat_pos0 = inner_bb.Min;
-            auto res_stat_pos1 = inner_bb.Min + ImVec2(start_x_percent * inner_width, ImGui::GetTextLineHeight());
-            auto cur_stat_pos0 = inner_bb.Min + ImVec2(start_x_percent * inner_width, 0);
-            auto cur_stat_pos1 = inner_bb.Min + ImVec2(end_x_percent * inner_width, ImGui::GetTextLineHeight());
+            auto res_stat_pos1 = inner_bb.Min + ImVec2(begin_pos_x, ImGui::GetTextLineHeight());
+            auto cur_stat_pos0 = inner_bb.Min + ImVec2(begin_pos_x, 0);
+            auto cur_stat_pos1 = inner_bb.Min + ImVec2(end_pos_x, ImGui::GetTextLineHeight());
 
             int color_table_index = start_x_percent / k_gredint_partition;
             color_table_index     = std::clamp(color_table_index, 0, k_gredint_count - 1);
@@ -277,10 +280,12 @@ namespace Meow
             window->DrawList->AddRectFilled(cur_stat_pos0, cur_stat_pos1, m_col_hovered_table[color_table_index]);
             window->DrawList->AddRect(cur_stat_pos0, cur_stat_pos1, col_outline);
 
+            auto text_size1 = ImGui::CalcTextSize(std::to_string(cur_stat.begin).c_str());
+
             ImGui::RenderText(inner_bb.Min + ImVec2(0.0, 1.5 * ImGui::GetTextLineHeight()), "0");
-            ImGui::RenderText(inner_bb.Min + ImVec2(start_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
+            ImGui::RenderText(inner_bb.Min + ImVec2(begin_pos_x - text_size1.x, 1.5 * ImGui::GetTextLineHeight()),
                               std::to_string(cur_stat.begin).c_str());
-            ImGui::RenderText(inner_bb.Min + ImVec2(end_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
+            ImGui::RenderText(inner_bb.Min + ImVec2(end_pos_x, 1.5 * ImGui::GetTextLineHeight()),
                               std::to_string(cur_stat.begin + cur_stat.usage).c_str());
             ImGui::RenderText(inner_bb.Min + ImVec2(inner_width, 1.5 * ImGui::GetTextLineHeight()),
                               std::to_string(cur_stat.size).c_str());
