@@ -53,7 +53,7 @@ namespace Meow
                     DrawVertexAttributesStat(stat);
                     DrawBufferStat(stat);
                     DrawImageStat(stat);
-                    DrawRingBufferStat(stat.ringbuf_stat);
+                    DrawRingBufferStat(pass_name, stat.ringbuf_stat);
 
                     ImGui::TreePop();
                 }
@@ -227,7 +227,7 @@ namespace Meow
         ImGui::PopID();
     }
 
-    void BuiltinStatisticsWidget::DrawRingBufferStat(const RingUniformBufferStat& stat)
+    void BuiltinStatisticsWidget::DrawRingBufferStat(const std::string& pass_name, const RingUniformBufferStat& stat)
     {
         ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (window->SkipItems)
@@ -236,7 +236,10 @@ namespace Meow
         ImGuiContext&     g     = *GImGui;
         const ImGuiStyle& style = g.Style;
 
-        ImGui::PushID(&stat);
+        const RingUniformBufferStat& cur_stat =
+            m_is_ringbuf_stat_shapshot_enabled[pass_name] ? m_ringbuf_stat_snapshot[pass_name] : stat;
+
+        ImGui::PushID(&cur_stat);
 
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
 
@@ -259,8 +262,8 @@ namespace Meow
             ImGui::RenderFrame(
                 inner_bb.Min, inner_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 
-            float start_x_percent = (double)stat.begin / stat.size;
-            float end_x_percent   = (double)(stat.begin + stat.usage) / stat.size;
+            float start_x_percent = (double)cur_stat.begin / cur_stat.size;
+            float end_x_percent   = (double)(cur_stat.begin + cur_stat.usage) / cur_stat.size;
 
             auto res_stat_pos0 = inner_bb.Min;
             auto res_stat_pos1 = inner_bb.Min + ImVec2(start_x_percent * inner_width, ImGui::GetTextLineHeight());
@@ -276,11 +279,26 @@ namespace Meow
 
             ImGui::RenderText(inner_bb.Min + ImVec2(0.0, 1.5 * ImGui::GetTextLineHeight()), "0");
             ImGui::RenderText(inner_bb.Min + ImVec2(start_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(stat.begin).c_str());
+                              std::to_string(cur_stat.begin).c_str());
             ImGui::RenderText(inner_bb.Min + ImVec2(end_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(stat.begin + stat.usage).c_str());
+                              std::to_string(cur_stat.begin + cur_stat.usage).c_str());
             ImGui::RenderText(inner_bb.Min + ImVec2(inner_width, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(stat.size).c_str());
+                              std::to_string(cur_stat.size).c_str());
+
+            if (ImGui::Button("Capture Snapshot"))
+            {
+                m_is_ringbuf_stat_shapshot_enabled[pass_name] = true;
+                m_ringbuf_stat_snapshot[pass_name]            = stat;
+            }
+
+            if (m_is_ringbuf_stat_shapshot_enabled[pass_name])
+            {
+                ImGui::SameLine();
+                if (ImGui::Button("Leave Snapshot"))
+                {
+                    m_is_ringbuf_stat_shapshot_enabled[pass_name] = false;
+                }
+            }
 
             ImGui::TreePop();
         }
