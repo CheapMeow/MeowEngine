@@ -59,7 +59,8 @@ namespace Meow
                     graph_size.y = 2.0 * ImGui::GetTextLineHeight() + (style.FramePadding.y * 2);
 
                     const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + graph_size);
-                    const ImRect inner_bb(frame_bb.Min + style.FramePadding, frame_bb.Max - style.FramePadding);
+                    const ImRect inner_bb(frame_bb.Min + style.FramePadding,
+                                          frame_bb.Max - style.FramePadding - ImVec2(0.0f, ImGui::GetTextLineHeight()));
 
                     float inner_width = inner_bb.Max.x - inner_bb.Min.x;
 
@@ -68,17 +69,17 @@ namespace Meow
                         return;
 
                     ImGui::RenderFrame(
-                        frame_bb.Min, frame_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+                        inner_bb.Min, inner_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
 
                     float start_x_percent = (double)pair.second.cur_begin / pair.second.max_size;
                     float end_x_percent =
                         (double)(pair.second.cur_begin + pair.second.cur_usage) / pair.second.max_size;
 
-                    auto res_stat_pos0 = inner_bb.Min + ImVec2(0, ImGui::GetTextLineHeight());
-                    auto res_stat_pos1 = inner_bb.Min + ImVec2(start_x_percent * inner_width, graph_size.y);
-                    auto cur_stat_pos0 =
+                    auto res_stat_pos0 = inner_bb.Min;
+                    auto res_stat_pos1 =
                         inner_bb.Min + ImVec2(start_x_percent * inner_width, ImGui::GetTextLineHeight());
-                    auto cur_stat_pos1 = inner_bb.Min + ImVec2(end_x_percent * inner_width, graph_size.y);
+                    auto cur_stat_pos0 = inner_bb.Min + ImVec2(start_x_percent * inner_width, 0);
+                    auto cur_stat_pos1 = inner_bb.Min + ImVec2(end_x_percent * inner_width, ImGui::GetTextLineHeight());
 
                     int color_table_index = start_x_percent / k_gredint_partition;
                     color_table_index     = std::clamp(color_table_index, 0, k_gredint_count - 1);
@@ -88,10 +89,12 @@ namespace Meow
                         cur_stat_pos0, cur_stat_pos1, m_col_hovered_table[color_table_index]);
                     window->DrawList->AddRect(cur_stat_pos0, cur_stat_pos1, col_outline);
 
-                    ImGui::RenderText(inner_bb.Min, "0");
-                    ImGui::RenderText(inner_bb.Min + ImVec2(start_x_percent * inner_width, 0),
+                    ImGui::RenderText(inner_bb.Min + ImVec2(0.0, 1.5 * ImGui::GetTextLineHeight()), "0");
+                    ImGui::RenderText(inner_bb.Min +
+                                          ImVec2(start_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
                                       std::to_string(pair.second.cur_begin).c_str());
-                    ImGui::RenderText(inner_bb.Min + ImVec2(end_x_percent * inner_width, 0),
+                    ImGui::RenderText(inner_bb.Min +
+                                          ImVec2(end_x_percent * inner_width, 1.5 * ImGui::GetTextLineHeight()),
                                       std::to_string(pair.second.cur_begin + pair.second.cur_usage).c_str());
 
                     ImGui::TreePop();
