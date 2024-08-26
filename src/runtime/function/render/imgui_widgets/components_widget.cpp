@@ -88,6 +88,7 @@ namespace Meow
             ImGui::PushID(value_ptr);
 
             ImGui::Text("%s", name.c_str());
+            ImGui::SameLine();
             ImGui::Checkbox(name.c_str(), static_cast<bool*>(value_ptr));
 
             ImGui::PopID();
@@ -106,7 +107,10 @@ namespace Meow
             ImGui::PushID(value_ptr);
 
             ImGui::Text("%s", name.c_str());
+            ImGui::SameLine();
+            ImGui::PushItemWidth(-FLT_MIN); // disable showing label for input
             ImGui::InputInt(name.c_str(), static_cast<int*>(value_ptr));
+            ImGui::PopItemWidth();
 
             ImGui::PopID();
         };
@@ -124,7 +128,10 @@ namespace Meow
             ImGui::PushID(value_ptr);
 
             ImGui::Text("%s", name.c_str());
+            ImGui::SameLine();
+            ImGui::PushItemWidth(-FLT_MIN); // disable showing label for input
             ImGui::InputFloat(name.c_str(), static_cast<float*>(value_ptr));
+            ImGui::PopItemWidth();
 
             ImGui::PopID();
         };
@@ -143,6 +150,7 @@ namespace Meow
                 ImGui::PushID(value_ptr);
 
                 ImGui::Text("%s", name.c_str());
+                ImGui::SameLine();
                 ImGui::Text("%s", (*static_cast<std::string*>(value_ptr)).c_str());
 
                 ImGui::PopID();
