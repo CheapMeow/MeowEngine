@@ -42,6 +42,7 @@ set(RUNTIME_HEADER_FILES
     function/render/imgui_widgets/builtin_statistics_widget.h
     function/render/imgui_widgets/components_widget.h
     function/render/imgui_widgets/flame_graph_widget.h
+    function/render/imgui_widgets/game_objects_widget.h
     function/render/imgui_widgets/pipeline_statistics_widget.h
     function/render/imgui_widgets/ring_buffer_widget.h
     function/render/imgui_widgets/spinner_widget.h
@@ -94,6 +95,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/imgui_widgets/builtin_statistics_widget.cpp
     function/render/imgui_widgets/components_widget.cpp
     function/render/imgui_widgets/flame_graph_widget.cpp
+    function/render/imgui_widgets/game_objects_widget.cpp
     function/render/imgui_widgets/pipeline_statistics_widget.cpp
     function/render/imgui_widgets/ring_buffer_widget.cpp
     function/render/imgui_widgets/spinner_widget.cpp

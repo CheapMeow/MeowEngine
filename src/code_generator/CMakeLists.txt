@@ -52,6 +52,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/imgui_widgets/builtin_statistics_widget.h
     ../runtime/function/render/imgui_widgets/components_widget.h
     ../runtime/function/render/imgui_widgets/flame_graph_widget.h
+    ../runtime/function/render/imgui_widgets/game_objects_widget.h
     ../runtime/function/render/imgui_widgets/pipeline_statistics_widget.h
     ../runtime/function/render/imgui_widgets/ring_buffer_widget.h
     ../runtime/function/render/imgui_widgets/spinner_widget.h

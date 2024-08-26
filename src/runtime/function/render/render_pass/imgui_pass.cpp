@@ -117,13 +117,13 @@ namespace Meow
         ImGui::NewFrame();
 
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
-        ImGui::Begin("Meow Engine");
 
+        ImGui::Begin("Switch RenderPass");
         if (ImGui::Combo(
                 "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
             m_on_pass_changed(m_cur_render_pass);
-
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
 
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
 
@@ -133,12 +133,18 @@ namespace Meow
 #endif
 
         const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
-        for (const auto& kv : all_gameobjects_map)
-        {
-            m_components_widget.CreateGameObjectUI(kv.second);
-        }
 
+        ImGui::Begin("GameObject");
+        m_gameobjects_widget.Draw(all_gameobjects_map);
         ImGui::End();
+
+        auto gameobject_ptr_iter = all_gameobjects_map.find(m_gameobjects_widget.GetSelectedID());
+        if (gameobject_ptr_iter != all_gameobjects_map.end())
+        {
+            ImGui::Begin("Component");
+            m_components_widget.CreateGameObjectUI(gameobject_ptr_iter->second);
+            ImGui::End();
+        }
 
         ImGui::Begin("Statistics");
 

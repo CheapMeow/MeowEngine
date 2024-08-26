@@ -3,6 +3,7 @@
 #include "core/signal/signal.hpp"
 #include "function/render/imgui_widgets/components_widget.h"
 #include "function/render/imgui_widgets/flame_graph_widget.h"
+#include "function/render/imgui_widgets/game_objects_widget.h"
 #include "function/render/imgui_widgets/ring_buffer_widget.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
@@ -61,8 +62,9 @@ namespace Meow
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;
 
-        ComponentsWidget m_components_widget;
-        FlameGraphWidget m_flame_graph_widget;
-        RingBufferWidget m_ring_buffer_widget;
+        GameObjectsWidget m_gameobjects_widget;
+        ComponentsWidget  m_components_widget;
+        FlameGraphWidget  m_flame_graph_widget;
+        RingBufferWidget  m_ring_buffer_widget;
     };
 } // namespace Meow
