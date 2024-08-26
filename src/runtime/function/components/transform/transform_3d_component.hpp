@@ -42,15 +42,15 @@ namespace Meow
             transform[0][0] = scale.x * rotation_mat[0][0];
             transform[0][1] = scale.y * rotation_mat[0][1];
             transform[0][2] = scale.z * rotation_mat[0][2];
-            transform[0][3] = 0;
+            transform[0][3] = position.x;
             transform[1][0] = scale.x * rotation_mat[1][0];
             transform[1][1] = scale.y * rotation_mat[1][1];
             transform[1][2] = scale.z * rotation_mat[1][2];
-            transform[1][3] = 0;
+            transform[1][3] = position.y;
             transform[2][0] = scale.x * rotation_mat[2][0];
             transform[2][1] = scale.y * rotation_mat[2][1];
             transform[2][2] = scale.z * rotation_mat[2][2];
-            transform[2][3] = 0;
+            transform[2][3] = position.z;
 
             // No projection term
             transform[3][0] = 0;
