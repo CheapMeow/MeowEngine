@@ -20,6 +20,10 @@ namespace Meow
         uint64_t                    allocated_memory = 0;
         uint32_t                    min_alignment    = 0;
 
+        // stat
+        uint64_t cur_begin;
+        uint64_t cur_usage;
+
         RingUniformBuffer(std::nullptr_t) {}
 
         RingUniformBuffer(RingUniformBuffer&& rhs) noexcept
@@ -73,6 +77,11 @@ namespace Meow
             if (new_memory_start + size <= buffer_size)
             {
                 allocated_memory = new_memory_start + size;
+
+                // stat
+                new_memory_start = 0;
+                cur_usage        = size;
+
                 return new_memory_start;
             }
 
@@ -81,8 +90,20 @@ namespace Meow
             // It means overriding the old buffer data
             // If the object number is very large, it definitely break the uniform data at this frame
             allocated_memory = size;
+
+            // stat
+            cur_begin = 0;
+            cur_usage = size;
+
             return 0;
         }
+    };
+
+    struct RingUniformBufferStat
+    {
+        uint64_t cur_begin = 0;
+        uint64_t cur_usage = 0;
+        uint64_t max_size  = 0;
     };
 
     /**
@@ -168,6 +189,11 @@ namespace Meow
         void BindPipeline(vk::raii::CommandBuffer const& command_buffer);
 
         void BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index);
+
+        const RingUniformBufferStat GetRingUniformBufferStat()
+        {
+            return {ring_buffer.cur_begin, ring_buffer.cur_usage, ring_buffer.buffer_size};
+        }
 
     public:
         std::shared_ptr<Shader> shader_ptr             = nullptr;

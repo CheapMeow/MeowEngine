@@ -4,15 +4,19 @@
 
 namespace Meow
 {
-    void PipelineStatisticsWidget::Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat, size_t& id)
+    void PipelineStatisticsWidget::Draw(const std::unordered_map<std::string, std::vector<uint32_t>>& stat)
     {
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
 
-        if (ImGui::TreeNodeEx(((std::string) "Pipeline Statistics" + "##" + std::to_string(id++)).c_str(), flag))
+        ImGui::PushID(&stat);
+
+        if (ImGui::TreeNodeEx("Pipeline Statistics", flag))
         {
             for (const auto& pair : stat)
             {
-                if (ImGui::TreeNodeEx((pair.first + "##" + std::to_string(id++)).c_str(), flag))
+                ImGui::PushID(&pair);
+
+                if (ImGui::TreeNodeEx(pair.first.c_str(), flag))
                 {
                     if (pair.second.size() < 11)
                         continue;
@@ -28,9 +32,13 @@ namespace Meow
 
                     ImGui::TreePop();
                 }
+
+                ImGui::PopID();
             }
 
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 } // namespace Meow

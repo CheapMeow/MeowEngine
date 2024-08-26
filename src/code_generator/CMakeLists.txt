@@ -53,6 +53,8 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/imgui_widgets/components_widget.h
     ../runtime/function/render/imgui_widgets/flame_graph_widget.h
     ../runtime/function/render/imgui_widgets/pipeline_statistics_widget.h
+    ../runtime/function/render/imgui_widgets/ring_buffer_widget.h
+    ../runtime/function/render/imgui_widgets/spinner_widget.h
     ../runtime/function/render/render_pass/deferred_pass.h
     ../runtime/function/render/render_pass/forward_pass.h
     ../runtime/function/render/render_pass/imgui_pass.h
@@ -81,7 +83,8 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/resource/resource_info/model_res_info.h
     ../runtime/function/window/window.h
     ../runtime/function/window/window_system.h
-    ../runtime/generated/register_all.h)
+    ../runtime/generated/register_all.h
+    ../runtime/generated/vertex_attribute_bit.gen.h)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CODE_GENERATOR_HEADER_FILES}
                                                       ${CODE_GENERATOR_SOURCE_FILES})

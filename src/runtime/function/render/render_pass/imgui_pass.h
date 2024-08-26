@@ -3,6 +3,7 @@
 #include "core/signal/signal.hpp"
 #include "function/render/imgui_widgets/components_widget.h"
 #include "function/render/imgui_widgets/flame_graph_widget.h"
+#include "function/render/imgui_widgets/ring_buffer_widget.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "render_pass.h"
@@ -62,7 +63,6 @@ namespace Meow
 
         ComponentsWidget m_components_widget;
         FlameGraphWidget m_flame_graph_widget;
-
-        size_t m_ui_id = 0;
+        RingBufferWidget m_ring_buffer_widget;
     };
 } // namespace Meow

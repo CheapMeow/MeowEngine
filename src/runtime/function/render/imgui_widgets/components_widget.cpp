@@ -11,13 +11,17 @@ namespace Meow
     ComponentsWidget::ComponentsWidget()
     {
         m_editor_ui_creator["TreeNodePush"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
+            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
+                ImGui::PushID(value_ptr);
+
                 ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-                node_states.push(ImGui::TreeNodeEx((name + "##" + std::to_string(id++)).c_str(), flag));
+                node_states.push(ImGui::TreeNodeEx(name.c_str(), flag));
+
+                ImGui::PopID();
             };
 
         m_editor_ui_creator["TreeNodePop"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
+            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
                     RUNTIME_ERROR("Tree node structure is wrong!");
@@ -30,7 +34,7 @@ namespace Meow
             };
 
         m_editor_ui_creator["glm::vec3"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
+            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
                     RUNTIME_ERROR("Tree node structure is wrong!");
@@ -40,11 +44,11 @@ namespace Meow
                 if (!node_states.top())
                     return;
 
-                DrawVecControl(name, *static_cast<glm::vec3*>(value_ptr), id);
+                DrawVecControl(name, *static_cast<glm::vec3*>(value_ptr));
             };
 
         m_editor_ui_creator["glm::quat"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
+            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
                     RUNTIME_ERROR("Tree node structure is wrong!");
@@ -62,7 +66,7 @@ namespace Meow
                 degrees_val.y = glm::degrees(euler.y); // roll
                 degrees_val.z = glm::degrees(euler.z); // yaw
 
-                DrawVecControl(name, degrees_val, id);
+                DrawVecControl(name, degrees_val);
 
                 euler.x = glm::radians(degrees_val.x);
                 euler.y = glm::radians(degrees_val.y);
@@ -71,53 +75,62 @@ namespace Meow
                 rotation = glm::quat(euler);
             };
 
-        m_editor_ui_creator["bool"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
-                if (node_states.empty())
-                {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
-                    return;
-                }
+        m_editor_ui_creator["bool"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
+            if (node_states.empty())
+            {
+                RUNTIME_ERROR("Tree node structure is wrong!");
+                return;
+            }
 
-                if (!node_states.top())
-                    return;
+            if (!node_states.top())
+                return;
 
-                ImGui::Text("%s", name.c_str());
-                ImGui::Checkbox((name + "##" + std::to_string(id++)).c_str(), static_cast<bool*>(value_ptr));
-            };
+            ImGui::PushID(value_ptr);
 
-        m_editor_ui_creator["int"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
-                if (node_states.empty())
-                {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
-                    return;
-                }
+            ImGui::Text("%s", name.c_str());
+            ImGui::Checkbox(name.c_str(), static_cast<bool*>(value_ptr));
 
-                if (!node_states.top())
-                    return;
+            ImGui::PopID();
+        };
 
-                ImGui::Text("%s", name.c_str());
-                ImGui::InputInt((name + "##" + std::to_string(id++)).c_str(), static_cast<int*>(value_ptr));
-            };
+        m_editor_ui_creator["int"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
+            if (node_states.empty())
+            {
+                RUNTIME_ERROR("Tree node structure is wrong!");
+                return;
+            }
 
-        m_editor_ui_creator["float"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
-                if (node_states.empty())
-                {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
-                    return;
-                }
+            if (!node_states.top())
+                return;
 
-                if (!node_states.top())
-                    return;
+            ImGui::PushID(value_ptr);
 
-                ImGui::Text("%s", name.c_str());
-                ImGui::InputFloat((name + "##" + std::to_string(id++)).c_str(), static_cast<float*>(value_ptr));
-            };
+            ImGui::Text("%s", name.c_str());
+            ImGui::InputInt(name.c_str(), static_cast<int*>(value_ptr));
+
+            ImGui::PopID();
+        };
+
+        m_editor_ui_creator["float"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
+            if (node_states.empty())
+            {
+                RUNTIME_ERROR("Tree node structure is wrong!");
+                return;
+            }
+
+            if (!node_states.top())
+                return;
+
+            ImGui::PushID(value_ptr);
+
+            ImGui::Text("%s", name.c_str());
+            ImGui::InputFloat(name.c_str(), static_cast<float*>(value_ptr));
+
+            ImGui::PopID();
+        };
 
         m_editor_ui_creator["std::string"] =
-            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr, size_t& id) {
+            [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
                     RUNTIME_ERROR("Tree node structure is wrong!");
@@ -126,25 +139,29 @@ namespace Meow
 
                 if (!node_states.top())
                     return;
+
+                ImGui::PushID(value_ptr);
 
                 ImGui::Text("%s", name.c_str());
                 ImGui::Text("%s", (*static_cast<std::string*>(value_ptr)).c_str());
+
+                ImGui::PopID();
             };
     }
 
-    void ComponentsWidget::CreateGameObjectUI(const std::shared_ptr<GameObject> go, size_t& id)
+    void ComponentsWidget::CreateGameObjectUI(const std::shared_ptr<GameObject> go)
     {
         FUNCTION_TIMER();
 
-        m_editor_ui_creator["TreeNodePush"](m_node_states, go->GetName(), nullptr, id);
+        m_editor_ui_creator["TreeNodePush"](m_node_states, go->GetName(), nullptr);
         for (reflect::refl_shared_ptr<Component> comp_ptr : go->GetComponents())
         {
-            CreateLeafNodeUI(comp_ptr, id);
+            CreateLeafNodeUI(comp_ptr);
         }
-        m_editor_ui_creator["TreeNodePop"](m_node_states, go->GetName(), nullptr, id);
+        m_editor_ui_creator["TreeNodePop"](m_node_states, go->GetName(), nullptr);
     }
 
-    void ComponentsWidget::CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr, size_t& id)
+    void ComponentsWidget::CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr)
     {
         FUNCTION_TIMER();
 
@@ -159,20 +176,17 @@ namespace Meow
             if (m_editor_ui_creator.find(field_accessor.type_name()) != m_editor_ui_creator.end())
             {
                 m_editor_ui_creator[field_accessor.type_name()](
-                    m_node_states, field_accessor.name(), field_accessor.get(comp_ptr.shared_ptr.get()), id);
+                    m_node_states, field_accessor.name(), field_accessor.get(comp_ptr.shared_ptr.get()));
             }
         }
     }
 
-    void ComponentsWidget::DrawVecControl(const std::string& label,
-                                          glm::vec3&         values,
-                                          size_t&            id,
-                                          float              reset_value,
-                                          float              column_width)
+    void
+    ComponentsWidget::DrawVecControl(const std::string& label, glm::vec3& values, float reset_value, float column_width)
     {
         FUNCTION_TIMER();
 
-        ImGui::PushID((label + "##" + std::to_string(id++)).c_str());
+        ImGui::PushID(&values);
 
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, column_width);

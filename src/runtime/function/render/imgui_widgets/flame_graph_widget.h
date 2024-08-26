@@ -21,14 +21,12 @@ namespace Meow
         void Draw(const std::vector<ScopeTimeData>& scope_times,
                   int                               max_depth,
                   std::chrono::microseconds         global_start,
-                  size_t&                           id,
                   ImVec2                            graph_size = ImVec2(0, 0));
 
     private:
         void Draw_impl(const std::vector<ScopeTimeData>& scope_times,
                        int                               max_depth,
                        std::chrono::microseconds         global_start,
-                       size_t&                           id,
                        ImVec2                            graph_size);
 
         bool               m_is_shapshot_enabled = false;

@@ -524,6 +524,11 @@ namespace Meow
 
         for (int i = 1; i >= 0; i--)
             g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+
+        g_runtime_global_context.render_system->UploadRingUniformBufferStat(m_pass_names[1],
+                                                                            m_quad_mat.GetRingUniformBufferStat());
+        g_runtime_global_context.render_system->UploadRingUniformBufferStat(
+            m_pass_names[0], m_obj2attachment_mat.GetRingUniformBufferStat());
     }
 
     void swap(DeferredPass& lhs, DeferredPass& rhs)

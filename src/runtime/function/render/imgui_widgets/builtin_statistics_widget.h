@@ -12,12 +12,12 @@ namespace Meow
     class BuiltinStatisticsWidget
     {
     public:
-        static void Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat, size_t& id);
+        static void Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat);
 
     private:
-        static void DrawFrameStat(const BuiltinRenderStat& stat, size_t& id);
-        static void DrawVertexAttributesStat(const BuiltinRenderStat& stat, size_t& id);
-        static void DrawBufferStat(const BuiltinRenderStat& stat, size_t& id);
-        static void DrawImageStat(const BuiltinRenderStat& stat, size_t& id);
+        static void DrawFrameStat(const BuiltinRenderStat& stat);
+        static void DrawVertexAttributesStat(const BuiltinRenderStat& stat);
+        static void DrawBufferStat(const BuiltinRenderStat& stat);
+        static void DrawImageStat(const BuiltinRenderStat& stat);
     };
 } // namespace Meow

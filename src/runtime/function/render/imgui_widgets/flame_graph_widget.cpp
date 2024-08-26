@@ -9,7 +9,6 @@ namespace Meow
     void FlameGraphWidget::Draw(const std::vector<ScopeTimeData>& scope_times,
                                 int                               max_depth,
                                 std::chrono::microseconds         global_start,
-                                size_t&                           id,
                                 ImVec2                            graph_size)
     {
         if (scope_times.size() == 0)
@@ -19,19 +18,20 @@ namespace Meow
         if (window->SkipItems)
             return;
 
+        ImGui::PushID(&scope_times);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Flame Graph" + +"##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Flame Graph", flag))
         {
             if (m_is_shapshot_enabled)
                 Draw_impl(m_curr_shapshot.scope_times,
                           m_curr_shapshot.max_depth,
                           m_curr_shapshot.global_start,
-                          id,
                           m_curr_shapshot.graph_size);
             else
-                Draw_impl(scope_times, max_depth, global_start, id, graph_size);
+                Draw_impl(scope_times, max_depth, global_start, graph_size);
 
-            if (ImGui::Button(((std::string) "Capture Snapshot" + "##" + std::to_string(id++)).c_str()))
+            if (ImGui::Button("Capture Snapshot"))
             {
                 m_is_shapshot_enabled        = true;
                 m_curr_shapshot.scope_times  = scope_times;
@@ -43,7 +43,7 @@ namespace Meow
             if (m_is_shapshot_enabled)
             {
                 ImGui::SameLine();
-                if (ImGui::Button(((std::string) "Leave Snapshot" + "##" + std::to_string(id++)).c_str()))
+                if (ImGui::Button("Leave Snapshot"))
                 {
                     m_is_shapshot_enabled = false;
                 }
@@ -51,12 +51,13 @@ namespace Meow
 
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 
     void FlameGraphWidget::Draw_impl(const std::vector<ScopeTimeData>& scope_times,
                                      int                               max_depth,
                                      std::chrono::microseconds         global_start,
-                                     size_t&                           id,
                                      ImVec2                            graph_size)
     {
         if (scope_times.size() == 0)

@@ -43,6 +43,8 @@ set(RUNTIME_HEADER_FILES
     function/render/imgui_widgets/components_widget.h
     function/render/imgui_widgets/flame_graph_widget.h
     function/render/imgui_widgets/pipeline_statistics_widget.h
+    function/render/imgui_widgets/ring_buffer_widget.h
+    function/render/imgui_widgets/spinner_widget.h
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
     function/render/render_pass/imgui_pass.h
@@ -71,7 +73,8 @@ set(RUNTIME_HEADER_FILES
     function/resource/resource_info/model_res_info.h
     function/window/window.h
     function/window/window_system.h
-    generated/register_all.h)
+    generated/register_all.h
+    generated/vertex_attribute_bit.gen.h)
 set(RUNTIME_SOURCE_FILES
     engine.cpp
     core/log/log.cpp
@@ -92,6 +95,8 @@ set(RUNTIME_SOURCE_FILES
     function/render/imgui_widgets/components_widget.cpp
     function/render/imgui_widgets/flame_graph_widget.cpp
     function/render/imgui_widgets/pipeline_statistics_widget.cpp
+    function/render/imgui_widgets/ring_buffer_widget.cpp
+    function/render/imgui_widgets/spinner_widget.cpp
     function/render/render_pass/deferred_pass.cpp
     function/render/render_pass/forward_pass.cpp
     function/render/render_pass/imgui_pass.cpp

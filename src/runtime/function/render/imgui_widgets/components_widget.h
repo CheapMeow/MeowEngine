@@ -16,17 +16,16 @@ namespace Meow
     public:
         ComponentsWidget();
 
-        void CreateGameObjectUI(const std::shared_ptr<GameObject> go, size_t& id);
+        void CreateGameObjectUI(const std::shared_ptr<GameObject> go);
 
     private:
-        void CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr, size_t& id);
+        void CreateLeafNodeUI(const reflect::refl_shared_ptr<Component> comp_ptr);
         void DrawVecControl(const std::string& label,
                             glm::vec3&         values,
-                            size_t&            id,
                             float              reset_value  = 0.0f,
                             float              column_width = 100.0f);
 
-        std::unordered_map<std::string, std::function<void(std::stack<bool>&, const std::string&, void*, size_t&)>>
+        std::unordered_map<std::string, std::function<void(std::stack<bool>&, const std::string&, void*)>>
                          m_editor_ui_creator;
         std::stack<bool> m_node_states;
     };

@@ -7,35 +7,45 @@
 
 namespace Meow
 {
-    void BuiltinStatisticsWidget::Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat, size_t& id)
+    void BuiltinStatisticsWidget::Draw(const std::unordered_map<std::string, BuiltinRenderStat>& stat)
     {
+        ImGui::PushID(&stat);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Builtin Statistics" + "##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Builtin Statistics", flag))
         {
             for (const auto& pair : stat)
             {
+                ImGui::PushID(&pair);
+
                 const std::string& pass_name = pair.first;
                 const auto&        stat      = pair.second;
 
-                if (ImGui::TreeNodeEx((pass_name + "##" + std::to_string(id++)).c_str(), flag))
+                if (ImGui::TreeNodeEx(pass_name.c_str(), flag))
                 {
-                    DrawFrameStat(stat, id);
-                    DrawVertexAttributesStat(stat, id);
-                    DrawBufferStat(stat, id);
-                    DrawImageStat(stat, id);
+                    DrawFrameStat(stat);
+                    DrawVertexAttributesStat(stat);
+                    DrawBufferStat(stat);
+                    DrawImageStat(stat);
 
                     ImGui::TreePop();
                 }
+
+                ImGui::PopID();
             }
 
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 
-    void BuiltinStatisticsWidget::DrawFrameStat(const BuiltinRenderStat& stat, size_t& id)
+    void BuiltinStatisticsWidget::DrawFrameStat(const BuiltinRenderStat& stat)
     {
+        ImGui::PushID(&stat + 1);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Frame" + "##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Frame", flag))
         {
             ImGui::Columns(2, "locations");
             ImGui::Text("%s", "Draw call");
@@ -45,12 +55,16 @@ namespace Meow
 
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 
-    void BuiltinStatisticsWidget::DrawVertexAttributesStat(const BuiltinRenderStat& stat, size_t& id)
+    void BuiltinStatisticsWidget::DrawVertexAttributesStat(const BuiltinRenderStat& stat)
     {
+        ImGui::PushID(&stat + 2);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Vertex Attributes" + "##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Vertex Attributes", flag))
         {
             ImGui::Columns(2, "locations");
             ImGui::Text("%s", "Attribute Name");
@@ -70,12 +84,16 @@ namespace Meow
             }
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 
-    void BuiltinStatisticsWidget::DrawBufferStat(const BuiltinRenderStat& stat, size_t& id)
+    void BuiltinStatisticsWidget::DrawBufferStat(const BuiltinRenderStat& stat)
     {
+        ImGui::PushID(&stat + 3);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Buffer" + "##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Buffer", flag))
         {
             ImGui::Columns(5, "locations");
             ImGui::Text("%s", "Buffer Name");
@@ -124,12 +142,16 @@ namespace Meow
             }
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 
-    void BuiltinStatisticsWidget::DrawImageStat(const BuiltinRenderStat& stat, size_t& id)
+    void BuiltinStatisticsWidget::DrawImageStat(const BuiltinRenderStat& stat)
     {
+        ImGui::PushID(&stat + 4);
+
         ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-        if (ImGui::TreeNodeEx(((std::string) "Image" + "##" + std::to_string(id++)).c_str(), flag))
+        if (ImGui::TreeNodeEx("Image", flag))
         {
             ImGui::Columns(4, "locations");
             ImGui::Text("%s", "Image Name");
@@ -174,5 +196,7 @@ namespace Meow
             }
             ImGui::TreePop();
         }
+
+        ImGui::PopID();
     }
 } // namespace Meow
