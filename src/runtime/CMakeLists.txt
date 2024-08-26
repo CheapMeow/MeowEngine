@@ -61,6 +61,7 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/model_mesh.h
     function/render/structs/model_node.h
     function/render/structs/pipeline_info.h
+    function/render/structs/ring_uniform_buffer.h
     function/render/structs/ring_uniform_buffer_stat.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
@@ -108,6 +109,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/model.cpp
     function/render/structs/model_mesh.cpp
     function/render/structs/model_node.cpp
+    function/render/structs/ring_uniform_buffer.cpp
     function/render/structs/shader.cpp
     function/render/structs/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp

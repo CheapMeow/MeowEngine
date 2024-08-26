@@ -1,9 +1,8 @@
 #pragma once
 
 #include "buffer_data.h"
-#include "core/base/alignment.h"
 #include "core/base/non_copyable.h"
-#include "ring_uniform_buffer_stat.h"
+#include "ring_uniform_buffer.h"
 #include "shader.h"
 
 #include <limits>
@@ -13,92 +12,6 @@
 
 namespace Meow
 {
-    struct RingUniformBuffer : NonCopyable
-    {
-        std::shared_ptr<BufferData> buffer_data_ptr  = nullptr;
-        void*                       mapped_data_ptr  = nullptr;
-        uint64_t                    buffer_size      = 0;
-        uint64_t                    allocated_memory = 0;
-        uint32_t                    min_alignment    = 0;
-
-        // stat
-        uint64_t begin;
-        uint64_t usage;
-
-        RingUniformBuffer(std::nullptr_t) {}
-
-        RingUniformBuffer(RingUniformBuffer&& rhs) noexcept
-        {
-            std::swap(buffer_data_ptr, rhs.buffer_data_ptr);
-            std::swap(mapped_data_ptr, rhs.mapped_data_ptr);
-            this->buffer_size      = rhs.buffer_size;
-            this->allocated_memory = rhs.allocated_memory;
-            this->min_alignment    = rhs.min_alignment;
-        }
-
-        RingUniformBuffer& operator=(RingUniformBuffer&& rhs) noexcept
-        {
-            if (this != &rhs)
-            {
-                std::swap(buffer_data_ptr, rhs.buffer_data_ptr);
-                std::swap(mapped_data_ptr, rhs.mapped_data_ptr);
-                this->buffer_size      = rhs.buffer_size;
-                this->allocated_memory = rhs.allocated_memory;
-                this->min_alignment    = rhs.min_alignment;
-            }
-
-            return *this;
-        }
-
-        RingUniformBuffer(vk::raii::PhysicalDevice const& physical_device, vk::raii::Device const& logical_device)
-        {
-            buffer_size   = 32 * 1024; // 32KB
-            min_alignment = physical_device.getProperties().limits.minUniformBufferOffsetAlignment;
-
-            buffer_data_ptr = std::make_shared<BufferData>(physical_device,
-                                                           logical_device,
-                                                           buffer_size,
-                                                           vk::BufferUsageFlagBits::eUniformBuffer |
-                                                               vk::BufferUsageFlagBits::eTransferDst);
-            mapped_data_ptr = buffer_data_ptr->device_memory.mapMemory(0, VK_WHOLE_SIZE);
-        }
-
-        ~RingUniformBuffer()
-        {
-            mapped_data_ptr = nullptr;
-            if (buffer_data_ptr != nullptr)
-                buffer_data_ptr->device_memory.unmapMemory();
-            buffer_data_ptr = nullptr;
-        }
-
-        uint64_t AllocateMemory(uint64_t size)
-        {
-            uint64_t new_memory_start = Align<uint64_t>(allocated_memory, min_alignment);
-
-            if (new_memory_start + size <= buffer_size)
-            {
-                allocated_memory = new_memory_start + size;
-
-                // stat
-                new_memory_start = 0;
-                usage            = size;
-
-                return new_memory_start;
-            }
-
-            // TODO: Scalable buffer size
-            // When the memory is running out, allocation return to the begin of memory
-            // It means overriding the old buffer data
-            // If the object number is very large, it definitely break the uniform data at this frame
-            allocated_memory = size;
-
-            // stat
-            begin = 0;
-            usage = size;
-
-            return 0;
-        }
-    };
 
     /**
      * @brief Information about uniform buffer that are same for all objects.

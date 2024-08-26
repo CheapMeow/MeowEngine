@@ -71,6 +71,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/model_mesh.h
     ../runtime/function/render/structs/model_node.h
     ../runtime/function/render/structs/pipeline_info.h
+    ../runtime/function/render/structs/ring_uniform_buffer.h
     ../runtime/function/render/structs/ring_uniform_buffer_stat.h
     ../runtime/function/render/structs/shader.h
     ../runtime/function/render/structs/surface_data.h
