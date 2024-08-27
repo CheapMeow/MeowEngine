@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+#include "function/global/runtime_global_context.h"
+
 namespace Meow
 {
     void Level::Tick(float dt)
@@ -12,6 +14,8 @@ namespace Meow
         {
             kv.second->Tick(dt);
         }
+
+        FrustumCulling();
     }
 
     std::weak_ptr<GameObject> Level::GetGameObjectByID(GameObjectID go_id) const
@@ -48,5 +52,31 @@ namespace Meow
         gobject->self_weak_ptr = gobject;
 
         return object_id;
+    }
+
+    void Level::FrustumCulling()
+    {
+        m_visibles.clear();
+
+        std::shared_ptr<GameObject> camera_go_ptr =
+            GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
+
+        if (!camera_go_ptr)
+            return;
+
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
+            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+
+        if (camera_comp_ptr)
+        {
+            for (const auto& pair : m_gameobjects)
+            {
+                if (camera_comp_ptr->FrustumCulling(pair.second))
+                {
+                    std::cout << "Find!" << std::endl;
+                    m_visibles[pair.first] = pair.second;
+                }
+            }
+        }
     }
 } // namespace Meow

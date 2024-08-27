@@ -8,7 +8,9 @@ set(RUNTIME_HEADER_FILES
     core/log/log.h
     core/math/assimp_glm_helper.h
     core/math/bounding_box.h
+    core/math/frustum.h
     core/math/math.h
+    core/math/plane.h
     core/reflect/macros.h
     core/reflect/reflect.hpp
     core/reflect/reflect_pointer.hpp
@@ -80,6 +82,8 @@ set(RUNTIME_HEADER_FILES
 set(RUNTIME_SOURCE_FILES
     engine.cpp
     core/log/log.cpp
+    core/math/frustum.cpp
+    core/math/plane.cpp
     function/components/camera/camera_3d_component.cpp
     function/file/file_system.cpp
     function/global/runtime_global_context.cpp

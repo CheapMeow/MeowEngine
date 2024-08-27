@@ -124,6 +124,18 @@ namespace Meow
         GotoAnimation(animation.time);
     }
 
+    BoundingBox Model::GetBounding()
+    {
+        BoundingBox bounding;
+
+        for (const auto& node : linear_nodes)
+        {
+            bounding.Merge(node->GetBounds());
+        }
+
+        return bounding;
+    }
+
     void Model::SetAnimation(size_t index)
     {
         if (index >= animations.size())

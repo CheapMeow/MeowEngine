@@ -63,6 +63,9 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        if (m_models.find(file_path) != m_models.end())
+            return m_models[file_path];
+
         std::shared_ptr<Model> model_ptr =
             g_runtime_global_context.render_system->CreateModelFromFile(file_path, attributes);
 

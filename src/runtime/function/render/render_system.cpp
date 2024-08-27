@@ -441,6 +441,21 @@ namespace Meow
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(
             m_gpu, m_logical_device, cmd_buffer, m_surface_data, m_swapchain_data.image_views, m_surface_data.extent);
+
+        // update aspect ratio
+
+        std::shared_ptr<GameObject> camera_go_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel()
+                                                        .lock()
+                                                        ->GetGameObjectByID(m_main_camera_id)
+                                                        .lock();
+
+        if (!camera_go_ptr)
+            return;
+
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
+            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+
+        camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
     }
 
     RenderSystem::RenderSystem()
@@ -512,14 +527,10 @@ namespace Meow
 
         camera_go_ptr->SetName("Camera");
         std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
-            camera_go_ptr
-                ->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                        std::make_shared<Transform3DComponent>())
-                .lock();
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            camera_go_ptr
-                ->TryAddComponent<Camera3DComponent>("Camera3DComponent", std::make_shared<Camera3DComponent>())
-                .lock();
+            camera_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+                                                                 std::make_shared<Transform3DComponent>());
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr = camera_go_ptr->TryAddComponent<Camera3DComponent>(
+            "Camera3DComponent", std::make_shared<Camera3DComponent>());
 
 #ifdef MEOW_DEBUG
         if (!camera_transform_comp_ptr)
@@ -528,7 +539,8 @@ namespace Meow
             RUNTIME_ERROR("shared ptr is invalid!");
 #endif
 
-        camera_comp_ptr->camera_mode = CameraMode::Free;
+        camera_comp_ptr->camera_mode  = CameraMode::Free;
+        camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
 
         GameObjectID                model_go_id  = level_ptr->CreateObject();
         std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
@@ -540,20 +552,17 @@ namespace Meow
         model_go_ptr->SetName("Backpack");
         model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
                                                             std::make_shared<Transform3DComponent>());
-        std::shared_ptr<ModelComponent> model_comp_ptr =
-            model_go_ptr
-                ->TryAddComponent<ModelComponent>(
-                    "ModelComponent",
-                    std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                                     m_render_pass_ptr->input_vertex_attributes))
-                .lock();
+        std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryAddComponent<ModelComponent>(
+            "ModelComponent",
+            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                                             m_render_pass_ptr->input_vertex_attributes));
 
         BoundingBox model_bounding          = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
         glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
         glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
         camera_transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
 
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 200; i++)
         {
             GameObjectID                model_go_id1  = level_ptr->CreateObject();
             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
@@ -563,10 +572,8 @@ namespace Meow
                 RUNTIME_ERROR("GameObject is invalid!");
 #endif
             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-                model_go_ptr1
-                    ->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                            std::make_shared<Transform3DComponent>())
-                    .lock();
+                model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+                                                                     std::make_shared<Transform3DComponent>());
             model_go_ptr1->TryAddComponent<ModelComponent>(
                 "ModelComponent",
                 std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",

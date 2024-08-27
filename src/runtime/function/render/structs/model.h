@@ -110,6 +110,8 @@ namespace Meow
 
         void Update(float time, float delta);
 
+        BoundingBox GetBounding();
+        
         void SetAnimation(size_t index);
 
         ModelAnimation& GetAnimation(size_t index = -1);

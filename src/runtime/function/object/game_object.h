@@ -41,7 +41,7 @@ namespace Meow
         std::vector<reflect::refl_shared_ptr<Component>> GetComponents() { return m_refl_components; }
 
         template<typename TComponent>
-        std::weak_ptr<TComponent> TryGetComponent(const std::string& component_type_name)
+        std::shared_ptr<TComponent> TryGetComponent(const std::string& component_type_name)
         {
             FUNCTION_TIMER();
 
@@ -57,7 +57,7 @@ namespace Meow
         }
 
         template<typename TComponent>
-        std::weak_ptr<TComponent> TryAddComponent(const std::string&          component_type_name,
+        std::shared_ptr<TComponent> TryAddComponent(const std::string&          component_type_name,
                                                   std::shared_ptr<TComponent> component_ptr)
         {
             FUNCTION_TIMER();

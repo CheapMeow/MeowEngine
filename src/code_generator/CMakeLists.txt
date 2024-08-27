@@ -18,7 +18,9 @@ set(HEADER_FILES_DEPEND
     ../runtime/core/log/log.h
     ../runtime/core/math/assimp_glm_helper.h
     ../runtime/core/math/bounding_box.h
+    ../runtime/core/math/frustum.h
     ../runtime/core/math/math.h
+    ../runtime/core/math/plane.h
     ../runtime/core/reflect/macros.h
     ../runtime/core/reflect/reflect.hpp
     ../runtime/core/reflect/reflect_pointer.hpp

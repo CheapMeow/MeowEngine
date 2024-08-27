@@ -14,9 +14,10 @@ namespace Meow
 			.AddField("scale", "glm::vec3", &Transform3DComponent::scale);
 
 		reflect::AddClass<Camera3DComponent>("Camera3DComponent")
+			.AddField("field_of_view", "float", &Camera3DComponent::field_of_view)
+			.AddField("aspect_ratio", "float", &Camera3DComponent::aspect_ratio)
 			.AddField("near_plane", "float", &Camera3DComponent::near_plane)
 			.AddField("far_plane", "float", &Camera3DComponent::far_plane)
-			.AddField("field_of_view", "float", &Camera3DComponent::field_of_view)
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
 
 		reflect::AddClass<ModelComponent>("ModelComponent");
