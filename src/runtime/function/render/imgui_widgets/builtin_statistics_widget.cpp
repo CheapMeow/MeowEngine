@@ -19,7 +19,7 @@ namespace Meow
             unsigned int red              = 255 * red_rgb.x;
             unsigned int green            = 255 * red_rgb.y;
             unsigned int blue             = 255 * red_rgb.z;
-            m_col_base_table[i]           = (alpha << 24) | (red << 16) | (green << 8) | blue;
+            m_col_base_table.push_back((alpha << 24) | (red << 16) | (green << 8) | blue);
         }
         for (int i = 0; i < k_gredint_count; i++)
         {
@@ -29,7 +29,7 @@ namespace Meow
             unsigned int red              = 255 * red_rgb.x;
             unsigned int green            = 255 * red_rgb.y;
             unsigned int blue             = 255 * red_rgb.z;
-            m_col_hovered_table[i]        = (alpha << 24) | (red << 16) | (green << 8) | blue;
+            m_col_hovered_table.push_back((alpha << 24) | (red << 16) | (green << 8) | blue);
         }
     }
 
