@@ -257,7 +257,11 @@ namespace Meow
 
             ImGui::ItemSize(frame_bb, style.FramePadding.y);
             if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
+            {
+                ImGui::TreePop();
+                ImGui::PopID();
                 return;
+            }
 
             ImGui::RenderFrame(
                 inner_bb.Min, inner_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
