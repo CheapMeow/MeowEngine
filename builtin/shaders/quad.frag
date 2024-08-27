@@ -29,10 +29,9 @@ float DoAttenuation(float range, float d)
 void main() 
 {
 	vec4 albedo   = subpassLoad(inputColor);
-	vec4 normal   = subpassLoad(inputNormal);
+	vec4 normal  = subpassLoad(inputNormal);
+	normal = normal * 2 - 1;
 	vec4 position = subpassLoad(inputPosition);
-	
-	normal.xyz    = normalize(normal.xyz);
 	
 	vec4 ambient  = vec4(0.20);
 	

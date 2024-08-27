@@ -14,6 +14,12 @@
 
 LLVM 安装后需要自行配置环境变量 `LLVM_DIR` 为 LLVM 根目录（这并不是为了从源码构建，所以这个环境变量与 LLVMConfig.cmake 无关）
 
+## 编译着色器
+
+```shell
+glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.spv
+```
+
 ## 特性
 
 ### 异常安全
