@@ -13,12 +13,13 @@ namespace Meow
     public:
         static void info(const std::string& message)
         {
-            std::cout << "[MeowEngine][" << GetCurrentTimeString() << "] " << message << std::endl;
+            std::cout << "\033[32m" << "[MeowEngine][" << GetCurrentTimeString() << "] " << message << "\033[0m"
+                      << std::endl;
         }
 
         static void warn(const std::string& message)
         {
-            std::cout << "\034[31m" << "[MeowEngine][" << GetCurrentTimeString() << "] " << message << "\033[0m"
+            std::cout << "\033[33m" << "[MeowEngine][" << GetCurrentTimeString() << "] " << message << "\033[0m"
                       << std::endl;
         }
 
