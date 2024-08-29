@@ -13,9 +13,9 @@ set(HEADER_FILES_DEPEND
     ../runtime/pch.h
     ../runtime/core/base/alignment.h
     ../runtime/core/base/bitmask.hpp
+    ../runtime/core/base/log.hpp
     ../runtime/core/base/macro.h
     ../runtime/core/base/non_copyable.h
-    ../runtime/core/log/log.h
     ../runtime/core/math/assimp_glm_helper.h
     ../runtime/core/math/bounding_box.h
     ../runtime/core/math/frustum.h
@@ -88,7 +88,8 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/window/window.h
     ../runtime/function/window/window_system.h
     ../runtime/generated/register_all.h
-    ../runtime/generated/vertex_attribute_bit.gen.h)
+    ../runtime/generated/vertex_attribute_bit.gen.h
+    ../runtime/test/geometries.hpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CODE_GENERATOR_HEADER_FILES}
                                                       ${CODE_GENERATOR_SOURCE_FILES})

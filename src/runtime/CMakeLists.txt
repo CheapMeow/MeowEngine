@@ -3,9 +3,9 @@ set(RUNTIME_HEADER_FILES
     pch.h
     core/base/alignment.h
     core/base/bitmask.hpp
+    core/base/log.hpp
     core/base/macro.h
     core/base/non_copyable.h
-    core/log/log.h
     core/math/assimp_glm_helper.h
     core/math/bounding_box.h
     core/math/frustum.h
@@ -78,10 +78,10 @@ set(RUNTIME_HEADER_FILES
     function/window/window.h
     function/window/window_system.h
     generated/register_all.h
-    generated/vertex_attribute_bit.gen.h)
+    generated/vertex_attribute_bit.gen.h
+    test/geometries.hpp)
 set(RUNTIME_SOURCE_FILES
     engine.cpp
-    core/log/log.cpp
     core/math/frustum.cpp
     core/math/plane.cpp
     function/components/camera/camera_3d_component.cpp
@@ -162,10 +162,6 @@ target_compile_options(${RUNTIME_NAME}
 
 target_include_directories(${RUNTIME_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 
-target_link_libraries(${RUNTIME_NAME} PUBLIC spdlog::spdlog)
-target_include_directories(${RUNTIME_NAME}
-                           PUBLIC ${3RD_PARTY_ROOT_DIR}/spdlog/include)
-
 target_link_libraries(${RUNTIME_NAME} PUBLIC glm)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
 
@@ -184,10 +180,6 @@ if(Vulkan_FOUND)
   target_include_directories(${RUNTIME_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
   # don't link to vulkan static lib
 endif()
-
-target_link_libraries(${RUNTIME_NAME}
-                      PUBLIC glslang glslang-default-resource-limits SPIRV)
-target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glslang)
 
 target_link_libraries(
   ${RUNTIME_NAME}

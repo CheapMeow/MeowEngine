@@ -53,7 +53,7 @@ namespace Meow
         auto it = schemes.find(name);
         if (it == schemes.end())
         {
-            RUNTIME_ERROR("Could not find input scheme: \"{}\"", name);
+            MEOW_ERROR("Could not find input scheme: \"{}\"", name);
             return nullptr;
         }
         return it->second.get();

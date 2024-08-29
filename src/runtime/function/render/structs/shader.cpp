@@ -275,7 +275,7 @@ namespace Meow
                 {
                     attribute = VertexAttributeBit::InstanceFloat4;
                 }
-                // EDITOR_ERROR("Not found attribute : %s, treat as instance attribute : %d.", var_name.c_str(),
+                // EDITOR_MEOW_ERROR("Not found attribute : %s, treat as instance attribute : %d.", var_name.c_str(),
                 // int32(attribute));
             }
 
@@ -533,7 +533,7 @@ namespace Meow
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
         {
-            RUNTIME_ERROR("Failed write buffer, {} not found!", name);
+            MEOW_ERROR("Failed write buffer, {} not found!", name);
             return;
         }
 
@@ -569,7 +569,7 @@ namespace Meow
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
         {
-            RUNTIME_ERROR("Failed write buffer, {} not found!", name);
+            MEOW_ERROR("Failed write buffer, {} not found!", name);
             return;
         }
 

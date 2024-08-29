@@ -7,7 +7,7 @@ namespace Meow
         auto it = m_axes.find(name);
         if (it == m_axes.end())
         {
-            RUNTIME_WARN("InputAxis was not found in input scheme: \"{}\"", name);
+            MEOW_WARN("InputAxis was not found in input scheme: \"{}\"", name);
             it = m_axes.emplace(name, std::make_unique<InputAxis>()).first;
         }
         return it->second.get();
@@ -29,7 +29,7 @@ namespace Meow
         auto it = m_buttons.find(name);
         if (it == m_buttons.end())
         {
-            RUNTIME_WARN("InputButton was not found in input scheme: \"{}\"", name);
+            MEOW_WARN("InputButton was not found in input scheme: \"{}\"", name);
             it = m_buttons.emplace(name, std::make_unique<InputButton>()).first;
         }
         return it->second.get();
@@ -56,14 +56,14 @@ namespace Meow
             if (auto it = m_axes.find(axis_name); it != m_axes.end())
                 std::swap(it->second->OnAxis(), axis->OnAxis());
             else
-                RUNTIME_WARN("InputAxis was not found in input scheme: \"{}\"", axis_name);
+                MEOW_WARN("InputAxis was not found in input scheme: \"{}\"", axis_name);
         }
         for (auto& [button_name, button] : other->m_buttons)
         {
             if (auto it = m_buttons.find(button_name); it != m_buttons.end())
                 std::swap(it->second->OnButton(), button->OnButton());
             else
-                RUNTIME_WARN("InputButton was not found in input scheme: \"{}\"", button_name);
+                MEOW_WARN("InputButton was not found in input scheme: \"{}\"", button_name);
         }
     }
 

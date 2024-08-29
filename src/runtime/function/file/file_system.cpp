@@ -84,7 +84,7 @@ namespace Meow
 
         if (!pixels)
         {
-            RUNTIME_WARN("Failed to load texture file: {}", file_path);
+            MEOW_WARN("Failed to load texture file: {}", file_path);
             return 0;
         }
 

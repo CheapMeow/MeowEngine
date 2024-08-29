@@ -81,7 +81,7 @@ namespace Meow
         });
         if (requiredButNotFoundIt != required.end())
         {
-            RUNTIME_ERROR("Validation Layer {} not found", *requiredButNotFoundIt);
+            MEOW_ERROR("Validation Layer {} not found", *requiredButNotFoundIt);
         }
         return (requiredButNotFoundIt == required.end());
     }
@@ -117,7 +117,7 @@ namespace Meow
                 return validation_layers;
             }
 
-            RUNTIME_ERROR("Couldn't enable validation layers (see log for error) - falling back");
+            MEOW_ERROR("Couldn't enable validation layers (see log for error) - falling back");
         }
 
         // Else return nothing
@@ -187,7 +187,7 @@ namespace Meow
             }
         }
 
-        RUNTIME_ERROR("{}", error_str.str());
+        MEOW_ERROR("{}", error_str.str());
 
         return VK_FALSE;
     }
@@ -209,7 +209,7 @@ namespace Meow
         uint32_t major = VK_VERSION_MAJOR(api_version);
         uint32_t minor = VK_VERSION_MINOR(api_version);
         uint32_t patch = VK_VERSION_PATCH(api_version);
-        RUNTIME_INFO("Vulkan API Version: {}.{}.{}", major, minor, patch);
+        MEOW_INFO("Vulkan API Version: {}.{}.{}", major, minor, patch);
     }
 
     /**
@@ -266,7 +266,7 @@ namespace Meow
             ss << extension.extensionName << ", ";
 
         ss << "\n\n";
-        RUNTIME_INFO("{}", ss.str());
+        MEOW_INFO("{}", ss.str());
     }
 
     /**

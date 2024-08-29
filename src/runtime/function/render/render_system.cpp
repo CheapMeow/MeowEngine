@@ -48,15 +48,15 @@ namespace Meow
         m_is_validation_layer_found = ValidateLayers(required_validation_layers, supported_validation_layers);
         if (m_is_validation_layer_found)
         {
-            RUNTIME_INFO("Enabled Validation Layers:");
+            MEOW_INFO("Enabled Validation Layers:");
             for (const auto& layer : required_validation_layers)
             {
-                RUNTIME_INFO("	\t{}", layer);
+                MEOW_INFO("	\t{}", layer);
             }
         }
         else
         {
-            RUNTIME_ERROR("Required validation layers are missing.");
+            MEOW_ERROR("Required validation layers are missing.");
         }
 
         uint32_t               api_version = m_vulkan_context.enumerateInstanceVersion();
@@ -512,7 +512,7 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
 #endif
 
         m_main_camera_id                          = level_ptr->CreateObject();
@@ -520,7 +520,7 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!camera_go_ptr)
-            RUNTIME_ERROR("GameObject is invalid!");
+            MEOW_ERROR("GameObject is invalid!");
 #endif
 
         camera_go_ptr->SetName("Camera");
@@ -532,9 +532,9 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!camera_transform_comp_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
         if (!camera_comp_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
 #endif
 
         camera_comp_ptr->camera_mode  = CameraMode::Free;
@@ -545,7 +545,7 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!model_go_ptr)
-            RUNTIME_ERROR("GameObject is invalid!");
+            MEOW_ERROR("GameObject is invalid!");
 #endif
         // model_go_ptr->SetName("Backpack");
         // model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
@@ -572,7 +572,7 @@ namespace Meow
 
         // #ifdef MEOW_DEBUG
         //             if (!model_go_ptr1)
-        //                 RUNTIME_ERROR("GameObject is invalid!");
+        //                 MEOW_ERROR("GameObject is invalid!");
         // #endif
         //             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
         //                 model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
@@ -653,7 +653,7 @@ namespace Meow
             case vk::Result::eSuccess:
                 break;
             case vk::Result::eSuboptimalKHR:
-                RUNTIME_ERROR("vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n");
+                MEOW_ERROR("vk::Queue::presentKHR returned vk::Result::eSuboptimalKHR !\n");
                 break;
             default:
                 assert(false); // an unexpected result is returned !

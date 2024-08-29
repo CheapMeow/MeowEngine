@@ -183,7 +183,7 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
 #endif
 
         std::shared_ptr<GameObject> camera_go_ptr =
@@ -195,11 +195,11 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!camera_go_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
         if (!transfrom_comp_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
         if (!camera_comp_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
 #endif
 
         glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
@@ -231,11 +231,11 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
             if (!model_go_ptr)
-                RUNTIME_ERROR("shared ptr is invalid!");
+                MEOW_ERROR("shared ptr is invalid!");
             if (!transfrom_comp_ptr2)
-                RUNTIME_ERROR("shared ptr is invalid!");
+                MEOW_ERROR("shared ptr is invalid!");
             if (!model_comp_ptr)
-                RUNTIME_ERROR("shared ptr is invalid!");
+                MEOW_ERROR("shared ptr is invalid!");
 #endif
 
             ubo_data.model = transfrom_comp_ptr2->GetTransform();

@@ -24,7 +24,7 @@ namespace Meow
             [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
+                    MEOW_ERROR("Tree node structure is wrong!");
                     return;
                 }
 
@@ -37,7 +37,7 @@ namespace Meow
             [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
+                    MEOW_ERROR("Tree node structure is wrong!");
                     return;
                 }
 
@@ -51,7 +51,7 @@ namespace Meow
             [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
+                    MEOW_ERROR("Tree node structure is wrong!");
                     return;
                 }
 
@@ -78,7 +78,7 @@ namespace Meow
         m_editor_ui_creator["bool"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
             if (node_states.empty())
             {
-                RUNTIME_ERROR("Tree node structure is wrong!");
+                MEOW_ERROR("Tree node structure is wrong!");
                 return;
             }
 
@@ -97,7 +97,7 @@ namespace Meow
         m_editor_ui_creator["int"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
             if (node_states.empty())
             {
-                RUNTIME_ERROR("Tree node structure is wrong!");
+                MEOW_ERROR("Tree node structure is wrong!");
                 return;
             }
 
@@ -118,7 +118,7 @@ namespace Meow
         m_editor_ui_creator["float"] = [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
             if (node_states.empty())
             {
-                RUNTIME_ERROR("Tree node structure is wrong!");
+                MEOW_ERROR("Tree node structure is wrong!");
                 return;
             }
 
@@ -140,7 +140,7 @@ namespace Meow
             [&](std::stack<bool>& node_states, const std::string& name, void* value_ptr) {
                 if (node_states.empty())
                 {
-                    RUNTIME_ERROR("Tree node structure is wrong!");
+                    MEOW_ERROR("Tree node structure is wrong!");
                     return;
                 }
 

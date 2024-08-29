@@ -58,14 +58,14 @@ namespace Meow
 
         template<typename TComponent>
         std::shared_ptr<TComponent> TryAddComponent(const std::string&          component_type_name,
-                                                  std::shared_ptr<TComponent> component_ptr)
+                                                    std::shared_ptr<TComponent> component_ptr)
         {
             FUNCTION_TIMER();
 
 #ifdef MEOW_DEBUG
             if (!component_ptr)
             {
-                RUNTIME_ERROR("shared ptr is invalid!");
+                MEOW_ERROR("shared ptr is invalid!");
                 return std::shared_ptr<TComponent>(nullptr);
             }
 #endif
@@ -75,7 +75,7 @@ namespace Meow
             {
                 if (refl_component.type_name == component_type_name)
                 {
-                    RUNTIME_ERROR("Component already exists: {}", component_type_name);
+                    MEOW_ERROR("Component already exists: {}", component_type_name);
                     return std::shared_ptr<TComponent>(nullptr);
                 }
             }
@@ -86,7 +86,7 @@ namespace Meow
 #ifdef MEOW_DEBUG
             if (m_refl_components.size() < 1)
             {
-                RUNTIME_ERROR("m_refl_components is empty!");
+                MEOW_ERROR("m_refl_components is empty!");
                 return std::shared_ptr<TComponent>(nullptr);
             }
 #endif

@@ -15,21 +15,11 @@ if(NOT TARGET glfw)
     add_subdirectory(glfw)
 endif()
 
-if(NOT TARGET spdlog)
-    option(SPDLOG_BUILD_EXAMPLE "" OFF)
-    option(SPDLOG_INSTALL "" OFF)
-    add_subdirectory(spdlog)
-endif()
-
 # need have installed Vulkan SDK
 find_package(Vulkan REQUIRED)
 
 if(NOT TARGET volk)
     add_subdirectory(volk)
-endif()
-
-if(NOT TARGET glslang)
-    add_subdirectory(glslang)
 endif()
 
 if(NOT TARGET spirv-cross-glsl)

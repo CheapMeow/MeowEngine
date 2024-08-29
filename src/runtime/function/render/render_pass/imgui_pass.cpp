@@ -127,7 +127,7 @@ namespace Meow
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
-            RUNTIME_ERROR("shared ptr is invalid!");
+            MEOW_ERROR("shared ptr is invalid!");
 #endif
 
         const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();

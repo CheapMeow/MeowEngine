@@ -18,6 +18,8 @@ int main(int argc, char* argv[])
 
     int include_path_count = 0;
 
+    std::cerr << "!!!!!!!!!!!!!" << std::endl;
+
     for (int i = 1; i < argc; ++i)
     {
         std::string arg(argv[i]);

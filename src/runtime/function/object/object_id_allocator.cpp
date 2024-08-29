@@ -12,7 +12,7 @@ namespace Meow
         m_next_id++;
         if (m_next_id >= k_invalid_gobject_id)
         {
-            RUNTIME_ERROR("gobject id overflow");
+            MEOW_ERROR("gobject id overflow");
         }
 
         return new_object_ret;

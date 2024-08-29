@@ -45,7 +45,7 @@ namespace Meow
         }
         catch (const std::bad_alloc&)
         {
-            RUNTIME_ERROR("cannot allocate memory for new gobject");
+            MEOW_ERROR("cannot allocate memory for new gobject");
         }
 
         m_gameobjects.insert({object_id, gobject});

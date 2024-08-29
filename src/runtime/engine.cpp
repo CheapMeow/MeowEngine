@@ -15,8 +15,6 @@ namespace Meow
     {
         RegisterAll();
 
-        Log::Init();
-
         // TODO: Init Dependencies graph
         g_runtime_global_context.file_system     = std::make_shared<FileSystem>();
         g_runtime_global_context.resource_system = std::make_shared<ResourceSystem>();

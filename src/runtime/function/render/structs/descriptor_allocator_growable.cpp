@@ -61,7 +61,7 @@ namespace Meow
         }
         catch (const std::exception& e)
         {
-            RUNTIME_INFO("{}\nAllocation failed. Try again", e.what());
+            MEOW_INFO("{}\nAllocation failed. Try again", e.what());
 
             fullPools.push_back(poolToUse);
 

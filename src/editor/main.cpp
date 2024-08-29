@@ -1,4 +1,4 @@
-#include "runtime/core/log/log.h"
+#include "runtime/core/base/log.hpp"
 #include "runtime/engine.h"
 
 using namespace Meow;
@@ -12,7 +12,7 @@ int main()
 
     MeowEngine::GetEngine().Start();
 
-    EDITOR_INFO("Editor is running!");
+    MEOW_INFO("Editor is running!");
     MeowEngine::GetEngine().Run();
 
     MeowEngine::GetEngine().ShutDown();
