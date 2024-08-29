@@ -27,10 +27,6 @@ namespace Meow
         glm::vec3 Y(viewMat[1]); // Up Unit Vector
         glm::vec3 Z(viewMat[2]); // Forward vector
 
-        std::cout << X.x << ',' << X.y << ',' << X.z << std::endl;
-        std::cout << Y.x << ',' << Y.y << ',' << Y.z << std::endl;
-        std::cout << Z.x << ',' << Z.y << ',' << Z.z << std::endl;
-
         // Gets worlds space position of the center points of the near and far planes
         // The forward vector Z points towards the viewer so you need to negate it and scale it
         // by the distance (near or far) to the plane to get the center positions
