@@ -44,8 +44,7 @@ namespace Meow
         auto bounding = model_shared_ptr->model_ptr.lock()->GetBounding();
         bounding.min  = bounding.min * transform_shared_ptr->scale + transform_shared_ptr->position;
         bounding.max  = bounding.max * transform_shared_ptr->scale + transform_shared_ptr->position;
-        // return CheckVisibility(&bounding);
-        return true;
+        return CheckVisibility(&bounding);
     }
 
     bool Camera3DComponent::CheckVisibility(BoundingBox* bounding) { return m_frustum.checkIfInside(bounding); }

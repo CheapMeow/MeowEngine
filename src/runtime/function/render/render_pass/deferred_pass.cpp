@@ -373,10 +373,11 @@ namespace Meow
         view           = glm::translate(view, -transfrom_comp_ptr->position);
 
         ubo_data.view       = view;
-        ubo_data.projection = glm::perspectiveLH_ZO(camera_comp_ptr->field_of_view,
-                                                    (float)window_size[0] / (float)window_size[1],
-                                                    camera_comp_ptr->near_plane,
-                                                    camera_comp_ptr->far_plane);
+        ubo_data.projection = glm::perspective(camera_comp_ptr->field_of_view,
+                                               (float)window_size[0] / (float)window_size[1],
+                                               camera_comp_ptr->near_plane,
+                                               camera_comp_ptr->far_plane);
+        // ubo_data.projection[1][1] = -1.0 * ubo_data.projection[1][1];
 
         // Update mesh uniform
 

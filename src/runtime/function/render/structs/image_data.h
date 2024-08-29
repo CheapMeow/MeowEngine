@@ -75,16 +75,16 @@ namespace Meow
                       bool                            force_staging        = false);
 
         static std::shared_ptr<ImageData>
-        CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
-                              vk::raii::Device const&         device,
-                              vk::raii::CommandBuffer const&  command_buffer,
-                              std::string const&              file_path,
-                              vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
-                              vk::ImageUsageFlags             usage_flags          = {},
-                              vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                              vk::FormatFeatureFlags          format_feature_flags = {},
-                              bool                            anisotropy_enable    = false,
-                              bool                            force_staging        = false);
+        CreateTexture(vk::raii::PhysicalDevice const& physical_device,
+                      vk::raii::Device const&         device,
+                      vk::raii::CommandBuffer const&  command_buffer,
+                      std::string const&              file_path,
+                      vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                      vk::ImageUsageFlags             usage_flags          = {},
+                      vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                      vk::FormatFeatureFlags          format_feature_flags = {},
+                      bool                            anisotropy_enable    = false,
+                      bool                            force_staging        = false);
 
         static std::shared_ptr<ImageData>
         CreateAttachment(vk::raii::PhysicalDevice const& physical_device,

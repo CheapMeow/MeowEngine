@@ -73,7 +73,6 @@ namespace Meow
             {
                 if (camera_comp_ptr->FrustumCulling(pair.second))
                 {
-                    std::cout << "Find!" << std::endl;
                     m_visibles[pair.first] = pair.second;
                 }
             }

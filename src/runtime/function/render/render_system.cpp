@@ -8,6 +8,7 @@
 #include "function/global/runtime_global_context.h"
 #include "function/level/level.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
+#include "test/geometries.hpp"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -479,9 +480,6 @@ namespace Meow
     {
         m_logical_device.waitIdle();
 
-        // delete mdoel before vulkan resources
-        m_models.clear();
-
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -549,40 +547,45 @@ namespace Meow
         if (!model_go_ptr)
             RUNTIME_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->SetName("Backpack");
+        // model_go_ptr->SetName("Backpack");
+        // model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+        //                                                     std::make_shared<Transform3DComponent>());
+        // model_go_ptr->TryAddComponent<ModelComponent>(
+        //     "ModelComponent",
+        //     std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+        //                                      m_render_pass_ptr->input_vertex_attributes));
+
+        camera_transform_comp_ptr->position = glm::vec3(0.0f, 0.0f, -25.0f);
+
+        model_go_ptr->SetName("TestBox");
         model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
                                                             std::make_shared<Transform3DComponent>());
-        std::shared_ptr<ModelComponent> model_comp_ptr = model_go_ptr->TryAddComponent<ModelComponent>(
+        model_go_ptr->TryAddComponent<ModelComponent>(
             "ModelComponent",
             std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
                                              m_render_pass_ptr->input_vertex_attributes));
 
-        BoundingBox model_bounding          = model_comp_ptr->model_ptr.lock()->root_node->GetBounds();
-        glm::vec3   bound_size              = model_bounding.max - model_bounding.min;
-        glm::vec3   bound_center            = model_bounding.min + bound_size * 0.5f;
-        camera_transform_comp_ptr->position = bound_center + glm::vec3(0.0f, 0.0f, -25.0f);
+        //         for (int i = 0; i < 20; i++)
+        //         {
+        //             GameObjectID                model_go_id1  = level_ptr->CreateObject();
+        //             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
-        for (int i = 0; i < 200; i++)
-        {
-            GameObjectID                model_go_id1  = level_ptr->CreateObject();
-            std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
+        // #ifdef MEOW_DEBUG
+        //             if (!model_go_ptr1)
+        //                 RUNTIME_ERROR("GameObject is invalid!");
+        // #endif
+        //             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
+        //                 model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
+        //                                                                      std::make_shared<Transform3DComponent>());
+        //             model_go_ptr1->TryAddComponent<ModelComponent>(
+        //                 "ModelComponent",
+        //                 std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+        //                                                  m_render_pass_ptr->input_vertex_attributes));
 
-#ifdef MEOW_DEBUG
-            if (!model_go_ptr1)
-                RUNTIME_ERROR("GameObject is invalid!");
-#endif
-            std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-                model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                                     std::make_shared<Transform3DComponent>());
-            model_go_ptr1->TryAddComponent<ModelComponent>(
-                "ModelComponent",
-                std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                                 m_render_pass_ptr->input_vertex_attributes));
-
-            model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                           10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                           10.0 * glm::linearRand(-1.0f, 1.0f));
-        }
+        //             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
+        //                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
+        //                                                            10.0 * glm::linearRand(-1.0f, 1.0f));
+        //         }
     }
 
     void RenderSystem::Tick(float dt)
@@ -615,9 +618,9 @@ namespace Meow
         cmd_buffer.begin({});
         cmd_buffer.setViewport(0,
                                vk::Viewport(0.0f,
-                                            static_cast<float>(m_surface_data.extent.height),
+                                            0.0f,
                                             static_cast<float>(m_surface_data.extent.width),
-                                            -static_cast<float>(m_surface_data.extent.height),
+                                            static_cast<float>(m_surface_data.extent.height),
                                             0.0f,
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
@@ -662,34 +665,22 @@ namespace Meow
         m_imgui_pass.AfterPresent();
     }
 
-    std::shared_ptr<ImageData> RenderSystem::CreateTextureFromFile(const std::string& file_path)
+    std::shared_ptr<ImageData> RenderSystem::CreateTexture(const std::string& file_path)
     {
         FUNCTION_TIMER();
 
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        std::shared_ptr<ImageData> texture_ptr =
-            ImageData::CreateTextureFromFile(m_gpu, m_logical_device, cmd_buffer, file_path);
-
-        return texture_ptr;
+        return ImageData::CreateTexture(m_gpu, m_logical_device, cmd_buffer, file_path);
     }
 
-    std::shared_ptr<Model> RenderSystem::CreateModelFromFile(const std::string&          file_path,
-                                                             BitMask<VertexAttributeBit> attributes)
+    std::shared_ptr<Model> RenderSystem::CreateModel(const std::string&          file_path,
+                                                     BitMask<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
 
-        m_models.emplace_back(std::make_shared<Model>(
-            m_gpu, m_logical_device, m_upload_context.command_pool, m_present_queue, file_path, attributes));
-
-#ifdef MEOW_DEBUG
-        if (m_models.size() < 1)
-            RUNTIME_ERROR("m_models is empty!");
-        if (!m_models[m_models.size() - 1])
-            RUNTIME_ERROR("shared ptr is invalid!");
-#endif
-
-        return m_models[m_models.size() - 1];
+        return std::make_shared<Model>(
+            m_gpu, m_logical_device, m_upload_context.command_pool, m_present_queue, file_path, attributes);
     }
 } // namespace Meow

@@ -26,10 +26,10 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        std::shared_ptr<ImageData> texture_ptr =
-            g_runtime_global_context.render_system->CreateTextureFromFile(file_path);
+        std::shared_ptr<ImageData> texture_ptr = g_runtime_global_context.render_system->CreateTexture(file_path);
 
-        m_textures[file_path] = texture_ptr;
+        if (texture_ptr)
+            m_textures[file_path] = texture_ptr;
 
         return texture_ptr;
     }
@@ -66,10 +66,10 @@ namespace Meow
         if (m_models.find(file_path) != m_models.end())
             return m_models[file_path];
 
-        std::shared_ptr<Model> model_ptr =
-            g_runtime_global_context.render_system->CreateModelFromFile(file_path, attributes);
+        std::shared_ptr<Model> model_ptr = g_runtime_global_context.render_system->CreateModel(file_path, attributes);
 
-        m_models[file_path] = model_ptr;
+        if (model_ptr)
+            m_models[file_path] = model_ptr;
 
         return model_ptr;
     }

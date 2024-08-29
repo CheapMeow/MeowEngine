@@ -85,10 +85,9 @@ namespace Meow
 
         const std::unordered_map<std::string, BuiltinRenderStat>& GetBuiltinRenderStat() { return m_render_stat_map; }
 
-        std::shared_ptr<ImageData> CreateTextureFromFile(const std::string& file_path);
+        std::shared_ptr<ImageData> CreateTexture(const std::string& file_path);
 
-        std::shared_ptr<Model> CreateModelFromFile(const std::string&          file_path,
-                                                   BitMask<VertexAttributeBit> attributes);
+        std::shared_ptr<Model> CreateModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
 
         GameObjectID m_main_camera_id;
 
@@ -145,9 +144,5 @@ namespace Meow
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
-
-        // resources
-
-        std::vector<std::shared_ptr<Model>> m_models;
     };
 } // namespace Meow

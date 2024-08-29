@@ -107,7 +107,7 @@ namespace Meow
                                                                            "builtin/shaders/mesh.frag.spv");
 
         m_forward_mat = Material(physical_device, device, mesh_shader_ptr);
-        m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eCounterClockwise, true);
 
         m_render_stat.vertex_attribute_metas = m_forward_mat.shader_ptr->vertex_attribute_metas;
         m_render_stat.buffer_meta_map        = m_forward_mat.shader_ptr->buffer_meta_map;

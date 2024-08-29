@@ -14,6 +14,11 @@ namespace Meow
     public:
         std::weak_ptr<Model> model_ptr;
 
+        // ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
+        // {
+        //     model_ptr = g_runtime_global_context.resource_system->LoadModel(file_path, attributes);
+        // }
+
         ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
         {
             model_ptr = g_runtime_global_context.resource_system->LoadModel(file_path, attributes);

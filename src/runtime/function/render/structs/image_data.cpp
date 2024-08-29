@@ -284,16 +284,16 @@ namespace Meow
         return image_data_ptr;
     }
 
-    std::shared_ptr<ImageData> ImageData::CreateTextureFromFile(vk::raii::PhysicalDevice const& physical_device,
-                                                                vk::raii::Device const&         device,
-                                                                vk::raii::CommandBuffer const&  command_buffer,
-                                                                std::string const&              file_path,
-                                                                vk::Format                      format,
-                                                                vk::ImageUsageFlags             usage_flags,
-                                                                vk::ImageAspectFlags            aspect_mask,
-                                                                vk::FormatFeatureFlags          format_feature_flags,
-                                                                bool                            anisotropy_enable,
-                                                                bool                            force_staging)
+    std::shared_ptr<ImageData> ImageData::CreateTexture(vk::raii::PhysicalDevice const& physical_device,
+                                                        vk::raii::Device const&         device,
+                                                        vk::raii::CommandBuffer const&  command_buffer,
+                                                        std::string const&              file_path,
+                                                        vk::Format                      format,
+                                                        vk::ImageUsageFlags             usage_flags,
+                                                        vk::ImageAspectFlags            aspect_mask,
+                                                        vk::FormatFeatureFlags          format_feature_flags,
+                                                        bool                            anisotropy_enable,
+                                                        bool                            force_staging)
     {
         auto [width, height] = g_runtime_global_context.file_system->GetImageFileWidthHeight(file_path);
         if (width == 0 || height == 0)
