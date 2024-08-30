@@ -4,17 +4,21 @@
 
 ### 第三方库
 
-大部分第三方库被添加为 submodule，加入构建系统，因此第一次构建的时间会比较久。
+`ExternalProject_Add` 在 install 上出现问题。自行复制 dll 来模仿 install，会出现 dll 缺失的问题。`vcpkg` 可能在查找路径上出现问题。最终还是 `submodule` 最稳定
 
-需要用户自行安装的第三方库有：
+需要用户安装的第三方库为
 
-1. VulkanSDK
+VulkanSDK
 
-2. LLVM
+LLVM
 
-其中 VulkanSDK 在安装时会配置好环境变量
+### 环境变量
 
-LLVM 安装后需要自行配置环境变量 `LLVM_DIR` 为 LLVM 根目录（这并不是为了从源码构建，所以这个环境变量与 LLVMConfig.cmake 无关）
+需要用户配置的环境变量为
+
+`VK_SDK_PATH` `VULKAN_SDK`
+
+`LLVM_DIR`
 
 ### 编译着色器
 
