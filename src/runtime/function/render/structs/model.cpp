@@ -29,7 +29,7 @@ namespace Meow
         ModelMesh*    mesh       = new ModelMesh();
         mesh->vertices           = std::move(vertices);
         mesh->indices            = std::move(indices);
-        mesh->vertex_count       = vertices.size() / stride * 4;
+        mesh->vertex_count       = mesh->vertices.size() / stride * 4;
 
         if (mesh->vertices.size() > 0)
         {
