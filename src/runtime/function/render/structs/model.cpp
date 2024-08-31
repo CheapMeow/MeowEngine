@@ -20,15 +20,15 @@ namespace Meow
                  vk::raii::Device const&         device,
                  vk::raii::CommandPool const&    command_pool,
                  vk::raii::Queue const&          queue,
-                 std::vector<float>&             vertices,
-                 std::vector<uint32_t>&          indices,
+                 std::vector<float>&&            vertices,
+                 std::vector<uint32_t>&&         indices,
                  BitMask<VertexAttributeBit>     attributes)
     {
         vk::IndexType index_type = vk::IndexType::eUint32;
         uint32_t      stride     = VertexAttributesToSize(attributes);
         ModelMesh*    mesh       = new ModelMesh();
-        mesh->vertices           = vertices;
-        mesh->indices            = indices;
+        mesh->vertices           = std::move(vertices);
+        mesh->indices            = std::move(indices);
         mesh->vertex_count       = vertices.size() / stride * 4;
 
         if (vertices.size() > 0)

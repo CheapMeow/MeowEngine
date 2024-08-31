@@ -327,7 +327,7 @@ namespace Meow
             m_render_stat_map.clear();
         });
 
-        m_render_pass_ptr = &m_deferred_pass;
+        m_render_pass_ptr = &m_forward_pass;
     }
 
     void RenderSystem::InitImGui()
@@ -560,10 +560,17 @@ namespace Meow
         model_go_ptr->SetName("TestBox");
         model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
                                                             std::make_shared<Transform3DComponent>());
+
+        const float*       cube_vertex_data = reinterpret_cast<const float*>(k_colored_cube_data);
+        std::vector<float> cube_vertex;
+        for (int i = 0; i < 36 * 6; i++)
+        {
+            cube_vertex.push_back(cube_vertex_data[i]);
+        }
         model_go_ptr->TryAddComponent<ModelComponent>(
             "ModelComponent",
-            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                             m_render_pass_ptr->input_vertex_attributes));
+            std::make_shared<ModelComponent>(
+                std::move(cube_vertex), std::vector<uint32_t>(), m_render_pass_ptr->input_vertex_attributes));
 
         //         for (int i = 0; i < 20; i++)
         //         {
@@ -673,6 +680,21 @@ namespace Meow
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
         return ImageData::CreateTexture(m_gpu, m_logical_device, cmd_buffer, file_path);
+    }
+
+    std::shared_ptr<Model> RenderSystem::CreateModel(std::vector<float>&&        vertices,
+                                                     std::vector<uint32_t>&&     indices,
+                                                     BitMask<VertexAttributeBit> attributes)
+    {
+        FUNCTION_TIMER();
+
+        return std::make_shared<Model>(m_gpu,
+                                       m_logical_device,
+                                       m_upload_context.command_pool,
+                                       m_present_queue,
+                                       std::move(vertices),
+                                       std::move(indices),
+                                       attributes);
     }
 
     std::shared_ptr<Model> RenderSystem::CreateModel(const std::string&          file_path,

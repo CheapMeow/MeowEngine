@@ -26,9 +26,9 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        if (m_textures_tag2id.find(file_path) != m_textures_tag2id.end())
+        if (m_textures_path2id.find(file_path) != m_textures_path2id.end())
         {
-            uuid = m_textures_tag2id[file_path];
+            uuid = m_textures_path2id[file_path];
             if (m_textures_id2data.find(uuid) != m_textures_id2data.end())
             {
                 return true;
@@ -39,9 +39,9 @@ namespace Meow
 
         if (texture_ptr)
         {
-            uuid                         = m_uuid_generator.getUUID();
-            m_textures_tag2id[file_path] = uuid;
-            m_textures_id2data[uuid]     = texture_ptr;
+            uuid                          = m_uuid_generator.getUUID();
+            m_textures_path2id[file_path] = uuid;
+            m_textures_id2data[uuid]      = texture_ptr;
             return true;
         }
         else
@@ -74,14 +74,41 @@ namespace Meow
     //     return m_materials[file_path];
     // }
 
+    bool ResourceSystem::LoadModel(std::vector<float>&&        vertices,
+                                   std::vector<uint32_t>&&     indices,
+                                   BitMask<VertexAttributeBit> attributes,
+                                   UUIDv4::UUID&               uuid)
+    {
+        FUNCTION_TIMER();
+
+        if (m_models_id2data.find(uuid) != m_models_id2data.end())
+        {
+            return true;
+        }
+
+        std::shared_ptr<Model> model_ptr =
+            g_runtime_global_context.render_system->CreateModel(std::move(vertices), std::move(indices), attributes);
+
+        if (model_ptr)
+        {
+            uuid                   = m_uuid_generator.getUUID();
+            m_models_id2data[uuid] = model_ptr;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     bool
     ResourceSystem::LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUIDv4::UUID& uuid)
     {
         FUNCTION_TIMER();
 
-        if (m_models_tag2id.find(file_path) != m_models_tag2id.end())
+        if (m_models_path2id.find(file_path) != m_models_path2id.end())
         {
-            uuid = m_models_tag2id[file_path];
+            uuid = m_models_path2id[file_path];
             if (m_models_id2data.find(uuid) != m_models_id2data.end())
             {
                 return true;
@@ -92,9 +119,9 @@ namespace Meow
 
         if (model_ptr)
         {
-            uuid                       = m_uuid_generator.getUUID();
-            m_models_tag2id[file_path] = uuid;
-            m_models_id2data[uuid]     = model_ptr;
+            uuid                        = m_uuid_generator.getUUID();
+            m_models_path2id[file_path] = uuid;
+            m_models_id2data[uuid]      = model_ptr;
             return true;
         }
         else

@@ -87,6 +87,10 @@ namespace Meow
 
         std::shared_ptr<ImageData> CreateTexture(const std::string& file_path);
 
+        std::shared_ptr<Model> CreateModel(std::vector<float>&&        vertices,
+                                           std::vector<uint32_t>&&     indices,
+                                           BitMask<VertexAttributeBit> attributes);
+
         std::shared_ptr<Model> CreateModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
 
         UUIDv4::UUID m_main_camera_id;

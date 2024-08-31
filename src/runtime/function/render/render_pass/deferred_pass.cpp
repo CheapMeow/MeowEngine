@@ -198,8 +198,8 @@ namespace Meow
                                        device,
                                        command_pool,
                                        queue,
-                                       vertices,
-                                       indices,
+                                       std::move(vertices),
+                                       std::move(indices),
                                        m_quad_mat.shader_ptr->per_vertex_attributes));
 
         clear_values.resize(5);

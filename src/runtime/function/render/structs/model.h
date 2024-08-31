@@ -74,8 +74,8 @@ namespace Meow
               vk::raii::Device const&         device,
               vk::raii::CommandPool const&    command_pool,
               vk::raii::Queue const&          queue,
-              std::vector<float>&             vertices,
-              std::vector<uint32_t>&          indices,
+              std::vector<float>&&            vertices,
+              std::vector<uint32_t>&&         indices,
               BitMask<VertexAttributeBit>     attributes);
 
         /**
@@ -111,7 +111,7 @@ namespace Meow
         void Update(float time, float delta);
 
         BoundingBox GetBounding();
-        
+
         void SetAnimation(size_t index);
 
         ModelAnimation& GetAnimation(size_t index = -1);

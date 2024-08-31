@@ -8,6 +8,7 @@
 #include "function/system.h"
 
 #include <unordered_map>
+#include <vector>
 
 namespace Meow
 {
@@ -47,6 +48,11 @@ namespace Meow
 
         // std::shared_ptr<Material> GetMaterial(const UUIDv4::UUID& uuid);
 
+        bool LoadModel(std::vector<float>&&        vertices,
+                       std::vector<uint32_t>&&     indices,
+                       BitMask<VertexAttributeBit> attributes,
+                       UUIDv4::UUID&               uuid);
+
         bool LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUIDv4::UUID& uuid);
 
         std::shared_ptr<Model> GetModel(const UUIDv4::UUID& uuid);
@@ -54,12 +60,12 @@ namespace Meow
     private:
         UUIDv4::UUIDGenerator<std::mt19937_64> m_uuid_generator;
 
-        std::unordered_map<std::string, UUIDv4::UUID>                m_textures_tag2id;
+        std::unordered_map<std::string, UUIDv4::UUID>                m_textures_path2id;
         std::unordered_map<UUIDv4::UUID, std::shared_ptr<ImageData>> m_textures_id2data;
 
         // std::unordered_map<UUIDv4::UUID, std::shared_ptr<Material>> m_materials;
 
-        std::unordered_map<std::string, UUIDv4::UUID>            m_models_tag2id;
+        std::unordered_map<std::string, UUIDv4::UUID>            m_models_path2id;
         std::unordered_map<UUIDv4::UUID, std::shared_ptr<Model>> m_models_id2data;
     };
 } // namespace Meow
