@@ -22,26 +22,42 @@ namespace Meow
 
     void ResourceSystem::Tick(float dt) {}
 
-    std::shared_ptr<ImageData> ResourceSystem::LoadTexture(const std::string& file_path)
+    bool ResourceSystem::LoadTexture(const std::string& file_path, UUIDv4::UUID& uuid)
     {
         FUNCTION_TIMER();
+
+        if (m_textures_tag2id.find(file_path) != m_textures_tag2id.end())
+        {
+            uuid = m_textures_tag2id[file_path];
+            if (m_textures_id2data.find(uuid) != m_textures_id2data.end())
+            {
+                return true;
+            }
+        }
 
         std::shared_ptr<ImageData> texture_ptr = g_runtime_global_context.render_system->CreateTexture(file_path);
 
         if (texture_ptr)
-            m_textures[file_path] = texture_ptr;
-
-        return texture_ptr;
+        {
+            uuid                         = m_uuid_generator.getUUID();
+            m_textures_tag2id[file_path] = uuid;
+            m_textures_id2data[uuid]     = texture_ptr;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    std::shared_ptr<ImageData> ResourceSystem::GetTexture(const std::string& file_path)
+    std::shared_ptr<ImageData> ResourceSystem::GetTexture(const UUIDv4::UUID& uuid)
     {
         FUNCTION_TIMER();
 
-        if (m_textures.find(file_path) == m_textures.end())
+        if (m_textures_id2data.find(uuid) == m_textures_id2data.end())
             return nullptr;
 
-        return m_textures[file_path];
+        return m_textures_id2data[uuid];
     }
 
     // bool ResourceSystem::LoadMaterial(const std::string& file_path)
@@ -58,29 +74,42 @@ namespace Meow
     //     return m_materials[file_path];
     // }
 
-    std::shared_ptr<Model> ResourceSystem::LoadModel(const std::string&          file_path,
-                                                     BitMask<VertexAttributeBit> attributes)
+    bool
+    ResourceSystem::LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUIDv4::UUID& uuid)
     {
         FUNCTION_TIMER();
 
-        if (m_models.find(file_path) != m_models.end())
-            return m_models[file_path];
+        if (m_models_tag2id.find(file_path) != m_models_tag2id.end())
+        {
+            uuid = m_models_tag2id[file_path];
+            if (m_models_id2data.find(uuid) != m_models_id2data.end())
+            {
+                return true;
+            }
+        }
 
         std::shared_ptr<Model> model_ptr = g_runtime_global_context.render_system->CreateModel(file_path, attributes);
 
         if (model_ptr)
-            m_models[file_path] = model_ptr;
-
-        return model_ptr;
+        {
+            uuid                       = m_uuid_generator.getUUID();
+            m_models_tag2id[file_path] = uuid;
+            m_models_id2data[uuid]     = model_ptr;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    std::shared_ptr<Model> ResourceSystem::GetModel(const std::string& file_path)
+    std::shared_ptr<Model> ResourceSystem::GetModel(const UUIDv4::UUID& uuid)
     {
         FUNCTION_TIMER();
 
-        if (m_models.find(file_path) == m_models.end())
+        if (m_models_id2data.find(uuid) == m_models_id2data.end())
             return nullptr;
 
-        return m_models[file_path];
+        return m_models_id2data[uuid];
     }
 } // namespace Meow

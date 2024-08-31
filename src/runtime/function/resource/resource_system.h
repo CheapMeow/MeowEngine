@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/base/bitmask.hpp"
+#include "core/uuid/uuid_v4.h"
 #include "function/render/structs/image_data.h"
 #include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
@@ -38,26 +39,27 @@ namespace Meow
 
         void Tick(float dt) override;
 
-        std::shared_ptr<ImageData> LoadTexture(const std::string& file_path);
+        bool LoadTexture(const std::string& file_path, UUIDv4::UUID& uuid);
 
-        std::shared_ptr<ImageData> GetTexture(const std::string& file_path);
+        std::shared_ptr<ImageData> GetTexture(const UUIDv4::UUID& uuid);
 
-        // bool LoadMaterial(const std::string& file_path);
+        // bool LoadMaterial(const std::string& file_path, UUIDv4::UUID& uuid);
 
-        // std::shared_ptr<Material> GetMaterial(const std::string& file_path);
+        // std::shared_ptr<Material> GetMaterial(const UUIDv4::UUID& uuid);
 
-        std::shared_ptr<Model> LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
+        bool LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUIDv4::UUID& uuid);
 
-        std::shared_ptr<Model> GetModel(const std::string& file_path);
+        std::shared_ptr<Model> GetModel(const UUIDv4::UUID& uuid);
 
     private:
-        std::unordered_map<std::string, std::shared_ptr<ImageData>> m_textures;
+        UUIDv4::UUIDGenerator<std::mt19937_64> m_uuid_generator;
 
-        // /**
-        //  * @brief Relative path - Material
-        //  */
-        // std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
+        std::unordered_map<std::string, UUIDv4::UUID>                m_textures_tag2id;
+        std::unordered_map<UUIDv4::UUID, std::shared_ptr<ImageData>> m_textures_id2data;
 
-        std::unordered_map<std::string, std::shared_ptr<Model>> m_models;
+        // std::unordered_map<UUIDv4::UUID, std::shared_ptr<Material>> m_materials;
+
+        std::unordered_map<std::string, UUIDv4::UUID>            m_models_tag2id;
+        std::unordered_map<UUIDv4::UUID, std::shared_ptr<Model>> m_models_id2data;
     };
 } // namespace Meow

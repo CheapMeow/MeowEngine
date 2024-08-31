@@ -12,6 +12,7 @@ namespace Meow
     class [[reflectable_class()]] ModelComponent : public Component
     {
     public:
+        UUIDv4::UUID         uuid;
         std::weak_ptr<Model> model_ptr;
 
         // ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
@@ -21,7 +22,8 @@ namespace Meow
 
         ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
         {
-            model_ptr = g_runtime_global_context.resource_system->LoadModel(file_path, attributes);
+            if (g_runtime_global_context.resource_system->LoadModel(file_path, attributes, uuid))
+                model_ptr = g_runtime_global_context.resource_system->GetModel(uuid);
         }
     };
 } // namespace Meow
