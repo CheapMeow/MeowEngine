@@ -31,12 +31,12 @@ namespace Meow
         mesh->indices            = std::move(indices);
         mesh->vertex_count       = vertices.size() / stride * 4;
 
-        if (vertices.size() > 0)
+        if (mesh->vertices.size() > 0)
         {
             mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
                 physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
         }
-        if (indices.size() > 0)
+        if (mesh->indices.size() > 0)
         {
             mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
                 physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);

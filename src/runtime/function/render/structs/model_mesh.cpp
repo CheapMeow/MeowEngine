@@ -29,19 +29,25 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        if (vertex_buffer_ptr && !index_buffer_ptr)
-        {
-            cmd_buffer.draw(vertex_count, 1, 0, 0);
-        }
-        else
+        if (vertex_buffer_ptr && index_buffer_ptr)
         {
             cmd_buffer.drawIndexed(index_buffer_ptr->index_count, 1, 0, 0, 0);
+        }
+        else if (vertex_buffer_ptr)
+        {
+            cmd_buffer.draw(vertex_count, 1, 0, 0);
         }
     }
 
     void ModelMesh::BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer)
     {
         FUNCTION_TIMER();
+
+        if (!vertex_buffer_ptr)
+        {
+            MEOW_ERROR("Doesn't have vertex buffer!");
+            return;
+        }
 
         BindOnly(cmd_buffer);
         DrawOnly(cmd_buffer);
