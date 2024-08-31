@@ -51,9 +51,6 @@ namespace Meow
         std::shared_ptr<Model> GetModel(const std::string& file_path);
 
     private:
-        /**
-         * @brief Relative path - ImageData
-         */
         std::unordered_map<std::string, std::shared_ptr<ImageData>> m_textures;
 
         // /**

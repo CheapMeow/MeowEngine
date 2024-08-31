@@ -540,7 +540,7 @@ namespace Meow
         camera_comp_ptr->camera_mode  = CameraMode::Free;
         camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
 
-        GameObjectID                model_go_id  = level_ptr->CreateObject();
+        UUIDv4::UUID                model_go_id  = level_ptr->CreateObject();
         std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
 
 #ifdef MEOW_DEBUG
@@ -567,7 +567,7 @@ namespace Meow
 
         //         for (int i = 0; i < 20; i++)
         //         {
-        //             GameObjectID                model_go_id1  = level_ptr->CreateObject();
+        //             UUIDv4::UUID                model_go_id1  = level_ptr->CreateObject();
         //             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
         // #ifdef MEOW_DEBUG

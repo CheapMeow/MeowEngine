@@ -18,7 +18,7 @@ namespace Meow
         FrustumCulling();
     }
 
-    std::weak_ptr<GameObject> Level::GetGameObjectByID(GameObjectID go_id) const
+    std::weak_ptr<GameObject> Level::GetGameObjectByID(UUIDv4::UUID go_id) const
     {
         FUNCTION_TIMER();
 
@@ -31,12 +31,12 @@ namespace Meow
         return std::weak_ptr<GameObject>();
     }
 
-    GameObjectID Level::CreateObject()
+    UUIDv4::UUID Level::CreateObject()
     {
         FUNCTION_TIMER();
 
-        GameObjectID object_id = ObjectIDAllocator::alloc();
-        ASSERT(object_id != k_invalid_gobject_id);
+        UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
+        UUIDv4::UUID object_id = uuid_generator.getUUID();
 
         std::shared_ptr<GameObject> gobject;
         try

@@ -20,6 +20,8 @@ set(RUNTIME_HEADER_FILES
     core/time/scope_time_data.h
     core/time/time.h
     core/time/timer.h
+    core/uuid/endianness.h
+    core/uuid/uuid_v4.h
     function/system.h
     function/components/camera/camera_3d_component.hpp
     function/components/model/model_component.h
@@ -39,7 +41,6 @@ set(RUNTIME_HEADER_FILES
     function/level/level.h
     function/level/level_system.h
     function/object/game_object.h
-    function/object/object_id_allocator.h
     function/render/render_system.h
     function/render/imgui_widgets/builtin_statistics_widget.h
     function/render/imgui_widgets/components_widget.h
@@ -95,7 +96,6 @@ set(RUNTIME_SOURCE_FILES
     function/level/level.cpp
     function/level/level_system.cpp
     function/object/game_object.cpp
-    function/object/object_id_allocator.cpp
     function/render/render_system.cpp
     function/render/imgui_widgets/builtin_statistics_widget.cpp
     function/render/imgui_widgets/components_widget.cpp

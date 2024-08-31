@@ -4,7 +4,7 @@
 
 namespace Meow
 {
-    void GameObjectsWidget::Draw(const std::unordered_map<GameObjectID, std::shared_ptr<GameObject>>& gameobject_map)
+    void GameObjectsWidget::Draw(const std::unordered_map<UUIDv4::UUID, std::shared_ptr<GameObject>>& gameobject_map)
     {
         ImGuiWindow* window = ImGui::GetCurrentWindow();
         if (window->SkipItems)

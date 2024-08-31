@@ -10,11 +10,11 @@ namespace Meow
     class GameObjectsWidget
     {
     public:
-        void Draw(const std::unordered_map<GameObjectID, std::shared_ptr<GameObject>>& gameobject_map);
+        void Draw(const std::unordered_map<UUIDv4::UUID, std::shared_ptr<GameObject>>& gameobject_map);
 
-        const GameObjectID GetSelectedID() const { return m_selected_go_id; }
+        const UUIDv4::UUID GetSelectedID() const { return m_selected_go_id; }
 
     private:
-        GameObjectID m_selected_go_id;
+        UUIDv4::UUID m_selected_go_id;
     };
 } // namespace Meow

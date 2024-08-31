@@ -3,7 +3,7 @@
 #include "pch.h"
 
 #include "core/reflect/reflect_pointer.hpp"
-#include "object_id_allocator.h"
+#include "core/uuid/uuid_v4.h"
 
 namespace Meow
 {
@@ -23,7 +23,7 @@ namespace Meow
     public:
         std::weak_ptr<GameObject> self_weak_ptr;
 
-        GameObject(GameObjectID id)
+        GameObject(UUIDv4::UUID id)
             : m_id {id}
         {}
 
@@ -31,7 +31,7 @@ namespace Meow
 
         virtual void Tick(float dt);
 
-        GameObjectID GetID() const { return m_id; }
+        UUIDv4::UUID GetID() const { return m_id; }
 
         void               SetName(std::string name) { m_name = name; }
         const std::string& GetName() const { return m_name; }
@@ -100,7 +100,7 @@ namespace Meow
         }
 
     protected:
-        GameObjectID                                     m_id {k_invalid_gobject_id};
+        UUIDv4::UUID                                     m_id;
         std::string                                      m_name = "Default Object";
         std::vector<reflect::refl_shared_ptr<Component>> m_refl_components;
     };

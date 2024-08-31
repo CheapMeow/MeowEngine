@@ -30,6 +30,8 @@ set(HEADER_FILES_DEPEND
     ../runtime/core/time/scope_time_data.h
     ../runtime/core/time/time.h
     ../runtime/core/time/timer.h
+    ../runtime/core/uuid/endianness.h
+    ../runtime/core/uuid/uuid_v4.h
     ../runtime/function/system.h
     ../runtime/function/components/camera/camera_3d_component.hpp
     ../runtime/function/components/model/model_component.h
@@ -49,7 +51,6 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/level/level.h
     ../runtime/function/level/level_system.h
     ../runtime/function/object/game_object.h
-    ../runtime/function/object/object_id_allocator.h
     ../runtime/function/render/render_system.h
     ../runtime/function/render/imgui_widgets/builtin_statistics_widget.h
     ../runtime/function/render/imgui_widgets/components_widget.h

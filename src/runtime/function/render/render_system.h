@@ -89,7 +89,7 @@ namespace Meow
 
         std::shared_ptr<Model> CreateModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
 
-        GameObjectID m_main_camera_id;
+        UUIDv4::UUID m_main_camera_id;
 
     private:
         void CreateVulkanInstance();
