@@ -2,6 +2,7 @@
 
 #include "core/base/macro.h"
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <vulkan/vulkan.hpp>
@@ -33,6 +34,21 @@ namespace Meow
             float half_angle = 0.5 * angle;
             float sin_v      = glm::sin(half_angle);
             return {glm::cos(half_angle), sin_v * axis.x, sin_v * axis.y, sin_v * axis.z};
+        }
+
+        static glm::mat4 perspective_vk(float fovy, float aspect, float zNear, float zFar)
+        {
+            assert(abs(aspect - std::numeric_limits<float>::epsilon()) > static_cast<float>(0));
+
+            float const tanHalfFovy = tan(fovy / 2.0f);
+
+            glm::mat4 Result(0.0f);
+            Result[0][0] = -1.0f / (aspect * tanHalfFovy);
+            Result[1][1] = 1.0f / (tanHalfFovy);
+            Result[2][2] = zFar / (zNear - zFar);
+            Result[2][3] = -1.0f;
+            Result[3][2] = -(zFar * zNear) / (zFar - zNear);
+            return Result;
         }
     };
 } // namespace Meow

@@ -327,7 +327,7 @@ namespace Meow
             m_render_stat_map.clear();
         });
 
-        m_render_pass_ptr = &m_forward_pass;
+        m_render_pass_ptr = &m_deferred_pass;
     }
 
     void RenderSystem::InitImGui()
@@ -536,6 +536,7 @@ namespace Meow
         if (!camera_comp_ptr)
             MEOW_ERROR("shared ptr is invalid!");
 #endif
+        camera_transform_comp_ptr->position = glm::vec3(0.0f, 0.0f, -10.0f);
 
         camera_comp_ptr->camera_mode  = CameraMode::Free;
         camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
@@ -547,30 +548,13 @@ namespace Meow
         if (!model_go_ptr)
             MEOW_ERROR("GameObject is invalid!");
 #endif
-        // model_go_ptr->SetName("Backpack");
-        // model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-        //                                                     std::make_shared<Transform3DComponent>());
-        // model_go_ptr->TryAddComponent<ModelComponent>(
-        //     "ModelComponent",
-        //     std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-        //                                      m_render_pass_ptr->input_vertex_attributes));
-
-        camera_transform_comp_ptr->position = glm::vec3(0.0f, 0.0f, -25.0f);
-
-        model_go_ptr->SetName("TestBox");
+        model_go_ptr->SetName("Backpack");
         model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
                                                             std::make_shared<Transform3DComponent>());
-
-        const float*       cube_vertex_data = reinterpret_cast<const float*>(k_colored_cube_data);
-        std::vector<float> cube_vertex;
-        for (int i = 0; i < 36 * 6; i++)
-        {
-            cube_vertex.push_back(cube_vertex_data[i]);
-        }
         model_go_ptr->TryAddComponent<ModelComponent>(
             "ModelComponent",
-            std::make_shared<ModelComponent>(
-                std::move(cube_vertex), std::vector<uint32_t>(), m_render_pass_ptr->input_vertex_attributes));
+            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                                             m_render_pass_ptr->input_vertex_attributes));
 
         //         for (int i = 0; i < 20; i++)
         //         {
@@ -625,9 +609,9 @@ namespace Meow
         cmd_buffer.begin({});
         cmd_buffer.setViewport(0,
                                vk::Viewport(0.0f,
-                                            0.0f,
-                                            static_cast<float>(m_surface_data.extent.width),
                                             static_cast<float>(m_surface_data.extent.height),
+                                            static_cast<float>(m_surface_data.extent.width),
+                                            -static_cast<float>(m_surface_data.extent.height),
                                             0.0f,
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));

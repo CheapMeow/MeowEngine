@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "core/math/math.h"
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
@@ -368,16 +369,15 @@ namespace Meow
 
         glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
 
-        glm::mat4 view = glm::mat4(1.0f);
-        view           = glm::mat4_cast(glm::conjugate(transfrom_comp_ptr->rotation)) * view;
-        view           = glm::translate(view, -transfrom_comp_ptr->position);
+        glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::mat4 view    = glm::lookAt(
+            transfrom_comp_ptr->position, transfrom_comp_ptr->position + forward, glm::vec3(0.0f, 1.0f, 0.0f));
 
         ubo_data.view       = view;
-        ubo_data.projection = glm::perspective(camera_comp_ptr->field_of_view,
-                                               (float)window_size[0] / (float)window_size[1],
-                                               camera_comp_ptr->near_plane,
-                                               camera_comp_ptr->far_plane);
-        // ubo_data.projection[1][1] = -1.0 * ubo_data.projection[1][1];
+        ubo_data.projection = Math::perspective_vk(camera_comp_ptr->field_of_view,
+                                                   (float)window_size[0] / (float)window_size[1],
+                                                   camera_comp_ptr->near_plane,
+                                                   camera_comp_ptr->far_plane);
 
         // Update mesh uniform
 
