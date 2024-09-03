@@ -18,12 +18,12 @@ namespace Meow
     {
         auto transfrom_shared_ptr = m_transform.lock();
 
-        glm::mat4 view = glm::mat4(1.0f);
-        view           = glm::mat4_cast(glm::conjugate(transfrom_shared_ptr->rotation)) * view;
-        view           = glm::translate(view, -transfrom_shared_ptr->position);
-
-        m_frustum.updatePlanes(
-            view, transfrom_shared_ptr->position, field_of_view, aspect_ratio, near_plane, far_plane);
+        m_frustum.updatePlanes(transfrom_shared_ptr->position,
+                               transfrom_shared_ptr->rotation,
+                               field_of_view,
+                               aspect_ratio,
+                               near_plane,
+                               far_plane);
 
         if (camera_mode == CameraMode::Free)
         {
@@ -44,8 +44,8 @@ namespace Meow
         auto bounding = model_shared_ptr->model_ptr.lock()->GetBounding();
         bounding.min  = bounding.min * transform_shared_ptr->scale + transform_shared_ptr->position;
         bounding.max  = bounding.max * transform_shared_ptr->scale + transform_shared_ptr->position;
-        return true;
-        // return CheckVisibility(&bounding);
+
+        return CheckVisibility(&bounding);
     }
 
     bool Camera3DComponent::CheckVisibility(BoundingBox* bounding) { return m_frustum.checkIfInside(bounding); }

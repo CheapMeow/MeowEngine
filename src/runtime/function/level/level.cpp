@@ -36,7 +36,7 @@ namespace Meow
         FUNCTION_TIMER();
 
         UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
-        UUIDv4::UUID object_id = uuid_generator.getUUID();
+        UUIDv4::UUID                           object_id = uuid_generator.getUUID();
 
         std::shared_ptr<GameObject> gobject;
         try

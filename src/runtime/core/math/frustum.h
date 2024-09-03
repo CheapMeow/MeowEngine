@@ -3,6 +3,8 @@
 #include "bounding_box.h"
 #include "plane.h"
 
+#include <glm/gtc/quaternion.hpp>
+
 namespace Meow
 {
     class Frustum
@@ -19,7 +21,8 @@ namespace Meow
         };
 
     public:
-        void updatePlanes(glm::mat4& viewMat, const glm::vec3& cameraPos, float fov, float AR, float near, float far);
+        void
+        updatePlanes(const glm::vec3 cameraPos, const glm::quat rotation, float fovy, float AR, float near, float far);
         bool checkIfInside(BoundingBox* bounds);
 
     private:
