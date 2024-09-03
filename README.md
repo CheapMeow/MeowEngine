@@ -30,19 +30,23 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 ### Cpp 静态反射
 
-使用 `LLVM` 中的 `libclang` 解析头文件，识别 cpp `attribute` 属性
+我个人的静态反射实现思路是
 
-属性为 `clang::annotate` 的类会被识别到，其中含有相同属性的字段和方法可以获得名字
+使用 `LLVM` 中的 `libclang` 解析头文件，识别 cpp 头文件的类型、变量、函数声明中的 `attribute` 属性
 
-已知被反射的类的名称，字段和方法的名称，使用代码生成，生成反射代码
+`libclang` 对传入的每一个头文件的 AST 都执行如下操作：首先记录那些属性为 `clang::annotate` 的类，然后以这些类为根 cursor 开始遍历。含有 `clang::annotate` 的字段和方法被记录下来
 
-该反射代码提取出类的成员变量指针，成员函数指针，存到 lambda 中，这个 lambda 接受 `void*`，`static_cast` 成被反射的类型。这样就完成了反射信息在 cpp 中的存储。
+已知被反射的类的名称，字段和方法的名称，就可以生成反射代码文件
 
-外部使用反射接口时，传入类型名称，可以获得对应的 `TypeDescriptor`，其中存储字段信息 `FieldAccessor` 和方法信息 `MethodAccessor`
+主目标中已经写好了 `TypeDescriptor` 类，`TypeDescriptor` 类会提供注册反射信息的功能，其中存储字段信息 `FieldAccessor` 和方法信息 `MethodAccessor`。生成的反射代码注册反射信息，也就是提取出类的成员变量指针，成员函数指针，存到 lambda 中。这个 lambda 接受 `void*`，`static_cast` 成被反射的类型。这样就完成了反射信息在 cpp 中的存储。
 
-向 `FieldAccessor` `MethodAccessor` 传入 `void*` 类型的实例指针，就能获得这个实例对应的成员和方法的指针
+外部使用反射接口时，传入 `std::string` 类型名称，可以从全局单例的 map 中获得对应的 `TypeDescriptor`。而已知 `TypeDescriptor`，就可以获得他其中存储的字段信息 `FieldAccessor` 和方法信息 `MethodAccessor` 列表
 
-因为只有 `static_cast`，所以类型不匹配时会报错中断
+向 `FieldAccessor` `MethodAccessor` 传入 `void*` 类型的实例指针，调用存储的 lambda 就能获得这个实例对应的成员和方法的指针
+
+因为只有 `static_cast`，所以类型不匹配时会报错中断，程序容错性会很差
+
+关于更多实现细节、序列化应用等内容，见博客
 
 ### SPIR-V 反射
 

@@ -38,11 +38,13 @@ namespace Meow
 
         CXIndex index = clang_createIndex(0, 0);
 
-        std::vector<const char*> all_args(1 + include_paths.size());
+        std::vector<const char*> all_args(3 + include_paths.size());
         all_args[0] = "-xc++";
+        all_args[1] = "-std=c++20";
+        all_args[2] = "-DGLM_ENABLE_EXPERIMENTAL";
         for (int i = 0; i < include_paths.size(); i++)
         {
-            all_args[i + 1] = include_paths[i].c_str();
+            all_args[i + 3] = include_paths[i].c_str();
         }
         CXTranslationUnit unit = clang_parseTranslationUnit(
             index, path.string().c_str(), all_args.data(), all_args.size(), nullptr, 0, CXTranslationUnit_None);
@@ -52,7 +54,7 @@ namespace Meow
             exit(-1);
         }
 
-        // LibclangUtils::print_diagnostics(unit);
+        LibclangUtils::print_diagnostics(unit);
 
         struct ParseContext
         {
@@ -167,6 +169,8 @@ namespace Meow
 
     bool Parser::ParseClass(const fs::path& path, CXCursor class_cursor)
     {
+        static const std::string vector_prefix = "std::vector<";
+
         std::string class_name = LibclangUtils::to_string(clang_getCursorSpelling(class_cursor));
 
         std::cout << "[CodeGenerator] Parsing reflectable class " << class_name << std::endl;

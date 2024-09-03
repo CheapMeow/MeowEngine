@@ -19,8 +19,8 @@ set(EDITOR_NAME MeowEditor)
 
 include(cmake/Utils.cmake)
 
-add_subdirectory(src/code_generator)
 add_subdirectory(src/3rdparty)
+add_subdirectory(src/code_generator)
 add_subdirectory(src/runtime)
 add_subdirectory(src/editor)
 
