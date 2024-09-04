@@ -97,6 +97,8 @@ namespace Meow
 
             void set(void* ins_ptr, void* val, std::size_t idx = 0) const { m_setter(ins_ptr, val, idx); }
 
+            const std::size_t get_size(void* ins_ptr) const { return m_array_size_getter(ins_ptr); }
+
         private:
             std::string m_name;
             std::string m_type_name;
@@ -214,6 +216,8 @@ namespace Meow
             const std::string& name() const { return m_name; }
 
             const std::vector<FieldAccessor>& GetFields() const { return m_fields; }
+
+            const std::vector<ArrayAccessor>& GetArrays() const { return m_arrays; }
 
             const std::vector<MethodAccessor>& GetMethods() const { return m_methods; }
 

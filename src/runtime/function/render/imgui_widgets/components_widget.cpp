@@ -177,14 +177,28 @@ namespace Meow
             return;
 
         const reflect::TypeDescriptor& type_desc = reflect::Registry::instance().GetType(comp_ptr.type_name);
-        const std::vector<reflect::FieldAccessor>& field_accessors = type_desc.GetFields();
 
+        const std::vector<reflect::FieldAccessor>& field_accessors = type_desc.GetFields();
         for (const reflect::FieldAccessor& field_accessor : field_accessors)
         {
             if (m_editor_ui_creator.find(field_accessor.type_name()) != m_editor_ui_creator.end())
             {
                 m_editor_ui_creator[field_accessor.type_name()](
                     m_node_states, field_accessor.name(), field_accessor.get(comp_ptr.shared_ptr.get()));
+            }
+        }
+
+        const std::vector<reflect::ArrayAccessor>& array_accessors = type_desc.GetArrays();
+        for (const reflect::ArrayAccessor& array_accessor : array_accessors)
+        {
+            if (m_editor_ui_creator.find(array_accessor.inner_type_name()) == m_editor_ui_creator.end())
+                continue;
+
+            std::size_t array_size = array_accessor.get_size(comp_ptr.shared_ptr.get());
+            for (std::size_t i = 0; i < array_size; i++)
+            {
+                m_editor_ui_creator[array_accessor.inner_type_name()](
+                    m_node_states, array_accessor.inner_type_name(), array_accessor.get(comp_ptr.shared_ptr.get(), i));
             }
         }
     }
