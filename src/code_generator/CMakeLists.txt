@@ -1,12 +1,10 @@
 set(CODE_GENERATOR_HEADER_FILES
     parser.h
-    keyword_finder.h
-    libclang_utils.h)
+    code_gen_utils.h)
 set(CODE_GENERATOR_SOURCE_FILES
     main.cpp
     parser.cpp
-    keyword_finder.cpp
-    libclang_utils.cpp)
+    code_gen_utils.cpp)
 
 set(HEADER_FILES_DEPEND
     ../runtime/engine.h

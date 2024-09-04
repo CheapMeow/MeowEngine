@@ -1,4 +1,4 @@
-#include "keyword_finder.h"
+#include "code_gen_utils.h"
 #include "parser.h"
 
 #include <filesystem>
@@ -84,8 +84,7 @@ int main(int argc, char* argv[])
     {
         if (entry.is_regular_file() && suffixes.find(entry.path().extension().string()) != suffixes.end())
         {
-            auto result = KeywordFinder::Find(entry.path());
-            if (result.is_reflectable_found || result.is_enum_found)
+            if (CodeGenUtils::find_reflectable_keyword(entry.path()))
                 files.push_back(entry.path());
         }
     }

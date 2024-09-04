@@ -1,17 +1,42 @@
-#include "libclang_utils.h"
+#include "code_gen_utils.h"
 
 #include <cctype> // for std::tolower
 
 namespace Meow
 {
-    std::string LibclangUtils::to_string(CXString cxStr)
+    bool CodeGenUtils::find_reflectable_keyword(const fs::path& filePath)
+    {
+        std::ifstream file(filePath);
+        if (!file.is_open())
+        {
+            std::cerr << "Failed to open the file: " << filePath << std::endl;
+            return false;
+        }
+
+        std::string line;
+        while (std::getline(file, line))
+        {
+            if (line.find("reflectable_class") != std::string::npos ||
+                line.find("reflectable_struct") != std::string::npos ||
+                line.find("reflectable_field") != std::string::npos ||
+                line.find("reflectable_method") != std::string::npos ||
+                line.find("reflectable_enum") != std::string::npos)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    std::string CodeGenUtils::to_string(CXString cxStr)
     {
         std::string result = clang_getCString(cxStr);
         clang_disposeString(cxStr);
         return result;
     }
 
-    std::vector<std::string> LibclangUtils::split(const std::string& text, char delim)
+    std::vector<std::string> CodeGenUtils::split(const std::string& text, char delim)
     {
         std::string              line;
         std::vector<std::string> vec;
@@ -23,7 +48,7 @@ namespace Meow
         return vec;
     }
 
-    void LibclangUtils::print_diagnostics(CXTranslationUnit TU)
+    void CodeGenUtils::print_diagnostics(CXTranslationUnit TU)
     {
         unsigned numDiagnostics = clang_getNumDiagnostics(TU);
         for (unsigned i = 0; i < numDiagnostics; ++i)
@@ -36,7 +61,7 @@ namespace Meow
         }
     }
 
-    std::string LibclangUtils::replace_all(std::string subject, const std::string& search, const std::string& replace)
+    std::string CodeGenUtils::replace_all(std::string subject, const std::string& search, const std::string& replace)
     {
         size_t pos = 0;
         while ((pos = subject.find(search, pos)) != std::string::npos)
@@ -47,7 +72,7 @@ namespace Meow
         return subject;
     }
 
-    std::string LibclangUtils::camel_case_to_under_score(const std::string& camel_case_str)
+    std::string CodeGenUtils::camel_case_to_under_score(const std::string& camel_case_str)
     {
         std::string under_score_str;
 
@@ -65,6 +90,20 @@ namespace Meow
         }
 
         return under_score_str;
+    }
+
+    std::string CodeGenUtils::get_name_without_container(std::string name)
+    {
+        size_t left  = name.find_first_of('<') + 1;
+        size_t right = name.find_last_of('>');
+        if (left > 0 && right < name.size() && left < right)
+        {
+            return name.substr(left, right - left);
+        }
+        else
+        {
+            return "";
+        }
     }
 
     std::ostream& operator<<(std::ostream& stream, const CXString& str)
