@@ -1,10 +1,13 @@
 set(CODE_GENERATOR_HEADER_FILES
-    parser.h
-    code_gen_utils.h)
+    src/parser/parser.h
+    src/utils/code_gen_utils.h
+    src/parse_result/type_parse_result.h
+    src/parse_result/field_parse_result.h
+    src/parse_result/method_parse_result.h)
 set(CODE_GENERATOR_SOURCE_FILES
-    main.cpp
-    parser.cpp
-    code_gen_utils.cpp)
+    src/main.cpp
+    src/parser/parser.cpp
+    src/utils/code_gen_utils.cpp)
 
 set(HEADER_FILES_DEPEND
 <all_headers_place_holder>)
@@ -16,6 +19,7 @@ add_executable(${CODE_GENERATOR_NAME} ${CODE_GENERATOR_HEADER_FILES} ${CODE_GENE
 
 find_package(Vulkan REQUIRED) # export vars
 
+target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glfw/include)

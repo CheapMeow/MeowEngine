@@ -1,5 +1,5 @@
-#include "code_gen_utils.h"
-#include "parser.h"
+#include "parser/parser.h"
+#include "utils/code_gen_utils.h"
 
 #include <filesystem>
 #include <iostream>

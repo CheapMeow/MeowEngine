@@ -1,6 +1,6 @@
 #include "parser.h"
 
-#include "code_gen_utils.h"
+#include "utils/code_gen_utils.h"
 
 #include <algorithm>
 #include <functional>
