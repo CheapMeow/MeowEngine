@@ -111,6 +111,21 @@ namespace Meow
         void InitImGui();
         void RecreateSwapChain();
 
+        /**
+         * @brief vk::raii::SwapchainKHR::acquireNextImageKHR without exceptions
+         */
+        std::pair<vk::Result, uint32_t> SwapchainNextImageWrapper(const vk::raii::SwapchainKHR& swapchain,
+                                                                  uint64_t                      timeout,
+                                                                  vk::Semaphore                 semaphore,
+                                                                  vk::Fence                     fence = {});
+
+        /**
+         * @brief vk::raii::Queue::presentKHR without exceptions
+         */
+        vk::Result QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info);
+
+        bool m_iconified = false;
+
         bool                           m_is_validation_layer_found  = false;
         const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
         const uint64_t                 k_fence_timeout              = 100000000;

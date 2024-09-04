@@ -117,10 +117,11 @@ namespace Meow
 
     void RenderSystem::CreateSurface()
     {
-        auto         size = g_runtime_global_context.window_system.get()->m_window->GetSize();
+        auto         size = g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetSize();
         vk::Extent2D extent(size.x, size.y);
-        m_surface_data = SurfaceData(
-            m_vulkan_instance, g_runtime_global_context.window_system.get()->m_window->GetGLFWWindow(), extent);
+        m_surface_data = SurfaceData(m_vulkan_instance,
+                                     g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetGLFWWindow(),
+                                     extent);
     }
 
     void RenderSystem::CreateLogicalDevice()
@@ -380,7 +381,8 @@ namespace Meow
         // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
         // with those in viewports
 
-        ImGui_ImplGlfw_InitForVulkan(g_runtime_global_context.window_system->m_window->GetGLFWWindow(), true);
+        ImGui_ImplGlfw_InitForVulkan(g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetGLFWWindow(),
+                                     true);
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance                  = *m_vulkan_instance;
         init_info.PhysicalDevice            = *m_gpu;
@@ -459,6 +461,28 @@ namespace Meow
         camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
     }
 
+    std::pair<vk::Result, uint32_t> RenderSystem::SwapchainNextImageWrapper(const vk::raii::SwapchainKHR& swapchain,
+                                                                            uint64_t                      timeout,
+                                                                            vk::Semaphore                 semaphore,
+                                                                            vk::Fence                     fence)
+    {
+        uint32_t   image_index;
+        vk::Result result = static_cast<vk::Result>(
+            swapchain.getDispatcher()->vkAcquireNextImageKHR(static_cast<VkDevice>(swapchain.getDevice()),
+                                                             static_cast<VkSwapchainKHR>(*swapchain),
+                                                             timeout,
+                                                             static_cast<VkSemaphore>(semaphore),
+                                                             static_cast<VkFence>(fence),
+                                                             &image_index));
+        return std::make_pair(result, image_index);
+    }
+
+    vk::Result RenderSystem::QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info)
+    {
+        return static_cast<vk::Result>(queue.getDispatcher()->vkQueuePresentKHR(
+            static_cast<VkQueue>(*queue), reinterpret_cast<const VkPresentInfoKHR*>(&present_info)));
+    }
+
     RenderSystem::RenderSystem()
     {
         CreateVulkanInstance();
@@ -505,6 +529,9 @@ namespace Meow
 
     void RenderSystem::Start()
     {
+        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnIconify().connect(
+            [&](bool iconified) { m_iconified = iconified; });
+
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
@@ -583,6 +610,9 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        if (m_iconified)
+            return;
+
         auto& per_frame_data            = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer                = per_frame_data.command_buffer;
         auto& image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
@@ -593,10 +623,8 @@ namespace Meow
 
         // ------------------- render -------------------
 
-        vk::Result result;
-        std::tie(result, m_current_image_index) =
-            m_swapchain_data.swap_chain.acquireNextImage(k_fence_timeout, *image_acquired_semaphore);
-
+        auto [result, m_current_image_index] =
+            SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *image_acquired_semaphore);
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebuffer_resized)
         {
             m_framebuffer_resized = false;
@@ -606,6 +634,8 @@ namespace Meow
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
 
+        if (m_surface_data.extent.height == 0 || m_surface_data.extent.width == 0)
+            std::cout << "WTF!!!!!!!!!!" << std::endl;
         cmd_buffer.begin({});
         cmd_buffer.setViewport(0,
                                vk::Viewport(0.0f,
@@ -638,8 +668,9 @@ namespace Meow
 
         vk::PresentInfoKHR present_info(
             *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
-        vk::Result result2 = m_present_queue.presentKHR(present_info);
-        switch (result2)
+        result = QueuePresentWrapper(m_present_queue, present_info);
+        ;
+        switch (result)
         {
             case vk::Result::eSuccess:
                 break;

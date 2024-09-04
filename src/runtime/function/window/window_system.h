@@ -17,6 +17,9 @@ namespace Meow
 
         void Tick(float dt) override;
 
+        std::shared_ptr<Window> GetCurrentFocusWindow() { return m_window; }
+
+    private:
         std::shared_ptr<Window> m_window;
     };
 } // namespace Meow

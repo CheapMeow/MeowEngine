@@ -7,7 +7,7 @@ namespace Meow
     KeyboardInputButton::KeyboardInputButton(KeyCode key)
         : m_key(key)
     {
-        g_runtime_global_context.window_system->m_window->OnKey().connect(
+        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnKey().connect(
             [this](KeyCode key, InputAction action, uint8_t mods) {
                 if (m_key == key)
                 {
@@ -18,6 +18,6 @@ namespace Meow
 
     InputAction KeyboardInputButton::GetAction() const
     {
-        return g_runtime_global_context.window_system->m_window->GetKeyAction(m_key);
+        return g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetKeyAction(m_key);
     }
 } // namespace Meow

@@ -9,14 +9,15 @@ namespace Meow
     MouseInputAxis::MouseInputAxis(uint8_t axis)
         : axis(axis)
     {
-        g_runtime_global_context.window_system->m_window->OnMousePosition().connect(
+        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnMousePosition().connect(
             [this](glm::vec2 value) { m_on_axis_signal(GetAmount()); });
     }
 
     float MouseInputAxis::GetAmount() const
     {
         return m_scale *
-                   static_cast<float>(g_runtime_global_context.window_system->m_window->GetMousePositionDelta()[axis]) +
+                   static_cast<float>(
+                       g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetMousePositionDelta()[axis]) +
                m_offset;
     }
 } // namespace Meow

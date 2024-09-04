@@ -367,7 +367,7 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        glm::ivec2 window_size = g_runtime_global_context.window_system->m_window->GetSize();
+        glm::ivec2 window_size = g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetSize();
 
         glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 view    = glm::lookAt(
