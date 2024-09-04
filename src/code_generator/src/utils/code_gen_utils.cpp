@@ -1,5 +1,6 @@
 #include "code_gen_utils.h"
 
+#include <algorithm>
 #include <cctype> // for std::tolower
 
 namespace Meow
@@ -34,6 +35,14 @@ namespace Meow
         std::string result = clang_getCString(cxStr);
         clang_disposeString(cxStr);
         return result;
+    }
+
+    std::string CodeGenUtils::get_relative_path(const fs::path& path, const fs::path& src_path)
+    {
+        fs::path    file_path_relative = fs::relative(path, src_path);
+        std::string path_rel           = file_path_relative.string();
+        std::replace(path_rel.begin(), path_rel.end(), '\\', '/');
+        return path_rel;
     }
 
     std::vector<std::string> CodeGenUtils::split(const std::string& text, char delim)

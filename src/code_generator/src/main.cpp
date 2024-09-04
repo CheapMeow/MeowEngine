@@ -1,3 +1,4 @@
+#include "generator/code_generator.h"
 #include "parser/parser.h"
 #include "utils/code_gen_utils.h"
 
@@ -75,8 +76,6 @@ int main(int argc, char* argv[])
         std::cout << include_paths[i] << std::endl;
     }
 
-    Parser parser;
-
     std::vector<fs::path> files;
 
     std::unordered_set<std::string> suffixes = {".h", ".hpp"};
@@ -89,13 +88,19 @@ int main(int argc, char* argv[])
         }
     }
 
-    parser.Begin(src_path, output_path);
+    Parser parser;
+    parser.Begin(src_path);
     for (int i = 0; i < files.size(); ++i)
     {
         std::cout << "[CodeGenerator] Traversing " << files[i].string() << std::endl;
         parser.ParseFile(files[i], include_paths);
     }
     parser.End();
+
+    CodeGenerator generator;
+    generator.Begin(src_path, output_path);
+    generator.Generate(parser.GetInlcudeRelativePaths(), parser.GetClassResults(), parser.GetEnumResults());
+    generator.End();
 
     return 0;
 }

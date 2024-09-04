@@ -8,7 +8,7 @@
 
 namespace Meow
 {
-    struct TypeParseResult
+    struct ClassParseResult
     {
         std::string                    class_name;
         std::vector<FieldParseResult>  field_results;

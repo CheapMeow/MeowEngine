@@ -19,6 +19,8 @@ namespace Meow
 
         static std::string to_string(CXString cxStr);
 
+        static std::string get_relative_path(const fs::path& path, const fs::path& src_path);
+        
         static std::vector<std::string> split(const std::string& text, char delim);
 
         static void print_diagnostics(CXTranslationUnit TU);

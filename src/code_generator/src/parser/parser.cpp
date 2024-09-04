@@ -2,34 +2,15 @@
 
 #include "utils/code_gen_utils.h"
 
-#include <algorithm>
 #include <functional>
 
 namespace Meow
 {
-    void Parser::Begin(const std::string& src_path, const std::string& output_path)
+    void Parser::Begin(const std::string& src_path)
     {
-        if (is_recording)
-        {
-            std::cerr << "Parser is already recording." << std::endl;
-            return;
-        }
-
-        output_source_file = std::ofstream(output_path + "/register_all.cpp");
-        if (!output_source_file)
-        {
-            std::cerr << "Error opening or creating the file " << output_path + "/register_all.cpp" << std::endl;
-            return;
-        }
-
-        is_recording = true;
+        is_recording   = true;
+        this->src_path = fs::path(src_path);
         class_name_set.clear();
-
-        this->src_path    = fs::path(src_path);
-        this->output_path = fs::path(output_path);
-
-        include_stream << "#include \"register_all.h\"\n\n";
-        include_stream << "#include \"core/reflect/type_descriptor_builder.hpp\"\n";
     }
 
     void Parser::ParseFile(const fs::path& path, const std::vector<std::string>& include_paths)
@@ -122,50 +103,14 @@ namespace Meow
 
         if (has_class_registered || has_enum_registered)
         {
-            InsertIncludePath(path);
+            include_relative_paths.push_back(CodeGenUtils::get_relative_path(path, src_path));
         }
 
         clang_disposeTranslationUnit(unit);
         clang_disposeIndex(index);
     }
 
-    void Parser::End()
-    {
-        if (!is_recording)
-        {
-            std::cerr << "Parser already ends recording." << std::endl;
-            return;
-        }
-
-        output_source_file << include_stream.str();
-
-        output_source_file << std::endl;
-        output_source_file << "namespace Meow" << std::endl;
-        output_source_file << "{" << std::endl;
-        output_source_file << '\t' << "void RegisterAll()" << std::endl;
-        output_source_file << '\t' << "{" << std::endl;
-
-        output_source_file << register_stream.str();
-
-        output_source_file << '\t' << "}" << std::endl;
-        output_source_file << std::endl;
-
-        output_source_file << enum_stream.str();
-
-        output_source_file << "} // namespace Meow" << std::endl;
-        output_source_file.close();
-
-        is_recording = false;
-    }
-
-    void Parser::InsertIncludePath(const fs::path& path)
-    {
-        fs::path    file_path_relative = fs::relative(path, src_path);
-        std::string include_path_rel   = file_path_relative.string();
-        std::replace(include_path_rel.begin(), include_path_rel.end(), '\\', '/');
-
-        include_stream << "#include \"" << include_path_rel << "\"\n";
-    }
+    void Parser::End() { is_recording = false; }
 
     bool Parser::ParseClass(const fs::path& path, CXCursor class_cursor)
     {
@@ -185,26 +130,15 @@ namespace Meow
             class_name_set.insert(class_name);
         }
 
-        // seperate each part
-        if (register_stream.str().length() != 0)
-            register_stream << std::endl;
-
-        register_stream << "\t\t" << "reflect::AddClass<" << class_name << ">(\"" << class_name << "\")";
-
-        struct ParseContext
-        {
-            std::stringstream* stream_ptr;
-            std::string        class_name;
-        };
-
-        ParseContext parse_context = {&register_stream, class_name};
+        ClassParseResult class_result;
+        class_result.class_name = class_name;
 
         clang_visitChildren(
             class_cursor,
             [](CXCursor c, CXCursor parent, CXClientData client_data) {
                 if (clang_getCursorKind(c) == CXCursor_AnnotateAttr)
                 {
-                    ParseContext* parse_context_ptr = static_cast<ParseContext*>(client_data);
+                    ClassParseResult* class_result = static_cast<ClassParseResult*>(client_data);
 
                     std::vector<std::string> annotations =
                         CodeGenUtils::split(CodeGenUtils::to_string(clang_getCursorSpelling(c)), ';');
@@ -222,9 +156,9 @@ namespace Meow
                             std::string inner_type_name = CodeGenUtils::get_name_without_container(field_type_name);
 
                             std::string field_name = CodeGenUtils::to_string(clang_getCursorSpelling(parent));
-                            *(parse_context_ptr->stream_ptr)
-                                << "\n\t\t\t" << ".AddField(\"" << field_name << "\", \"" << field_type_name << "\", &"
-                                << parse_context_ptr->class_name << "::" << field_name << ")";
+
+                            class_result->field_results.emplace_back(
+                                field_type_name, is_array, inner_type_name, field_name);
                         }
                     }
                     else if (annotations[0] == "reflectable_method")
@@ -232,18 +166,16 @@ namespace Meow
                         if (clang_getCursorKind(parent) == CXCursor_CXXMethod)
                         {
                             std::string method_name = CodeGenUtils::to_string(clang_getCursorSpelling(parent));
-                            *(parse_context_ptr->stream_ptr)
-                                << "\n\t\t\t" << ".AddMethod(\"" << method_name << "\", &"
-                                << parse_context_ptr->class_name << "::" << method_name << ")";
+                            class_result->method_results.emplace_back(method_name);
                         }
                     }
                 }
 
                 return CXChildVisit_Recurse;
             },
-            &parse_context);
+            &class_result);
 
-        register_stream << ";\n";
+        class_results.push_back(class_result);
 
         return true;
     }
@@ -251,62 +183,38 @@ namespace Meow
     bool Parser::ParseEnum(const fs::path& path, CXCursor enum_cursor)
     {
         std::string enum_name = CodeGenUtils::to_string(clang_getCursorSpelling(enum_cursor));
-
         // avoid repeating registering
         if (enum_name_set.find(enum_name) != enum_name_set.end())
         {
             return false;
         }
 
-        struct ParseContext
-        {
-            std::stringstream* stream_ptr2;
-            std::stringstream* stream_ptr3;
-            std::string        enum_name;
-            bool               has_found = false;
-        };
+        CXType      underlying_type      = clang_getEnumDeclIntegerType(enum_cursor);
+        std::string underlying_type_name = CodeGenUtils::to_string(clang_getTypeSpelling(underlying_type));
 
+        EnumParseResult enum_result;
+        enum_result.enum_name            = enum_name;
+        enum_result.underlying_type_name = underlying_type_name;
+
+        std::stringstream gen_src_stream1;
         std::stringstream gen_src_stream2;
-        std::stringstream gen_src_stream3;
-
-        gen_src_stream2 << "\t" << enum_name << " to_enum(const std::string& str)" << std::endl;
-        gen_src_stream2 << "\t{";
-
-        gen_src_stream3 << "\tconst std::string to_string(" << enum_name << " enum_val)" << std::endl;
-        gen_src_stream3 << "\t{" << std::endl;
-        gen_src_stream3 << "\t\tswitch (enum_val)" << std::endl;
-        gen_src_stream3 << "\t\t{";
-
-        ParseContext parse_context = {&gen_src_stream2, &gen_src_stream3, enum_name};
 
         clang_visitChildren(
             enum_cursor,
             [](CXCursor c, CXCursor parent, CXClientData client_data) {
-                ParseContext* parse_context_ptr = static_cast<ParseContext*>(client_data);
+                EnumParseResult* enum_result = static_cast<EnumParseResult*>(client_data);
 
                 if (clang_getCursorKind(c) == CXCursor_EnumConstantDecl)
                 {
-                    parse_context_ptr->has_found = true;
-
                     std::string enum_element_name = CodeGenUtils::to_string(clang_getCursorSpelling(c));
-
-                    *(parse_context_ptr->stream_ptr2) << "\n\t\tif (str == \"" << enum_element_name << "\")";
-                    *(parse_context_ptr->stream_ptr2)
-                        << "\n\t\t\treturn " << parse_context_ptr->enum_name << "::" << enum_element_name << ";";
-
-                    *(parse_context_ptr->stream_ptr3)
-                        << "\n\t\t\tcase " << parse_context_ptr->enum_name << "::" << enum_element_name << ":";
-                    *(parse_context_ptr->stream_ptr3) << "\n\t\t\t\treturn \"" << enum_element_name << "\";";
+                    enum_result->enum_element_names.push_back(enum_element_name);
                 }
 
                 return CXChildVisit_Recurse;
             },
-            &parse_context);
+            &enum_result);
 
-        // declaration in .gen.h is behind of implementation
-        // so the declaration with no element is scanned first
-        // we should jump it
-        if (parse_context.has_found == false)
+        if (enum_result.enum_element_names.size() == 0)
             return false;
 
         std::cout << "[CodeGenerator] Parsing reflectable enum " << enum_name << std::endl;
@@ -314,65 +222,8 @@ namespace Meow
         // success find
         // only then can we insert to map
         enum_name_set.insert(enum_name);
-
-        GenerateEnumReflHeaderFile(path, enum_cursor);
-
-        gen_src_stream2 << std::endl;
-        gen_src_stream2 << std::endl;
-        gen_src_stream2 << "\t\treturn " << enum_name << "::None;" << std::endl;
-        gen_src_stream2 << "\t}" << std::endl;
-        gen_src_stream2 << std::endl;
-
-        gen_src_stream3 << "\n\t\t\tdefault:" << std::endl;
-        gen_src_stream3 << "\t\t\t\treturn \"Unknown\";" << std::endl;
-        gen_src_stream3 << "\t\t}" << std::endl;
-        gen_src_stream3 << "\t}" << std::endl;
-        gen_src_stream3 << std::endl;
-
-        enum_stream << gen_src_stream2.str() << gen_src_stream3.str();
+        enum_results.push_back(enum_result);
 
         return true;
-    }
-
-    void Parser::GenerateEnumReflHeaderFile(const fs::path& path, CXCursor enum_cursor)
-    {
-        std::string enum_name            = CodeGenUtils::to_string(clang_getCursorSpelling(enum_cursor));
-        CXType      underlying_type      = clang_getEnumDeclIntegerType(enum_cursor);
-        std::string underlying_type_name = CodeGenUtils::to_string(clang_getTypeSpelling(underlying_type));
-
-        std::string gen_header_template = R"(#pragma once  
-
-#include "core/reflect/macros.h"
-
-#include <cstdint>
-#include <string>  
-  
-namespace Meow  
-{  
-    enum class EnumName : UnderlyingType;  
-  
-    EnumName to_enum(const std::string& str);  
-  
-    const std::string to_string(EnumName enum_val);  
-} // namespace Meow  
-)";
-
-        std::string replaced_header = CodeGenUtils::replace_all(gen_header_template, "EnumName", enum_name);
-        replaced_header = CodeGenUtils::replace_all(replaced_header, "UnderlyingType", underlying_type_name);
-
-        std::string   gen_header_file_name = CodeGenUtils::camel_case_to_under_score(enum_name);
-        std::ofstream output_header_file(output_path.string() + "/" + gen_header_file_name + ".gen.h");
-        if (output_header_file.is_open())
-        {
-            output_header_file << replaced_header;
-            output_header_file.close();
-            std::cout << "[CodeGenerator] Generated: " << output_path.string() + "/" + gen_header_file_name + ".gen.h"
-                      << std::endl;
-        }
-        else
-        {
-            std::cerr << "[CodeGenerator] Fail to write: "
-                      << output_path.string() + "/" + gen_header_file_name + ".gen.h" << std::endl;
-        }
     }
 } // namespace Meow
