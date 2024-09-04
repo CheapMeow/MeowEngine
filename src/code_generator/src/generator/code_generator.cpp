@@ -2,6 +2,8 @@
 
 #include "utils/code_gen_utils.h"
 
+#include <iomanip>
+
 namespace Meow
 {
     void CodeGenerator::Begin(const std::string& src_path, const std::string& output_path)
@@ -43,7 +45,10 @@ namespace Meow
         output_source_file << '\t' << "void RegisterAll()" << std::endl;
         output_source_file << '\t' << "{" << std::endl;
 
-        bool is_first = true;
+        bool                     is_first           = true;
+        static const std::string add_field_nonarray = ".AddFieldNonArray(\"";
+        static const std::string add_field_array    = ".AddFieldArray(\"";
+
         for (const auto& class_result : class_results)
         {
             // seperate each part
@@ -52,19 +57,29 @@ namespace Meow
 
             is_first = false;
 
-            output_source_file << "\t\t" << "reflect::AddClass<" << class_result.class_name << ">(\""
-                               << class_result.class_name << "\")";
+            output_source_file << "\t\t" << "reflect::AddClass<" << class_result.class_name << ">("
+                               << std::quoted(class_result.class_name) << ")";
 
             for (const auto& field_result : class_result.field_results)
             {
-                output_source_file << "\n\t\t\t" << ".AddField(\"" << field_result.field_name << "\", \""
-                                   << field_result.field_type_name << "\", &" << class_result.class_name
-                                   << "::" << field_result.field_name << ")";
+                if (field_result.is_array)
+                {
+                    output_source_file << "\n\t\t\t" << ".AddArray(" << std::quoted(field_result.field_name) << ", "
+                                       << std::quoted(field_result.field_type_name) << ", "
+                                       << std::quoted(field_result.inner_type_name) << ", &" << class_result.class_name
+                                       << "::" << field_result.field_name << ")";
+                }
+                else
+                {
+                    output_source_file << "\n\t\t\t" << ".AddField(" << std::quoted(field_result.field_name) << ", "
+                                       << std::quoted(field_result.field_type_name) << ", &" << class_result.class_name
+                                       << "::" << field_result.field_name << ")";
+                }
             }
 
             for (const auto& method_result : class_result.method_results)
             {
-                output_source_file << "\n\t\t\t" << ".AddMethod(\"" << method_result.method_name << "\", &"
+                output_source_file << "\n\t\t\t" << ".AddMethod(" << std::quoted(method_result.method_name) << ", &"
                                    << class_result.class_name << "::" << method_result.method_name << ")";
             }
 
@@ -91,11 +106,11 @@ namespace Meow
 
             for (const auto& enum_element_name : enum_result.enum_element_names)
             {
-                gen_src_stream1 << "\n\t\tif (str == \"" << enum_element_name << "\")";
+                gen_src_stream1 << "\n\t\tif (str == " << std::quoted(enum_element_name) << ")";
                 gen_src_stream1 << "\n\t\t\treturn " << enum_result.enum_name << "::" << enum_element_name << ";";
 
                 gen_src_stream2 << "\n\t\t\tcase " << enum_result.enum_name << "::" << enum_element_name << ":";
-                gen_src_stream2 << "\n\t\t\t\treturn \"" << enum_element_name << "\";";
+                gen_src_stream2 << "\n\t\t\t\treturn " << std::quoted(enum_element_name) << ";";
             }
 
             gen_src_stream1 << std::endl;

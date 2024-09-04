@@ -6,7 +6,6 @@ namespace Meow
 {
     namespace reflect
     {
-
         template<typename ClassType>
         class TypeDescriptorBuilder
         {
@@ -27,6 +26,16 @@ namespace Meow
             AddField(const std::string& name, const std::string& type_name, FieldType ClassType::*field_ptr)
             {
                 m_type_descriptor.AddField({name, type_name, field_ptr});
+                return *this;
+            }
+
+            template<typename ArrayType>
+            TypeDescriptorBuilder& AddArray(const std::string& name,
+                                            const std::string& type_name,
+                                            const std::string& inner_type_name,
+                                            ArrayType ClassType::*array_ptr)
+            {
+                m_type_descriptor.AddArray({name, type_name, inner_type_name, array_ptr});
                 return *this;
             }
 

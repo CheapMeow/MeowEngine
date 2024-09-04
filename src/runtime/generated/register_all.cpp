@@ -21,7 +21,7 @@ namespace Meow
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
 
 		reflect::AddClass<ModelComponent>("ModelComponent")
-			.AddField("m_image_paths", "std::vector<std::string>", &ModelComponent::m_image_paths);
+			.AddArray("m_image_paths", "std::vector<std::string>", "std::string", &ModelComponent::m_image_paths);
 	}
 
 	VertexAttributeBit to_enum(const std::string& str)

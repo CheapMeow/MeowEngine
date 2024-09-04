@@ -20,17 +20,16 @@ namespace Meow
         public:
             FieldAccessor() = default;
 
-            FieldAccessor(const FieldAccessor&)            = delete;
-            FieldAccessor& operator=(const FieldAccessor&) = delete;
-            FieldAccessor(FieldAccessor&&)                 = default;
-            FieldAccessor& operator=(FieldAccessor&&)      = default;
-
             template<typename ClassType, typename FieldType>
             FieldAccessor(const std::string& name, const std::string& type_name, FieldType ClassType::*field_ptr)
-                : m_name(name)
-                , m_type_name(type_name)
             {
-                m_getter = [field_ptr](void* obj) -> void* { return &(static_cast<ClassType*>(obj)->*field_ptr); };
+                m_name      = name;
+                m_type_name = type_name;
+
+                m_getter = [field_ptr](void* obj) -> void* {
+                    ClassType* self = static_cast<ClassType*>(obj);
+                    return &(self->*field_ptr);
+                };
 
                 m_setter = [field_ptr](void* obj, void* val) {
                     ClassType* self  = static_cast<ClassType*>(obj);
@@ -44,28 +43,74 @@ namespace Meow
 
             void* get(void* ins_ptr) const { return m_getter(ins_ptr); }
 
-            template<typename FieldType>
-            void set(void* ins_ptr, FieldType* val)
-            {
-                m_setter(ins_ptr, val);
-            }
+            void set(void* ins_ptr, void* val) const { m_setter(ins_ptr, val); }
 
         private:
-            std::string                       m_name;
-            std::string                       m_type_name;
+            std::string m_name;
+            std::string m_type_name;
+
             std::function<void*(void*)>       m_getter {nullptr};
             std::function<void(void*, void*)> m_setter {nullptr};
+        };
+
+        class ArrayAccessor
+        {
+        public:
+            ArrayAccessor() = default;
+
+            template<typename ClassType, template<typename> class ArrayType, typename InnerType>
+            ArrayAccessor(const std::string&   name,
+                          const std::string&   type_name,
+                          const std::string&   inner_type_name,
+                          ArrayType<InnerType> ClassType::*array_ptr)
+            {
+                m_name            = name;
+                m_type_name       = type_name;
+                m_inner_type_name = inner_type_name;
+
+                m_getter = [array_ptr](void* obj, std::size_t idx) -> void* {
+                    ClassType*           self = static_cast<ClassType*>(obj);
+                    ArrayType<InnerType> arr  = static_cast<ArrayType<InnerType>>(self->*array_ptr);
+                    return &(arr[idx]);
+                };
+
+                m_setter = [array_ptr](void* obj, void* val, std::size_t idx) {
+                    ClassType*           self = static_cast<ClassType*>(obj);
+                    ArrayType<InnerType> arr  = static_cast<ArrayType<InnerType>>(self->*array_ptr);
+                    arr[idx]                  = *static_cast<InnerType*>(val);
+                };
+
+                m_array_size_getter = [array_ptr](void* obj) -> std::size_t {
+                    ClassType*           self = static_cast<ClassType*>(obj);
+                    ArrayType<InnerType> arr  = static_cast<ArrayType<InnerType>>(self->*array_ptr);
+                    return arr.size();
+                };
+            }
+
+            const std::string& name() const { return m_name; }
+
+            const std::string& type_name() const { return m_type_name; }
+
+            const std::string& inner_type_name() const { return m_inner_type_name; }
+
+            void* get(void* ins_ptr, std::size_t idx = 0) const { return m_getter(ins_ptr, idx); }
+
+            void set(void* ins_ptr, void* val, std::size_t idx = 0) const { m_setter(ins_ptr, val, idx); }
+
+        private:
+            std::string m_name;
+            std::string m_type_name;
+            std::string m_inner_type_name;
+
+            std::function<void*(void*, std::size_t)>       m_getter {nullptr};
+            std::function<void(void*, void*, std::size_t)> m_setter {nullptr};
+            std::function<std::size_t(void*)>              m_array_size_getter {nullptr};
         };
 
         class MethodAccessor
         {
         public:
             MethodAccessor() = default;
-
-            MethodAccessor(const MethodAccessor&)            = delete;
-            MethodAccessor& operator=(const MethodAccessor&) = delete;
-            MethodAccessor(MethodAccessor&&)                 = default;
-            MethodAccessor& operator=(MethodAccessor&&)      = default;
 
             template<typename ClassType, typename ReturnType, typename... Args>
             MethodAccessor(const std::string& name, ReturnType (ClassType::*func)(Args...))
@@ -174,11 +219,14 @@ namespace Meow
 
             void AddField(FieldAccessor&& field) { m_fields.emplace_back(std::move(field)); }
 
+            void AddArray(ArrayAccessor&& array) { m_arrays.emplace_back(std::move(array)); }
+
             void AddMethod(MethodAccessor&& method) { m_methods.emplace_back(std::move(method)); }
 
         private:
             std::string                 m_name;
             std::vector<FieldAccessor>  m_fields;
+            std::vector<ArrayAccessor>  m_arrays;
             std::vector<MethodAccessor> m_methods;
         };
 
