@@ -39,26 +39,6 @@ namespace Meow
         PerFrameData(std::nullptr_t) {}
     };
 
-    /**
-     * @brief Using single command pool is intending to
-     * reseting command pool to reset all command buffers.
-     *
-     * But now in one time submit function, it create command buffer, submit to queue, and then delete it.
-     *
-     * So use which method is a question, need to be tested in later time.
-     *
-     * You can also allocate a fence to wait for all command buffers in upload context,
-     * but it is also pending to discuss later.
-     */
-    struct UploadContext
-    {
-        vk::raii::CommandPool command_pool = nullptr;
-
-        UploadContext() {}
-
-        UploadContext(std::nullptr_t) {}
-    };
-
     class RenderSystem final : public System
     {
     public:
@@ -104,7 +84,6 @@ namespace Meow
         void CreateSurface();
         void CreateLogicalDevice();
         void CreateSwapChian();
-        void CreateUploadContext();
         void CreateDescriptorAllocator();
         void CreatePerFrameData();
         void CreateRenderPass();
@@ -150,7 +129,6 @@ namespace Meow
         vk::raii::Queue             m_graphics_queue       = nullptr;
         vk::raii::Queue             m_present_queue        = nullptr;
         SwapChainData               m_swapchain_data       = nullptr;
-        UploadContext               m_upload_context       = nullptr;
         DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         DeferredPass                m_deferred_pass        = nullptr;
         ForwardPass                 m_forward_pass         = nullptr;

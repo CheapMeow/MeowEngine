@@ -177,23 +177,6 @@ namespace Meow
                           m_present_queue_family_index);
     }
 
-    void RenderSystem::CreateUploadContext()
-    {
-        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient |
-                                                               vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                                                           m_graphics_queue_family_index);
-        m_upload_context.command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Command pool in UploadContext";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {vk::ObjectType::eCommandPool,
-                                                       GetVulkanHandle(*m_upload_context.command_pool),
-                                                       object_name.c_str(),
-                                                       nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-    }
-
     void RenderSystem::CreateDescriptorAllocator()
     {
         // create a descriptor pool
@@ -293,7 +276,7 @@ namespace Meow
         m_deferred_pass = DeferredPass(m_gpu,
                                        m_logical_device,
                                        m_surface_data,
-                                       m_upload_context.command_pool,
+                                       m_per_frame_data[m_current_frame_index].command_pool,
                                        m_graphics_queue,
                                        m_descriptor_allocator);
         m_deferred_pass.RefreshFrameBuffers(
@@ -302,7 +285,7 @@ namespace Meow
         m_forward_pass = ForwardPass(m_gpu,
                                      m_logical_device,
                                      m_surface_data,
-                                     m_upload_context.command_pool,
+                                     m_per_frame_data[m_current_frame_index].command_pool,
                                      m_graphics_queue,
                                      m_descriptor_allocator);
         m_forward_pass.RefreshFrameBuffers(
@@ -311,7 +294,7 @@ namespace Meow
         m_imgui_pass = ImGuiPass(m_gpu,
                                  m_logical_device,
                                  m_surface_data,
-                                 m_upload_context.command_pool,
+                                 m_per_frame_data[m_current_frame_index].command_pool,
                                  m_graphics_queue,
                                  m_descriptor_allocator);
         m_imgui_pass.RefreshFrameBuffers(
@@ -493,7 +476,6 @@ namespace Meow
         CreateSurface();
         CreateLogicalDevice();
         CreateSwapChian();
-        CreateUploadContext();
         CreateDescriptorAllocator();
         CreatePerFrameData();
         CreateRenderPass();
@@ -514,7 +496,6 @@ namespace Meow
         m_forward_pass         = nullptr;
         m_deferred_pass        = nullptr;
         m_descriptor_allocator = nullptr;
-        m_upload_context       = nullptr;
         m_swapchain_data       = nullptr;
         m_present_queue        = nullptr;
         m_graphics_queue       = nullptr;
@@ -634,8 +615,6 @@ namespace Meow
         assert(result == vk::Result::eSuccess);
         assert(m_current_image_index < m_swapchain_data.images.size());
 
-        if (m_surface_data.extent.height == 0 || m_surface_data.extent.width == 0)
-            std::cout << "WTF!!!!!!!!!!" << std::endl;
         cmd_buffer.begin({});
         cmd_buffer.setViewport(0,
                                vk::Viewport(0.0f,
@@ -705,7 +684,7 @@ namespace Meow
 
         return std::make_shared<Model>(m_gpu,
                                        m_logical_device,
-                                       m_upload_context.command_pool,
+                                       m_per_frame_data[m_current_frame_index].command_pool,
                                        m_present_queue,
                                        std::move(vertices),
                                        std::move(indices),
@@ -717,7 +696,11 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        return std::make_shared<Model>(
-            m_gpu, m_logical_device, m_upload_context.command_pool, m_present_queue, file_path, attributes);
+        return std::make_shared<Model>(m_gpu,
+                                       m_logical_device,
+                                       m_per_frame_data[m_current_frame_index].command_pool,
+                                       m_present_queue,
+                                       file_path,
+                                       attributes);
     }
 } // namespace Meow
