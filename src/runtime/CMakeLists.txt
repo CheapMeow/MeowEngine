@@ -1,6 +1,6 @@
 set(RUNTIME_HEADER_FILES
-    engine.h
     pch.h
+    runtime.h
     core/base/alignment.h
     core/base/bitmask.hpp
     core/base/log.hpp
@@ -82,7 +82,7 @@ set(RUNTIME_HEADER_FILES
     generated/vertex_attribute_bit.gen.h
     test/geometries.hpp)
 set(RUNTIME_SOURCE_FILES
-    engine.cpp
+    runtime.cpp
     core/math/frustum.cpp
     core/math/plane.cpp
     function/components/camera/camera_3d_component.cpp

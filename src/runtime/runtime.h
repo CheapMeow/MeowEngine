@@ -12,28 +12,24 @@ namespace Meow
     /**
      * @brief Engine entry.
      */
-    class LIBRARY_API MeowEngine : NonCopyable
+    class LIBRARY_API MeowRuntime : NonCopyable
     {
     public:
-        bool Init(); /**< Init engine */
+        bool Init();
         bool Start();
-        void Run();
+        void Tick(float dt);
         void ShutDown();
 
-        static MeowEngine& GetEngine()
+        static MeowRuntime& Get()
         {
-            static MeowEngine instance;
+            static MeowRuntime instance;
             return instance;
         }
 
+        bool IsRunning() { return m_running; }
         void SetRunning(bool running) { m_running = running; }
 
     private:
         bool m_running = true;
-
-        float m_last_time = 0.0;
-        // float m_accumulator          = 0.0;
-        // float m_phyics_time           = 0.0;
-        // float m_phyics_fixed_dt = 1.0 / 60.0;
     };
 } // namespace Meow

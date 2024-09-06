@@ -65,6 +65,8 @@ namespace Meow
 
         const std::unordered_map<std::string, BuiltinRenderStat>& GetBuiltinRenderStat() { return m_render_stat_map; }
 
+        const uint32_t GetMaxFrames() { return k_max_frames_in_flight; }
+
         std::shared_ptr<ImageData> CreateTexture(const std::string& file_path);
 
         std::shared_ptr<Model> CreateModel(std::vector<float>&&        vertices,

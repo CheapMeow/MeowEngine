@@ -12,8 +12,8 @@ set(CODE_GENERATOR_SOURCE_FILES
     src/generator/code_generator.cpp)
 
 set(HEADER_FILES_DEPEND
-    ../runtime/engine.h
     ../runtime/pch.h
+    ../runtime/runtime.h
     ../runtime/core/base/alignment.h
     ../runtime/core/base/bitmask.hpp
     ../runtime/core/base/log.hpp

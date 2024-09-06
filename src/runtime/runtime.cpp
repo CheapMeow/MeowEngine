@@ -1,5 +1,5 @@
 
-#include "engine.h"
+#include "runtime.h"
 
 #include "pch.h"
 
@@ -11,7 +11,7 @@
 
 namespace Meow
 {
-    bool MeowEngine::Init()
+    bool MeowRuntime::Init()
     {
         RegisterAll();
 
@@ -26,7 +26,7 @@ namespace Meow
         return true;
     }
 
-    bool MeowEngine::Start()
+    bool MeowRuntime::Start()
     {
         g_runtime_global_context.level_system->Start();
         g_runtime_global_context.file_system->Start();
@@ -35,29 +35,25 @@ namespace Meow
         g_runtime_global_context.input_system->Start();
         g_runtime_global_context.render_system->Start();
 
+        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnClose().connect(
+            [&]() { m_running = false; });
+
         return true;
     }
 
-    void MeowEngine::Run()
+    void MeowRuntime::Tick(float dt)
     {
-        while (g_runtime_global_context.running)
-        {
-            float curr_time = Time::GetTime();
-            float dt        = curr_time - m_last_time;
-            m_last_time     = curr_time;
+        // TODO: Update Dependencies graph
+        g_runtime_global_context.resource_system->Tick(dt);
+        g_runtime_global_context.window_system->Tick(dt);
+        g_runtime_global_context.input_system->Tick(dt);
+        g_runtime_global_context.render_system->Tick(dt);
+        g_runtime_global_context.level_system->Tick(dt);
 
-            // TODO: Update Dependencies graph
-            g_runtime_global_context.resource_system->Tick(dt);
-            g_runtime_global_context.window_system->Tick(dt);
-            g_runtime_global_context.input_system->Tick(dt);
-            g_runtime_global_context.render_system->Tick(dt);
-            g_runtime_global_context.level_system->Tick(dt);
-
-            TimerSingleton::Get().Clear();
-        }
+        TimerSingleton::Get().Clear();
     }
 
-    void MeowEngine::ShutDown()
+    void MeowRuntime::ShutDown()
     {
         // TODO: ShutDown Dependencies graph
         g_runtime_global_context.level_system    = nullptr;

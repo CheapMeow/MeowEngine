@@ -1,19 +1,28 @@
+#include "editor.h"
 #include "runtime/core/base/log.hpp"
-#include "runtime/engine.h"
+#include "runtime/core/time/time.h"
+#include "runtime/function/global/runtime_global_context.h"
 
 using namespace Meow;
 
 int main()
 {
-    if (!MeowEngine::GetEngine().Init())
+    if (!MeowEditor::Get().Init())
     {
         return 1;
     }
 
-    MeowEngine::GetEngine().Start();
+    MeowEditor::Get().Start();
 
-    MEOW_INFO("Editor is running!");
-    MeowEngine::GetEngine().Run();
+    float last_time = 0.0;
+    while (MeowEditor::Get().IsRunning())
+    {
+        float curr_time = Time::GetTime();
+        float dt        = curr_time - last_time;
+        last_time       = curr_time;
 
-    MeowEngine::GetEngine().ShutDown();
+        MeowEditor::Get().Tick(dt);
+    }
+
+    MeowEditor::Get().ShutDown();
 }

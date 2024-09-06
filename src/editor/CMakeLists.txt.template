@@ -1,9 +1,7 @@
 set(EDITOR_HEADER_FILES
-    editor.h
-    render/editor_window.h)
+<all_headers_place_holder>)
 set(EDITOR_SOURCE_FILES
-    editor.cpp
-    main.cpp)
+<all_sources_place_holder>)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES}
                                                       ${EDITOR_SOURCE_FILES})
