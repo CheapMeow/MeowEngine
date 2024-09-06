@@ -6,13 +6,7 @@
 
 namespace Meow
 {
-    WindowSystem::WindowSystem()
-    {
-        m_window = std::make_shared<Window>(0);
-        m_window->OnClose().connect([&]() { g_runtime_global_context.running = false; });
-        m_window->OnSize().connect(
-            [&](glm::ivec2 new_size) { g_runtime_global_context.render_system->SetResized(true); });
-    }
+    WindowSystem::WindowSystem() {}
 
     WindowSystem::~WindowSystem() { m_window = nullptr; }
 
@@ -22,6 +16,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_window->Tick(dt);
+        if (m_window)
+            m_window->Tick(dt);
     }
 } // namespace Meow

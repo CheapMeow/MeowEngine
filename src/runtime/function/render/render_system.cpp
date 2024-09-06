@@ -8,7 +8,7 @@
 #include "function/global/runtime_global_context.h"
 #include "function/level/level.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
-#include "test/geometries.hpp"
+#include "function/render/window/runtime_window.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -468,6 +468,8 @@ namespace Meow
 
     RenderSystem::RenderSystem()
     {
+        g_runtime_global_context.window_system->AddWindow(std::make_shared<RuntimeWindow>(0));
+
         CreateVulkanInstance();
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         CreateDebugUtilsMessengerEXT();
@@ -510,6 +512,9 @@ namespace Meow
 
     void RenderSystem::Start()
     {
+        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnSize().connect(
+            [&](glm::ivec2 new_size) { SetResized(true); });
+
         g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnIconify().connect(
             [&](bool iconified) { m_iconified = iconified; });
 

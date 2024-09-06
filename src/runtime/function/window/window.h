@@ -11,8 +11,6 @@
 
 namespace Meow
 {
-    using WindowId = std::size_t;
-
     /**
      * @brief Window controls glfw window and input.
      */
@@ -20,9 +18,9 @@ namespace Meow
     {
     public:
         Window(std::size_t id);
-        ~Window();
+        virtual ~Window();
 
-        void Tick(float dt);
+        virtual void Tick(float dt);
 
         /**
          * Gets the size of the window in pixels.
@@ -310,7 +308,7 @@ namespace Meow
          */
         Signal<glm::vec2>& OnMouseScroll() { return m_on_mouse_scroll_signal; }
 
-    private:
+    protected:
         friend void CallbackWindowPosition(GLFWwindow* glfwWindow, int32_t xpos, int32_t ypos);
         friend void CallbackWindowSize(GLFWwindow* glfwWindow, int32_t width, int32_t height);
         friend void CallbackWindowClose(GLFWwindow* glfwWindow);

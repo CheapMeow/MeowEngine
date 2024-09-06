@@ -87,6 +87,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/vertex_buffer.h
     ../runtime/function/render/utils/vulkan_initialize_utils.hpp
     ../runtime/function/render/utils/vulkan_shader_utils.hpp
+    ../runtime/function/render/window/runtime_window.h
     ../runtime/function/resource/resource_system.h
     ../runtime/function/resource/resource_info/model_res_info.h
     ../runtime/function/window/window.h
