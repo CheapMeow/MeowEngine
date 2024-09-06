@@ -244,7 +244,8 @@ namespace Meow
 
     void DeferredPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                            vk::raii::Device const&                 device,
-                                           vk::raii::CommandBuffer const&          command_buffer,
+                                           vk::raii::CommandPool const&            command_pool,
+                                           vk::raii::Queue const&                  queue,
                                            SurfaceData&                            surface_data,
                                            std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                            vk::Extent2D const&                     extent)
@@ -265,7 +266,8 @@ namespace Meow
 
         m_color_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
-                                                         command_buffer,
+                                                         command_pool,
+                                                         queue,
                                                          color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
@@ -276,7 +278,8 @@ namespace Meow
 
         m_normal_attachment = ImageData::CreateAttachment(physical_device,
                                                           device,
-                                                          command_buffer,
+                                                          command_pool,
+                                                          queue,
                                                           vk::Format::eR8G8B8A8Unorm,
                                                           extent,
                                                           vk::ImageUsageFlagBits::eColorAttachment |
@@ -287,7 +290,8 @@ namespace Meow
 
         m_position_attachment = ImageData::CreateAttachment(physical_device,
                                                             device,
-                                                            command_buffer,
+                                                            command_pool,
+                                                            queue,
                                                             vk::Format::eR16G16B16A16Sfloat,
                                                             extent,
                                                             vk::ImageUsageFlagBits::eColorAttachment |
@@ -298,7 +302,8 @@ namespace Meow
 
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
-                                                         command_buffer,
+                                                         command_pool,
+                                                         queue,
                                                          m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment |
@@ -351,8 +356,7 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        std::shared_ptr<GameObject> camera_go_ptr =
-            level_ptr->GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
+        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
         std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
             camera_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
         std::shared_ptr<Camera3DComponent> camera_comp_ptr =
@@ -520,7 +524,7 @@ namespace Meow
                 std::pair<vk::Result, std::vector<uint32_t>> query_results =
                     query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-                g_runtime_global_context.render_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+                g_runtime_global_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
             }
         }
 
@@ -528,7 +532,7 @@ namespace Meow
         m_render_stat[1].ringbuf_stat = m_quad_mat.GetRingUniformBufferStat();
 
         for (int i = 1; i >= 0; i--)
-            g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+            g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
     }
 
     void swap(DeferredPass& lhs, DeferredPass& rhs)

@@ -41,6 +41,7 @@ set(RUNTIME_HEADER_FILES
     function/level/level.h
     function/level/level_system.h
     function/object/game_object.h
+    function/profile/profile_system.h
     function/render/render_system.h
     function/render/imgui_widgets/builtin_statistics_widget.h
     function/render/imgui_widgets/components_widget.h
@@ -63,6 +64,7 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/model_bone.h
     function/render/structs/model_mesh.h
     function/render/structs/model_node.h
+    function/render/structs/per_frame_data.h
     function/render/structs/pipeline_info.h
     function/render/structs/ring_uniform_buffer.h
     function/render/structs/ring_uniform_buffer_stat.h
@@ -98,6 +100,7 @@ set(RUNTIME_SOURCE_FILES
     function/level/level.cpp
     function/level/level_system.cpp
     function/object/game_object.cpp
+    function/profile/profile_system.cpp
     function/render/render_system.cpp
     function/render/imgui_widgets/builtin_statistics_widget.cpp
     function/render/imgui_widgets/components_widget.cpp

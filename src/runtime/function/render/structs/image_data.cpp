@@ -147,7 +147,8 @@ namespace Meow
 
     std::shared_ptr<ImageData> ImageData::CreateDepthBuffer(vk::raii::PhysicalDevice const& physical_device,
                                                             vk::raii::Device const&         device,
-                                                            vk::raii::CommandBuffer const&  command_buffer,
+                                                            vk::raii::CommandPool const&    command_pool,
+                                                            vk::raii::Queue const&          queue,
                                                             vk::Format                      format,
                                                             vk::Extent2D const&             extent)
     {
@@ -192,8 +193,10 @@ namespace Meow
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
         // Transit Layout
-        image_data_ptr->SetImageLayout(
-            command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
+            image_data_ptr->SetImageLayout(
+                command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        });
 
         return image_data_ptr;
     }
@@ -286,7 +289,8 @@ namespace Meow
 
     std::shared_ptr<ImageData> ImageData::CreateTexture(vk::raii::PhysicalDevice const& physical_device,
                                                         vk::raii::Device const&         device,
-                                                        vk::raii::CommandBuffer const&  command_buffer,
+                                                        vk::raii::CommandPool const&    command_pool,
+                                                        vk::raii::Queue const&          queue,
                                                         std::string const&              file_path,
                                                         vk::Format                      format,
                                                         vk::ImageUsageFlags             usage_flags,
@@ -326,42 +330,41 @@ namespace Meow
 
         // Transit Layout
 
-        command_buffer.begin({});
-
-        if (image_data_ptr->need_staging)
-        {
-            // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-            image_data_ptr->SetImageLayout(
-                command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-            vk::BufferImageCopy copy_region(0,
-                                            image_data_ptr->extent.width,
-                                            image_data_ptr->extent.height,
-                                            vk::ImageSubresourceLayers(aspect_mask, 0, 0, 1),
-                                            vk::Offset3D(0, 0, 0),
-                                            vk::Extent3D(image_data_ptr->extent, 1));
-            command_buffer.copyBufferToImage(*image_data_ptr->staging_buffer_data.buffer,
-                                             *image_data_ptr->image,
-                                             vk::ImageLayout::eTransferDstOptimal,
-                                             copy_region);
-            // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
-            image_data_ptr->SetImageLayout(
-                command_buffer, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
-        }
-        else
-        {
-            // If we can use the linear tiled image as a texture, just do it
-            image_data_ptr->SetImageLayout(
-                command_buffer, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
-        }
-
-        command_buffer.end();
+        OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
+            if (image_data_ptr->need_staging)
+            {
+                // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
+                image_data_ptr->SetImageLayout(
+                    command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+                vk::BufferImageCopy copy_region(0,
+                                                image_data_ptr->extent.width,
+                                                image_data_ptr->extent.height,
+                                                vk::ImageSubresourceLayers(aspect_mask, 0, 0, 1),
+                                                vk::Offset3D(0, 0, 0),
+                                                vk::Extent3D(image_data_ptr->extent, 1));
+                command_buffer.copyBufferToImage(*image_data_ptr->staging_buffer_data.buffer,
+                                                 *image_data_ptr->image,
+                                                 vk::ImageLayout::eTransferDstOptimal,
+                                                 copy_region);
+                // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
+                image_data_ptr->SetImageLayout(
+                    command_buffer, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal);
+            }
+            else
+            {
+                // If we can use the linear tiled image as a texture, just do it
+                image_data_ptr->SetImageLayout(
+                    command_buffer, vk::ImageLayout::ePreinitialized, vk::ImageLayout::eShaderReadOnlyOptimal);
+            }
+        });
 
         return image_data_ptr;
     }
 
     std::shared_ptr<ImageData> ImageData::CreateAttachment(vk::raii::PhysicalDevice const& physical_device,
                                                            vk::raii::Device const&         device,
-                                                           vk::raii::CommandBuffer const&  command_buffer,
+                                                           vk::raii::CommandPool const&    command_pool,
+                                                           vk::raii::Queue const&          queue,
                                                            vk::Format                      format,
                                                            vk::Extent2D const&             extent,
                                                            vk::ImageUsageFlags             usage_flags,
@@ -408,17 +411,14 @@ namespace Meow
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
         // Transit Layout
-
-        command_buffer.begin({});
-
-        if (aspect_mask & vk::ImageAspectFlagBits::eColor)
-            image_data_ptr->SetImageLayout(
-                command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
-        else if (aspect_mask & vk::ImageAspectFlagBits::eDepth)
-            image_data_ptr->SetImageLayout(
-                command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-        command_buffer.end();
+        OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
+            if (aspect_mask & vk::ImageAspectFlagBits::eColor)
+                image_data_ptr->SetImageLayout(
+                    command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
+            else if (aspect_mask & vk::ImageAspectFlagBits::eDepth)
+                image_data_ptr->SetImageLayout(
+                    command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        });
 
         return image_data_ptr;
     }

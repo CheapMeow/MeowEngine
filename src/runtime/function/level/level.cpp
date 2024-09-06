@@ -58,8 +58,7 @@ namespace Meow
     {
         m_visibles.clear();
 
-        std::shared_ptr<GameObject> camera_go_ptr =
-            GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
+        std::shared_ptr<GameObject> camera_go_ptr = GetGameObjectByID(m_main_camera_id).lock();
 
         if (!camera_go_ptr)
             return;

@@ -31,7 +31,8 @@ namespace Meow
 
         virtual void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                          vk::raii::Device const&                 device,
-                                         vk::raii::CommandBuffer const&          command_buffer,
+                                         vk::raii::CommandPool const&            command_pool,
+                                         vk::raii::Queue const&                  queue,
                                          SurfaceData&                            surface_data,
                                          std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                          vk::Extent2D const&                     extent)

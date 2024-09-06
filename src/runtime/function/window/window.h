@@ -3,6 +3,7 @@
 #include "core/base/non_copyable.h"
 #include "core/signal/signal.hpp"
 #include "function/input/input_enum.h"
+#include "function/render/structs/surface_data.h"
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -20,7 +21,11 @@ namespace Meow
         Window(std::size_t id);
         virtual ~Window();
 
+        virtual void Init() {}
+
         virtual void Tick(float dt);
+
+        virtual const SurfaceData& GetSurfaceData() { return m_surface_data; }
 
         /**
          * Gets the size of the window in pixels.
@@ -370,5 +375,7 @@ namespace Meow
         Signal<MouseButtonCode, InputAction, uint8_t> m_on_mouse_button_signal;
         Signal<glm::vec2>                             m_on_mouse_position_signal;
         Signal<glm::vec2>                             m_on_mouse_scroll_signal;
+
+        SurfaceData m_surface_data = nullptr;
     };
 } // namespace Meow

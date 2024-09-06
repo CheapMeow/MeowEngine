@@ -59,7 +59,8 @@ namespace Meow
 
         static std::shared_ptr<ImageData> CreateDepthBuffer(vk::raii::PhysicalDevice const& physical_device,
                                                             vk::raii::Device const&         device,
-                                                            vk::raii::CommandBuffer const&  command_buffer,
+                                                            vk::raii::CommandPool const&    command_pool,
+                                                            vk::raii::Queue const&          queue,
                                                             vk::Format                      format,
                                                             vk::Extent2D const&             extent);
 
@@ -77,7 +78,8 @@ namespace Meow
         static std::shared_ptr<ImageData>
         CreateTexture(vk::raii::PhysicalDevice const& physical_device,
                       vk::raii::Device const&         device,
-                      vk::raii::CommandBuffer const&  command_buffer,
+                      vk::raii::CommandPool const&    command_pool,
+                      vk::raii::Queue const&          queue,
                       std::string const&              file_path,
                       vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                       vk::ImageUsageFlags             usage_flags          = {},
@@ -89,7 +91,8 @@ namespace Meow
         static std::shared_ptr<ImageData>
         CreateAttachment(vk::raii::PhysicalDevice const& physical_device,
                          vk::raii::Device const&         device,
-                         vk::raii::CommandBuffer const&  command_buffer,
+                         vk::raii::CommandPool const&    command_pool,
+                         vk::raii::Queue const&          queue,
                          vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                          vk::Extent2D const&             extent               = {256, 256},
                          vk::ImageUsageFlags             usage_flags          = {},

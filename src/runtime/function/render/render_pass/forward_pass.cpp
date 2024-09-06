@@ -132,7 +132,8 @@ namespace Meow
 
     void ForwardPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                           vk::raii::Device const&                 device,
-                                          vk::raii::CommandBuffer const&          command_buffer,
+                                          vk::raii::CommandPool const&            command_pool,
+                                          vk::raii::Queue const&                  queue,
                                           SurfaceData&                            surface_data,
                                           std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                           vk::Extent2D const&                     extent)
@@ -147,7 +148,8 @@ namespace Meow
 
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
-                                                         command_buffer,
+                                                         command_pool,
+                                                         queue,
                                                          m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
@@ -189,8 +191,7 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        std::shared_ptr<GameObject> camera_go_ptr =
-            level_ptr->GetGameObjectByID(g_runtime_global_context.render_system->m_main_camera_id).lock();
+        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
         std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
             camera_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
         std::shared_ptr<Camera3DComponent> camera_comp_ptr =
@@ -311,11 +312,11 @@ namespace Meow
             std::pair<vk::Result, std::vector<uint32_t>> query_results =
                 query_pool.getResults<uint32_t>(0, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-            g_runtime_global_context.render_system->UploadPipelineStat(m_pass_name, query_results.second);
+            g_runtime_global_context.profile_system->UploadPipelineStat(m_pass_name, query_results.second);
         }
 
         m_render_stat.ringbuf_stat = m_forward_mat.GetRingUniformBufferStat();
-        g_runtime_global_context.render_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
+        g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)

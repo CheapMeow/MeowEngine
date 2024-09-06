@@ -74,7 +74,8 @@ namespace Meow
 
     void ImGuiPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
                                         vk::raii::Device const&                 device,
-                                        vk::raii::CommandBuffer const&          command_buffer,
+                                        vk::raii::CommandPool const&            command_pool,
+                                        vk::raii::Queue const&                  queue,
                                         SurfaceData&                            surface_data,
                                         std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                         vk::Extent2D const&                     extent)
@@ -150,10 +151,10 @@ namespace Meow
                                   TimerSingleton::Get().GetMaxDepth(),
                                   TimerSingleton::Get().GetGlobalStart());
 
-        m_builtin_stat_widget.Draw(g_runtime_global_context.render_system->GetBuiltinRenderStat());
+        m_builtin_stat_widget.Draw(g_runtime_global_context.profile_system->GetBuiltinRenderStat());
 
         if (m_query_enabled)
-            PipelineStatisticsWidget::Draw(g_runtime_global_context.render_system->GetPipelineStat());
+            PipelineStatisticsWidget::Draw(g_runtime_global_context.profile_system->GetPipelineStat());
         else
             ImGui::Text("Pipeline Statistics is disabled.");
 

@@ -54,6 +54,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/level/level.h
     ../runtime/function/level/level_system.h
     ../runtime/function/object/game_object.h
+    ../runtime/function/profile/profile_system.h
     ../runtime/function/render/render_system.h
     ../runtime/function/render/imgui_widgets/builtin_statistics_widget.h
     ../runtime/function/render/imgui_widgets/components_widget.h
@@ -76,6 +77,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/structs/model_bone.h
     ../runtime/function/render/structs/model_mesh.h
     ../runtime/function/render/structs/model_node.h
+    ../runtime/function/render/structs/per_frame_data.h
     ../runtime/function/render/structs/pipeline_info.h
     ../runtime/function/render/structs/ring_uniform_buffer.h
     ../runtime/function/render/structs/ring_uniform_buffer_stat.h

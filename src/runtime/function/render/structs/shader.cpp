@@ -4,7 +4,7 @@
 
 namespace Meow
 {
-    Shader::Shader(vk::raii::PhysicalDevice const& gpu,
+    Shader::Shader(vk::raii::PhysicalDevice const& physical_device,
                    vk::raii::Device const&         logical_device,
                    DescriptorAllocatorGrowable&    descriptor_allocator,
                    std::string                     vert_shader_file_path,

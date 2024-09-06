@@ -115,4 +115,17 @@ namespace Meow
         queue.submit(submit_info, nullptr);
         queue.waitIdle();
     }
+
+    /**
+     * @brief vk::raii::SwapchainKHR::acquireNextImageKHR without exceptions
+     */
+    std::pair<vk::Result, uint32_t> SwapchainNextImageWrapper(const vk::raii::SwapchainKHR& swapchain,
+                                                              uint64_t                      timeout,
+                                                              vk::Semaphore                 semaphore,
+                                                              vk::Fence                     fence = {});
+
+    /**
+     * @brief vk::raii::Queue::presentKHR without exceptions
+     */
+    vk::Result QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info);
 } // namespace Meow
