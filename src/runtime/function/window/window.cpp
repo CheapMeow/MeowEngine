@@ -1,6 +1,7 @@
 #include "window.h"
 #include "core/math/math.h"
 
+#include <iostream>
 #include <stdexcept>
 
 namespace Meow

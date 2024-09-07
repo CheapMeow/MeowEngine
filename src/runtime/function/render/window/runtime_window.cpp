@@ -106,7 +106,7 @@ namespace Meow
             std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
                                              m_render_pass_ptr->input_vertex_attributes));
 
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 200; i++)
         {
             UUIDv4::UUID                model_go_id1  = level_ptr->CreateObject();
             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();

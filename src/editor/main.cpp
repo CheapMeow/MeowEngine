@@ -14,14 +14,9 @@ int main()
 
     MeowEditor::Get().Start();
 
-    float last_time = 0.0;
     while (MeowEditor::Get().IsRunning())
     {
-        float curr_time = Time::GetTime();
-        float dt        = curr_time - last_time;
-        last_time       = curr_time;
-
-        MeowEditor::Get().Tick(dt);
+        MeowEditor::Get().Tick();
     }
 
     MeowEditor::Get().ShutDown();

@@ -15,7 +15,7 @@ namespace Meow
     public:
         bool Init();
         bool Start();
-        void Tick(float dt);
+        void Tick();
         void ShutDown();
 
         static MeowEditor& Get()

@@ -44,8 +44,8 @@ namespace Meow
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
-        bool           m_framebuffer_resized = false;
-        bool           m_iconified           = false;
+        bool           m_framebuffer_resized  = false;
+        bool           m_iconified            = false;
         const uint64_t k_fence_timeout        = 100000000;
         const uint32_t k_max_frames_in_flight = 2;
         uint32_t       m_current_frame_index  = 0;

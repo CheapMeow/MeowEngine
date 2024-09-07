@@ -22,6 +22,6 @@ namespace Meow
         std::shared_ptr<Window> GetCurrentFocusWindow() { return m_window; }
 
     private:
-        std::shared_ptr<Window> m_window;
+        std::shared_ptr<Window> m_window = nullptr;
     };
 } // namespace Meow
