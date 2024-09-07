@@ -16,7 +16,8 @@ int main()
 
     while (MeowEditor::Get().IsRunning())
     {
-        MeowEditor::Get().Tick();
+        Time::Get().Update();
+        MeowEditor::Get().Tick(Time::Get().GetDeltaTime());
     }
 
     MeowEditor::Get().ShutDown();

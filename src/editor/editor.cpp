@@ -1,6 +1,5 @@
 #include "editor.h"
 
-#include "runtime/core/time/time.h"
 #include "runtime/runtime.h"
 
 #include <iostream>
@@ -11,13 +10,7 @@ namespace Meow
 
     bool MeowEditor::Start() { return MeowRuntime::Get().Start(); }
 
-    void MeowEditor::Tick()
-    {
-        float dt = Time::Get().GetDeltaTime();
-        std::cout << "dt = " << dt << std::endl;
-        MeowRuntime::Get().Tick(dt);
-        Time::Get().Update();
-    }
+    void MeowEditor::Tick(float dt) { MeowRuntime::Get().Tick(dt); }
 
     void MeowEditor::ShutDown() { MeowRuntime::Get().ShutDown(); }
 

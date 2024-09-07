@@ -22,22 +22,36 @@ namespace Meow
             return instance;
         }
 
-        float GetDeltaTime() { return m_elapsed_time; }
-
-    private:
-        Time() { m_last_timepoint = std::chrono::steady_clock::now(); }
+        float GetTime() { return m_elapsed_time; }
+        float GetDeltaTime() { return m_dt; }
 
         void Update()
         {
             auto end_timepoint = std::chrono::steady_clock::now();
-            auto elapsed_time =
+            auto delta_time =
                 std::chrono::time_point_cast<std::chrono::microseconds>(end_timepoint).time_since_epoch() -
                 std::chrono::time_point_cast<std::chrono::microseconds>(m_last_timepoint).time_since_epoch();
+            auto elapsed_time =
+                std::chrono::time_point_cast<std::chrono::microseconds>(end_timepoint).time_since_epoch() -
+                std::chrono::time_point_cast<std::chrono::microseconds>(m_start_timepoint).time_since_epoch();
+
             m_last_timepoint = end_timepoint;
-            m_elapsed_time   = (float)elapsed_time.count() / 1000000.0;
+
+            m_elapsed_time = elapsed_time.count() / 1000000.0;
+            m_dt           = (float)delta_time.count() / 1000000.0;
         }
 
+    private:
+        Time()
+        {
+            m_start_timepoint = std::chrono::steady_clock::now();
+            m_last_timepoint  = std::chrono::steady_clock::now();
+        }
+
+        float m_elapsed_time;
+        float m_dt;
+
+        std::chrono::time_point<std::chrono::steady_clock> m_start_timepoint;
         std::chrono::time_point<std::chrono::steady_clock> m_last_timepoint;
-        float                                              m_elapsed_time;
     };
 } // namespace Meow

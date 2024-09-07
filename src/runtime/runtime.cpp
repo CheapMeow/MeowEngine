@@ -45,6 +45,8 @@ namespace Meow
 
     void MeowRuntime::Tick(float dt)
     {
+        Time::Get().Update();
+
         // TODO: Update Dependencies graph
         g_runtime_global_context.resource_system->Tick(dt);
         g_runtime_global_context.window_system->Tick(dt);
