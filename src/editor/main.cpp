@@ -1,7 +1,6 @@
 #include "editor.h"
 #include "runtime/core/base/log.hpp"
 #include "runtime/core/time/time.h"
-#include "runtime/function/global/runtime_global_context.h"
 
 using namespace Meow;
 

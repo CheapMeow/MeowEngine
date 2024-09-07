@@ -29,6 +29,8 @@ namespace Meow
 
     bool MeowRuntime::Start()
     {
+        std::cout << "Runtime: Global addresss: " << &g_runtime_global_context << std::endl;
+
         g_runtime_global_context.profile_system->Start();
         g_runtime_global_context.level_system->Start();
         g_runtime_global_context.file_system->Start();
