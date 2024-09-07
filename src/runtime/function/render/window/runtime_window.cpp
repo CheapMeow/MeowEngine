@@ -216,9 +216,6 @@ namespace Meow
     {
         const vk::raii::Instance& vulkan_instance = g_runtime_global_context.render_system->GetInstance();
 
-        std::cout << "RuntimeWindow::CreateSurface()" << std::endl;
-        std::cout << &vulkan_instance << std::endl;
-
         auto         size = GetSize();
         vk::Extent2D extent(size.x, size.y);
         m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
