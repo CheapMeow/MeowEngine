@@ -18,7 +18,6 @@ set(RUNTIME_HEADER_FILES
     core/reflect/unsafe_any.hpp
     core/signal/signal.hpp
     core/time/scope_time_data.h
-    core/time/time.h
     core/time/timer.h
     core/uuid/endianness.h
     core/uuid/uuid_v4.h
@@ -79,6 +78,7 @@ set(RUNTIME_HEADER_FILES
     function/render/window/runtime_window.h
     function/resource/resource_system.h
     function/resource/resource_info/model_res_info.h
+    function/time/time_system.h
     function/window/window.h
     function/window/window_system.h
     generated/register_all.h
@@ -125,6 +125,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/window/runtime_window.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp
+    function/time/time_system.cpp
     function/window/window.cpp
     function/window/window_system.cpp
     generated/register_all.cpp)

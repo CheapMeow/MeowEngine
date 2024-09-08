@@ -1,6 +1,5 @@
 #include "editor.h"
 
-#include "runtime/core/time/time.h"
 #include "runtime/runtime.h"
 #include <iostream>
 

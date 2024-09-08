@@ -31,7 +31,6 @@ set(HEADER_FILES_DEPEND
     ../runtime/core/reflect/unsafe_any.hpp
     ../runtime/core/signal/signal.hpp
     ../runtime/core/time/scope_time_data.h
-    ../runtime/core/time/time.h
     ../runtime/core/time/timer.h
     ../runtime/core/uuid/endianness.h
     ../runtime/core/uuid/uuid_v4.h
@@ -92,6 +91,7 @@ set(HEADER_FILES_DEPEND
     ../runtime/function/render/window/runtime_window.h
     ../runtime/function/resource/resource_system.h
     ../runtime/function/resource/resource_info/model_res_info.h
+    ../runtime/function/time/time_system.h
     ../runtime/function/window/window.h
     ../runtime/function/window/window_system.h
     ../runtime/generated/register_all.h

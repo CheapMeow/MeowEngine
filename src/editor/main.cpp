@@ -1,6 +1,6 @@
 #include "editor.h"
 #include "runtime/core/base/log.hpp"
-#include "runtime/core/time/time.h"
+#include "runtime/function/global/runtime_global_context.h"
 
 using namespace Meow;
 
@@ -15,8 +15,7 @@ int main()
 
     while (MeowEditor::Get().IsRunning())
     {
-        Time::Get().Update();
-        MeowEditor::Get().Tick(Time::Get().GetDeltaTime());
+        MeowEditor::Get().Tick(g_runtime_global_context.time_system->GetDeltaTime());
     }
 
     MeowEditor::Get().ShutDown();

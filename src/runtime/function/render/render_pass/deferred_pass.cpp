@@ -424,7 +424,7 @@ namespace Meow
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
-            float bias                        = glm::sin(Time::Get().GetTime() * m_LightInfos.speed[i]) / 5.0f;
+            float bias = glm::sin(g_runtime_global_context.time_system->GetTime() * m_LightInfos.speed[i]) / 5.0f;
             m_LightDatas.lights[i].position.x = m_LightInfos.position[i].x + bias * m_LightInfos.direction[i].x;
             m_LightDatas.lights[i].position.y = m_LightInfos.position[i].y + bias * m_LightInfos.direction[i].y;
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
