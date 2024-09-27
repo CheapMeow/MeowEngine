@@ -21,8 +21,8 @@ namespace Meow
         g_runtime_global_context.file_system     = std::make_shared<FileSystem>();
         g_runtime_global_context.resource_system = std::make_shared<ResourceSystem>();
         g_runtime_global_context.window_system   = std::make_shared<WindowSystem>();
-        g_runtime_global_context.input_system    = std::make_shared<InputSystem>();
         g_runtime_global_context.render_system   = std::make_shared<RenderSystem>();
+        g_runtime_global_context.input_system    = std::make_shared<InputSystem>();
         g_runtime_global_context.level_system    = std::make_shared<LevelSystem>();
 
         return true;
@@ -35,9 +35,9 @@ namespace Meow
         g_runtime_global_context.level_system->Start();
         g_runtime_global_context.file_system->Start();
         g_runtime_global_context.resource_system->Start();
+        g_runtime_global_context.render_system->Start();
         g_runtime_global_context.window_system->Start();
         g_runtime_global_context.input_system->Start();
-        g_runtime_global_context.render_system->Start();
 
         g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnClose().connect(
             [&]() { m_running = false; });

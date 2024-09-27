@@ -7,17 +7,49 @@
 
 namespace Meow
 {
-    WindowSystem::WindowSystem() {}
+    WindowSystem::WindowSystem()
+    {
+        glfwInit();
 
-    WindowSystem::~WindowSystem() { m_window = nullptr; }
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    void WindowSystem::Start() { AddWindow(std::make_shared<RuntimeWindow>(0)); }
+        // Create a windowed mode window and its context.
+        m_current_glfw_window = glfwCreateWindow(1080, 720, "Meow Engine GLFW Window", NULL, NULL);
+
+        // Gets any window errors.
+        if (!m_current_glfw_window)
+        {
+            glfwTerminate();
+            throw std::runtime_error("GLFW failed to create the window");
+        }
+
+        glfwMakeContextCurrent(m_current_glfw_window);
+        glfwSwapInterval(1);
+
+        // Sets the user pointer.
+        glfwSetWindowUserPointer(m_current_glfw_window, this);
+
+        // Window attributes that can change later.
+        glfwSetWindowAttrib(m_current_glfw_window, GLFW_DECORATED, false);
+        glfwSetWindowAttrib(m_current_glfw_window, GLFW_RESIZABLE, false);
+        glfwSetWindowAttrib(m_current_glfw_window, GLFW_FLOATING, false);
+
+        // Shows the glfw window.
+        glfwShowWindow(m_current_glfw_window);
+    }
+
+    WindowSystem::~WindowSystem() {}
+
+    void WindowSystem::Start() { AddWindow(std::make_shared<RuntimeWindow>(0, m_current_glfw_window)); }
 
     void WindowSystem::Tick(float dt)
     {
         FUNCTION_TIMER();
 
-        if (m_window)
-            m_window->Tick(dt);
+        if (m_current_window)
+            m_current_window->Tick(dt);
     }
 } // namespace Meow

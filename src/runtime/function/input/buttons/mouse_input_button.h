@@ -11,7 +11,27 @@ namespace Meow
          * @brief a new button mouse.
          * @param button The button on the mouse being checked.
          */
-        explicit MouseInputButton(MouseButtonCode button = MouseButtonCode::Button0);
+        explicit MouseInputButton(std::shared_ptr<Window> window, MouseButtonCode button = MouseButtonCode::Button0);
+        ~MouseInputButton();
+
+        MouseInputButton(MouseInputButton&& rhs) noexcept
+            : InputButton(std::move(rhs))
+        {
+            swap(*this, rhs);
+        }
+
+        MouseInputButton& operator=(MouseInputButton&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                InputButton::operator=(std::move(rhs));
+
+                swap(*this, rhs);
+            }
+            return *this;
+        }
+
+        friend void LIBRARY_API swap(MouseInputButton& lhs, MouseInputButton& rhs);
 
         InputAction GetAction() const override;
 
@@ -20,5 +40,7 @@ namespace Meow
 
     private:
         MouseButtonCode m_button;
+        std::size_t     m_slot_id     = 0;
+        bool            m_initialized = false;
     };
 } // namespace Meow

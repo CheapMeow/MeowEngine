@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+#include "core/base/macro.h"
+
 #include <glm/glm.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -58,9 +60,9 @@ namespace Meow
     FindGraphicsAndPresentQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device,
                                            vk::raii::SurfaceKHR const&     surface);
 
-    vk::SurfaceFormatKHR PickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats);
+    vk::SurfaceFormatKHR LIBRARY_API PickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats);
 
-    vk::PresentModeKHR PickPresentMode(std::vector<vk::PresentModeKHR> const& present_modes);
+    vk::PresentModeKHR LIBRARY_API PickPresentMode(std::vector<vk::PresentModeKHR> const& present_modes);
 
     uint32_t FindMemoryType(vk::PhysicalDeviceMemoryProperties const& memory_properties,
                             uint32_t                                  type_bits,
@@ -119,13 +121,13 @@ namespace Meow
     /**
      * @brief vk::raii::SwapchainKHR::acquireNextImageKHR without exceptions
      */
-    std::pair<vk::Result, uint32_t> SwapchainNextImageWrapper(const vk::raii::SwapchainKHR& swapchain,
-                                                              uint64_t                      timeout,
-                                                              vk::Semaphore                 semaphore,
-                                                              vk::Fence                     fence = {});
+    std::pair<vk::Result, uint32_t> LIBRARY_API SwapchainNextImageWrapper(const vk::raii::SwapchainKHR& swapchain,
+                                                                          uint64_t                      timeout,
+                                                                          vk::Semaphore                 semaphore,
+                                                                          vk::Fence                     fence = {});
 
     /**
      * @brief vk::raii::Queue::presentKHR without exceptions
      */
-    vk::Result QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info);
+    vk::Result LIBRARY_API QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info);
 } // namespace Meow

@@ -2,26 +2,41 @@
 
 #include <algorithm>
 #include <functional>
-#include <vector>
+#include <map>
 
 template<typename... Args>
 class Signal
 {
 public:
     using SlotType = std::function<void(Args...)>;
+    using SlotID   = std::size_t;
 
-    void connect(const SlotType& slot) { slots.push_back(slot); }
+    SlotID connect(const SlotType& slot)
+    {
+        m_slots[m_sequence] = slot;
+        return m_sequence++;
+    }
 
-    void disconnect(const SlotType& slot) { slots.erase(std::remove(slots.begin(), slots.end(), slot), slots.end()); }
+    bool disconnect(SlotID id)
+    {
+        auto it = m_slots.find(id);
+        if (it != m_slots.end())
+        {
+            m_slots.erase(it);
+            return true;
+        }
+        return false;
+    }
 
     void operator()(Args... args) const
     {
-        for (const auto& slot : slots)
+        for (const auto& kv : m_slots)
         {
-            slot(args...);
+            kv.second(args...);
         }
     }
 
 private:
-    std::vector<SlotType> slots;
+    SlotID                     m_sequence = 0;
+    std::map<SlotID, SlotType> m_slots;
 };

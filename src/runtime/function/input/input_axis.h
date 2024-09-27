@@ -1,12 +1,18 @@
 #pragma once
 
+#include "core/base/non_copyable.h"
 #include "core/signal/signal.hpp"
+#include "function/window/window.h"
+
+#include <memory>
 
 namespace Meow
 {
-    class InputAxis
+    class InputAxis : public NonCopyable
     {
     public:
+        InputAxis() = default;
+
         /**
          * @brief the current value along the axis. -1 is smallest input, 1 is largest input.
          * @return The current value of the axis in the range (-1, 1).
@@ -26,8 +32,9 @@ namespace Meow
         void  SetOffset(float offset) { m_offset = offset; }
 
     protected:
-        Signal<float> m_on_axis_signal;
-        float         m_scale  = 1.0f;
-        float         m_offset = 0.0f;
+        std::weak_ptr<Window> m_window;
+        Signal<float>         m_on_axis_signal;
+        float                 m_scale  = 1.0f;
+        float                 m_offset = 0.0f;
     };
 } // namespace Meow

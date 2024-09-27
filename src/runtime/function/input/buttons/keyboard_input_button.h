@@ -2,6 +2,8 @@
 
 #include "function/input/input_button.h"
 
+#include <iostream>
+
 namespace Meow
 {
     class KeyboardInputButton : public InputButton
@@ -11,7 +13,29 @@ namespace Meow
          * @brief a new button keyboard.
          * @param m_key The m_key on the keyboard being checked.
          */
-        explicit KeyboardInputButton(KeyCode key = KeyCode::Unknown);
+        explicit KeyboardInputButton(std::shared_ptr<Window> window, KeyCode key = KeyCode::Unknown);
+        ~KeyboardInputButton();
+
+        KeyboardInputButton(KeyboardInputButton&& rhs) noexcept
+            : InputButton(std::move(rhs))
+        {
+            swap(*this, rhs);
+        }
+
+        KeyboardInputButton& operator=(KeyboardInputButton&& rhs) noexcept
+        {
+            if (this != &rhs)
+            {
+                InputButton::operator=(std::move(rhs));
+
+                swap(*this, rhs);
+
+                std::cout << "Hello!" << std::endl;
+            }
+            return *this;
+        }
+
+        friend void LIBRARY_API swap(KeyboardInputButton& lhs, KeyboardInputButton& rhs);
 
         InputAction GetAction() const override;
 
@@ -19,6 +43,8 @@ namespace Meow
         void    SetKey(KeyCode key) { m_key = key; }
 
     private:
-        KeyCode m_key;
+        KeyCode     m_key;
+        std::size_t m_slot_id     = 0;
+        bool        m_initialized = false;
     };
 } // namespace Meow

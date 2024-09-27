@@ -2,12 +2,13 @@
 
 #include "buffer_data.h"
 #include "core/base/alignment.h"
+#include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "ring_uniform_buffer_stat.h"
 
 namespace Meow
 {
-    struct RingUniformBuffer : NonCopyable
+    struct LIBRARY_API RingUniformBuffer : NonCopyable
     {
         std::shared_ptr<BufferData> buffer_data_ptr  = nullptr;
         void*                       mapped_data_ptr  = nullptr;

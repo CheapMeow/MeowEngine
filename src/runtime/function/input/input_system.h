@@ -1,5 +1,8 @@
 #pragma once
 
+#include "function/input/axes/mouse_input_axis.h"
+#include "function/input/buttons/keyboard_input_button.h"
+#include "function/input/buttons/mouse_input_button.h"
 #include "function/system.h"
 #include "input_scheme.h"
 

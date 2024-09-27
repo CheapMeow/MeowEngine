@@ -92,7 +92,6 @@ set(RUNTIME_SOURCE_FILES
     function/components/model/model_component.cpp
     function/file/file_system.cpp
     function/global/runtime_global_context.cpp
-    function/input/input_scheme.cpp
     function/input/input_system.cpp
     function/input/axes/mouse_input_axis.cpp
     function/input/buttons/keyboard_input_button.cpp

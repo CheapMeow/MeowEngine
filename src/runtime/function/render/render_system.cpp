@@ -107,14 +107,19 @@ namespace Meow
 
     void RenderSystem::CreateLogicalDevice()
     {
+        // Logical Device
+
         std::vector<vk::ExtensionProperties> device_extensions = m_physical_device.enumerateDeviceExtensionProperties();
         if (!ValidateExtensions(k_required_device_extensions, device_extensions))
         {
             throw std::runtime_error("Required device extensions are missing, will try without.");
         }
 
-        const SurfaceData& surface_data =
-            g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetSurfaceData();
+        // temp SurfaceData
+        vk::Extent2D extent(1080, 720);
+        SurfaceData  surface_data(
+            m_vulkan_instance, g_runtime_global_context.window_system->GetCurrentFocusGLFWWindow(), extent);
+
         auto indexs                   = FindGraphicsAndPresentQueueFamilyIndex(m_physical_device, surface_data.surface);
         m_graphics_queue_family_index = indexs.first;
         m_present_queue_family_index  = indexs.second;
@@ -147,7 +152,19 @@ namespace Meow
         m_present_queue  = vk::raii::Queue(m_logical_device, m_present_queue_family_index, 0);
     }
 
-    RenderSystem::RenderSystem() { CreateVulkanInstance(); }
+    RenderSystem::RenderSystem()
+    {
+        CreateVulkanInstance();
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        CreateDebugUtilsMessengerEXT();
+#endif
+        CreatePhysicalDevice();
+        CreateLogicalDevice();
+
+        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
+                                                           m_graphics_queue_family_index);
+        m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+    }
 
     RenderSystem::~RenderSystem()
     {
@@ -164,20 +181,7 @@ namespace Meow
         m_vulkan_instance = nullptr;
     }
 
-    void RenderSystem::Start()
-    {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        CreateDebugUtilsMessengerEXT();
-#endif
-        CreatePhysicalDevice();
-        CreateLogicalDevice();
-
-        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
-                                                           m_graphics_queue_family_index);
-        m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
-
-        g_runtime_global_context.window_system->GetCurrentFocusWindow()->Init();
-    }
+    void RenderSystem::Start() {}
 
     void RenderSystem::Tick(float dt) {}
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/base/bitmask.hpp"
+#include "core/base/macro.h"
 #include "function/object/game_object.h"
 #include "function/render/structs/model.h"
 
@@ -8,7 +9,7 @@
 
 namespace Meow
 {
-    class [[reflectable_class()]] ModelComponent : public Component
+    class [[reflectable_class()]] LIBRARY_API ModelComponent : public Component
     {
     public:
         UUIDv4::UUID         uuid;

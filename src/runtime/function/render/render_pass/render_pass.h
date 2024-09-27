@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "function/render/structs/image_data.h"
 #include "function/render/structs/surface_data.h"
@@ -9,7 +10,7 @@
 
 namespace Meow
 {
-    class RenderPass : public NonCopyable
+    class LIBRARY_API RenderPass : public NonCopyable
     {
     public:
         RenderPass(std::nullptr_t) {}
@@ -50,7 +51,7 @@ namespace Meow
 
         virtual void AfterPresent();
 
-        friend void swap(RenderPass& lhs, RenderPass& rhs);
+        friend void LIBRARY_API swap(RenderPass& lhs, RenderPass& rhs);
 
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;

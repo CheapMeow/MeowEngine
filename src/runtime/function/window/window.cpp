@@ -134,28 +134,33 @@ namespace Meow
         return 0.0;
     }
 
-    Window::Window(std::size_t id)
+    Window::Window(std::size_t id, GLFWwindow* glfw_window)
         : m_glfw_window_id(id)
         , m_size(1080, 720)
         , m_title("Meow Engine Window")
         , m_resizable(true)
         , m_focused(true)
     {
-        glfwInit();
-
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        // Create a windowed mode window and its context.
-        m_glfw_window = glfwCreateWindow(1080, 720, "Meow Engine GLFW Window", NULL, NULL);
-
-        // Gets any window errors.
-        if (!m_glfw_window)
+        if (!glfw_window)
         {
-            glfwTerminate();
-            throw std::runtime_error("GLFW failed to create the window");
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+            glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+            // Create a windowed mode window and its context.
+            m_glfw_window = glfwCreateWindow(1080, 720, "Meow Engine GLFW Window", NULL, NULL);
+
+            // Gets any window errors.
+            if (!m_glfw_window)
+            {
+                glfwTerminate();
+                throw std::runtime_error("GLFW failed to create the window");
+            }
+        }
+        else
+        {
+            m_glfw_window = glfw_window;
         }
 
         glfwMakeContextCurrent(m_glfw_window);

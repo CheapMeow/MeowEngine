@@ -14,13 +14,10 @@ namespace Meow
     class RuntimeWindow : public Window
     {
     public:
-        RuntimeWindow(std::size_t id);
+        RuntimeWindow(std::size_t id, GLFWwindow* glfw_window = nullptr);
         ~RuntimeWindow() override;
 
-        void Init() override;
         void Tick(float dt) override;
-
-        const SurfaceData& GetSurfaceData() override { return m_surface_data; }
 
     private:
         void CreateSurface();
