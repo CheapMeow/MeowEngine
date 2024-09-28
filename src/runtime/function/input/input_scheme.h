@@ -15,7 +15,7 @@ namespace Meow
 {
     struct InputScheme : public NonCopyable
     {
-        std::map<std::string, InputAxis>   axes;
-        std::map<std::string, InputButton> buttons;
+        std::map<std::string, std::unique_ptr<InputAxis>>   axes;
+        std::map<std::string, std::unique_ptr<InputButton>> buttons;
     };
 } // namespace Meow
