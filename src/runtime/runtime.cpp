@@ -64,9 +64,9 @@ namespace Meow
         // TODO: ShutDown Dependencies graph
         g_runtime_global_context.level_system    = nullptr;
         g_runtime_global_context.resource_system = nullptr;
+        g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.window_system   = nullptr;
         g_runtime_global_context.render_system   = nullptr;
-        g_runtime_global_context.input_system    = nullptr;
         g_runtime_global_context.file_system     = nullptr;
         g_runtime_global_context.profile_system  = nullptr;
         g_runtime_global_context.time_system     = nullptr;

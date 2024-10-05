@@ -7,13 +7,17 @@
 #include <tuple>
 #include <vector>
 
+#ifndef ENGINE_ROOT_DIR
+#    define ENGINE_ROOT_DIR ""
+#endif
+
 namespace Meow
 {
     class FileSystem final : public System
     {
     public:
         // TODO: Support configure of engine root path
-        FileSystem() { m_root_path = "E:/repositories/MeowEngine"; }
+        FileSystem() { m_root_path = ENGINE_ROOT_DIR; }
 
         void Start() override;
 

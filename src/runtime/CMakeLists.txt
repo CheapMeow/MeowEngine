@@ -142,6 +142,7 @@ set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")
 target_compile_definitions(
   ${RUNTIME_NAME}
   PRIVATE LIBRARY_EXPORTS
+          ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
           $<$<CONFIG:Debug>:MEOW_DEBUG>
           $<$<CONFIG:Release>:MEOW_RELEASE>
           $<$<CONFIG:Debug>:VKB_DEBUG>

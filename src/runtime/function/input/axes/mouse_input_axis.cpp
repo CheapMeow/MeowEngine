@@ -31,7 +31,7 @@ namespace Meow
             return;
         }
 
-        if (window->OnMousePosition().disconnect(m_slot_id))
+        if (!window->OnMousePosition().disconnect(m_slot_id))
         {
             MEOW_ERROR("Try disconnect slot in dector of MouseInputAxis, but the slot doesn't exist in window!");
         }

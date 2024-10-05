@@ -34,7 +34,7 @@ namespace Meow
             return;
         }
 
-        if (window->OnMouseButton().disconnect(m_slot_id))
+        if (!window->OnMouseButton().disconnect(m_slot_id))
         {
             MEOW_ERROR("Try disconnect slot in dector of MouseInputButton, but the slot doesn't exist in window!");
         }
