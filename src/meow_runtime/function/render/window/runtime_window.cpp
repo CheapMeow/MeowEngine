@@ -86,6 +86,8 @@ namespace Meow
             UUID                        model_go_id1  = level_ptr->CreateObject();
             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
 
+            model_go_ptr1->SetName("Backpack" + std::to_string(i + 1));
+
 #ifdef MEOW_DEBUG
             if (!model_go_ptr1)
                 MEOW_ERROR("GameObject is invalid!");
