@@ -19,49 +19,32 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CODE_GENERATOR_HEADER_FI
 
 add_executable(${CODE_GENERATOR_NAME} ${CODE_GENERATOR_HEADER_FILES} ${CODE_GENERATOR_SOURCE_FILES})
 
-find_package(Vulkan REQUIRED) # export vars
-
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${RUNTIME_DIR})
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glfw/include)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/volk)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/SPIRV-Cross)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/stb)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/assimp/include)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${CMAKE_BINARY_DIR}/src/3rdparty/assimp/include) # for config.h
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
-
-function(get_target_include_directories TARGET VAR_NAME)  
-    set(INCLUDE_DIRS "")  
-    get_target_property(TMP_DIRS ${TARGET} INCLUDE_DIRECTORIES)    
-    foreach(DIR ${TMP_DIRS})  
-        # If DIR is a generator expression, there will be no expansion here
-        # Here we assume they are direct paths 
-        list(APPEND INCLUDE_DIRS "-I${DIR}")  
-    endforeach()   
-    set(${VAR_NAME} "${INCLUDE_DIRS}" PARENT_SCOPE)  
-endfunction()  
-
-get_target_include_directories(${CODE_GENERATOR_NAME} INCLUDE_PATH_COLLECTION)  
-
 set_target_properties(${CODE_GENERATOR_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${CODE_GENERATOR_NAME} PROPERTIES FOLDER "Engine")
 
-# being a cross-platform target, we enforce standards conformance on MSVC
-target_compile_options(${CODE_GENERATOR_NAME}
-                       PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
-target_compile_options(${CODE_GENERATOR_NAME}
-                       PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/WX->")
-
+target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(${CODE_GENERATOR_NAME} PUBLIC $ENV{LLVM_DIR}/lib/libclang.lib)
-target_include_directories(${CODE_GENERATOR_NAME}
-                           PUBLIC $ENV{LLVM_DIR}/include)
-                           
+target_include_directories(${CODE_GENERATOR_NAME} PUBLIC $ENV{LLVM_DIR}/include)
+
+set(INCLUDE_DIRS)
+list(APPEND INCLUDE_DIRS "-I${CMAKE_CURRENT_SOURCE_DIR}/src")
+list(APPEND INCLUDE_DIRS "-I${RUNTIME_DIR}")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/glm")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/glfw/include")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/volk")
+find_package(Vulkan REQUIRED) # export vars
+list(APPEND INCLUDE_DIRS "-I${Vulkan_INCLUDE_DIRS}")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/SPIRV-Cross")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/stb")
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/assimp/include")
+list(APPEND INCLUDE_DIRS "-I${CMAKE_BINARY_DIR}/src/3rdparty/assimp/include") # for config.h
+list(APPEND INCLUDE_DIRS "-I${3RD_PARTY_ROOT_DIR}/imgui")
+list(APPEND INCLUDE_DIRS "-I$ENV{LLVM_DIR}/include")
+list(APPEND INCLUDE_DIRS "-I$ENV{LLVM_DIR}/lib/clang/19/include") # for mm_malloc.h to solve libclang diagnostic error
+
 add_custom_command(
     OUTPUT ${RUNTIME_DIR}/generated/register_all.cpp
-    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_PATH_COLLECTION} "-S${RUNTIME_DIR}" "-O${RUNTIME_DIR}/generated"
+    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_DIRS} "-S${RUNTIME_DIR}" "-O${RUNTIME_DIR}/generated"
     DEPENDS ${HEADER_FILES_DEPEND}
     COMMENT "Generating register_all.cpp"
 )
