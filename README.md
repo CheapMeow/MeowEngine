@@ -2,6 +2,10 @@
 
 ## 编译
 
+### 编译器
+
+msvc 在类型检查，模板类型推导方面可能更严格
+
 ### 第三方库
 
 `ExternalProject_Add` 在 install 上出现问题。自行复制 dll 来模仿 install，会出现 dll 缺失的问题。`vcpkg` 可能在查找路径上出现问题。最终还是 `submodule` 最稳定

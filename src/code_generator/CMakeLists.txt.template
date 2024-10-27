@@ -22,7 +22,7 @@ add_executable(${CODE_GENERATOR_NAME} ${CODE_GENERATOR_HEADER_FILES} ${CODE_GENE
 find_package(Vulkan REQUIRED) # export vars
 
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${SRC_ROOT_DIR}/runtime)
+target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${RUNTIME_DIR})
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glm)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/glfw/include)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/volk)
@@ -58,13 +58,13 @@ target_compile_options(${CODE_GENERATOR_NAME}
 target_link_libraries(${CODE_GENERATOR_NAME} PUBLIC $ENV{LLVM_DIR}/lib/libclang.lib)
 target_include_directories(${CODE_GENERATOR_NAME}
                            PUBLIC $ENV{LLVM_DIR}/include)
-
+                           
 add_custom_command(
-    OUTPUT ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
-    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_PATH_COLLECTION} "-S${SRC_ROOT_DIR}/runtime" "-O${SRC_ROOT_DIR}/runtime/generated"
+    OUTPUT ${RUNTIME_DIR}/generated/register_all.cpp
+    COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_PATH_COLLECTION} "-S${RUNTIME_DIR}" "-O${RUNTIME_DIR}/generated"
     DEPENDS ${HEADER_FILES_DEPEND}
     COMMENT "Generating register_all.cpp"
 )
 add_custom_target(${GENERATED_FILE_TARGET_NAME}
-    DEPENDS ${SRC_ROOT_DIR}/runtime/generated/register_all.cpp
+    DEPENDS ${RUNTIME_DIR}/generated/register_all.cpp
 )

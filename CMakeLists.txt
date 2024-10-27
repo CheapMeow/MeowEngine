@@ -6,11 +6,16 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Add the cmake folder so the FindXXX module is found
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error -Wno-attributes -msse4.2")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+endif()
 
 set(ENGINE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SRC_ROOT_DIR ${ENGINE_ROOT_DIR}/src)
+set(CODE_GENERATOR_ROOT_DIR ${SRC_ROOT_DIR}/code_generator)
 set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
+set(RUNTIME_DIR ${SRC_ROOT_DIR}/meow_runtime)
+set(EDITOR_DIR ${SRC_ROOT_DIR}/meow_editor)
 
 set(CODE_GENERATOR_NAME CodeGenerator)
 set(GENERATED_FILE_TARGET_NAME GenerateRegisterFile)
@@ -19,10 +24,10 @@ set(EDITOR_NAME MeowEditor)
 
 include(cmake/Utils.cmake)
 
-add_subdirectory(src/3rdparty)
-add_subdirectory(src/code_generator)
-add_subdirectory(src/runtime)
-add_subdirectory(src/editor)
+add_subdirectory(${3RD_PARTY_ROOT_DIR})
+add_subdirectory(${CODE_GENERATOR_ROOT_DIR})
+add_subdirectory(${RUNTIME_DIR})
+add_subdirectory(${EDITOR_DIR})
 
 # Setup editor to be startup project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT

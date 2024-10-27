@@ -8,7 +8,7 @@ sys.path.append(current_dir)
 from replace_util.replace import replace_headers_and_sources
 
 def main():
-    cmakelist_root = "./src/runtime"
+    cmakelist_root = "./src/meow_runtime"
     header_root = cmakelist_root
     src_root = cmakelist_root
     if os.path.isdir(cmakelist_root):
