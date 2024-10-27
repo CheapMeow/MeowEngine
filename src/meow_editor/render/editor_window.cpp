@@ -52,10 +52,9 @@ namespace Meow
 
         camera_go_ptr->SetName("Camera");
         std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
-            camera_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                                 std::make_shared<Transform3DComponent>());
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr = camera_go_ptr->TryAddComponent<Camera3DComponent>(
-            "Camera3DComponent", std::make_shared<Camera3DComponent>());
+            TryAddComponent(camera_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
+            TryAddComponent(camera_go_ptr, "Camera3DComponent", std::make_shared<Camera3DComponent>());
 
 #ifdef MEOW_DEBUG
         if (!camera_transform_comp_ptr)
@@ -76,12 +75,11 @@ namespace Meow
             MEOW_ERROR("GameObject is invalid!");
 #endif
         model_go_ptr->SetName("Backpack");
-        model_go_ptr->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                            std::make_shared<Transform3DComponent>());
-        model_go_ptr->TryAddComponent<ModelComponent>(
-            "ModelComponent",
-            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                             m_render_pass_ptr->input_vertex_attributes));
+        TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+        TryAddComponent(model_go_ptr,
+                        "ModelComponent",
+                        std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                                                         m_render_pass_ptr->input_vertex_attributes));
 
         for (int i = 0; i < 200; i++)
         {
@@ -93,12 +91,11 @@ namespace Meow
                 MEOW_ERROR("GameObject is invalid!");
 #endif
             std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-                model_go_ptr1->TryAddComponent<Transform3DComponent>("Transform3DComponent",
-                                                                     std::make_shared<Transform3DComponent>());
-            model_go_ptr1->TryAddComponent<ModelComponent>(
-                "ModelComponent",
-                std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                                 m_render_pass_ptr->input_vertex_attributes));
+                TryAddComponent(model_go_ptr1, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+            TryAddComponent(model_go_ptr1,
+                            "ModelComponent",
+                            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                                                             m_render_pass_ptr->input_vertex_attributes));
 
             model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
                                                            10.0 * glm::linearRand(-1.0f, 1.0f),
