@@ -73,17 +73,11 @@ namespace Meow
     //     return m_materials[file_path];
     // }
 
-    bool ResourceSystem::LoadModel(std::vector<float>&&        vertices,
-                                   std::vector<uint32_t>&&     indices,
-                                   BitMask<VertexAttributeBit> attributes,
-                                   UUID&                       uuid)
+    std::tuple<bool, UUID> ResourceSystem::LoadModel(std::vector<float>&&        vertices,
+                                                     std::vector<uint32_t>&&     indices,
+                                                     BitMask<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
-
-        if (m_models_id2data.find(uuid) != m_models_id2data.end())
-        {
-            return true;
-        }
 
         std::shared_ptr<Model> model_ptr =
             g_runtime_global_context.render_system->CreateModel(std::move(vertices), std::move(indices), attributes);
@@ -91,24 +85,25 @@ namespace Meow
         if (model_ptr)
         {
             m_models_id2data[model_ptr->uuid] = model_ptr;
-            return true;
+            return {true, model_ptr->uuid};
         }
         else
         {
-            return false;
+            return {false, UUID(0)};
         }
     }
 
-    bool ResourceSystem::LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUID& uuid)
+    std::tuple<bool, UUID> ResourceSystem::LoadModel(const std::string&          file_path,
+                                                     BitMask<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
 
         if (m_models_path2id.find(file_path) != m_models_path2id.end())
         {
-            uuid = m_models_path2id[file_path];
+            UUID uuid = m_models_path2id[file_path];
             if (m_models_id2data.find(uuid) != m_models_id2data.end())
             {
-                return true;
+                return {true, uuid};
             }
         }
 
@@ -118,11 +113,11 @@ namespace Meow
         {
             m_models_path2id[file_path]       = model_ptr->uuid;
             m_models_id2data[model_ptr->uuid] = model_ptr;
-            return true;
+            return {true, model_ptr->uuid};
         }
         else
         {
-            return false;
+            return {false, UUID(0)};
         }
     }
 

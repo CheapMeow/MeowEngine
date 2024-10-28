@@ -7,6 +7,7 @@
 #include "function/render/structs/shader.h"
 #include "function/system.h"
 
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -48,12 +49,11 @@ namespace Meow
 
         // std::shared_ptr<Material> GetMaterial(const UUID& uuid);
 
-        bool LoadModel(std::vector<float>&&        vertices,
-                       std::vector<uint32_t>&&     indices,
-                       BitMask<VertexAttributeBit> attributes,
-                       UUID&                       uuid);
+        std::tuple<bool, UUID> LoadModel(std::vector<float>&&        vertices,
+                                         std::vector<uint32_t>&&     indices,
+                                         BitMask<VertexAttributeBit> attributes);
 
-        bool LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes, UUID& uuid);
+        std::tuple<bool, UUID> LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
 
         std::shared_ptr<Model> GetModel(const UUID& uuid);
 

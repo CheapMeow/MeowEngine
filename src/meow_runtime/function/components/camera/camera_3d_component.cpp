@@ -40,8 +40,6 @@ namespace Meow
         auto model_shared_ptr = gameobject->TryGetComponent<ModelComponent>("ModelComponent");
         if (!model_shared_ptr)
             return false;
-        
-        MEOW_INFO("{} is pass!", gameobject->GetName());
 
         auto bounding = model_shared_ptr->model_ptr.lock()->GetBounding();
         bounding.min  = bounding.min * transform_shared_ptr->scale + transform_shared_ptr->position;
