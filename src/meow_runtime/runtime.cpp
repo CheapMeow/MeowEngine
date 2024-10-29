@@ -39,9 +39,6 @@ namespace Meow
         g_runtime_global_context.window_system->Start();
         g_runtime_global_context.input_system->Start();
 
-        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnClose().connect(
-            [&]() { m_running = false; });
-
         return true;
     }
 

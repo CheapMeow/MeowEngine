@@ -1,11 +1,11 @@
-#include "runtime_window.h"
+#include "game_window.h"
 
-#include "function/components/camera/camera_3d_component.hpp"
-#include "function/components/model/model_component.h"
-#include "function/components/transform/transform_3d_component.hpp"
-#include "function/global/runtime_global_context.h"
-#include "function/level/level.h"
-#include "function/render/utils/vulkan_initialize_utils.hpp"
+#include "meow_runtime/function/components/camera/camera_3d_component.hpp"
+#include "meow_runtime/function/components/model/model_component.h"
+#include "meow_runtime/function/components/transform/transform_3d_component.hpp"
+#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/level/level.h"
+#include "meow_runtime/function/render/utils/vulkan_initialize_utils.hpp"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -15,7 +15,7 @@
 
 namespace Meow
 {
-    RuntimeWindow::RuntimeWindow(std::size_t id, GLFWwindow* glfw_window)
+    GameWindow::GameWindow(std::size_t id, GLFWwindow* glfw_window)
         : Window::Window(id, glfw_window)
     {
         CreateSurface();
@@ -103,7 +103,7 @@ namespace Meow
         }
     }
 
-    RuntimeWindow::~RuntimeWindow()
+    GameWindow::~GameWindow()
     {
         const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         logical_device.waitIdle();
@@ -122,7 +122,7 @@ namespace Meow
         m_surface_data         = nullptr;
     }
 
-    void RuntimeWindow::Tick(float dt)
+    void GameWindow::Tick(float dt)
     {
         FUNCTION_TIMER();
 
@@ -205,7 +205,7 @@ namespace Meow
         Window::Tick(dt);
     }
 
-    void RuntimeWindow::CreateSurface()
+    void GameWindow::CreateSurface()
     {
         const vk::raii::Instance& vulkan_instance = g_runtime_global_context.render_system->GetInstance();
 
@@ -214,7 +214,7 @@ namespace Meow
         m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
     }
 
-    void RuntimeWindow::CreateSwapChian()
+    void GameWindow::CreateSwapChian()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
@@ -230,7 +230,7 @@ namespace Meow
                           g_runtime_global_context.render_system->GetPresentQueueFamilyIndex());
     }
 
-    void RuntimeWindow::CreateDescriptorAllocator()
+    void GameWindow::CreateDescriptorAllocator()
     {
         const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
 
@@ -252,7 +252,7 @@ namespace Meow
         m_descriptor_allocator                         = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
     }
 
-    void RuntimeWindow::CreatePerFrameData()
+    void GameWindow::CreatePerFrameData()
     {
         const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
@@ -277,7 +277,7 @@ namespace Meow
         }
     }
 
-    void RuntimeWindow::CreateRenderPass()
+    void GameWindow::CreateRenderPass()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
@@ -340,7 +340,7 @@ namespace Meow
         m_render_pass_ptr = &m_deferred_pass;
     }
 
-    void RuntimeWindow::InitImGui()
+    void GameWindow::InitImGui()
     {
         const vk::raii::Instance&       vulkan_instance = g_runtime_global_context.render_system->GetInstance();
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
@@ -420,7 +420,7 @@ namespace Meow
                       [](vk::raii::CommandBuffer& command_buffer) { ImGui_ImplVulkan_CreateFontsTexture(); });
     }
 
-    void RuntimeWindow::RecreateSwapChain()
+    void GameWindow::RecreateSwapChain()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();

@@ -8,9 +8,9 @@
 namespace Meow
 {
     /**
-     * @brief Engine entry.
+     * @brief Game entry.
      */
-    class MeowEditor : public NonCopyable
+    class MeowGame : public NonCopyable
     {
     public:
         bool Init();
@@ -18,9 +18,9 @@ namespace Meow
         void Tick(float dt);
         void ShutDown();
 
-        static MeowEditor& Get()
+        static MeowGame& Get()
         {
-            static MeowEditor instance;
+            static MeowGame instance;
             return instance;
         }
 

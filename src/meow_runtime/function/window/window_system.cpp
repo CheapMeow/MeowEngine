@@ -3,7 +3,6 @@
 #include "pch.h"
 
 #include "function/global/runtime_global_context.h"
-#include "function/render/window/runtime_window.h"
 
 namespace Meow
 {
@@ -43,7 +42,7 @@ namespace Meow
 
     WindowSystem::~WindowSystem() {}
 
-    void WindowSystem::Start() { AddWindow(std::make_shared<RuntimeWindow>(0, m_current_glfw_window)); }
+    void WindowSystem::Start() { }
 
     void WindowSystem::Tick(float dt)
     {

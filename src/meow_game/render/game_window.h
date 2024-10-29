@@ -1,21 +1,21 @@
 #pragma once
 
-#include "function/object/game_object.h"
-#include "function/render/render_pass/deferred_pass.h"
-#include "function/render/render_pass/forward_pass.h"
-#include "function/render/render_pass/imgui_pass.h"
-#include "function/render/structs/per_frame_data.h"
-#include "function/render/structs/surface_data.h"
-#include "function/render/structs/swapchain_data.h"
-#include "function/window/window.h"
+#include "meow_runtime/function/object/game_object.h"
+#include "meow_runtime/function/render/render_pass/deferred_pass.h"
+#include "meow_runtime/function/render/render_pass/forward_pass.h"
+#include "meow_runtime/function/render/render_pass/imgui_pass.h"
+#include "meow_runtime/function/render/structs/per_frame_data.h"
+#include "meow_runtime/function/render/structs/surface_data.h"
+#include "meow_runtime/function/render/structs/swapchain_data.h"
+#include "meow_runtime/function/window/window.h"
 
 namespace Meow
 {
-    class RuntimeWindow : public Window
+    class GameWindow : public Window
     {
     public:
-        RuntimeWindow(std::size_t id, GLFWwindow* glfw_window = nullptr);
-        ~RuntimeWindow() override;
+        GameWindow(std::size_t id, GLFWwindow* glfw_window = nullptr);
+        ~GameWindow() override;
 
         void Tick(float dt) override;
 

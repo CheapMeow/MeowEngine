@@ -15,8 +15,8 @@
 
 namespace Meow
 {
-    EditorWindow::EditorWindow(std::size_t id)
-        : Window::Window(id)
+    EditorWindow::EditorWindow(std::size_t id, GLFWwindow* glfw_window)
+        : Window::Window(id, glfw_window)
     {
         CreateSurface();
         CreateSwapChian();
@@ -25,11 +25,9 @@ namespace Meow
         CreateRenderPass();
         InitImGui();
 
-        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnSize().connect(
-            [&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
+        OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
-        g_runtime_global_context.window_system->GetCurrentFocusWindow()->OnIconify().connect(
-            [&](bool iconified) { m_iconified = iconified; });
+        OnIconify().connect([&](bool iconified) { m_iconified = iconified; });
 
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
@@ -85,6 +83,8 @@ namespace Meow
         {
             UUID                        model_go_id1  = level_ptr->CreateObject();
             std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
+
+            model_go_ptr1->SetName("Backpack" + std::to_string(i + 1));
 
 #ifdef MEOW_DEBUG
             if (!model_go_ptr1)
@@ -398,8 +398,7 @@ namespace Meow
         // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
         // with those in viewports
 
-        ImGui_ImplGlfw_InitForVulkan(g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetGLFWWindow(),
-                                     true);
+        ImGui_ImplGlfw_InitForVulkan(m_glfw_window, true);
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance                  = *vulkan_instance;
         init_info.PhysicalDevice            = *physical_device;

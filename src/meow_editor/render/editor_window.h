@@ -14,12 +14,10 @@ namespace Meow
     class EditorWindow : public Window
     {
     public:
-        EditorWindow(std::size_t id);
+        EditorWindow(std::size_t id, GLFWwindow* glfw_window = nullptr);
         ~EditorWindow() override;
 
         void Tick(float dt) override;
-
-        const SurfaceData& GetSurfaceData() override { return m_surface_data; }
 
     private:
         void CreateSurface();

@@ -3,6 +3,7 @@
 #include "function/components/shared/pawn_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_global_context.h"
+#include "runtime.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -26,32 +27,7 @@ namespace Meow
         , m_current_scheme(m_null_scheme.get())
     {}
 
-    void InputSystem::Start()
-    {
-        // TODO: Support json to get default input scheme
-        m_current_scheme->buttons["Left"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::A);
-        m_current_scheme->buttons["Right"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::D);
-        m_current_scheme->buttons["Forward"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::W);
-        m_current_scheme->buttons["Backward"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::S);
-        m_current_scheme->buttons["Up"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::E);
-        m_current_scheme->buttons["Down"] = std::make_unique<KeyboardInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), KeyCode::Q);
-
-        m_current_scheme->buttons["LeftMouse"] = std::make_unique<MouseInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), MouseButtonCode::ButtonLeft);
-        m_current_scheme->buttons["RightMouse"] = std::make_unique<MouseInputButton>(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow(), MouseButtonCode::ButtonRight);
-
-        m_current_scheme->axes["MouseX"] =
-            std::make_unique<MouseInputAxis>(g_runtime_global_context.window_system->GetCurrentFocusWindow(), 0);
-        m_current_scheme->axes["MouseY"] =
-            std::make_unique<MouseInputAxis>(g_runtime_global_context.window_system->GetCurrentFocusWindow(), 1);
-    }
+    void InputSystem::Start() {}
 
     void InputSystem::Tick(float dt) {}
 
@@ -125,5 +101,26 @@ namespace Meow
             return (*it).second.get();
         else
             return nullptr;
+    }
+
+    void InputSystem::BindDefault(std::shared_ptr<Window> window_ptr)
+    {
+        // TODO: Support json to get default input scheme
+        m_current_scheme->buttons["Left"]     = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::A);
+        m_current_scheme->buttons["Right"]    = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::D);
+        m_current_scheme->buttons["Forward"]  = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::W);
+        m_current_scheme->buttons["Backward"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::S);
+        m_current_scheme->buttons["Up"]       = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::E);
+        m_current_scheme->buttons["Down"]     = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::Q);
+
+        m_current_scheme->buttons["LeftMouse"] =
+            std::make_unique<MouseInputButton>(window_ptr, MouseButtonCode::ButtonLeft);
+        m_current_scheme->buttons["RightMouse"] =
+            std::make_unique<MouseInputButton>(window_ptr, MouseButtonCode::ButtonRight);
+
+        m_current_scheme->axes["MouseX"] = std::make_unique<MouseInputAxis>(window_ptr, 0);
+        m_current_scheme->axes["MouseY"] = std::make_unique<MouseInputAxis>(window_ptr, 1);
+
+        window_ptr->OnClose().connect([&]() { MeowRuntime::Get().SetRunning(false); });
     }
 } // namespace Meow

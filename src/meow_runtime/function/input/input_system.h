@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/base/macro.h"
 #include "function/input/axes/mouse_input_axis.h"
 #include "function/input/buttons/keyboard_input_button.h"
 #include "function/input/buttons/mouse_input_button.h"
@@ -8,7 +9,9 @@
 
 namespace Meow
 {
-    class InputSystem : System
+    class Window;
+
+    class LIBRARY_API InputSystem : public System
     {
     public:
         InputSystem();
@@ -26,6 +29,8 @@ namespace Meow
 
         InputAxis*   GetAxis(const std::string& name) const;
         InputButton* GetButton(const std::string& name) const;
+
+        void BindDefault(std::shared_ptr<Window> window_ptr);
 
     private:
         std::map<std::string, std::unique_ptr<InputScheme>> schemes;

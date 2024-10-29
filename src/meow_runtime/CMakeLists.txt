@@ -74,7 +74,6 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/vertex_buffer.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
-    function/render/window/runtime_window.h
     function/resource/resource_system.h
     function/resource/resource_info/model_res_info.h
     function/time/time_system.h
@@ -121,7 +120,6 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/shader.cpp
     function/render/structs/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp
-    function/render/window/runtime_window.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp
     function/time/time_system.cpp

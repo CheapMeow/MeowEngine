@@ -16,11 +16,13 @@ set(CODE_GENERATOR_ROOT_DIR ${SRC_ROOT_DIR}/code_generator)
 set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
 set(RUNTIME_DIR ${SRC_ROOT_DIR}/meow_runtime)
 set(EDITOR_DIR ${SRC_ROOT_DIR}/meow_editor)
+set(GAME_DIR ${SRC_ROOT_DIR}/meow_game)
 
 set(CODE_GENERATOR_NAME CodeGenerator)
 set(GENERATED_FILE_TARGET_NAME GenerateRegisterFile)
 set(RUNTIME_NAME MeowRuntime)
 set(EDITOR_NAME MeowEditor)
+set(GAME_NAME MeowGame)
 
 include(cmake/Utils.cmake)
 
@@ -28,6 +30,7 @@ add_subdirectory(${3RD_PARTY_ROOT_DIR})
 add_subdirectory(${CODE_GENERATOR_ROOT_DIR})
 add_subdirectory(${RUNTIME_DIR})
 add_subdirectory(${EDITOR_DIR})
+add_subdirectory(${GAME_DIR})
 
 # Setup editor to be startup project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT
@@ -36,7 +39,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT
 # Set all 3rd party project to one folder
 get_all_targets(ALL_TAR_LIST)
 foreach(TAR ${ALL_TAR_LIST})
-  if("${TAR}" STREQUAL "${CODE_GENERATOR_NAME}" OR "${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}")
+  if("${TAR}" STREQUAL "${CODE_GENERATOR_NAME}" OR "${TAR}" STREQUAL "${RUNTIME_NAME}" OR "${TAR}" STREQUAL "${EDITOR_NAME}" OR "${TAR}" STREQUAL "${GAME_NAME}")
     continue()
   endif()
 
