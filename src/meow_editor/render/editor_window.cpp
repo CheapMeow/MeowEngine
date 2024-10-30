@@ -207,6 +207,8 @@ namespace Meow
 
     void EditorWindow::CreateSurface()
     {
+        glfwInit();
+
         const vk::raii::Instance& vulkan_instance = g_runtime_global_context.render_system->GetInstance();
 
         auto         size = GetSize();
