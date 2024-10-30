@@ -118,6 +118,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/model_node.cpp
     function/render/structs/ring_uniform_buffer.cpp
     function/render/structs/shader.cpp
+    function/render/structs/surface_data.cpp
     function/render/structs/swapchain_data.cpp
     function/render/structs/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp
