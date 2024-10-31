@@ -175,16 +175,20 @@ namespace Meow
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
         vk::SubmitInfo         submit_info(
-            *image_acquired_semaphore, wait_destination_stage_mask, *cmd_buffer, *render_finished_semaphore);
+            *image_acquired_semaphore,
+            wait_destination_stage_mask,
+            *cmd_buffer,
+            *render_finished_semaphore);
         graphics_queue.submit(submit_info, *in_flight_fence);
 
-        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
-            ;
+        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout));
         cmd_buffer.reset();
         logical_device.resetFences({*in_flight_fence});
 
         vk::PresentInfoKHR present_info(
-            *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
+            *render_finished_semaphore,
+            *m_swapchain_data.swap_chain,
+            m_current_image_index);
         result = QueuePresentWrapper(present_queue, present_info);
         switch (result)
         {
@@ -249,7 +253,7 @@ namespace Meow
                                                           {vk::DescriptorType::eUniformBufferDynamic, 1000},
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
-        m_descriptor_allocator                         = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
+        m_descriptor_allocator = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
     }
 
     void GameWindow::CreatePerFrameData()
@@ -265,7 +269,9 @@ namespace Meow
             m_per_frame_data[i].command_pool = vk::raii::CommandPool(logical_device, command_pool_create_info);
 
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
-                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+                *m_per_frame_data[i].command_pool,
+                vk::CommandBufferLevel::ePrimary,
+                1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
             m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
 
@@ -280,17 +286,17 @@ namespace Meow
     void GameWindow::CreateRenderPass()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
             g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
 
-        m_deferred_pass = DeferredPass(physical_device,
-                                       logical_device,
-                                       m_surface_data,
-                                       onetime_submit_command_pool,
-                                       graphics_queue,
-                                       m_descriptor_allocator);
+        m_deferred_pass = GameDeferredPass(physical_device,
+                                           logical_device,
+                                           m_surface_data,
+                                           onetime_submit_command_pool,
+                                           graphics_queue,
+                                           m_descriptor_allocator);
         m_deferred_pass.RefreshFrameBuffers(physical_device,
                                             logical_device,
                                             onetime_submit_command_pool,
@@ -299,12 +305,12 @@ namespace Meow
                                             m_swapchain_data.image_views,
                                             m_surface_data.extent);
 
-        m_forward_pass = ForwardPass(physical_device,
-                                     logical_device,
-                                     m_surface_data,
-                                     onetime_submit_command_pool,
-                                     graphics_queue,
-                                     m_descriptor_allocator);
+        m_forward_pass = GameForwardPass(physical_device,
+                                         logical_device,
+                                         m_surface_data,
+                                         onetime_submit_command_pool,
+                                         graphics_queue,
+                                         m_descriptor_allocator);
         m_forward_pass.RefreshFrameBuffers(physical_device,
                                            logical_device,
                                            onetime_submit_command_pool,
@@ -344,11 +350,11 @@ namespace Meow
     {
         const vk::raii::Instance&       vulkan_instance = g_runtime_global_context.render_system->GetInstance();
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
             g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
         const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
-        const vk::raii::Queue& graphics_queue  = g_runtime_global_context.render_system->GetGraphicsQueue();
+        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
 
         std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
                                                           {vk::DescriptorType::eCombinedImageSampler, 1000},
@@ -361,8 +367,10 @@ namespace Meow
                                                           {vk::DescriptorType::eUniformBufferDynamic, 1000},
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
-        vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
-            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
+        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
+            1000,
+            pool_sizes);
         m_imgui_descriptor_pool = vk::raii::DescriptorPool(logical_device, descriptor_pool_create_info);
 
         // Setup Dear ImGui context
@@ -423,7 +431,7 @@ namespace Meow
     void GameWindow::RecreateSwapChain()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
             g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
