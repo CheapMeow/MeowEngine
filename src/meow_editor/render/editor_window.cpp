@@ -16,7 +16,7 @@
 namespace Meow
 {
     EditorWindow::EditorWindow(std::size_t id, GLFWwindow* glfw_window)
-        : Window::Window(id, glfw_window)
+        : Window(id, glfw_window)
     {
         CreateSurface();
         CreateSwapChian();
