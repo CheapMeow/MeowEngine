@@ -3,7 +3,6 @@
 #include "meow_runtime/function/object/game_object.h"
 #include "render/render_pass/game_deferred_pass.h"
 #include "render/render_pass/game_forward_pass.h"
-#include "meow_runtime/function/render/render_pass/imgui_pass.h"
 #include "meow_runtime/function/render/structs/per_frame_data.h"
 #include "meow_runtime/function/render/structs/surface_data.h"
 #include "meow_runtime/function/render/structs/swapchain_data.h"
@@ -25,7 +24,6 @@ namespace Meow
         void CreateDescriptorAllocator();
         void CreatePerFrameData();
         void CreateRenderPass();
-        void InitImGui();
         void RecreateSwapChain();
 
         SwapChainData m_swapchain_data = nullptr;
@@ -35,11 +33,7 @@ namespace Meow
 
         GameDeferredPass m_deferred_pass   = nullptr;
         GameForwardPass  m_forward_pass    = nullptr;
-        ImGuiPass        m_imgui_pass      = nullptr;
         RenderPass*      m_render_pass_ptr = nullptr;
-
-        // TODO: Dynamic descriptor pool?
-        vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
         bool           m_framebuffer_resized  = false;
         bool           m_iconified            = false;

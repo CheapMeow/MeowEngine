@@ -23,7 +23,6 @@ namespace Meow
         CreateDescriptorAllocator();
         CreatePerFrameData();
         CreateRenderPass();
-        InitImGui();
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
@@ -108,12 +107,6 @@ namespace Meow
         const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
         logical_device.waitIdle();
 
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
-        m_imgui_pass            = nullptr;
-        m_imgui_descriptor_pool = nullptr;
         m_per_frame_data.clear();
         m_forward_pass         = nullptr;
         m_deferred_pass        = nullptr;
@@ -167,10 +160,6 @@ namespace Meow
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
 
-        m_imgui_pass.Start(cmd_buffer, m_surface_data, m_current_image_index);
-        m_imgui_pass.Draw(cmd_buffer);
-        m_imgui_pass.End(cmd_buffer);
-
         cmd_buffer.end();
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
@@ -204,7 +193,6 @@ namespace Meow
         m_current_frame_index = (m_current_frame_index + 1) % k_max_frames_in_flight;
 
         m_render_pass_ptr->AfterPresent();
-        m_imgui_pass.AfterPresent();
 
         Window::Tick(dt);
     }
@@ -319,113 +307,7 @@ namespace Meow
                                            m_swapchain_data.image_views,
                                            m_surface_data.extent);
 
-        m_imgui_pass = ImGuiPass(physical_device,
-                                 logical_device,
-                                 m_surface_data,
-                                 onetime_submit_command_pool,
-                                 graphics_queue,
-                                 m_descriptor_allocator);
-        m_imgui_pass.RefreshFrameBuffers(physical_device,
-                                         logical_device,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         m_surface_data,
-                                         m_swapchain_data.image_views,
-                                         m_surface_data.extent);
-
-        m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
-            // switch render pass
-            if (cur_render_pass == 0)
-                m_render_pass_ptr = &m_deferred_pass;
-            else if (cur_render_pass == 1)
-                m_render_pass_ptr = &m_forward_pass;
-
-            g_runtime_global_context.profile_system->ClearProfile();
-        });
-
         m_render_pass_ptr = &m_deferred_pass;
-    }
-
-    void GameWindow::InitImGui()
-    {
-        const vk::raii::Instance&       vulkan_instance = g_runtime_global_context.render_system->GetInstance();
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
-        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
-
-        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
-                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
-                                                          {vk::DescriptorType::eSampledImage, 1000},
-                                                          {vk::DescriptorType::eStorageImage, 1000},
-                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eInputAttachment, 1000}};
-        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
-            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            1000,
-            pool_sizes);
-        m_imgui_descriptor_pool = vk::raii::DescriptorPool(logical_device, descriptor_pool_create_info);
-
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        (void)io;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
-        // io.ConfigViewportsNoAutoMerge = true;
-        // io.ConfigViewportsNoTaskBarIcon = true;
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-        // ImGui::StyleColorsLight();
-
-        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular
-        // ones.
-        ImGuiStyle& style = ImGui::GetStyle();
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            style.WindowRounding              = 0.0f;
-            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-        }
-
-        // Setup Platform/Renderer backends
-
-        // Because in ImGui docking branch, each viewport has its own `render pass`, but they doesn't have their
-        // own `pipeline`. They use the `pipeline` created from the `render pass` pass in `ImGui_ImplVulkan_Init`. So
-        // the `render pass` pass in `ImGui_ImplVulkan_Init` should be compatiable with the `render pass` used in other
-        // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
-        // with those in viewports
-
-        ImGui_ImplGlfw_InitForVulkan(m_glfw_window, true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance                  = *vulkan_instance;
-        init_info.PhysicalDevice            = *physical_device;
-        init_info.Device                    = *logical_device;
-        init_info.QueueFamily               = graphics_queue_family_index;
-        init_info.Queue                     = *graphics_queue;
-        init_info.DescriptorPool            = *m_imgui_descriptor_pool;
-        init_info.Subpass                   = 0;
-        init_info.MinImageCount             = k_max_frames_in_flight;
-        init_info.ImageCount                = k_max_frames_in_flight;
-        init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
-        init_info.RenderPass                = *m_imgui_pass.render_pass;
-
-        ImGui_ImplVulkan_Init(&init_info);
-
-        OneTimeSubmit(logical_device,
-                      onetime_submit_command_pool,
-                      graphics_queue,
-                      [](vk::raii::CommandBuffer& command_buffer) { ImGui_ImplVulkan_CreateFontsTexture(); });
     }
 
     void GameWindow::RecreateSwapChain()
@@ -449,7 +331,6 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreatePerFrameData();
-        InitImGui();
         m_deferred_pass.RefreshFrameBuffers(physical_device,
                                             logical_device,
                                             onetime_submit_command_pool,
@@ -464,13 +345,6 @@ namespace Meow
                                            m_surface_data,
                                            m_swapchain_data.image_views,
                                            m_surface_data.extent);
-        m_imgui_pass.RefreshFrameBuffers(physical_device,
-                                         logical_device,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         m_surface_data,
-                                         m_swapchain_data.image_views,
-                                         m_surface_data.extent);
 
         // update aspect ratio
 
