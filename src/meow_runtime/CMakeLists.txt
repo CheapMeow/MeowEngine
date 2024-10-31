@@ -137,26 +137,26 @@ add_dependencies(${RUNTIME_NAME} ${GENERATED_FILE_TARGET_NAME})
 set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")
 
-target_compile_definitions(
-  ${RUNTIME_NAME}
-  PRIVATE LIBRARY_EXPORTS
-          ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
-          $<$<CONFIG:Debug>:MEOW_DEBUG>
-          $<$<CONFIG:Release>:MEOW_RELEASE>
-          $<$<CONFIG:Debug>:VKB_DEBUG>
-          $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
-          VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
-                                    # according to cmake build platform
-          VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
-          VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from
-                                           # vulkan hpp
-          GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
-          IMGUI_DEFINE_MATH_OPERATORS
-          # _DISABLE_STRING_ANNOTATION # for ASAN
-          # _DISABLE_VECTOR_ANNOTATION # for ASAN
+target_compile_definitions(${RUNTIME_NAME} PRIVATE
+  LIBRARY_EXPORTS
 )
 target_compile_definitions(${RUNTIME_NAME} PUBLIC
-  NOMINMAX) # for std::numeric_limits<double>::min() and max()
+  ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
+  $<$<CONFIG:Debug>:MEOW_DEBUG>
+  $<$<CONFIG:Release>:MEOW_RELEASE>
+  $<$<CONFIG:Debug>:VKB_DEBUG>
+  $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
+  VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
+                            # according to cmake build platform
+  VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
+  VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from
+                                  # vulkan hpp
+  GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
+  IMGUI_DEFINE_MATH_OPERATORS
+  # _DISABLE_STRING_ANNOTATION # for ASAN
+  # _DISABLE_VECTOR_ANNOTATION # for ASAN
+  NOMINMAX # for std::numeric_limits<double>::min() and max()
+)
 
 # being a cross-platform target, we enforce standards conformance on MSVC
 target_compile_options(${RUNTIME_NAME}
