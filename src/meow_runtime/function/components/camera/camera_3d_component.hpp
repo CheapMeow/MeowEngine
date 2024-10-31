@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "core/math/bounding_box.h"
 #include "core/math/frustum.h"
 #include "core/reflect/macros.h"
@@ -18,7 +17,7 @@ namespace Meow
         Invalid
     };
 
-    class [[reflectable_class()]] LIBRARY_API Camera3DComponent : public Component
+    class [[reflectable_class()]] Camera3DComponent : public Component
     {
     public:
         [[reflectable_field()]]

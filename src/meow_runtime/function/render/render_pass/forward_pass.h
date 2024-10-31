@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
@@ -8,7 +7,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API ForwardPass : public RenderPass
+    class ForwardPass : public RenderPass
     {
     public:
         ForwardPass(std::nullptr_t)
@@ -65,7 +64,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void LIBRARY_API swap(ForwardPass& lhs, ForwardPass& rhs);
+        friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     private:
         Material m_forward_mat = nullptr;

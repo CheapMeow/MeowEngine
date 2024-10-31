@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/system.h"
 #include "function/window/window.h"
 
@@ -8,7 +7,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API WindowSystem final : public System
+    class WindowSystem final : public System
     {
     public:
         WindowSystem();

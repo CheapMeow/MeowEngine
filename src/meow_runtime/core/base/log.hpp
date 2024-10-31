@@ -1,14 +1,12 @@
 #pragma once
 
-#include "core/base/macro.h"
-
 #include <chrono>
 #include <format>
 #include <iostream>
 
 namespace Meow
 {
-    class LIBRARY_API Logger
+    class Logger
     {
     public:
         static void info(const std::string& message)

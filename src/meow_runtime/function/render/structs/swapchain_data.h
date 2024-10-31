@@ -1,11 +1,10 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
 
 namespace Meow
 {
-    struct LIBRARY_API SwapChainData
+    struct SwapChainData
     {
         vk::Format                       color_format;
         vk::raii::SwapchainKHR           swap_chain = nullptr;

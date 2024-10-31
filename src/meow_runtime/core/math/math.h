@@ -1,7 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -9,7 +7,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API Math
+    class Math
     {
     public:
         /**

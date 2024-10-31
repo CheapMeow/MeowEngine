@@ -131,7 +131,7 @@ set(RUNTIME_SOURCE_FILES
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 
-add_library(${RUNTIME_NAME} SHARED ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
+add_library(${RUNTIME_NAME} STATIC ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 add_dependencies(${RUNTIME_NAME} ${GENERATED_FILE_TARGET_NAME})
 
 set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
@@ -148,9 +148,6 @@ target_compile_definitions(${RUNTIME_NAME} PUBLIC
   $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
   VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
                             # according to cmake build platform
-  VULKAN_HPP_STORAGE_SHARED # compile dll when using vulkan hpp
-  VULKAN_HPP_STORAGE_SHARED_EXPORT # export DispatchLoaderDynamic from
-                                  # vulkan hpp
   GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
   IMGUI_DEFINE_MATH_OPERATORS
   # _DISABLE_STRING_ANNOTATION # for ASAN

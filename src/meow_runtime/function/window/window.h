@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "core/signal/signal.hpp"
 #include "function/input/input_enum.h"
@@ -16,7 +15,7 @@ namespace Meow
     /**
      * @brief Window controls glfw window and input.
      */
-    class LIBRARY_API Window : NonCopyable
+    class Window : NonCopyable
     {
     public:
         Window(std::nullptr_t) {}

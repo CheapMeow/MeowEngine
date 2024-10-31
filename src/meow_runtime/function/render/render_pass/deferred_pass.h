@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/model.h"
@@ -30,7 +29,7 @@ namespace Meow
         PointLight lights[k_num_lights];
     };
 
-    class LIBRARY_API DeferredPass : public RenderPass
+    class DeferredPass : public RenderPass
     {
     public:
         DeferredPass(std::nullptr_t)
@@ -91,7 +90,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void LIBRARY_API swap(DeferredPass& lhs, DeferredPass& rhs);
+        friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 
     private:
         Material m_obj2attachment_mat = nullptr;

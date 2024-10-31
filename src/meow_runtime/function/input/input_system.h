@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/input/axes/mouse_input_axis.h"
 #include "function/input/buttons/keyboard_input_button.h"
 #include "function/input/buttons/mouse_input_button.h"
@@ -11,7 +10,7 @@ namespace Meow
 {
     class Window;
 
-    class LIBRARY_API InputSystem : public System
+    class InputSystem : public System
     {
     public:
         InputSystem();

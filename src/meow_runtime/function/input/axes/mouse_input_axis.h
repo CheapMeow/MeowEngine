@@ -32,8 +32,8 @@ namespace Meow
             }
             return *this;
         }
-        
-        friend void LIBRARY_API swap(MouseInputAxis& lhs, MouseInputAxis& rhs);
+
+        friend void swap(MouseInputAxis& lhs, MouseInputAxis& rhs);
 
         float GetAmount() const override;
 

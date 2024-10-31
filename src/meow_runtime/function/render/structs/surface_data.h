@@ -1,14 +1,12 @@
 #pragma once
 
-#include "core/base/macro.h"
-
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <vulkan/vulkan_raii.hpp>
 
 namespace Meow
 {
-    struct LIBRARY_API SurfaceData
+    struct SurfaceData
     {
         vk::Extent2D         extent;
         vk::raii::SurfaceKHR surface = nullptr;

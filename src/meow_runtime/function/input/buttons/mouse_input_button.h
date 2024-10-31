@@ -31,7 +31,7 @@ namespace Meow
             return *this;
         }
 
-        friend void LIBRARY_API swap(MouseInputButton& lhs, MouseInputButton& rhs);
+        friend void swap(MouseInputButton& lhs, MouseInputButton& rhs);
 
         InputAction GetAction() const override;
 

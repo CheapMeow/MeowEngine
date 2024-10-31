@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "core/base/non_copyable.h"
 #include "function/system.h"
 
@@ -12,7 +11,7 @@ namespace Meow
     /**
      * @brief Engine entry.
      */
-    class LIBRARY_API MeowRuntime : NonCopyable
+    class MeowRuntime : NonCopyable
     {
     public:
         bool Init();

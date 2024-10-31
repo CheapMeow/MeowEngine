@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/file/file_system.h"
 #include "function/input/input_system.h"
 #include "function/level/level_system.h"
@@ -28,5 +27,5 @@ namespace Meow
         std::shared_ptr<LevelSystem>    level_system    = nullptr;
     };
 
-    extern LIBRARY_API RuntimeGlobalContext g_runtime_global_context;
+    extern RuntimeGlobalContext g_runtime_global_context;
 } // namespace Meow

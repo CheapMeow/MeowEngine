@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/render/structs/builtin_render_stat.h"
 #include "function/system.h"
 
@@ -11,7 +10,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API ProfileSystem : public System
+    class ProfileSystem : public System
     {
     public:
         void Start() override {};

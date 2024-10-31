@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/object/game_object.h"
 
@@ -8,7 +7,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API Level
+    class Level
     {
     public:
         void Tick(float dt);

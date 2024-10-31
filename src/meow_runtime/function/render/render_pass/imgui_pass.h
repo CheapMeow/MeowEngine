@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/macro.h"
 #include "core/signal/signal.hpp"
 #include "function/render/imgui_widgets/builtin_statistics_widget.h"
 #include "function/render/imgui_widgets/components_widget.h"
@@ -12,7 +11,7 @@
 
 namespace Meow
 {
-    class LIBRARY_API ImGuiPass : public RenderPass
+    class ImGuiPass : public RenderPass
     {
     public:
         ImGuiPass(std::nullptr_t);
@@ -57,7 +56,7 @@ namespace Meow
 
         Signal<int>& OnPassChanged() { return m_on_pass_changed; }
 
-        friend void LIBRARY_API swap(ImGuiPass& lhs, ImGuiPass& rhs);
+        friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
     private:
         int                      m_cur_render_pass   = 0;
