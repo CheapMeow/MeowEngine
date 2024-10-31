@@ -34,8 +34,7 @@ namespace Meow
     public:
         GameDeferredPass(std::nullptr_t)
             : RenderPass(nullptr)
-        {
-        }
+        {}
 
         GameDeferredPass(const vk::raii::PhysicalDevice& physical_device,
                          const vk::raii::Device&         device,
@@ -105,7 +104,8 @@ namespace Meow
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
 
-        std::string       m_pass_names[2];
-        BuiltinRenderStat m_render_stat[2];
+        std::string m_pass_names[2];
+
+        int draw_call[2] = {0, 0};
     };
 } // namespace Meow

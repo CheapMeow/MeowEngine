@@ -12,8 +12,7 @@ namespace Meow
     public:
         GameForwardPass(std::nullptr_t)
             : RenderPass(nullptr)
-        {
-        }
+        {}
 
         GameForwardPass(const vk::raii::PhysicalDevice& physical_device,
                         const vk::raii::Device&         device,
@@ -70,6 +69,6 @@ namespace Meow
     private:
         Material m_forward_mat = nullptr;
 
-        BuiltinRenderStat m_render_stat;
+        int draw_call = 0;
     };
 } // namespace Meow

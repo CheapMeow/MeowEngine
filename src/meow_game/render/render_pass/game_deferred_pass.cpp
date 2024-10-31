@@ -255,18 +255,10 @@ namespace Meow
         m_quad_mat.subpass = 1;
         m_quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
 
-        m_render_stat[0].vertex_attribute_metas = m_obj2attachment_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat[0].buffer_meta_map        = m_obj2attachment_mat.shader_ptr->buffer_meta_map;
-        m_render_stat[0].image_meta_map         = m_obj2attachment_mat.shader_ptr->image_meta_map;
-
-        m_render_stat[1].vertex_attribute_metas = m_quad_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat[1].buffer_meta_map        = m_quad_mat.shader_ptr->buffer_meta_map;
-        m_render_stat[1].image_meta_map         = m_quad_mat.shader_ptr->image_meta_map;
-
         // Create quad model
-        std::vector<float> vertices = {-1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-                                       1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
-        std::vector<uint32_t> indices = {0, 1, 2, 0, 2, 3};
+        std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+                                          1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
+        std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
         m_quad_model = std::move(Model(physical_device,
                                        device,
@@ -284,15 +276,6 @@ namespace Meow
         clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
-
-        // Debug
-
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount = 2,
-                                                        .pipelineStatistics = (1 << 11) - 1};
-
-        query_pool = device.createQueryPool(query_pool_create_info, nullptr);
 
         // init light
 
@@ -344,7 +327,7 @@ namespace Meow
                                                          color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
-                                                         vk::ImageUsageFlagBits::eInputAttachment,
+                                                             vk::ImageUsageFlagBits::eInputAttachment,
                                                          vk::ImageAspectFlagBits::eColor,
                                                          {},
                                                          false);
@@ -356,7 +339,7 @@ namespace Meow
                                                           vk::Format::eR8G8B8A8Unorm,
                                                           extent,
                                                           vk::ImageUsageFlagBits::eColorAttachment |
-                                                          vk::ImageUsageFlagBits::eInputAttachment,
+                                                              vk::ImageUsageFlagBits::eInputAttachment,
                                                           vk::ImageAspectFlagBits::eColor,
                                                           {},
                                                           false);
@@ -368,7 +351,7 @@ namespace Meow
                                                             vk::Format::eR16G16B16A16Sfloat,
                                                             extent,
                                                             vk::ImageUsageFlagBits::eColorAttachment |
-                                                            vk::ImageUsageFlagBits::eInputAttachment,
+                                                                vk::ImageUsageFlagBits::eInputAttachment,
                                                             vk::ImageAspectFlagBits::eColor,
                                                             {},
                                                             false);
@@ -380,7 +363,7 @@ namespace Meow
                                                          m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment |
-                                                         vk::ImageUsageFlagBits::eInputAttachment,
+                                                             vk::ImageUsageFlagBits::eInputAttachment,
                                                          vk::ImageAspectFlagBits::eDepth,
                                                          {},
                                                          false);
@@ -454,9 +437,7 @@ namespace Meow
 
         glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 view    = glm::lookAt(
-            transfrom_comp_ptr->position,
-            transfrom_comp_ptr->position + forward,
-            glm::vec3(0.0f, 1.0f, 0.0f));
+            transfrom_comp_ptr->position, transfrom_comp_ptr->position + forward, glm::vec3(0.0f, 1.0f, 0.0f));
 
         ubo_data.view       = view;
         ubo_data.projection = Math::perspective_vk(camera_comp_ptr->field_of_view,
@@ -470,7 +451,7 @@ namespace Meow
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>           model_go_ptr        = kv.second.lock();
+            std::shared_ptr<GameObject>           model_go_ptr = kv.second.lock();
             std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
                 model_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
             std::shared_ptr<ModelComponent> model_comp_ptr =
@@ -522,20 +503,11 @@ namespace Meow
                                  const Meow::SurfaceData&       surface_data,
                                  uint32_t                       current_image_index)
     {
-        // Debug
-        if (m_query_enabled)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                command_buffer.resetQueryPool(*query_pool, 0, 2);
-            }
-        }
-
         RenderPass::Start(command_buffer, surface_data, current_image_index);
 
         for (int i = 0; i < 2; i++)
         {
-            m_render_stat[i].draw_call = 0;
+            draw_call[i] = 0;
         }
     }
 
@@ -545,15 +517,11 @@ namespace Meow
 
         m_obj2attachment_mat.BindPipeline(command_buffer);
 
-        // Debug
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 0, {});
-
         std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>     model_go_ptr   = kv.second.lock();
+            std::shared_ptr<GameObject>     model_go_ptr = kv.second.lock();
             std::shared_ptr<ModelComponent> model_comp_ptr =
                 model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
 
@@ -562,59 +530,27 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.BindDescriptorSets(command_buffer, m_render_stat[0].draw_call);
+                m_obj2attachment_mat.BindDescriptorSets(command_buffer, draw_call[0]);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
-                ++m_render_stat[0].draw_call;
+                ++draw_call[0];
             }
         }
-
-        // Debug
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 0);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_quad_mat.BindPipeline(command_buffer);
 
-        // Debug
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 1, {});
-
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
-            m_quad_mat.BindDescriptorSets(command_buffer, m_render_stat[1].draw_call);
+            m_quad_mat.BindDescriptorSets(command_buffer, draw_call[1]);
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
 
-            ++m_render_stat[1].draw_call;
+            ++draw_call[1];
         }
-
-        // Debug
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 1);
     }
 
-    void GameDeferredPass::AfterPresent()
-    {
-        FUNCTION_TIMER();
-
-        if (m_query_enabled)
-        {
-            for (int i = 1; i >= 0; i--)
-            {
-                std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
-
-                g_runtime_global_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
-            }
-        }
-
-        m_render_stat[0].ringbuf_stat = m_obj2attachment_mat.GetRingUniformBufferStat();
-        m_render_stat[1].ringbuf_stat = m_quad_mat.GetRingUniformBufferStat();
-
-        for (int i = 1; i >= 0; i--)
-            g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
-    }
+    void GameDeferredPass::AfterPresent() {}
 
     void swap(GameDeferredPass& lhs, GameDeferredPass& rhs)
     {
@@ -632,6 +568,5 @@ namespace Meow
         swap(lhs.m_LightInfos, rhs.m_LightInfos);
 
         swap(lhs.m_pass_names, rhs.m_pass_names);
-        swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

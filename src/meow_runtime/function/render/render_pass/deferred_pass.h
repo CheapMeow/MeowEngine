@@ -36,11 +36,11 @@ namespace Meow
             : RenderPass(nullptr)
         {}
 
-        DeferredPass(vk::raii::PhysicalDevice const& physical_device,
-                     vk::raii::Device const&         device,
+        DeferredPass(const vk::raii::PhysicalDevice& physical_device,
+                     const vk::raii::Device&         device,
                      SurfaceData&                    surface_data,
-                     vk::raii::CommandPool const&    command_pool,
-                     vk::raii::Queue const&          queue,
+                     const vk::raii::CommandPool&    command_pool,
+                     const vk::raii::Queue&          queue,
                      DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         DeferredPass(DeferredPass&& rhs) noexcept
@@ -60,7 +60,7 @@ namespace Meow
             return *this;
         }
 
-        ~DeferredPass()
+        ~DeferredPass() override
         {
             m_obj2attachment_mat = nullptr;
             m_quad_mat           = nullptr;
@@ -72,21 +72,21 @@ namespace Meow
             m_depth_attachment  = nullptr;
         }
 
-        void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                 vk::raii::Device const&                 device,
-                                 vk::raii::CommandPool const&            command_pool,
-                                 vk::raii::Queue const&                  queue,
+        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
+                                 const vk::raii::Device&                 device,
+                                 const vk::raii::CommandPool&            command_pool,
+                                 const vk::raii::Queue&                  queue,
                                  SurfaceData&                            surface_data,
-                                 std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                 vk::Extent2D const&                     extent) override;
+                                 const std::vector<vk::raii::ImageView>& swapchain_image_views,
+                                 const vk::Extent2D&                     extent) override;
 
         void UpdateUniformBuffer() override;
 
-        void Start(vk::raii::CommandBuffer const& command_buffer,
-                   Meow::SurfaceData const&       surface_data,
+        void Start(const vk::raii::CommandBuffer& command_buffer,
+                   const Meow::SurfaceData&       surface_data,
                    uint32_t                       current_image_index) override;
 
-        void Draw(vk::raii::CommandBuffer const& command_buffer) override;
+        void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
         void AfterPresent() override;
 
@@ -103,6 +103,8 @@ namespace Meow
 
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
+
+        int draw_call = 0;
 
         std::string       m_pass_names[2];
         BuiltinRenderStat m_render_stat[2];

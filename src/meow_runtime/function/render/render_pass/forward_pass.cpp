@@ -14,11 +14,11 @@
 
 namespace Meow
 {
-    ForwardPass::ForwardPass(vk::raii::PhysicalDevice const& physical_device,
-                             vk::raii::Device const&         device,
+    ForwardPass::ForwardPass(const vk::raii::PhysicalDevice& physical_device,
+                             const vk::raii::Device&         device,
                              SurfaceData&                    surface_data,
-                             vk::raii::CommandPool const&    command_pool,
-                             vk::raii::Queue const&          queue,
+                             const vk::raii::CommandPool&    command_pool,
+                             const vk::raii::Queue&          queue,
                              DescriptorAllocatorGrowable&    m_descriptor_allocator)
         : RenderPass(device)
     {
@@ -101,11 +101,11 @@ namespace Meow
 
         // Create Material
 
-        std::shared_ptr<Shader> mesh_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                                           device,
-                                                                           m_descriptor_allocator,
-                                                                           "builtin/shaders/mesh.vert.spv",
-                                                                           "builtin/shaders/mesh.frag.spv");
+        auto mesh_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                        device,
+                                                        m_descriptor_allocator,
+                                                        "builtin/shaders/mesh.vert.spv",
+                                                        "builtin/shaders/mesh.frag.spv");
 
         m_forward_mat = Material(physical_device, device, mesh_shader_ptr);
         m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
@@ -130,13 +130,13 @@ namespace Meow
         query_pool = device.createQueryPool(query_pool_create_info, nullptr);
     }
 
-    void ForwardPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                          vk::raii::Device const&                 device,
-                                          vk::raii::CommandPool const&            command_pool,
-                                          vk::raii::Queue const&                  queue,
+    void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
+                                          const vk::raii::Device&                 device,
+                                          const vk::raii::CommandPool&            command_pool,
+                                          const vk::raii::Queue&                  queue,
                                           SurfaceData&                            surface_data,
-                                          std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                          vk::Extent2D const&                     extent)
+                                          const std::vector<vk::raii::ImageView>& swapchain_image_views,
+                                          const vk::Extent2D&                     extent)
     {
         // clear
 
@@ -171,7 +171,7 @@ namespace Meow
                                                           1);                           /* layers */
 
         framebuffers.reserve(swapchain_image_views.size());
-        for (auto const& imageView : swapchain_image_views)
+        for (const auto& imageView : swapchain_image_views)
         {
             attachments[0] = *imageView;
             framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
@@ -255,20 +255,20 @@ namespace Meow
         m_forward_mat.EndFrame();
     }
 
-    void ForwardPass::Start(vk::raii::CommandBuffer const& command_buffer,
-                            Meow::SurfaceData const&       surface_data,
+    void ForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
+                            const Meow::SurfaceData&       surface_data,
                             uint32_t                       current_image_index)
     {
         // Debug
         if (m_query_enabled)
             command_buffer.resetQueryPool(*query_pool, 0, 1);
 
-        m_render_stat.draw_call = 0;
+        draw_call = 0;
 
         RenderPass::Start(command_buffer, surface_data, current_image_index);
     }
 
-    void ForwardPass::Draw(vk::raii::CommandBuffer const& command_buffer)
+    void ForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -291,10 +291,10 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.BindDescriptorSets(command_buffer, m_render_stat.draw_call);
+                m_forward_mat.BindDescriptorSets(command_buffer, draw_call);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
-                ++m_render_stat.draw_call;
+                ++draw_call;
             }
         }
 
@@ -316,6 +316,7 @@ namespace Meow
         }
 
         m_render_stat.ringbuf_stat = m_forward_mat.GetRingUniformBufferStat();
+        m_render_stat.draw_call    = draw_call;
         g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
     }
 

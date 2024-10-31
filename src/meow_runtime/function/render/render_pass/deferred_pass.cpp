@@ -16,11 +16,11 @@
 
 namespace Meow
 {
-    DeferredPass::DeferredPass(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
+    DeferredPass::DeferredPass(const vk::raii::PhysicalDevice& physical_device,
+                               const vk::raii::Device&         device,
                                SurfaceData&                    surface_data,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
+                               const vk::raii::CommandPool&    command_pool,
+                               const vk::raii::Queue&          queue,
                                DescriptorAllocatorGrowable&    m_descriptor_allocator)
         : RenderPass(device)
     {
@@ -162,21 +162,21 @@ namespace Meow
 
         // Create Material
 
-        std::shared_ptr<Shader> obj_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                                          device,
-                                                                          m_descriptor_allocator,
-                                                                          "builtin/shaders/obj.vert.spv",
-                                                                          "builtin/shaders/obj.frag.spv");
+        auto obj_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                       device,
+                                                       m_descriptor_allocator,
+                                                       "builtin/shaders/obj.vert.spv",
+                                                       "builtin/shaders/obj.frag.spv");
 
         m_obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
         m_obj2attachment_mat.color_attachment_count = 3;
         m_obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
 
-        std::shared_ptr<Shader> quad_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                                           device,
-                                                                           m_descriptor_allocator,
-                                                                           "builtin/shaders/quad.vert.spv",
-                                                                           "builtin/shaders/quad.frag.spv");
+        auto quad_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                        device,
+                                                        m_descriptor_allocator,
+                                                        "builtin/shaders/quad.vert.spv",
+                                                        "builtin/shaders/quad.frag.spv");
 
         m_quad_mat         = Material(physical_device, device, quad_shader_ptr);
         m_quad_mat.subpass = 1;
@@ -242,13 +242,13 @@ namespace Meow
         }
     }
 
-    void DeferredPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                           vk::raii::Device const&                 device,
-                                           vk::raii::CommandPool const&            command_pool,
-                                           vk::raii::Queue const&                  queue,
+    void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
+                                           const vk::raii::Device&                 device,
+                                           const vk::raii::CommandPool&            command_pool,
+                                           const vk::raii::Queue&                  queue,
                                            SurfaceData&                            surface_data,
-                                           std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                           vk::Extent2D const&                     extent)
+                                           const std::vector<vk::raii::ImageView>& swapchain_image_views,
+                                           const vk::Extent2D&                     extent)
     {
         // clear
 
@@ -329,7 +329,7 @@ namespace Meow
                                                           1);                           /* layers */
 
         framebuffers.reserve(swapchain_image_views.size());
-        for (auto const& imageView : swapchain_image_views)
+        for (const auto& imageView : swapchain_image_views)
         {
             attachments[0] = *imageView;
             framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
@@ -437,8 +437,8 @@ namespace Meow
         m_quad_mat.EndFrame();
     }
 
-    void DeferredPass::Start(vk::raii::CommandBuffer const& command_buffer,
-                             Meow::SurfaceData const&       surface_data,
+    void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
+                             const Meow::SurfaceData&       surface_data,
                              uint32_t                       current_image_index)
     {
         // Debug
@@ -452,13 +452,10 @@ namespace Meow
 
         RenderPass::Start(command_buffer, surface_data, current_image_index);
 
-        for (int i = 0; i < 2; i++)
-        {
-            m_render_stat[i].draw_call = 0;
-        }
+        draw_call = 0;
     }
 
-    void DeferredPass::Draw(vk::raii::CommandBuffer const& command_buffer)
+    void DeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -532,7 +529,10 @@ namespace Meow
         m_render_stat[1].ringbuf_stat = m_quad_mat.GetRingUniformBufferStat();
 
         for (int i = 1; i >= 0; i--)
+        {
+            m_render_stat[i].draw_call = draw_call;
             g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+        }
     }
 
     void swap(DeferredPass& lhs, DeferredPass& rhs)
