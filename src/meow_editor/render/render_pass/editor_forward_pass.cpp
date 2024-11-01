@@ -1,20 +1,21 @@
-#include "forward_pass.h"
+#include "editor_forward_pass.h"
 
 #include "pch.h"
 
-#include "core/math/math.h"
-#include "function/components/camera/camera_3d_component.hpp"
-#include "function/components/model/model_component.h"
-#include "function/components/transform/transform_3d_component.hpp"
-#include "function/global/runtime_global_context.h"
-#include "function/render/structs/ubo_data.h"
+#include "global/editor_global_context.h"
+#include "meow_runtime/core/math/math.h"
+#include "meow_runtime/function/components/camera/camera_3d_component.hpp"
+#include "meow_runtime/function/components/model/model_component.h"
+#include "meow_runtime/function/components/transform/transform_3d_component.hpp"
+#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
 
 namespace Meow
 {
-    ForwardPass::ForwardPass(const vk::raii::PhysicalDevice& physical_device,
+    EditorForwardPass::EditorForwardPass(const vk::raii::PhysicalDevice& physical_device,
                              const vk::raii::Device&         device,
                              SurfaceData&                    surface_data,
                              const vk::raii::CommandPool&    command_pool,
@@ -130,7 +131,7 @@ namespace Meow
         query_pool = device.createQueryPool(query_pool_create_info, nullptr);
     }
 
-    void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
+    void EditorForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
                                           const vk::raii::Device&                 device,
                                           const vk::raii::CommandPool&            command_pool,
                                           const vk::raii::Queue&                  queue,
@@ -178,7 +179,7 @@ namespace Meow
         }
     }
 
-    void ForwardPass::UpdateUniformBuffer()
+    void EditorForwardPass::UpdateUniformBuffer()
     {
         FUNCTION_TIMER();
 
@@ -255,7 +256,7 @@ namespace Meow
         m_forward_mat.EndFrame();
     }
 
-    void ForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
+    void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
                             const Meow::SurfaceData&       surface_data,
                             uint32_t                       current_image_index)
     {
@@ -268,7 +269,7 @@ namespace Meow
         RenderPass::Start(command_buffer, surface_data, current_image_index);
     }
 
-    void ForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void EditorForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -303,7 +304,7 @@ namespace Meow
             command_buffer.endQuery(*query_pool, 0);
     }
 
-    void ForwardPass::AfterPresent()
+    void EditorForwardPass::AfterPresent()
     {
         FUNCTION_TIMER();
 
@@ -312,15 +313,15 @@ namespace Meow
             std::pair<vk::Result, std::vector<uint32_t>> query_results =
                 query_pool.getResults<uint32_t>(0, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-            g_runtime_global_context.profile_system->UploadPipelineStat(m_pass_name, query_results.second);
+            g_editor_global_context.profile_system->UploadPipelineStat(m_pass_name, query_results.second);
         }
 
-        m_render_stat.ringbuf_stat = m_forward_mat.GetRingUniformBufferStat();
-        m_render_stat.draw_call    = draw_call;
-        g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
+        m_render_stat.ringbuf_stat.populate(m_forward_mat.GetRingUniformBuffer());
+        m_render_stat.draw_call = draw_call;
+        g_editor_global_context.profile_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
     }
 
-    void swap(ForwardPass& lhs, ForwardPass& rhs)
+    void swap(EditorForwardPass& lhs, EditorForwardPass& rhs)
     {
         using std::swap;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/object/game_object.h"
+#include "meow_runtime/function/object/game_object.h"
 
 #include <imgui.h>
 #include <vector>

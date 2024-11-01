@@ -39,20 +39,9 @@ set(RUNTIME_HEADER_FILES
     function/level/level.h
     function/level/level_system.h
     function/object/game_object.h
-    function/profile/profile_system.h
     function/render/render_system.h
-    function/render/imgui_widgets/builtin_statistics_widget.h
-    function/render/imgui_widgets/components_widget.h
-    function/render/imgui_widgets/flame_graph_widget.h
-    function/render/imgui_widgets/game_objects_widget.h
-    function/render/imgui_widgets/pipeline_statistics_widget.h
-    function/render/imgui_widgets/spinner_widget.h
-    function/render/render_pass/deferred_pass.h
-    function/render/render_pass/forward_pass.h
-    function/render/render_pass/imgui_pass.h
     function/render/render_pass/render_pass.h
     function/render/structs/buffer_data.h
-    function/render/structs/builtin_render_stat.h
     function/render/structs/descriptor_allocator_growable.h
     function/render/structs/image_data.h
     function/render/structs/index_buffer.h
@@ -65,7 +54,6 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/per_frame_data.h
     function/render/structs/pipeline_info.h
     function/render/structs/ring_uniform_buffer.h
-    function/render/structs/ring_uniform_buffer_stat.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
@@ -98,17 +86,7 @@ set(RUNTIME_SOURCE_FILES
     function/level/level.cpp
     function/level/level_system.cpp
     function/object/game_object.cpp
-    function/profile/profile_system.cpp
     function/render/render_system.cpp
-    function/render/imgui_widgets/builtin_statistics_widget.cpp
-    function/render/imgui_widgets/components_widget.cpp
-    function/render/imgui_widgets/flame_graph_widget.cpp
-    function/render/imgui_widgets/game_objects_widget.cpp
-    function/render/imgui_widgets/pipeline_statistics_widget.cpp
-    function/render/imgui_widgets/spinner_widget.cpp
-    function/render/render_pass/deferred_pass.cpp
-    function/render/render_pass/forward_pass.cpp
-    function/render/render_pass/imgui_pass.cpp
     function/render/render_pass/render_pass.cpp
     function/render/structs/descriptor_allocator_growable.cpp
     function/render/structs/image_data.cpp

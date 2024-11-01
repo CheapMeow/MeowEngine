@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
+#include "render/structs/builtin_render_stat.h"
 
 #include <cstdint>
 #include <imgui.h>

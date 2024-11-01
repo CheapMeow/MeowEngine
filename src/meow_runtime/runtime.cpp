@@ -17,7 +17,6 @@ namespace Meow
 
         // TODO: Init Dependencies graph
         g_runtime_global_context.time_system     = std::make_shared<TimeSystem>();
-        g_runtime_global_context.profile_system  = std::make_shared<ProfileSystem>();
         g_runtime_global_context.file_system     = std::make_shared<FileSystem>();
         g_runtime_global_context.resource_system = std::make_shared<ResourceSystem>();
         g_runtime_global_context.window_system   = std::make_shared<WindowSystem>();
@@ -31,7 +30,6 @@ namespace Meow
     bool MeowRuntime::Start()
     {
         g_runtime_global_context.time_system->Start();
-        g_runtime_global_context.profile_system->Start();
         g_runtime_global_context.level_system->Start();
         g_runtime_global_context.file_system->Start();
         g_runtime_global_context.resource_system->Start();
@@ -51,7 +49,6 @@ namespace Meow
         g_runtime_global_context.input_system->Tick(dt);
         g_runtime_global_context.render_system->Tick(dt);
         g_runtime_global_context.level_system->Tick(dt);
-        g_runtime_global_context.profile_system->Tick(dt);
 
         TimerSingleton::Get().Clear();
     }
@@ -65,7 +62,6 @@ namespace Meow
         g_runtime_global_context.window_system   = nullptr;
         g_runtime_global_context.render_system   = nullptr;
         g_runtime_global_context.file_system     = nullptr;
-        g_runtime_global_context.profile_system  = nullptr;
         g_runtime_global_context.time_system     = nullptr;
     }
 } // namespace Meow

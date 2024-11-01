@@ -97,10 +97,7 @@ namespace Meow
 
         void BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index);
 
-        const RingUniformBufferStat GetRingUniformBufferStat()
-        {
-            return {ring_buffer.begin, ring_buffer.usage, ring_buffer.buffer_size};
-        }
+        RingUniformBuffer const& GetRingUniformBuffer() const { return ring_buffer; }
 
     public:
         std::shared_ptr<Shader> shader_ptr             = nullptr;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 #include "meow_runtime/function/render/render_pass/render_pass.h"

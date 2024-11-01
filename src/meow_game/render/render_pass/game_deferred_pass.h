@@ -1,6 +1,5 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
 #include "function/render/structs/material.h"
 #include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"

@@ -3,7 +3,6 @@
 #include "buffer_data.h"
 #include "core/base/alignment.h"
 #include "core/base/non_copyable.h"
-#include "ring_uniform_buffer_stat.h"
 
 namespace Meow
 {

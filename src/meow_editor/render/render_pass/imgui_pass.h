@@ -1,13 +1,13 @@
 #pragma once
 
-#include "core/signal/signal.hpp"
-#include "function/render/imgui_widgets/builtin_statistics_widget.h"
-#include "function/render/imgui_widgets/components_widget.h"
-#include "function/render/imgui_widgets/flame_graph_widget.h"
-#include "function/render/imgui_widgets/game_objects_widget.h"
-#include "function/render/structs/material.h"
-#include "function/render/structs/shader.h"
-#include "render_pass.h"
+#include "meow_runtime/core/signal/signal.hpp"
+#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/structs/material.h"
+#include "meow_runtime/function/render/structs/shader.h"
+#include "render/imgui_widgets/builtin_statistics_widget.h"
+#include "render/imgui_widgets/components_widget.h"
+#include "render/imgui_widgets/flame_graph_widget.h"
+#include "render/imgui_widgets/game_objects_widget.h"
 
 namespace Meow
 {

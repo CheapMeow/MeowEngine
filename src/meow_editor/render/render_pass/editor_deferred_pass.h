@@ -1,10 +1,10 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
-#include "function/render/structs/material.h"
-#include "function/render/structs/model.h"
-#include "function/render/structs/shader.h"
-#include "render_pass.h"
+#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/structs/material.h"
+#include "meow_runtime/function/render/structs/model.h"
+#include "meow_runtime/function/render/structs/shader.h"
+#include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
@@ -29,27 +29,27 @@ namespace Meow
         PointLight lights[k_num_lights];
     };
 
-    class DeferredPass : public RenderPass
+    class EditorDeferredPass : public RenderPass
     {
     public:
-        DeferredPass(std::nullptr_t)
+        EditorDeferredPass(std::nullptr_t)
             : RenderPass(nullptr)
         {}
 
-        DeferredPass(const vk::raii::PhysicalDevice& physical_device,
+        EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
                      const vk::raii::Device&         device,
                      SurfaceData&                    surface_data,
                      const vk::raii::CommandPool&    command_pool,
                      const vk::raii::Queue&          queue,
                      DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
-        DeferredPass(DeferredPass&& rhs) noexcept
+        EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
         {
             swap(*this, rhs);
         }
 
-        DeferredPass& operator=(DeferredPass&& rhs) noexcept
+        EditorDeferredPass& operator=(EditorDeferredPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -60,7 +60,7 @@ namespace Meow
             return *this;
         }
 
-        ~DeferredPass() override
+        ~EditorDeferredPass() override
         {
             m_obj2attachment_mat = nullptr;
             m_quad_mat           = nullptr;
@@ -90,7 +90,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void swap(DeferredPass& lhs, DeferredPass& rhs);
+        friend void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs);
 
     private:
         Material m_obj2attachment_mat = nullptr;

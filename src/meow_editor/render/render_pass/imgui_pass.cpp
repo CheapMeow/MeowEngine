@@ -2,8 +2,9 @@
 
 #include "pch.h"
 
-#include "function/global/runtime_global_context.h"
-#include "function/render/imgui_widgets/pipeline_statistics_widget.h"
+#include "global/editor_global_context.h"
+#include "meow_runtime/function/global/runtime_global_context.h"
+#include "render/imgui_widgets/pipeline_statistics_widget.h"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -151,10 +152,10 @@ namespace Meow
                                   TimerSingleton::Get().GetMaxDepth(),
                                   TimerSingleton::Get().GetGlobalStart());
 
-        m_builtin_stat_widget.Draw(g_runtime_global_context.profile_system->GetBuiltinRenderStat());
+        m_builtin_stat_widget.Draw(g_editor_global_context.profile_system->GetBuiltinRenderStat());
 
         if (m_query_enabled)
-            PipelineStatisticsWidget::Draw(g_runtime_global_context.profile_system->GetPipelineStat());
+            PipelineStatisticsWidget::Draw(g_editor_global_context.profile_system->GetPipelineStat());
         else
             ImGui::Text("Pipeline Statistics is disabled.");
 

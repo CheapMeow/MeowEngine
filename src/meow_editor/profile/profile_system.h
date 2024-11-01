@@ -1,7 +1,7 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
-#include "function/system.h"
+#include "meow_runtime/function/system.h"
+#include "render/structs/builtin_render_stat.h"
 
 #include <cstdint>
 #include <string>

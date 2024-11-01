@@ -1,33 +1,33 @@
 #pragma once
 
-#include "function/render/structs/builtin_render_stat.h"
-#include "function/render/structs/material.h"
-#include "function/render/structs/shader.h"
-#include "render_pass.h"
+#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/structs/material.h"
+#include "meow_runtime/function/render/structs/shader.h"
+#include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
-    class ForwardPass : public RenderPass
+    class EditorForwardPass : public RenderPass
     {
     public:
-        ForwardPass(std::nullptr_t)
+        EditorForwardPass(std::nullptr_t)
             : RenderPass(nullptr)
         {}
 
-        ForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                    const vk::raii::Device&         device,
-                    SurfaceData&                    surface_data,
-                    const vk::raii::CommandPool&    command_pool,
-                    const vk::raii::Queue&          queue,
-                    DescriptorAllocatorGrowable&    m_descriptor_allocator);
+        EditorForwardPass(const vk::raii::PhysicalDevice& physical_device,
+                          const vk::raii::Device&         device,
+                          SurfaceData&                    surface_data,
+                          const vk::raii::CommandPool&    command_pool,
+                          const vk::raii::Queue&          queue,
+                          DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
-        ForwardPass(ForwardPass&& rhs) noexcept
+        EditorForwardPass(EditorForwardPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
         {
             swap(*this, rhs);
         }
 
-        ForwardPass& operator=(ForwardPass&& rhs) noexcept
+        EditorForwardPass& operator=(EditorForwardPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -38,7 +38,7 @@ namespace Meow
             return *this;
         }
 
-        ~ForwardPass() override
+        ~EditorForwardPass() override
         {
             m_forward_mat = nullptr;
             render_pass   = nullptr;
@@ -64,7 +64,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void swap(ForwardPass& lhs, ForwardPass& rhs);
+        friend void swap(EditorForwardPass& lhs, EditorForwardPass& rhs);
 
     private:
         Material m_forward_mat = nullptr;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/time/scope_time_data.h"
+#include "meow_runtime/core/time/scope_time_data.h"
 
 #include <imgui.h>
 #include <vector>

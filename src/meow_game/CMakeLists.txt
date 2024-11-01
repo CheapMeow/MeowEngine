@@ -21,4 +21,3 @@ set_target_properties(${GAME_NAME} PROPERTIES FOLDER "Editor")
 target_include_directories(${GAME_NAME} PUBLIC ${SRC_ROOT_DIR} ${GAME_DIR})
 
 target_link_libraries(${GAME_NAME} PUBLIC ${RUNTIME_NAME})
-target_include_directories(${GAME_NAME} PUBLIC ${RUNTIME_DIR})

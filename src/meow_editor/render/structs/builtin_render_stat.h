@@ -1,9 +1,9 @@
 #pragma once
 
-#include "core/base/bitmask.hpp"
+#include "meow_runtime/core/base/bitmask.hpp"
+#include "meow_runtime/function/render/structs/shader.h"
+#include "meow_runtime/function/render/structs/vertex_attribute.h"
 #include "ring_uniform_buffer_stat.h"
-#include "shader.h"
-#include "vertex_attribute.h"
 
 namespace Meow
 {

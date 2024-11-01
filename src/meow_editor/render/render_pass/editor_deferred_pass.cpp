@@ -1,14 +1,15 @@
-#include "deferred_pass.h"
+#include "editor_deferred_pass.h"
 
 #include "pch.h"
 
-#include "core/math/math.h"
-#include "function/components/camera/camera_3d_component.hpp"
-#include "function/components/model/model_component.h"
-#include "function/components/transform/transform_3d_component.hpp"
-#include "function/global/runtime_global_context.h"
-#include "function/object/game_object.h"
-#include "function/render/structs/ubo_data.h"
+#include "global/editor_global_context.h"
+#include "meow_runtime/core/math/math.h"
+#include "meow_runtime/function/components/camera/camera_3d_component.hpp"
+#include "meow_runtime/function/components/model/model_component.h"
+#include "meow_runtime/function/components/transform/transform_3d_component.hpp"
+#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/object/game_object.h"
+#include "meow_runtime/function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -16,7 +17,7 @@
 
 namespace Meow
 {
-    DeferredPass::DeferredPass(const vk::raii::PhysicalDevice& physical_device,
+    EditorDeferredPass::EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
                                const vk::raii::Device&         device,
                                SurfaceData&                    surface_data,
                                const vk::raii::CommandPool&    command_pool,
@@ -242,7 +243,7 @@ namespace Meow
         }
     }
 
-    void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
+    void EditorDeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
                                            const vk::raii::Device&                 device,
                                            const vk::raii::CommandPool&            command_pool,
                                            const vk::raii::Queue&                  queue,
@@ -343,7 +344,7 @@ namespace Meow
         m_quad_mat.SetImage(device, "inputDepth", *m_depth_attachment);
     }
 
-    void DeferredPass::UpdateUniformBuffer()
+    void EditorDeferredPass::UpdateUniformBuffer()
     {
         FUNCTION_TIMER();
 
@@ -437,7 +438,7 @@ namespace Meow
         m_quad_mat.EndFrame();
     }
 
-    void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
+    void EditorDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
                              const Meow::SurfaceData&       surface_data,
                              uint32_t                       current_image_index)
     {
@@ -455,7 +456,7 @@ namespace Meow
         draw_call = 0;
     }
 
-    void DeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void EditorDeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -510,7 +511,7 @@ namespace Meow
             command_buffer.endQuery(*query_pool, 1);
     }
 
-    void DeferredPass::AfterPresent()
+    void EditorDeferredPass::AfterPresent()
     {
         FUNCTION_TIMER();
 
@@ -521,21 +522,21 @@ namespace Meow
                 std::pair<vk::Result, std::vector<uint32_t>> query_results =
                     query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-                g_runtime_global_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+                g_editor_global_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
             }
         }
 
-        m_render_stat[0].ringbuf_stat = m_obj2attachment_mat.GetRingUniformBufferStat();
-        m_render_stat[1].ringbuf_stat = m_quad_mat.GetRingUniformBufferStat();
+        m_render_stat[0].ringbuf_stat.populate(m_obj2attachment_mat.GetRingUniformBuffer());
+        m_render_stat[1].ringbuf_stat.populate(m_quad_mat.GetRingUniformBuffer());
 
         for (int i = 1; i >= 0; i--)
         {
             m_render_stat[i].draw_call = draw_call;
-            g_runtime_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+            g_editor_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
         }
     }
 
-    void swap(DeferredPass& lhs, DeferredPass& rhs)
+    void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs)
     {
         using std::swap;
 
