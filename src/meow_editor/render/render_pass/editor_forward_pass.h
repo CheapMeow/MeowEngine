@@ -71,6 +71,9 @@ namespace Meow
 
         int draw_call = 0;
 
+        bool                m_query_enabled = true;
+        vk::raii::QueryPool query_pool      = nullptr;
+        
         BuiltinRenderStat m_render_stat;
     };
 } // namespace Meow

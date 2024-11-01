@@ -325,6 +325,11 @@ namespace Meow
     {
         using std::swap;
 
+        swap(lhs.m_query_enabled, rhs.m_query_enabled);
+        swap(lhs.query_pool, rhs.query_pool);
+
+        swap(lhs.draw_call, rhs.draw_call);
+
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
         swap(lhs.m_render_stat, rhs.m_render_stat);
     }

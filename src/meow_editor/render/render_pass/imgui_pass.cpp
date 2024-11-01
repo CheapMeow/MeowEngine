@@ -188,6 +188,9 @@ namespace Meow
 
         swap(lhs.m_components_widget, rhs.m_components_widget);
         swap(lhs.m_flame_graph_widget, rhs.m_flame_graph_widget);
+
+        swap(lhs.m_query_enabled, rhs.m_query_enabled);
+        swap(lhs.query_pool, rhs.query_pool);
     }
 
 } // namespace Meow

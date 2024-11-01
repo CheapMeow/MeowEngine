@@ -106,6 +106,9 @@ namespace Meow
 
         int draw_call = 0;
 
+        bool                m_query_enabled = true;
+        vk::raii::QueryPool query_pool      = nullptr;
+        
         std::string       m_pass_names[2];
         BuiltinRenderStat m_render_stat[2];
     };

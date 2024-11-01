@@ -58,8 +58,6 @@ namespace Meow
         BitMask<VertexAttributeBit>        input_vertex_attributes;
 
         std::string         m_pass_name     = "Default Pass";
-        bool                m_query_enabled = true;
-        vk::raii::QueryPool query_pool      = nullptr;
 
     protected:
         vk::Format                 m_depth_format     = vk::Format::eD16Unorm;
