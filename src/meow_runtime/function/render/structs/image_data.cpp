@@ -1,6 +1,6 @@
 #include "image_data.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 namespace Meow
 {
@@ -299,7 +299,7 @@ namespace Meow
                                                         bool                            anisotropy_enable,
                                                         bool                            force_staging)
     {
-        auto [width, height] = g_runtime_global_context.file_system->GetImageFileWidthHeight(file_path);
+        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_path);
         if (width == 0 || height == 0)
         {
             return nullptr;
@@ -322,7 +322,7 @@ namespace Meow
                              0, image_data_ptr->staging_buffer_data.buffer.getMemoryRequirements().size) :
                          image_data_ptr->device_memory.mapMemory(0, image_data_ptr->image.getMemoryRequirements().size);
 
-        if (g_runtime_global_context.file_system->ReadImageFileToPtr(file_path, static_cast<uint8_t*>(data)) == 0)
+        if (g_runtime_context.file_system->ReadImageFileToPtr(file_path, static_cast<uint8_t*>(data)) == 0)
             return nullptr;
 
         image_data_ptr->need_staging ? image_data_ptr->staging_buffer_data.device_memory.unmapMemory() :

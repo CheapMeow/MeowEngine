@@ -2,7 +2,7 @@
 
 #include "core/math/math.h"
 #include "function/components/model/model_component.h"
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
 
 namespace Meow
@@ -54,10 +54,10 @@ namespace Meow
     {
         if (std::shared_ptr<Transform3DComponent> transform_component = m_transform.lock())
         {
-            if (g_runtime_global_context.input_system->GetButton("RightMouse")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("RightMouse")->GetAction() == InputAction::Press)
             {
-                float dx = g_runtime_global_context.input_system->GetAxis("MouseX")->GetAmount();
-                float dy = g_runtime_global_context.input_system->GetAxis("MouseY")->GetAmount();
+                float dx = g_runtime_context.input_system->GetAxis("MouseX")->GetAmount();
+                float dy = g_runtime_context.input_system->GetAxis("MouseY")->GetAmount();
 
                 glm::vec3 temp_right = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 
@@ -74,27 +74,27 @@ namespace Meow
 
             glm::vec3 movement = glm::vec3(0.0f);
 
-            if (g_runtime_global_context.input_system->GetButton("Left")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Left")->GetAction() == InputAction::Press)
             {
                 movement += -right;
             }
-            if (g_runtime_global_context.input_system->GetButton("Right")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Right")->GetAction() == InputAction::Press)
             {
                 movement += right;
             }
-            if (g_runtime_global_context.input_system->GetButton("Forward")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Forward")->GetAction() == InputAction::Press)
             {
                 movement += forward;
             }
-            if (g_runtime_global_context.input_system->GetButton("Backward")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Backward")->GetAction() == InputAction::Press)
             {
                 movement += -forward;
             }
-            if (g_runtime_global_context.input_system->GetButton("Up")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Up")->GetAction() == InputAction::Press)
             {
                 movement += up;
             }
-            if (g_runtime_global_context.input_system->GetButton("Down")->GetAction() == InputAction::Press)
+            if (g_runtime_context.input_system->GetButton("Down")->GetAction() == InputAction::Press)
             {
                 movement += -up;
             }

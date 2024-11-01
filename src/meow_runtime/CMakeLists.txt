@@ -27,7 +27,7 @@ set(RUNTIME_HEADER_FILES
     function/components/shared/uuid_component.h
     function/components/transform/transform_3d_component.hpp
     function/file/file_system.h
-    function/global/runtime_global_context.h
+    function/global/runtime_context.h
     function/input/input_axis.h
     function/input/input_button.h
     function/input/input_enum.h
@@ -78,7 +78,7 @@ set(RUNTIME_SOURCE_FILES
     function/components/camera/camera_3d_component.cpp
     function/components/model/model_component.cpp
     function/file/file_system.cpp
-    function/global/runtime_global_context.cpp
+    function/global/runtime_context.cpp
     function/input/input_system.cpp
     function/input/axes/mouse_input_axis.cpp
     function/input/buttons/keyboard_input_button.cpp

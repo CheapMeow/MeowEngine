@@ -1,6 +1,6 @@
 #include "model_component.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 namespace Meow
 {
@@ -9,15 +9,15 @@ namespace Meow
                                    BitMask<VertexAttributeBit> attributes)
     {
         auto [success, model_uuid] =
-            g_runtime_global_context.resource_system->LoadModel(std::move(vertices), std::move(indices), attributes);
+            g_runtime_context.resource_system->LoadModel(std::move(vertices), std::move(indices), attributes);
         if (success)
-            model_ptr = g_runtime_global_context.resource_system->GetModel(model_uuid);
+            model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
     }
 
     ModelComponent::ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
     {
-        auto [success, model_uuid] = g_runtime_global_context.resource_system->LoadModel(file_path, attributes);
+        auto [success, model_uuid] = g_runtime_context.resource_system->LoadModel(file_path, attributes);
         if (success)
-            model_ptr = g_runtime_global_context.resource_system->GetModel(model_uuid);
+            model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
     }
 } // namespace Meow

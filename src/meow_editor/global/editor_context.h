@@ -10,8 +10,8 @@ namespace Meow
     {
         bool running = true;
 
-        std::shared_ptr<ProfileSystem>  profile_system  = nullptr;
+        std::shared_ptr<ProfileSystem> profile_system = nullptr;
     };
 
-    extern EditorGlobalContext g_editor_global_context;
+    extern EditorGlobalContext g_editor_context;
 } // namespace Meow

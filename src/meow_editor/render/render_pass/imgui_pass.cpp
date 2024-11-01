@@ -2,8 +2,8 @@
 
 #include "pch.h"
 
-#include "global/editor_global_context.h"
-#include "meow_runtime/function/global/runtime_global_context.h"
+#include "global/editor_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 #include "render/imgui_widgets/pipeline_statistics_widget.h"
 
 #include <backends/imgui_impl_glfw.h>
@@ -125,7 +125,7 @@ namespace Meow
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
@@ -152,10 +152,10 @@ namespace Meow
                                   TimerSingleton::Get().GetMaxDepth(),
                                   TimerSingleton::Get().GetGlobalStart());
 
-        m_builtin_stat_widget.Draw(g_editor_global_context.profile_system->GetBuiltinRenderStat());
+        m_builtin_stat_widget.Draw(g_editor_context.profile_system->GetBuiltinRenderStat());
 
         if (m_query_enabled)
-            PipelineStatisticsWidget::Draw(g_editor_global_context.profile_system->GetPipelineStat());
+            PipelineStatisticsWidget::Draw(g_editor_context.profile_system->GetPipelineStat());
         else
             ImGui::Text("Pipeline Statistics is disabled.");
 

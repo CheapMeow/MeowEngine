@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 #include <map>
 #include <volk.h>
@@ -118,7 +118,7 @@ namespace Meow
         // temp SurfaceData
         vk::Extent2D extent(1080, 720);
         SurfaceData  surface_data(
-            m_vulkan_instance, g_runtime_global_context.window_system->GetCurrentFocusGLFWWindow(), extent);
+            m_vulkan_instance, g_runtime_context.window_system->GetCurrentFocusGLFWWindow(), extent);
 
         auto indexs                   = FindGraphicsAndPresentQueueFamilyIndex(m_physical_device, surface_data.surface);
         m_graphics_queue_family_index = indexs.first;

@@ -3,7 +3,7 @@
 #include "meow_runtime/function/components/camera/camera_3d_component.hpp"
 #include "meow_runtime/function/components/model/model_component.h"
 #include "meow_runtime/function/components/transform/transform_3d_component.hpp"
-#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/function/level/level.h"
 #include "meow_runtime/function/render/utils/vulkan_initialize_utils.hpp"
 
@@ -31,7 +31,7 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
@@ -104,7 +104,7 @@ namespace Meow
 
     GameWindow::~GameWindow()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
         logical_device.waitIdle();
 
         m_per_frame_data.clear();
@@ -122,9 +122,9 @@ namespace Meow
         if (m_iconified)
             return;
 
-        const vk::raii::Device& logical_device            = g_runtime_global_context.render_system->GetLogicalDevice();
-        const vk::raii::Queue&  graphics_queue            = g_runtime_global_context.render_system->GetGraphicsQueue();
-        const vk::raii::Queue&  present_queue             = g_runtime_global_context.render_system->GetPresentQueue();
+        const vk::raii::Device& logical_device            = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&  graphics_queue            = g_runtime_context.render_system->GetGraphicsQueue();
+        const vk::raii::Queue&  present_queue             = g_runtime_context.render_system->GetPresentQueue();
         auto&                   per_frame_data            = m_per_frame_data[m_current_frame_index];
         auto&                   cmd_buffer                = per_frame_data.command_buffer;
         auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
@@ -164,20 +164,16 @@ namespace Meow
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
         vk::SubmitInfo         submit_info(
-            *image_acquired_semaphore,
-            wait_destination_stage_mask,
-            *cmd_buffer,
-            *render_finished_semaphore);
+            *image_acquired_semaphore, wait_destination_stage_mask, *cmd_buffer, *render_finished_semaphore);
         graphics_queue.submit(submit_info, *in_flight_fence);
 
-        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout));
+        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
+            ;
         cmd_buffer.reset();
         logical_device.resetFences({*in_flight_fence});
 
         vk::PresentInfoKHR present_info(
-            *render_finished_semaphore,
-            *m_swapchain_data.swap_chain,
-            m_current_image_index);
+            *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
         result = QueuePresentWrapper(present_queue, present_info);
         switch (result)
         {
@@ -199,7 +195,7 @@ namespace Meow
 
     void GameWindow::CreateSurface()
     {
-        const vk::raii::Instance& vulkan_instance = g_runtime_global_context.render_system->GetInstance();
+        const vk::raii::Instance& vulkan_instance = g_runtime_context.render_system->GetInstance();
 
         auto         size = GetSize();
         vk::Extent2D extent(size.x, size.y);
@@ -208,8 +204,8 @@ namespace Meow
 
     void GameWindow::CreateSwapChian()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
         m_swapchain_data =
             SwapChainData(physical_device,
@@ -218,13 +214,13 @@ namespace Meow
                           m_surface_data.extent,
                           vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
                           nullptr,
-                          g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex(),
-                          g_runtime_global_context.render_system->GetPresentQueueFamilyIndex());
+                          g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
+                          g_runtime_context.render_system->GetPresentQueueFamilyIndex());
     }
 
     void GameWindow::CreateDescriptorAllocator()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         // create a descriptor pool
         // TODO: descriptor pool size is determined by all materials, so
@@ -241,13 +237,13 @@ namespace Meow
                                                           {vk::DescriptorType::eUniformBufferDynamic, 1000},
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
-        m_descriptor_allocator = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
+        m_descriptor_allocator                         = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
     }
 
     void GameWindow::CreatePerFrameData()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
-        const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
 
         m_per_frame_data.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
@@ -257,9 +253,7 @@ namespace Meow
             m_per_frame_data[i].command_pool = vk::raii::CommandPool(logical_device, command_pool_create_info);
 
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
-                *m_per_frame_data[i].command_pool,
-                vk::CommandBufferLevel::ePrimary,
-                1);
+                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
             m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
 
@@ -273,11 +267,11 @@ namespace Meow
 
     void GameWindow::CreateRenderPass()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         m_deferred_pass = GameDeferredPass(physical_device,
                                            logical_device,
@@ -312,11 +306,11 @@ namespace Meow
 
     void GameWindow::RecreateSwapChain()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         logical_device.waitIdle();
 
@@ -348,7 +342,7 @@ namespace Meow
 
         // update aspect ratio
 
-        std::shared_ptr<Level>      level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level>      level_ptr     = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
 
         if (!camera_go_ptr)

@@ -2,7 +2,7 @@
 
 #include "function/components/shared/pawn_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 #include "runtime.h"
 
 #include <glm/gtc/matrix_transform.hpp>

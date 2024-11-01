@@ -1,6 +1,6 @@
 #include "game.h"
 
-#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/runtime.h"
 #include "render/game_window.h"
 
@@ -15,10 +15,9 @@ namespace Meow
         if (!MeowRuntime::Get().Start())
             return false;
 
-        g_runtime_global_context.window_system->AddWindow(
-            std::make_shared<GameWindow>(0, g_runtime_global_context.window_system->GetCurrentFocusGLFWWindow()));
-        g_runtime_global_context.input_system->BindDefault(
-            g_runtime_global_context.window_system->GetCurrentFocusWindow());
+        g_runtime_context.window_system->AddWindow(
+            std::make_shared<GameWindow>(0, g_runtime_context.window_system->GetCurrentFocusGLFWWindow()));
+        g_runtime_context.input_system->BindDefault(g_runtime_context.window_system->GetCurrentFocusWindow());
 
         return true;
     }

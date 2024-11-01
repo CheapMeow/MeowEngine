@@ -2,12 +2,12 @@
 
 #include "pch.h"
 
-#include "global/editor_global_context.h"
+#include "global/editor_context.h"
 #include "meow_runtime/core/math/math.h"
 #include "meow_runtime/function/components/camera/camera_3d_component.hpp"
 #include "meow_runtime/function/components/model/model_component.h"
 #include "meow_runtime/function/components/transform/transform_3d_component.hpp"
-#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/function/object/game_object.h"
 #include "meow_runtime/function/render/structs/ubo_data.h"
 
@@ -18,11 +18,11 @@
 namespace Meow
 {
     EditorDeferredPass::EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                               const vk::raii::Device&         device,
-                               SurfaceData&                    surface_data,
-                               const vk::raii::CommandPool&    command_pool,
-                               const vk::raii::Queue&          queue,
-                               DescriptorAllocatorGrowable&    m_descriptor_allocator)
+                                           const vk::raii::Device&         device,
+                                           SurfaceData&                    surface_data,
+                                           const vk::raii::CommandPool&    command_pool,
+                                           const vk::raii::Queue&          queue,
+                                           DescriptorAllocatorGrowable&    m_descriptor_allocator)
         : RenderPass(device)
     {
         m_pass_name = "Deferred Pass";
@@ -244,12 +244,12 @@ namespace Meow
     }
 
     void EditorDeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
-                                           const vk::raii::Device&                 device,
-                                           const vk::raii::CommandPool&            command_pool,
-                                           const vk::raii::Queue&                  queue,
-                                           SurfaceData&                            surface_data,
-                                           const std::vector<vk::raii::ImageView>& swapchain_image_views,
-                                           const vk::Extent2D&                     extent)
+                                                 const vk::raii::Device&                 device,
+                                                 const vk::raii::CommandPool&            command_pool,
+                                                 const vk::raii::Queue&                  queue,
+                                                 SurfaceData&                            surface_data,
+                                                 const std::vector<vk::raii::ImageView>& swapchain_image_views,
+                                                 const vk::Extent2D&                     extent)
     {
         // clear
 
@@ -350,7 +350,7 @@ namespace Meow
 
         UBOData ubo_data;
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
@@ -372,7 +372,7 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        glm::ivec2 window_size = g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetSize();
+        glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
 
         glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 view    = glm::lookAt(
@@ -425,7 +425,7 @@ namespace Meow
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
-            float bias = glm::sin(g_runtime_global_context.time_system->GetTime() * m_LightInfos.speed[i]) / 5.0f;
+            float bias = glm::sin(g_runtime_context.time_system->GetTime() * m_LightInfos.speed[i]) / 5.0f;
             m_LightDatas.lights[i].position.x = m_LightInfos.position[i].x + bias * m_LightInfos.direction[i].x;
             m_LightDatas.lights[i].position.y = m_LightInfos.position[i].y + bias * m_LightInfos.direction[i].y;
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
@@ -439,8 +439,8 @@ namespace Meow
     }
 
     void EditorDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                             const Meow::SurfaceData&       surface_data,
-                             uint32_t                       current_image_index)
+                                   const Meow::SurfaceData&       surface_data,
+                                   uint32_t                       current_image_index)
     {
         // Debug
         if (m_query_enabled)
@@ -466,7 +466,7 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 0, {});
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
@@ -522,7 +522,7 @@ namespace Meow
                 std::pair<vk::Result, std::vector<uint32_t>> query_results =
                     query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-                g_editor_global_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
             }
         }
 
@@ -532,7 +532,7 @@ namespace Meow
         for (int i = 1; i >= 0; i--)
         {
             m_render_stat[i].draw_call = draw_call;
-            g_editor_global_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
         }
     }
 

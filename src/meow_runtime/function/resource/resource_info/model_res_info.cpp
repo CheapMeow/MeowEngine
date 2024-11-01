@@ -1,6 +1,6 @@
 #include "model_res_info.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -31,7 +31,7 @@ namespace Meow
     {
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
-        auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
+        auto [data_ptr, data_size] = g_runtime_context.file_system.get()->ReadBinaryFile(file_path);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);

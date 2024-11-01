@@ -13,7 +13,7 @@ set(EDITOR_HEADER_FILES
     render/structs/builtin_render_stat.h
     render/structs/ring_uniform_buffer_stat.h
     profile/profile_system.h
-    global/editor_global_context.h)
+    global/editor_context.h)
 set(EDITOR_SOURCE_FILES
     editor.cpp
     main.cpp
@@ -28,7 +28,7 @@ set(EDITOR_SOURCE_FILES
     render/render_pass/editor_forward_pass.cpp
     render/render_pass/imgui_pass.cpp
     profile/profile_system.cpp
-    global/editor_global_context.cpp)
+    global/editor_context.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
                                                       

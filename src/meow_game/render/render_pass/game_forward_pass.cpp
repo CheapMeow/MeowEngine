@@ -6,7 +6,7 @@
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 #include "function/render/structs/ubo_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -212,7 +212,7 @@ namespace Meow
 
         UBOData ubo_data;
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
@@ -234,7 +234,7 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        glm::ivec2 window_size = g_runtime_global_context.window_system->GetCurrentFocusWindow()->GetSize();
+        glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
 
         glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 view    = glm::lookAt(
@@ -298,7 +298,7 @@ namespace Meow
 
         m_forward_mat.BindPipeline(command_buffer);
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {

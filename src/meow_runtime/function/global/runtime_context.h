@@ -25,5 +25,5 @@ namespace Meow
         std::shared_ptr<LevelSystem>    level_system    = nullptr;
     };
 
-    extern RuntimeGlobalContext g_runtime_global_context;
+    extern RuntimeGlobalContext g_runtime_context;
 } // namespace Meow

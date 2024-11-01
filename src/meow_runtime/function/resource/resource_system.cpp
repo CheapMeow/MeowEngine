@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 namespace Meow
 {
@@ -15,7 +15,7 @@ namespace Meow
         // TODO: Image size should be analysised?
         // std::shared_ptr<ImageData> diffuse_texture = LoadTexture("builtin/models/backpack/diffuse.jpg", {4096,
         // 4096}); m_materials["Default Material"] =
-        //     std::make_shared<Material>(g_runtime_global_context.render_system->CreateMaterial(
+        //     std::make_shared<Material>(g_runtime_context.render_system->CreateMaterial(
         //         "builtin/shaders/textured_mesh_without_vertex_color.vert.spv",
         //         "builtin/shaders/textured_mesh_without_vertex_color.frag.spv", diffuse_texture));
     }
@@ -35,7 +35,7 @@ namespace Meow
             }
         }
 
-        std::shared_ptr<ImageData> texture_ptr = g_runtime_global_context.render_system->CreateTexture(file_path);
+        std::shared_ptr<ImageData> texture_ptr = g_runtime_context.render_system->CreateTexture(file_path);
 
         if (texture_ptr)
         {
@@ -80,7 +80,7 @@ namespace Meow
         FUNCTION_TIMER();
 
         std::shared_ptr<Model> model_ptr =
-            g_runtime_global_context.render_system->CreateModel(std::move(vertices), std::move(indices), attributes);
+            g_runtime_context.render_system->CreateModel(std::move(vertices), std::move(indices), attributes);
 
         if (model_ptr)
         {
@@ -107,7 +107,7 @@ namespace Meow
             }
         }
 
-        std::shared_ptr<Model> model_ptr = g_runtime_global_context.render_system->CreateModel(file_path, attributes);
+        std::shared_ptr<Model> model_ptr = g_runtime_context.render_system->CreateModel(file_path, attributes);
 
         if (model_ptr)
         {

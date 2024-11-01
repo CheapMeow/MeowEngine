@@ -1,10 +1,10 @@
 #include "editor_window.h"
 
-#include "global/editor_global_context.h"
+#include "global/editor_context.h"
 #include "meow_runtime/function/components/camera/camera_3d_component.hpp"
 #include "meow_runtime/function/components/model/model_component.h"
 #include "meow_runtime/function/components/transform/transform_3d_component.hpp"
-#include "meow_runtime/function/global/runtime_global_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/function/level/level.h"
 #include "meow_runtime/function/render/utils/vulkan_initialize_utils.hpp"
 
@@ -33,7 +33,7 @@ namespace Meow
         auto& per_frame_data = m_per_frame_data[m_current_frame_index];
         auto& cmd_buffer     = per_frame_data.command_buffer;
 
-        std::shared_ptr<Level> level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
         if (!level_ptr)
@@ -106,7 +106,7 @@ namespace Meow
 
     EditorWindow::~EditorWindow()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
         logical_device.waitIdle();
 
         ImGui_ImplVulkan_Shutdown();
@@ -130,9 +130,9 @@ namespace Meow
         if (m_iconified)
             return;
 
-        const vk::raii::Device& logical_device            = g_runtime_global_context.render_system->GetLogicalDevice();
-        const vk::raii::Queue&  graphics_queue            = g_runtime_global_context.render_system->GetGraphicsQueue();
-        const vk::raii::Queue&  present_queue             = g_runtime_global_context.render_system->GetPresentQueue();
+        const vk::raii::Device& logical_device            = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&  graphics_queue            = g_runtime_context.render_system->GetGraphicsQueue();
+        const vk::raii::Queue&  present_queue             = g_runtime_context.render_system->GetPresentQueue();
         auto&                   per_frame_data            = m_per_frame_data[m_current_frame_index];
         auto&                   cmd_buffer                = per_frame_data.command_buffer;
         auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
@@ -208,7 +208,7 @@ namespace Meow
 
     void EditorWindow::CreateSurface()
     {
-        const vk::raii::Instance& vulkan_instance = g_runtime_global_context.render_system->GetInstance();
+        const vk::raii::Instance& vulkan_instance = g_runtime_context.render_system->GetInstance();
 
         auto         size = GetSize();
         vk::Extent2D extent(size.x, size.y);
@@ -217,8 +217,8 @@ namespace Meow
 
     void EditorWindow::CreateSwapChian()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
         m_swapchain_data =
             SwapChainData(physical_device,
@@ -227,13 +227,13 @@ namespace Meow
                           m_surface_data.extent,
                           vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
                           nullptr,
-                          g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex(),
-                          g_runtime_global_context.render_system->GetPresentQueueFamilyIndex());
+                          g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
+                          g_runtime_context.render_system->GetPresentQueueFamilyIndex());
     }
 
     void EditorWindow::CreateDescriptorAllocator()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         // create a descriptor pool
         // TODO: descriptor pool size is determined by all materials, so
@@ -255,8 +255,8 @@ namespace Meow
 
     void EditorWindow::CreatePerFrameData()
     {
-        const vk::raii::Device& logical_device = g_runtime_global_context.render_system->GetLogicalDevice();
-        const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
 
         m_per_frame_data.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
@@ -280,11 +280,11 @@ namespace Meow
 
     void EditorWindow::CreateRenderPass()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         m_deferred_pass = EditorDeferredPass(physical_device,
                                              logical_device,
@@ -335,7 +335,7 @@ namespace Meow
             else if (cur_render_pass == 1)
                 m_render_pass_ptr = &m_forward_pass;
 
-            g_editor_global_context.profile_system->ClearProfile();
+            g_editor_context.profile_system->ClearProfile();
         });
 
         m_render_pass_ptr = &m_deferred_pass;
@@ -343,13 +343,13 @@ namespace Meow
 
     void EditorWindow::InitImGui()
     {
-        const vk::raii::Instance&       vulkan_instance = g_runtime_global_context.render_system->GetInstance();
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const auto graphics_queue_family_index = g_runtime_global_context.render_system->GetGraphicsQueueFamiliyIndex();
-        const vk::raii::Queue& graphics_queue  = g_runtime_global_context.render_system->GetGraphicsQueue();
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const vk::raii::Queue& graphics_queue  = g_runtime_context.render_system->GetGraphicsQueue();
 
         std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
                                                           {vk::DescriptorType::eCombinedImageSampler, 1000},
@@ -423,11 +423,11 @@ namespace Meow
 
     void EditorWindow::RecreateSwapChain()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_global_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_global_context.render_system->GetLogicalDevice();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_global_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_global_context.render_system->GetGraphicsQueue();
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         logical_device.waitIdle();
 
@@ -467,7 +467,7 @@ namespace Meow
 
         // update aspect ratio
 
-        std::shared_ptr<Level>      level_ptr = g_runtime_global_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level>      level_ptr     = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
 
         if (!camera_go_ptr)

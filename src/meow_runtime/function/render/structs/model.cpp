@@ -3,7 +3,7 @@
 #include "pch.h"
 
 #include "core/math/assimp_glm_helper.h"
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
@@ -91,7 +91,7 @@ namespace Meow
             loadSkin = true;
         }
 
-        auto [data_ptr, data_size] = g_runtime_global_context.file_system.get()->ReadBinaryFile(file_path);
+        auto [data_ptr, data_size] = g_runtime_context.file_system.get()->ReadBinaryFile(file_path);
 
         Assimp::Importer importer;
         const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);

@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#include "function/global/runtime_global_context.h"
+#include "function/global/runtime_context.h"
 
 namespace Meow
 {
