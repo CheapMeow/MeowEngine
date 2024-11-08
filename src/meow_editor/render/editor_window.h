@@ -28,7 +28,8 @@ namespace Meow
         void InitImGui();
         void RecreateSwapChain();
 
-        SwapChainData m_swapchain_data = nullptr;
+        ImGui_ImplVulkanH_Window m_igmui_window;
+        SwapChainData            m_swapchain_data = nullptr;
 
         DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;

@@ -37,11 +37,11 @@ namespace Meow
         {}
 
         EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                     const vk::raii::Device&         device,
-                     SurfaceData&                    surface_data,
-                     const vk::raii::CommandPool&    command_pool,
-                     const vk::raii::Queue&          queue,
-                     DescriptorAllocatorGrowable&    m_descriptor_allocator);
+                           const vk::raii::Device&         device,
+                           SurfaceData&                    surface_data,
+                           const vk::raii::CommandPool&    command_pool,
+                           const vk::raii::Queue&          queue,
+                           DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
@@ -100,6 +100,7 @@ namespace Meow
         std::shared_ptr<ImageData> m_color_attachment    = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment   = nullptr;
         std::shared_ptr<ImageData> m_position_attachment = nullptr;
+        std::shared_ptr<ImageData> m_output_attachment   = nullptr;
 
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
@@ -108,7 +109,7 @@ namespace Meow
 
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
-        
+
         std::string       m_pass_names[2];
         BuiltinRenderStat m_render_stat[2];
     };
