@@ -33,7 +33,6 @@ namespace Meow
                                          vk::raii::Device const&                 device,
                                          vk::raii::CommandPool const&            command_pool,
                                          vk::raii::Queue const&                  queue,
-                                         SurfaceData&                            surface_data,
                                          std::vector<vk::raii::ImageView> const& swapchain_image_views,
                                          vk::Extent2D const&                     extent)
         {}
@@ -57,7 +56,7 @@ namespace Meow
         std::vector<vk::ClearValue>        clear_values;
         BitMask<VertexAttributeBit>        input_vertex_attributes;
 
-        std::string         m_pass_name     = "Default Pass";
+        std::string m_pass_name = "Default Pass";
 
     protected:
         vk::Format                 m_depth_format     = vk::Format::eD16Unorm;

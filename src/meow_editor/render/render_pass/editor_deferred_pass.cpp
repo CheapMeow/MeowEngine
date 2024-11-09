@@ -36,6 +36,8 @@ namespace Meow
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
         assert(color_format != vk::Format::eUndefined);
 
+        m_color_format = color_format;
+
         std::vector<vk::AttachmentDescription> attachment_descriptions;
         // swap chain attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
@@ -247,7 +249,6 @@ namespace Meow
                                                  const vk::raii::Device&                 device,
                                                  const vk::raii::CommandPool&            command_pool,
                                                  const vk::raii::Queue&                  queue,
-                                                 SurfaceData&                            surface_data,
                                                  const std::vector<vk::raii::ImageView>& swapchain_image_views,
                                                  const vk::Extent2D&                     extent)
     {
@@ -262,14 +263,11 @@ namespace Meow
 
         // Create attachment
 
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
-
         m_color_attachment = ImageData::CreateAttachment(physical_device,
                                                          device,
                                                          command_pool,
                                                          queue,
-                                                         color_format,
+                                                         m_color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,
@@ -539,6 +537,8 @@ namespace Meow
     void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs)
     {
         using std::swap;
+
+        swap(lhs.m_color_format, rhs.m_color_format);
 
         swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
         swap(lhs.m_quad_mat, rhs.m_quad_mat);

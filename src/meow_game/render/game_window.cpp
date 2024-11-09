@@ -283,7 +283,6 @@ namespace Meow
                                             logical_device,
                                             onetime_submit_command_pool,
                                             graphics_queue,
-                                            m_surface_data,
                                             m_swapchain_data.image_views,
                                             m_surface_data.extent);
 
@@ -297,7 +296,6 @@ namespace Meow
                                            logical_device,
                                            onetime_submit_command_pool,
                                            graphics_queue,
-                                           m_surface_data,
                                            m_swapchain_data.image_views,
                                            m_surface_data.extent);
 
@@ -329,14 +327,12 @@ namespace Meow
                                             logical_device,
                                             onetime_submit_command_pool,
                                             graphics_queue,
-                                            m_surface_data,
                                             m_swapchain_data.image_views,
                                             m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers(physical_device,
                                            logical_device,
                                            onetime_submit_command_pool,
                                            graphics_queue,
-                                           m_surface_data,
                                            m_swapchain_data.image_views,
                                            m_surface_data.extent);
 

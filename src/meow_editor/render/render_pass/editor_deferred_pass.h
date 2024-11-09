@@ -37,11 +37,11 @@ namespace Meow
         {}
 
         EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                     const vk::raii::Device&         device,
-                     SurfaceData&                    surface_data,
-                     const vk::raii::CommandPool&    command_pool,
-                     const vk::raii::Queue&          queue,
-                     DescriptorAllocatorGrowable&    m_descriptor_allocator);
+                           const vk::raii::Device&         device,
+                           SurfaceData&                    surface_data,
+                           const vk::raii::CommandPool&    command_pool,
+                           const vk::raii::Queue&          queue,
+                           DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
@@ -76,7 +76,6 @@ namespace Meow
                                  const vk::raii::Device&                 device,
                                  const vk::raii::CommandPool&            command_pool,
                                  const vk::raii::Queue&                  queue,
-                                 SurfaceData&                            surface_data,
                                  const std::vector<vk::raii::ImageView>& swapchain_image_views,
                                  const vk::Extent2D&                     extent) override;
 
@@ -93,6 +92,8 @@ namespace Meow
         friend void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs);
 
     private:
+        vk::Format m_color_format;
+
         Material m_obj2attachment_mat = nullptr;
         Material m_quad_mat           = nullptr;
         Model    m_quad_model         = nullptr;
@@ -108,7 +109,7 @@ namespace Meow
 
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
-        
+
         std::string       m_pass_names[2];
         BuiltinRenderStat m_render_stat[2];
     };

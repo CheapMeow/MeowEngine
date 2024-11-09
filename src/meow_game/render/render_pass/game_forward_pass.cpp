@@ -156,7 +156,6 @@ namespace Meow
                                               const vk::raii::Device&                 device,
                                               const vk::raii::CommandPool&            command_pool,
                                               const vk::raii::Queue&                  queue,
-                                              SurfaceData&                            surface_data,
                                               const std::vector<vk::raii::ImageView>& swapchain_image_views,
                                               const vk::Extent2D&                     extent)
     {
@@ -184,19 +183,13 @@ namespace Meow
         vk::ImageView attachments[2];
         attachments[1] = *m_depth_attachment->image_view;
 
-        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(),
-                                                          /* flags */
-                                                          *render_pass,
-                                                          /* renderPass */
-                                                          2,
-                                                          /* attachmentCount */
-                                                          attachments,
-                                                          /* pAttachments */
-                                                          extent.width,
-                                                          /* width */
-                                                          extent.height,
-                                                          /* height */
-                                                          1); /* layers */
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          2,                            /* attachmentCount */
+                                                          attachments,                  /* pAttachments */
+                                                          extent.width,                 /* width */
+                                                          extent.height,                /* height */
+                                                          1);                           /* layers */
 
         framebuffers.reserve(swapchain_image_views.size());
         for (const auto& imageView : swapchain_image_views)

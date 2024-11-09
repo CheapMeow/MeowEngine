@@ -75,7 +75,6 @@ namespace Meow
                                  const vk::raii::Device&                 device,
                                  const vk::raii::CommandPool&            command_pool,
                                  const vk::raii::Queue&                  queue,
-                                 SurfaceData&                            surface_data,
                                  const std::vector<vk::raii::ImageView>& swapchain_image_views,
                                  const vk::Extent2D&                     extent) override;
 
@@ -92,6 +91,8 @@ namespace Meow
         friend void swap(GameDeferredPass& lhs, GameDeferredPass& rhs);
 
     private:
+        vk::Format m_color_format;
+
         Material m_obj2attachment_mat = nullptr;
         Material m_quad_mat           = nullptr;
         Model    m_quad_model         = nullptr;

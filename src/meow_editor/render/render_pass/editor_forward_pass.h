@@ -50,7 +50,6 @@ namespace Meow
                                  const vk::raii::Device&                 device,
                                  const vk::raii::CommandPool&            command_pool,
                                  const vk::raii::Queue&                  queue,
-                                 SurfaceData&                            surface_data,
                                  const std::vector<vk::raii::ImageView>& swapchain_image_views,
                                  const vk::Extent2D&                     extent) override;
 
@@ -73,7 +72,7 @@ namespace Meow
 
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
-        
+
         BuiltinRenderStat m_render_stat;
     };
 } // namespace Meow
