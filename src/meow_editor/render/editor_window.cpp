@@ -217,41 +217,18 @@ namespace Meow
 
     void EditorWindow::CreateSwapChian()
     {
-        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        m_igmui_window.Surface = **m_surface_data.surface;
-
-        vk::SurfaceFormatKHR surface_format = PickSurfaceFormat(physical_device.getSurfaceFormatsKHR(*surface));
-        color_format                        = surface_format.format;
-
-        vk::SurfaceCapabilitiesKHR surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-        vk::Extent2D               swapchain_extent;
-        if (surface_capabilities.currentExtent.width == std::numeric_limits<uint32_t>::max())
-        {
-            // If the surface size is undefined, the size is set to the size of the images requested.
-            swapchain_extent.width = glm::clamp(
-                extent.width, surface_capabilities.minImageExtent.width, surface_capabilities.maxImageExtent.width);
-            swapchain_extent.height = glm::clamp(
-                extent.height, surface_capabilities.minImageExtent.height, surface_capabilities.maxImageExtent.height);
-        }
-        else
-        {
-            // If the surface size is defined, the swap chain size must match
-            swapchain_extent = surface_capabilities.currentExtent;
-        }
-        vk::PresentModeKHR present_mode = PickPresentMode(physical_device.getSurfacePresentModesKHR(*surface));
-
-        ImGui_ImplVulkanH_CreateOrResizeWindow(**vulkan_instance,
-                                               **physical_device,
-                                               **logical_device,
-                                               &m_igmui_window,
-                                               VC->QueueFamily,
-                                               nullptr,
-                                               ,
-                                               height,
-                                               MinImageCount);
+        m_swapchain_data =
+            SwapChainData(physical_device,
+                          logical_device,
+                          m_surface_data.surface,
+                          m_surface_data.extent,
+                          vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+                          nullptr,
+                          g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
+                          g_runtime_context.render_system->GetPresentQueueFamilyIndex());
     }
 
     void EditorWindow::CreateDescriptorAllocator()

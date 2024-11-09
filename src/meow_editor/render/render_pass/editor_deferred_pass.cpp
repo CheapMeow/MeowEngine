@@ -259,7 +259,6 @@ namespace Meow
         m_normal_attachment   = nullptr;
         m_position_attachment = nullptr;
         m_depth_attachment    = nullptr;
-        m_output_attachment   = nullptr;
 
         // Create attachment
 
@@ -313,17 +312,6 @@ namespace Meow
                                                          vk::ImageAspectFlagBits::eDepth,
                                                          {},
                                                          false);
-
-        m_output_attachment = ImageData::CreateAttachment(physical_device,
-                                                          device,
-                                                          command_pool,
-                                                          queue,
-                                                          color_format,
-                                                          extent,
-                                                          vk::ImageUsageFlagBits::eColorAttachment,
-                                                          vk::ImageAspectFlagBits::eColor,
-                                                          {},
-                                                          false);
 
         // Provide attachment information to frame buffer
 
