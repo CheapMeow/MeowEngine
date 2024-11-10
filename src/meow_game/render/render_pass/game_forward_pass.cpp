@@ -152,12 +152,12 @@ namespace Meow
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
     }
 
-    void GameForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
-                                              const vk::raii::Device&                 device,
-                                              const vk::raii::CommandPool&            command_pool,
-                                              const vk::raii::Queue&                  queue,
-                                              const std::vector<vk::raii::ImageView>& swapchain_image_views,
-                                              const vk::Extent2D&                     extent)
+    void GameForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
+                                              const vk::raii::Device&           device,
+                                              const vk::raii::CommandPool&      command_pool,
+                                              const vk::raii::Queue&            queue,
+                                              const std::vector<vk::ImageView>& output_image_views,
+                                              const vk::Extent2D&               extent)
     {
         // clear
 
@@ -191,10 +191,10 @@ namespace Meow
                                                           extent.height,                /* height */
                                                           1);                           /* layers */
 
-        framebuffers.reserve(swapchain_image_views.size());
-        for (const auto& imageView : swapchain_image_views)
+        framebuffers.reserve(output_image_views.size());
+        for (const auto& imageView : output_image_views)
         {
-            attachments[0] = *imageView;
+            attachments[0] = imageView;
             framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
         }
     }

@@ -27,6 +27,7 @@ namespace Meow
         void CreateRenderPass();
         void InitImGui();
         void RecreateSwapChain();
+        void RefreshRenderPass();
 
         SwapChainData m_swapchain_data = nullptr;
 
@@ -47,5 +48,7 @@ namespace Meow
         const uint32_t k_max_frames_in_flight = 2;
         uint32_t       m_current_frame_index  = 0;
         uint32_t       m_current_image_index  = 0;
+
+        std::vector<std::shared_ptr<ImageData>> m_offscreen_attachments;
     };
 } // namespace Meow

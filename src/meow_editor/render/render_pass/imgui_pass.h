@@ -40,12 +40,12 @@ namespace Meow
                   vk::raii::Queue const&          queue,
                   DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
-        void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                 vk::raii::Device const&                 device,
-                                 vk::raii::CommandPool const&            command_pool,
-                                 vk::raii::Queue const&                  queue,
-                                 std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                 vk::Extent2D const&                     extent) override;
+        void RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
+                                 vk::raii::Device const&           device,
+                                 vk::raii::CommandPool const&      command_pool,
+                                 vk::raii::Queue const&            queue,
+                                 const std::vector<vk::ImageView>& output_image_views,
+                                 vk::Extent2D const&               extent) override;
 
         void Start(vk::raii::CommandBuffer const& command_buffer,
                    Meow::SurfaceData const&       surface_data,

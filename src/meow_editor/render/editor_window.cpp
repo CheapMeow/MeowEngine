@@ -219,6 +219,12 @@ namespace Meow
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        vk::Format color_format =
+            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
 
         m_swapchain_data =
             SwapChainData(physical_device,
@@ -229,6 +235,22 @@ namespace Meow
                           nullptr,
                           g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
+
+        m_offscreen_attachments.resize(k_max_frames_in_flight);
+        for (int i = 0; i < k_max_frames_in_flight; i++)
+        {
+            m_offscreen_attachments[i] = ImageData::CreateAttachment(physical_device,
+                                                                     logical_device,
+                                                                     onetime_submit_command_pool,
+                                                                     graphics_queue,
+                                                                     color_format,
+                                                                     m_surface_data.extent,
+                                                                     vk::ImageUsageFlagBits::eColorAttachment |
+                                                                         vk::ImageUsageFlagBits::eInputAttachment,
+                                                                     vk::ImageAspectFlagBits::eColor,
+                                                                     {},
+                                                                     false);
+        }
     }
 
     void EditorWindow::CreateDescriptorAllocator()
@@ -292,38 +314,19 @@ namespace Meow
                                              onetime_submit_command_pool,
                                              graphics_queue,
                                              m_descriptor_allocator);
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            m_swapchain_data.image_views,
-                                            m_surface_data.extent);
-
-        m_forward_pass = EditorForwardPass(physical_device,
+        m_forward_pass  = EditorForwardPass(physical_device,
                                            logical_device,
                                            m_surface_data,
                                            onetime_submit_command_pool,
                                            graphics_queue,
                                            m_descriptor_allocator);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_swapchain_data.image_views,
-                                           m_surface_data.extent);
-
-        m_imgui_pass = ImGuiPass(physical_device,
+        m_imgui_pass    = ImGuiPass(physical_device,
                                  logical_device,
                                  m_surface_data,
                                  onetime_submit_command_pool,
                                  graphics_queue,
                                  m_descriptor_allocator);
-        m_imgui_pass.RefreshFrameBuffers(physical_device,
-                                         logical_device,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         m_swapchain_data.image_views,
-                                         m_surface_data.extent);
+        RefreshRenderPass();
 
         m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
             // switch render pass
@@ -440,24 +443,7 @@ namespace Meow
         CreateSwapChian();
         CreatePerFrameData();
         InitImGui();
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            m_swapchain_data.image_views,
-                                            m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_swapchain_data.image_views,
-                                           m_surface_data.extent);
-        m_imgui_pass.RefreshFrameBuffers(physical_device,
-                                         logical_device,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         m_swapchain_data.image_views,
-                                         m_surface_data.extent);
+        RefreshRenderPass();
 
         // update aspect ratio
 
@@ -471,5 +457,40 @@ namespace Meow
             camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
         camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+    }
+
+    void EditorWindow::RefreshRenderPass()
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        std::vector<vk::ImageView> swapchain_image_views;
+        swapchain_image_views.resize(m_swapchain_data.image_views.size());
+        for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
+        {
+            swapchain_image_views[i] = *m_swapchain_data.image_views[i];
+        }
+
+        m_deferred_pass.RefreshFrameBuffers(physical_device,
+                                            logical_device,
+                                            onetime_submit_command_pool,
+                                            graphics_queue,
+                                            swapchain_image_views,
+                                            m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(physical_device,
+                                           logical_device,
+                                           onetime_submit_command_pool,
+                                           graphics_queue,
+                                           swapchain_image_views,
+                                           m_surface_data.extent);
+        m_imgui_pass.RefreshFrameBuffers(physical_device,
+                                         logical_device,
+                                         onetime_submit_command_pool,
+                                         graphics_queue,
+                                         swapchain_image_views,
+                                         m_surface_data.extent);
     }
 } // namespace Meow

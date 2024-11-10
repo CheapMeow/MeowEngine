@@ -73,12 +73,12 @@ namespace Meow
         clear_values[0].color = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
     }
 
-    void ImGuiPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                        vk::raii::Device const&                 device,
-                                        vk::raii::CommandPool const&            command_pool,
-                                        vk::raii::Queue const&                  queue,
-                                        std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                        vk::Extent2D const&                     extent)
+    void ImGuiPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
+                                        vk::raii::Device const&           device,
+                                        vk::raii::CommandPool const&      command_pool,
+                                        vk::raii::Queue const&            queue,
+                                        const std::vector<vk::ImageView>& output_image_views,
+                                        vk::Extent2D const&               extent)
     {
         // clear
 
@@ -96,10 +96,10 @@ namespace Meow
                                                           extent.height,                /* height */
                                                           1);                           /* layers */
 
-        framebuffers.reserve(swapchain_image_views.size());
-        for (auto const& imageView : swapchain_image_views)
+        framebuffers.reserve(output_image_views.size());
+        for (auto const& imageView : output_image_views)
         {
-            attachments[0] = *imageView;
+            attachments[0] = imageView;
             framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
         }
     }

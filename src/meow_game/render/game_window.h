@@ -1,12 +1,13 @@
 #pragma once
 
 #include "meow_runtime/function/object/game_object.h"
-#include "render/render_pass/game_deferred_pass.h"
-#include "render/render_pass/game_forward_pass.h"
 #include "meow_runtime/function/render/structs/per_frame_data.h"
 #include "meow_runtime/function/render/structs/surface_data.h"
 #include "meow_runtime/function/render/structs/swapchain_data.h"
 #include "meow_runtime/function/window/window.h"
+#include "render/render_pass/game_deferred_pass.h"
+#include "render/render_pass/game_forward_pass.h"
+
 
 namespace Meow
 {
@@ -25,6 +26,7 @@ namespace Meow
         void CreatePerFrameData();
         void CreateRenderPass();
         void RecreateSwapChain();
+        void RefreshRenderPass();
 
         SwapChainData m_swapchain_data = nullptr;
 

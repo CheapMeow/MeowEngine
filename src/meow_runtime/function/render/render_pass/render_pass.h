@@ -29,12 +29,12 @@ namespace Meow
 
         virtual ~RenderPass() {}
 
-        virtual void RefreshFrameBuffers(vk::raii::PhysicalDevice const&         physical_device,
-                                         vk::raii::Device const&                 device,
-                                         vk::raii::CommandPool const&            command_pool,
-                                         vk::raii::Queue const&                  queue,
-                                         std::vector<vk::raii::ImageView> const& swapchain_image_views,
-                                         vk::Extent2D const&                     extent)
+        virtual void RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
+                                         vk::raii::Device const&           device,
+                                         vk::raii::CommandPool const&      command_pool,
+                                         vk::raii::Queue const&            queue,
+                                         const std::vector<vk::ImageView>& output_image_views,
+                                         vk::Extent2D const&               extent)
         {}
 
         virtual void UpdateUniformBuffer() {}

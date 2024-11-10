@@ -46,12 +46,12 @@ namespace Meow
             m_depth_attachment = nullptr;
         }
 
-        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&         physical_device,
-                                 const vk::raii::Device&                 device,
-                                 const vk::raii::CommandPool&            command_pool,
-                                 const vk::raii::Queue&                  queue,
-                                 const std::vector<vk::raii::ImageView>& swapchain_image_views,
-                                 const vk::Extent2D&                     extent) override;
+        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
+                                 const vk::raii::Device&           device,
+                                 const vk::raii::CommandPool&      command_pool,
+                                 const vk::raii::Queue&            queue,
+                                 const std::vector<vk::ImageView>& output_image_views,
+                                 const vk::Extent2D&               extent) override;
 
         void UpdateUniformBuffer() override;
 

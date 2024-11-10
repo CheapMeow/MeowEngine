@@ -279,25 +279,13 @@ namespace Meow
                                            onetime_submit_command_pool,
                                            graphics_queue,
                                            m_descriptor_allocator);
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            m_swapchain_data.image_views,
-                                            m_surface_data.extent);
-
-        m_forward_pass = GameForwardPass(physical_device,
+        m_forward_pass  = GameForwardPass(physical_device,
                                          logical_device,
                                          m_surface_data,
                                          onetime_submit_command_pool,
                                          graphics_queue,
                                          m_descriptor_allocator);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_swapchain_data.image_views,
-                                           m_surface_data.extent);
+        RefreshRenderPass();
 
         m_render_pass_ptr = &m_deferred_pass;
     }
@@ -323,18 +311,7 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreatePerFrameData();
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            m_swapchain_data.image_views,
-                                            m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_swapchain_data.image_views,
-                                           m_surface_data.extent);
+        RefreshRenderPass();
 
         // update aspect ratio
 
@@ -348,5 +325,34 @@ namespace Meow
             camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
         camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+    }
+
+    void GameWindow::RefreshRenderPass()
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        std::vector<vk::ImageView> swapchain_image_views;
+        swapchain_image_views.resize(m_swapchain_data.image_views.size());
+        for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
+        {
+            swapchain_image_views[i] = *m_swapchain_data.image_views[i];
+        }
+
+        m_deferred_pass.RefreshFrameBuffers(physical_device,
+                                            logical_device,
+                                            onetime_submit_command_pool,
+                                            graphics_queue,
+                                            swapchain_image_views,
+                                            m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(physical_device,
+                                           logical_device,
+                                           onetime_submit_command_pool,
+                                           graphics_queue,
+                                           swapchain_image_views,
+                                           m_surface_data.extent);
     }
 } // namespace Meow
