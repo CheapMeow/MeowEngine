@@ -33,15 +33,15 @@ namespace Meow
 
         std::vector<vk::AttachmentDescription> attachment_descriptions;
         // swap chain attachment
-        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
-                                             color_format,                     /* format */
-                                             m_sample_count,                   /* samples */
-                                             vk::AttachmentLoadOp::eClear,     /* loadOp */
-                                             vk::AttachmentStoreOp::eStore,    /* storeOp */
-                                             vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
-                                             vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                                             vk::ImageLayout::eUndefined,      /* initialLayout */
-                                             vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),         /* flags */
+                                             color_format,                             /* format */
+                                             m_sample_count,                           /* samples */
+                                             vk::AttachmentLoadOp::eClear,             /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,            /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal,  /* initialLayout */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal); /* finalLayout */
         // depth attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
                                              m_depth_format,                                   /* format */
