@@ -35,6 +35,7 @@ namespace Meow
         vk::raii::Sampler      sampler       = nullptr;
         bool                   need_staging;
         BufferData             staging_buffer_data = nullptr;
+        vk::ImageLayout        layout;
 
         ImageData(std::nullptr_t) {}
 
@@ -54,24 +55,22 @@ namespace Meow
          * @param old_image_layout Old image layout
          * @param new_image_layout New image layout
          */
-        void SetImageLayout(vk::raii::CommandBuffer const& command_buffer,
+        void SetImageLayout(const vk::raii::CommandBuffer& command_buffer,
                             vk::ImageLayout                old_image_layout,
                             vk::ImageLayout                new_image_layout);
 
-        void TransitLayout(vk::raii::CommandBuffer const& command_buffer);
-
-        static std::shared_ptr<ImageData> CreateDepthBuffer(vk::raii::PhysicalDevice const& physical_device,
-                                                            vk::raii::Device const&         device,
-                                                            vk::raii::CommandPool const&    command_pool,
-                                                            vk::raii::Queue const&          queue,
+        static std::shared_ptr<ImageData> CreateDepthBuffer(const vk::raii::PhysicalDevice& physical_device,
+                                                            const vk::raii::Device&         device,
+                                                            const vk::raii::CommandPool&    command_pool,
+                                                            const vk::raii::Queue&          queue,
                                                             vk::Format                      format,
-                                                            vk::Extent2D const&             extent);
+                                                            const vk::Extent2D&             extent);
 
         static std::shared_ptr<ImageData>
-        CreateTexture(vk::raii::PhysicalDevice const& physical_device,
-                      vk::raii::Device const&         device,
+        CreateTexture(const vk::raii::PhysicalDevice& physical_device,
+                      const vk::raii::Device&         device,
                       vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
-                      vk::Extent2D const&             extent               = {256, 256},
+                      const vk::Extent2D&             extent               = {256, 256},
                       vk::ImageUsageFlags             usage_flags          = {},
                       vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
                       vk::FormatFeatureFlags          format_feature_flags = {},
@@ -79,11 +78,11 @@ namespace Meow
                       bool                            force_staging        = false);
 
         static std::shared_ptr<ImageData>
-        CreateTexture(vk::raii::PhysicalDevice const& physical_device,
-                      vk::raii::Device const&         device,
-                      vk::raii::CommandPool const&    command_pool,
-                      vk::raii::Queue const&          queue,
-                      std::string const&              file_path,
+        CreateTexture(const vk::raii::PhysicalDevice& physical_device,
+                      const vk::raii::Device&         device,
+                      const vk::raii::CommandPool&    command_pool,
+                      const vk::raii::Queue&          queue,
+                      const std::string&              file_path,
                       vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                       vk::ImageUsageFlags             usage_flags          = {},
                       vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
@@ -92,15 +91,27 @@ namespace Meow
                       bool                            force_staging        = false);
 
         static std::shared_ptr<ImageData>
-        CreateAttachment(vk::raii::PhysicalDevice const& physical_device,
-                         vk::raii::Device const&         device,
-                         vk::raii::CommandPool const&    command_pool,
-                         vk::raii::Queue const&          queue,
+        CreateAttachment(const vk::raii::PhysicalDevice& physical_device,
+                         const vk::raii::Device&         device,
+                         const vk::raii::CommandPool&    command_pool,
+                         const vk::raii::Queue&          queue,
                          vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
-                         vk::Extent2D const&             extent               = {256, 256},
+                         const vk::Extent2D&             extent               = {256, 256},
                          vk::ImageUsageFlags             usage_flags          = {},
                          vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
                          vk::FormatFeatureFlags          format_feature_flags = {},
                          bool                            anisotropy_enable    = false);
+
+        static std::shared_ptr<ImageData>
+        CreateRenderTarget(const vk::raii::PhysicalDevice& physical_device,
+                           const vk::raii::Device&         device,
+                           const vk::raii::CommandPool&    command_pool,
+                           const vk::raii::Queue&          queue,
+                           vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                           const vk::Extent2D&             extent               = {256, 256},
+                           vk::ImageUsageFlags             usage_flags          = {},
+                           vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                           vk::FormatFeatureFlags          format_feature_flags = {},
+                           bool                            anisotropy_enable    = false);
     };
 } // namespace Meow

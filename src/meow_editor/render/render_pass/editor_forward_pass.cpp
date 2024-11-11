@@ -256,7 +256,7 @@ namespace Meow
     }
 
     void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                  const Meow::SurfaceData&       surface_data,
+                                  vk::Extent2D                   extent,
                                   uint32_t                       current_image_index)
     {
         // Debug
@@ -265,7 +265,7 @@ namespace Meow
 
         draw_call = 0;
 
-        RenderPass::Start(command_buffer, surface_data, current_image_index);
+        RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
     void EditorForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)

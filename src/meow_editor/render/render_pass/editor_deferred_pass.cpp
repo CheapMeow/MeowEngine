@@ -40,15 +40,15 @@ namespace Meow
 
         std::vector<vk::AttachmentDescription> attachment_descriptions;
         // swap chain attachment
-        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(), /* flags */
-                                             color_format,                     /* format */
-                                             m_sample_count,                   /* samples */
-                                             vk::AttachmentLoadOp::eClear,     /* loadOp */
-                                             vk::AttachmentStoreOp::eStore,    /* storeOp */
-                                             vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
-                                             vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                                             vk::ImageLayout::eUndefined,      /* initialLayout */
-                                             vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),         /* flags */
+                                             color_format,                             /* format */
+                                             m_sample_count,                           /* samples */
+                                             vk::AttachmentLoadOp::eClear,             /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,            /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal,  /* initialLayout */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal); /* finalLayout */
         // color attachment
         attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
                                              color_format,                              /* format */
@@ -437,7 +437,7 @@ namespace Meow
     }
 
     void EditorDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                   const Meow::SurfaceData&       surface_data,
+                                   vk::Extent2D                   extent,
                                    uint32_t                       current_image_index)
     {
         // Debug
@@ -449,7 +449,7 @@ namespace Meow
             }
         }
 
-        RenderPass::Start(command_buffer, surface_data, current_image_index);
+        RenderPass::Start(command_buffer, extent, current_image_index);
 
         draw_call = 0;
     }

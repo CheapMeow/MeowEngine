@@ -17,11 +17,11 @@ namespace Meow
         : RenderPass(nullptr)
     {}
 
-    ImGuiPass::ImGuiPass(vk::raii::PhysicalDevice const& physical_device,
-                         vk::raii::Device const&         device,
+    ImGuiPass::ImGuiPass(const vk::raii::PhysicalDevice& physical_device,
+                         const vk::raii::Device&         device,
                          SurfaceData&                    surface_data,
-                         vk::raii::CommandPool const&    command_pool,
-                         vk::raii::Queue const&          queue,
+                         const vk::raii::CommandPool&    command_pool,
+                         const vk::raii::Queue&          queue,
                          DescriptorAllocatorGrowable&    m_descriptor_allocator)
         : RenderPass(device)
     {
@@ -37,21 +37,20 @@ namespace Meow
         vk::AttachmentDescription attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
                                                          color_format,                     /* format */
                                                          vk::SampleCountFlagBits::e1,      /* samples */
-                                                         vk::AttachmentLoadOp::eLoad,      /* loadOp */
+                                                         vk::AttachmentLoadOp::eClear,     /* loadOp */
                                                          vk::AttachmentStoreOp::eStore,    /* storeOp */
                                                          vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
                                                          vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                                                         vk::ImageLayout::ePresentSrcKHR,  /* initialLayout */
+                                                         vk::ImageLayout::eUndefined,      /* initialLayout */
                                                          vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
 
-        vk::SubpassDescription subpass_description(
-            vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
-                                   vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
-                                   {},                               /* pInputAttachments */
-                                   swapchain_attachment_reference,   /* pColorAttachments */
-                                   {},                               /* pResolveAttachments */
-                                   {},                               /* pDepthStencilAttachment */
-                                   nullptr));                        /* pPreserveAttachments */
+        auto subpass_description(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                        vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                        {},                               /* pInputAttachments */
+                                                        swapchain_attachment_reference,   /* pColorAttachments */
+                                                        {},                               /* pResolveAttachments */
+                                                        {},                               /* pDepthStencilAttachment */
+                                                        nullptr));                        /* pPreserveAttachments */
 
         vk::SubpassDependency dependencies(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
                                            0,                                                 /* dstSubpass */
@@ -73,12 +72,12 @@ namespace Meow
         clear_values[0].color = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
     }
 
-    void ImGuiPass::RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
-                                        vk::raii::Device const&           device,
-                                        vk::raii::CommandPool const&      command_pool,
-                                        vk::raii::Queue const&            queue,
+    void ImGuiPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
+                                        const vk::raii::Device&           device,
+                                        const vk::raii::CommandPool&      command_pool,
+                                        const vk::raii::Queue&            queue,
                                         const std::vector<vk::ImageView>& output_image_views,
-                                        vk::Extent2D const&               extent)
+                                        const vk::Extent2D&               extent)
     {
         // clear
 
@@ -97,16 +96,15 @@ namespace Meow
                                                           1);                           /* layers */
 
         framebuffers.reserve(output_image_views.size());
-        for (auto const& imageView : output_image_views)
+        for (const auto& imageView : output_image_views)
         {
             attachments[0] = imageView;
             framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
         }
     }
 
-    void ImGuiPass::Start(vk::raii::CommandBuffer const& command_buffer,
-                          Meow::SurfaceData const&       surface_data,
-                          uint32_t                       current_image_index)
+    void
+    ImGuiPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
         FUNCTION_TIMER();
 
@@ -116,6 +114,10 @@ namespace Meow
         ImGui::NewFrame();
 
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+
+        ImGui::Begin("Demo");
+        ImGui::Image((ImTextureID)m_offscreen_image_desc, ImGui::GetContentRegionAvail());
+        ImGui::End();
 
         ImGui::Begin("Switch RenderPass");
         if (ImGui::Combo(
@@ -160,10 +162,10 @@ namespace Meow
 
         ImGui::End();
 
-        RenderPass::Start(command_buffer, surface_data, current_image_index);
+        RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void ImGuiPass::Draw(vk::raii::CommandBuffer const& command_buffer)
+    void ImGuiPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -181,12 +183,38 @@ namespace Meow
         }
     }
 
+    void ImGuiPass::InitOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
+                                              VkImageView   offscreen_image_view,
+                                              VkImageLayout offscreen_image_layout)
+    {
+        m_offscreen_image_desc =
+            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
+    }
+
+    void ImGuiPass::RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
+                                                 VkImageView   offscreen_image_view,
+                                                 VkImageLayout offscreen_image_layout)
+    {
+        ImGui_ImplVulkan_RemoveTexture(m_offscreen_image_desc);
+        m_offscreen_image_desc =
+            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
+    }
+
     void swap(ImGuiPass& lhs, ImGuiPass& rhs)
     {
         using std::swap;
 
+        swap(lhs.m_cur_render_pass, rhs.m_cur_render_pass);
+        swap(lhs.m_render_pass_names, rhs.m_render_pass_names);
+        swap(lhs.m_on_pass_changed, rhs.m_on_pass_changed);
+
+        swap(lhs.m_is_offscreen_image_valid, rhs.m_is_offscreen_image_valid);
+        swap(lhs.m_offscreen_image_desc, rhs.m_offscreen_image_desc);
+
+        swap(lhs.m_gameobjects_widget, rhs.m_gameobjects_widget);
         swap(lhs.m_components_widget, rhs.m_components_widget);
         swap(lhs.m_flame_graph_widget, rhs.m_flame_graph_widget);
+        swap(lhs.m_builtin_stat_widget, rhs.m_builtin_stat_widget);
 
         swap(lhs.m_query_enabled, rhs.m_query_enabled);
         swap(lhs.query_pool, rhs.query_pool);

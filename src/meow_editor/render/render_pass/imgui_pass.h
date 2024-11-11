@@ -48,7 +48,7 @@ namespace Meow
                                  vk::Extent2D const&               extent) override;
 
         void Start(vk::raii::CommandBuffer const& command_buffer,
-                   Meow::SurfaceData const&       surface_data,
+                   vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
         void Draw(vk::raii::CommandBuffer const& command_buffer) override;
@@ -57,10 +57,21 @@ namespace Meow
 
         friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
+        void InitOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
+                                       VkImageView   offscreen_image_view,
+                                       VkImageLayout offscreen_image_layout);
+
+        void RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
+                                          VkImageView   offscreen_image_view,
+                                          VkImageLayout offscreen_image_layout);
+
     private:
         int                      m_cur_render_pass   = 0;
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;
+
+        bool            m_is_offscreen_image_valid = false;
+        VkDescriptorSet m_offscreen_image_desc;
 
         GameObjectsWidget       m_gameobjects_widget;
         ComponentsWidget        m_components_widget;

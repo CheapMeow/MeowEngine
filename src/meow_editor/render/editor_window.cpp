@@ -26,6 +26,11 @@ namespace Meow
         CreateRenderPass();
         InitImGui();
 
+        is_offscreen_valid = true;
+        m_imgui_pass.InitOffscreenRenderTarget(*m_offscreen_render_target->sampler,
+                                               *m_offscreen_render_target->image_view,
+                                               static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
         OnIconify().connect([&](bool iconified) { m_iconified = iconified; });
@@ -164,11 +169,15 @@ namespace Meow
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
-        m_render_pass_ptr->Start(cmd_buffer, m_surface_data, m_current_image_index);
+        // TODO: temp
+
+        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
+
+        m_render_pass_ptr->Start(cmd_buffer, temp_extent, 0);
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
 
-        m_imgui_pass.Start(cmd_buffer, m_surface_data, m_current_image_index);
+        m_imgui_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_imgui_pass.Draw(cmd_buffer);
         m_imgui_pass.End(cmd_buffer);
 
@@ -236,21 +245,21 @@ namespace Meow
                           g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
 
-        m_offscreen_attachments.resize(k_max_frames_in_flight);
-        for (int i = 0; i < k_max_frames_in_flight; i++)
-        {
-            m_offscreen_attachments[i] = ImageData::CreateAttachment(physical_device,
-                                                                     logical_device,
-                                                                     onetime_submit_command_pool,
-                                                                     graphics_queue,
-                                                                     color_format,
-                                                                     m_surface_data.extent,
-                                                                     vk::ImageUsageFlagBits::eColorAttachment |
-                                                                         vk::ImageUsageFlagBits::eInputAttachment,
-                                                                     vk::ImageAspectFlagBits::eColor,
-                                                                     {},
-                                                                     false);
-        }
+        // TODO: temp
+
+        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
+
+        m_offscreen_render_target = ImageData::CreateRenderTarget(physical_device,
+                                                                  logical_device,
+                                                                  onetime_submit_command_pool,
+                                                                  graphics_queue,
+                                                                  color_format,
+                                                                  temp_extent,
+                                                                  vk::ImageUsageFlagBits::eColorAttachment |
+                                                                      vk::ImageUsageFlagBits::eInputAttachment,
+                                                                  vk::ImageAspectFlagBits::eColor,
+                                                                  {},
+                                                                  false);
     }
 
     void EditorWindow::CreateDescriptorAllocator()
@@ -474,23 +483,32 @@ namespace Meow
             swapchain_image_views[i] = *m_swapchain_data.image_views[i];
         }
 
+        // TODO: temp
+
+        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
+
         m_deferred_pass.RefreshFrameBuffers(physical_device,
                                             logical_device,
                                             onetime_submit_command_pool,
                                             graphics_queue,
-                                            swapchain_image_views,
-                                            m_surface_data.extent);
+                                            {*m_offscreen_render_target->image_view},
+                                            temp_extent);
         m_forward_pass.RefreshFrameBuffers(physical_device,
                                            logical_device,
                                            onetime_submit_command_pool,
                                            graphics_queue,
-                                           swapchain_image_views,
-                                           m_surface_data.extent);
+                                           {*m_offscreen_render_target->image_view},
+                                           temp_extent);
         m_imgui_pass.RefreshFrameBuffers(physical_device,
                                          logical_device,
                                          onetime_submit_command_pool,
                                          graphics_queue,
                                          swapchain_image_views,
                                          m_surface_data.extent);
+
+        if (is_offscreen_valid)
+            m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
+                                                      *m_offscreen_render_target->image_view,
+                                                      static_cast<VkImageLayout>(m_offscreen_render_target->layout));
     }
 } // namespace Meow

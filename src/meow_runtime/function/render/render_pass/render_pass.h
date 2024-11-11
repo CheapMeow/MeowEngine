@@ -14,7 +14,7 @@ namespace Meow
     public:
         RenderPass(std::nullptr_t) {}
 
-        RenderPass(vk::raii::Device const& device);
+        RenderPass(const vk::raii::Device& device);
 
         RenderPass(RenderPass&& rhs) noexcept { swap(*this, rhs); }
 
@@ -27,25 +27,24 @@ namespace Meow
             return *this;
         }
 
-        virtual ~RenderPass() {}
+        ~RenderPass() override {}
 
-        virtual void RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
-                                         vk::raii::Device const&           device,
-                                         vk::raii::CommandPool const&      command_pool,
-                                         vk::raii::Queue const&            queue,
+        virtual void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
+                                         const vk::raii::Device&           device,
+                                         const vk::raii::CommandPool&      command_pool,
+                                         const vk::raii::Queue&            queue,
                                          const std::vector<vk::ImageView>& output_image_views,
-                                         vk::Extent2D const&               extent)
+                                         const vk::Extent2D&               extent)
         {}
 
         virtual void UpdateUniformBuffer() {}
 
-        virtual void Start(vk::raii::CommandBuffer const& command_buffer,
-                           Meow::SurfaceData const&       surface_data,
-                           uint32_t                       current_image_index);
+        virtual void
+        Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index);
 
-        virtual void Draw(vk::raii::CommandBuffer const& command_buffer) {}
+        virtual void Draw(const vk::raii::CommandBuffer& command_buffer) {}
 
-        virtual void End(vk::raii::CommandBuffer const& command_buffer);
+        virtual void End(const vk::raii::CommandBuffer& command_buffer);
 
         virtual void AfterPresent();
 

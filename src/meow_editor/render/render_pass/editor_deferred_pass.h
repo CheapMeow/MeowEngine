@@ -82,7 +82,7 @@ namespace Meow
         void UpdateUniformBuffer() override;
 
         void Start(const vk::raii::CommandBuffer& command_buffer,
-                   const Meow::SurfaceData&       surface_data,
+                   vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;

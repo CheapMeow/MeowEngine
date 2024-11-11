@@ -49,6 +49,7 @@ namespace Meow
         uint32_t       m_current_frame_index  = 0;
         uint32_t       m_current_image_index  = 0;
 
-        std::vector<std::shared_ptr<ImageData>> m_offscreen_attachments;
+        std::shared_ptr<ImageData> m_offscreen_render_target;
+        bool                       is_offscreen_valid = false;
     };
 } // namespace Meow

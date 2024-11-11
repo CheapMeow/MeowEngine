@@ -156,7 +156,7 @@ namespace Meow
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
-        m_render_pass_ptr->Start(cmd_buffer, m_surface_data, m_current_image_index);
+        m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
 
