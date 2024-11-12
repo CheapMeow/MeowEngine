@@ -33,7 +33,7 @@ void main()
 	normal = normal * 2 - 1;
 	vec4 position = subpassLoad(inputPosition);
 	
-	vec4 ambient  = vec4(0.20);
+	vec4 ambient  = vec4(0.2, 0.2, 0.2, 1.0);
 	
 	outFragColor  = vec4(0.0) + ambient;
 	for (int i = 0; i < NUM_LIGHTS; ++i)

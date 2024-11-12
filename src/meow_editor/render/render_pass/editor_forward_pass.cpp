@@ -118,7 +118,7 @@ namespace Meow
         m_render_stat.image_meta_map         = m_forward_mat.shader_ptr->image_meta_map;
 
         clear_values.resize(2);
-        clear_values[0].color        = vk::ClearColorValue(0.2f, 0.2f, 0.2f, 0.2f);
+        clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         // Debug
