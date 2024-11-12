@@ -10,6 +10,7 @@
 #include <backends/imgui_impl_vulkan.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Meow
 {
@@ -113,7 +114,13 @@ namespace Meow
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        // auto dockspace_id = ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+        // auto demo_node_id = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.3f, nullptr, &dockspace_id);
+        // ImGui::DockBuilderDockWindow("Demo", demo_node_id);
+
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+
+        ImGui::ShowDemoWindow();
 
         ImGui::Begin("Demo");
         ImGui::Image((ImTextureID)m_offscreen_image_desc, ImGui::GetContentRegionAvail());
