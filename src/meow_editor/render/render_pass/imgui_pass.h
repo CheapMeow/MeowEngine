@@ -57,10 +57,6 @@ namespace Meow
 
         friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
-        void InitOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
-                                       VkImageView   offscreen_image_view,
-                                       VkImageLayout offscreen_image_layout);
-
         void RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
                                           VkImageView   offscreen_image_view,
                                           VkImageLayout offscreen_image_layout);

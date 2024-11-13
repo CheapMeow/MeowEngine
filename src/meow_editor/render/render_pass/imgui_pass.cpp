@@ -214,19 +214,10 @@ namespace Meow
         }
     }
 
-    void ImGuiPass::InitOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
-                                              VkImageView   offscreen_image_view,
-                                              VkImageLayout offscreen_image_layout)
-    {
-        m_offscreen_image_desc =
-            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
-    }
-
     void ImGuiPass::RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
                                                  VkImageView   offscreen_image_view,
                                                  VkImageLayout offscreen_image_layout)
     {
-        ImGui_ImplVulkan_RemoveTexture(m_offscreen_image_desc);
         m_offscreen_image_desc =
             ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
     }

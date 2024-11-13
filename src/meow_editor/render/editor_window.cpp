@@ -27,9 +27,9 @@ namespace Meow
         InitImGui();
 
         is_offscreen_valid = true;
-        m_imgui_pass.InitOffscreenRenderTarget(*m_offscreen_render_target->sampler,
-                                               *m_offscreen_render_target->image_view,
-                                               static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+        m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
+                                                  *m_offscreen_render_target->image_view,
+                                                  static_cast<VkImageLayout>(m_offscreen_render_target->layout));
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
