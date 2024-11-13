@@ -152,7 +152,9 @@ namespace Meow
                 {
                     height = width / aspect_ratio;
                 }
-                ImGui::Image((ImTextureID)m_offscreen_image_desc, ImVec2((float)width, (float)height));
+                ImVec2 image_size = {width, height};
+                ImGui::SetCursorPos((ImGui::GetWindowSize() - image_size) * 0.5f);
+                ImGui::Image((ImTextureID)m_offscreen_image_desc, image_size);
             }
         }
         ImGui::End();
