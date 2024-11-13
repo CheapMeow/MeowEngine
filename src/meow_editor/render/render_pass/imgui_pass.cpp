@@ -120,19 +120,6 @@ namespace Meow
 
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
-        ImGui::ShowDemoWindow();
-
-        ImGui::Begin("Demo");
-        ImGui::Image((ImTextureID)m_offscreen_image_desc, ImGui::GetContentRegionAvail());
-        ImGui::End();
-
-        ImGui::Begin("Switch RenderPass");
-        if (ImGui::Combo(
-                "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
-            m_on_pass_changed(m_cur_render_pass);
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
@@ -141,6 +128,41 @@ namespace Meow
 #endif
 
         const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
+
+        ImGui::ShowDemoWindow();
+
+        ImGui::Begin("Demo");
+        const auto camera_id = level_ptr->GetMainCameraID();
+        auto       it        = all_gameobjects_map.find(camera_id);
+        if (it != all_gameobjects_map.end())
+        {
+            const auto camera_go_ptr   = it->second;
+            const auto camera_comp_ptr = camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+            if (camera_comp_ptr)
+            {
+                auto   aspect_ratio = camera_comp_ptr->aspect_ratio; // width / height
+                ImVec2 region_size  = ImGui::GetContentRegionAvail();
+                float  width        = static_cast<float>(region_size.x);
+                float  height       = static_cast<float>(region_size.y);
+                if (width / height > aspect_ratio)
+                {
+                    width = aspect_ratio * height;
+                }
+                else
+                {
+                    height = width / aspect_ratio;
+                }
+                ImGui::Image((ImTextureID)m_offscreen_image_desc, ImVec2((float)width, (float)height));
+            }
+        }
+        ImGui::End();
+
+        ImGui::Begin("Switch RenderPass");
+        if (ImGui::Combo(
+                "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
+            m_on_pass_changed(m_cur_render_pass);
+        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::End();
 
         ImGui::Begin("GameObject");
         m_gameobjects_widget.Draw(all_gameobjects_map);
