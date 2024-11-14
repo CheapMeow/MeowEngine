@@ -27,12 +27,28 @@ namespace Meow
 
     struct BufferMeta
     {
-        uint32_t             set                  = 0;
-        uint32_t             binding              = 0;
-        uint32_t             bufferSize           = 0;
-        vk::DescriptorType   descriptorType       = vk::DescriptorType::eUniformBuffer;
-        vk::ShaderStageFlags stageFlags           = {};
-        uint32_t             dynamic_offset_index = 0;
+        uint32_t             set            = 0;
+        uint32_t             binding        = 0;
+        uint32_t             bufferSize     = 0;
+        vk::DescriptorType   descriptorType = vk::DescriptorType::eUniformBuffer;
+        vk::ShaderStageFlags stageFlags     = {};
+
+        /**
+         * This value only available when dynamic uniform buffer.
+         *
+         * Vulkan Specification: If any of the sets being bound include dynamic uniform or storage buffers, then
+         * pDynamicOffsets includes one element for each array element in each dynamic descriptor type binding in each
+         * set. Values are taken from pDynamicOffsets in an order such that all entries for set N come before set N+1;
+         * within a set, entries are ordered by the binding numbers in the descriptor set layouts; and within a binding
+         * array, elements are in order. dynamicOffsetCount must equal the total number of dynamic descriptors in the
+         * sets being bound.
+         */
+        uint32_t dynamic_seq = 0;
+
+#ifdef MEOW_DEBUG
+        std::string var_name;
+        std::string type_name;
+#endif
     };
 
     struct ImageMeta
@@ -46,7 +62,7 @@ namespace Meow
     class DescriptorSetLayoutMeta
     {
     private:
-        typedef std::vector<vk::DescriptorSetLayoutBinding> BindingsArray;
+        using BindingsArray = std::vector<vk::DescriptorSetLayoutBinding>;
 
     public:
         DescriptorSetLayoutMeta() {}
@@ -54,7 +70,7 @@ namespace Meow
         ~DescriptorSetLayoutMeta() {}
 
     public:
-        int32_t       set = -1;
+        uint32_t      set = -1;
         BindingsArray bindings;
     };
 
@@ -147,8 +163,8 @@ namespace Meow
     struct Shader
     {
     public:
-        typedef std::vector<vk::VertexInputBindingDescription>   InputBindingsVector;
-        typedef std::vector<vk::VertexInputAttributeDescription> InputAttributesVector;
+        using InputBindingsVector   = std::vector<vk::VertexInputBindingDescription>;
+        using InputAttributesVector = std::vector<vk::VertexInputAttributeDescription>;
 
         // stored for creating pipeline
 
@@ -175,7 +191,7 @@ namespace Meow
         std::unordered_map<std::string, BufferMeta> buffer_meta_map;
         std::unordered_map<std::string, ImageMeta>  image_meta_map;
 
-        uint32_t uniform_buffer_count = 0;
+        uint32_t dynamic_uniform_buffer_count = 0;
 
         BitMask<VertexAttributeBit> per_vertex_attributes;
         BitMask<VertexAttributeBit> instance_attributes;
@@ -192,13 +208,13 @@ namespace Meow
 
     private:
         vk::Device                        m_device     = {};
-        vk::raii::DeviceDispatcher const* m_dispatcher = nullptr;
+        const vk::raii::DeviceDispatcher* m_dispatcher = nullptr;
 
     public:
         Shader() {}
 
-        Shader(vk::raii::PhysicalDevice const& physical_device,
-               vk::raii::Device const&         logical_device,
+        Shader(const vk::raii::PhysicalDevice& physical_device,
+               const vk::raii::Device&         logical_device,
                DescriptorAllocatorGrowable&    descriptor_allocator,
                std::string                     vert_shader_file_path,
                std::string                     frag_shader_file_path,
@@ -218,17 +234,17 @@ namespace Meow
             }
         }
 
-        void SetBuffer(vk::raii::Device const&     logical_device,
+        void SetBuffer(const vk::raii::Device&     logical_device,
                        const std::string&          name,
-                       vk::raii::Buffer const&     buffer,
+                       const vk::raii::Buffer&     buffer,
                        vk::DeviceSize              range            = VK_WHOLE_SIZE,
-                       vk::raii::BufferView const* raii_buffer_view = nullptr);
+                       const vk::raii::BufferView* raii_buffer_view = nullptr);
 
-        void SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data);
+        void SetImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data);
 
     private:
         bool CreateShaderModuleAndGetMeta(
-            vk::raii::Device const&                         logical_device,
+            const vk::raii::Device&                         logical_device,
             vk::raii::ShaderModule&                         shader_module,
             const std::string&                              shader_file_path,
             vk::ShaderStageFlagBits                         stage,
@@ -260,7 +276,7 @@ namespace Meow
 
         void GenerateInputInfo();
 
-        void GenerateLayout(vk::raii::Device const& raii_logical_device);
+        void GenerateLayout(const vk::raii::Device& raii_logical_device);
 
         void GenerateDynamicUniformBufferOffset();
 
@@ -276,7 +292,7 @@ namespace Meow
          * @param logical_device logical device
          * @param descriptor_allocator descriptor allocator
          */
-        void AllocateDescriptorSet(vk::raii::Device const&      logical_device,
+        void AllocateDescriptorSet(const vk::raii::Device&      logical_device,
                                    DescriptorAllocatorGrowable& descriptor_allocator);
     };
 

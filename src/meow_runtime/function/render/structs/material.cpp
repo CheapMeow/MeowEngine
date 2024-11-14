@@ -224,7 +224,7 @@ namespace Meow
         FUNCTION_TIMER();
 
         per_obj_dynamic_offsets.push_back(
-            std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
+            std::vector<uint32_t>(shader_ptr->dynamic_uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
     }
 
     void Material::EndPopulatingDynamicUniformBufferPerObject()
@@ -273,7 +273,7 @@ namespace Meow
 
         memcpy(ringCPUData + ringOffset, dataPtr, bufferSize);
 
-        per_obj_dynamic_offsets[obj_count][buffer_meta_iter->second.dynamic_offset_index] = (uint32_t)ringOffset;
+        per_obj_dynamic_offsets[obj_count][buffer_meta_iter->second.dynamic_seq] = (uint32_t)ringOffset;
     }
 
     void Material::SetStorageBuffer(vk::raii::Device const&     logical_device,

@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
 
-layout (binding = 0) uniform UBO 
+layout (binding = 0) uniform UBODynamic 
 {
 	mat4 modelMatrix;
 	mat4 viewMatrix;

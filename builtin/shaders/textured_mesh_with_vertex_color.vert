@@ -5,7 +5,7 @@ layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec3 inColor;
 layout (location = 3) in vec2 inUV0;
 
-layout (binding = 0) uniform UBO 
+layout (binding = 0) uniform UBODynamic 
 {
 	mat4 modelMatrix;
 	mat4 viewMatrix;

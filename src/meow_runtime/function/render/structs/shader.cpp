@@ -4,8 +4,8 @@
 
 namespace Meow
 {
-    Shader::Shader(vk::raii::PhysicalDevice const& physical_device,
-                   vk::raii::Device const&         logical_device,
+    Shader::Shader(const vk::raii::PhysicalDevice& physical_device,
+                   const vk::raii::Device&         logical_device,
                    DescriptorAllocatorGrowable&    descriptor_allocator,
                    std::string                     vert_shader_file_path,
                    std::string                     frag_shader_file_path,
@@ -79,7 +79,7 @@ namespace Meow
     }
 
     bool Shader::CreateShaderModuleAndGetMeta(
-        vk::raii::Device const&                         logical_device,
+        const vk::raii::Device&                         logical_device,
         vk::raii::ShaderModule&                         shader_module,
         const std::string&                              shader_file_path,
         vk::ShaderStageFlagBits                         stage,
@@ -172,9 +172,13 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            // Convention: Always use dynamic uniform buffer
-            vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding, vk::DescriptorType::eUniformBufferDynamic, 1, stageFlags, nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding {binding,
+                                                               (type_name.find("Dynamic") != std::string::npos) ?
+                                                                   vk::DescriptorType::eUniformBufferDynamic :
+                                                                   vk::DescriptorType::eUniformBuffer,
+                                                               1,
+                                                               stageFlags,
+                                                               nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -188,6 +192,12 @@ namespace Meow
                 buffer_meta.bufferSize     = uniform_buffer_struct_size;
                 buffer_meta.stageFlags     = stageFlags;
                 buffer_meta.descriptorType = set_layout_binding.descriptorType;
+
+#ifdef MEOW_DEBUG
+                buffer_meta.var_name  = var_name;
+                buffer_meta.type_name = type_name;
+#endif
+
                 buffer_meta_map.insert(std::make_pair(var_name, buffer_meta));
             }
             else
@@ -440,7 +450,7 @@ namespace Meow
         }
     }
 
-    void Shader::GenerateLayout(vk::raii::Device const& raii_logical_device)
+    void Shader::GenerateLayout(const vk::raii::Device& raii_logical_device)
     {
         std::vector<DescriptorSetLayoutMeta>& metas = set_layout_metas.metas;
 
@@ -496,39 +506,41 @@ namespace Meow
         // for (auto& buffer_meta : buffer_meta_map)
         // instead, use double layer looping
 
-        uniform_buffer_count = 0;
+        dynamic_uniform_buffer_count = 0;
         for (auto& meta : metas)
         {
             for (auto& descriptor_layout_binding : meta.bindings)
             {
-                // Convention: Non-dynamic is regarded as dynamic
-                for (auto& buffer_meta : buffer_meta_map)
+                if (descriptor_layout_binding.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
                 {
-                    if (buffer_meta.second.set == meta.set &&
-                        buffer_meta.second.binding == descriptor_layout_binding.binding &&
-                        buffer_meta.second.descriptorType == descriptor_layout_binding.descriptorType &&
-                        buffer_meta.second.stageFlags == descriptor_layout_binding.stageFlags)
+                    for (auto& buffer_meta : buffer_meta_map)
                     {
-                        buffer_meta.second.dynamic_offset_index = uniform_buffer_count;
-                        uniform_buffer_count += 1;
-                        break;
+                        if (buffer_meta.second.set == meta.set &&
+                            buffer_meta.second.binding == descriptor_layout_binding.binding &&
+                            buffer_meta.second.descriptorType == descriptor_layout_binding.descriptorType &&
+                            buffer_meta.second.stageFlags == descriptor_layout_binding.stageFlags)
+                        {
+                            buffer_meta.second.dynamic_seq = dynamic_uniform_buffer_count;
+                            dynamic_uniform_buffer_count++;
+                            break;
+                        }
                     }
                 }
             }
         }
     }
 
-    void Shader::AllocateDescriptorSet(vk::raii::Device const&      logical_device,
+    void Shader::AllocateDescriptorSet(const vk::raii::Device&      logical_device,
                                        DescriptorAllocatorGrowable& descriptor_allocator)
     {
         descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
     }
 
-    void Shader::SetBuffer(vk::raii::Device const&     logical_device,
+    void Shader::SetBuffer(const vk::raii::Device&     logical_device,
                            const std::string&          name,
-                           vk::raii::Buffer const&     buffer,
+                           const vk::raii::Buffer&     buffer,
                            vk::DeviceSize              range,
-                           vk::raii::BufferView const* raii_buffer_view)
+                           const vk::raii::BufferView* raii_buffer_view)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -564,7 +576,7 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data)
+    void Shader::SetImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
