@@ -65,8 +65,6 @@ namespace Meow
 
         void EndObject();
 
-        void SetGlobalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size);
-
         void SetLocalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size);
 
         void SetStorageBuffer(vk::raii::Device const&     logical_device,
