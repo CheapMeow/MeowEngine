@@ -384,7 +384,7 @@ namespace Meow
 
         // Update mesh uniform
 
-        m_obj2attachment_mat.BeginFrame();
+        m_obj2attachment_mat.BeginPopulatingDynamicUniformPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
@@ -412,12 +412,12 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.BeginObject();
-                m_obj2attachment_mat.SetLocalUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
-                m_obj2attachment_mat.EndObject();
+                m_obj2attachment_mat.BeginPopulatingDynamicUniformPerObject();
+                m_obj2attachment_mat.PopulateDynamicUniform("uboMVP", &ubo_data, sizeof(ubo_data));
+                m_obj2attachment_mat.EndPopulatingDynamicUniformPerObject();
             }
         }
-        m_obj2attachment_mat.EndFrame();
+        m_obj2attachment_mat.EndPopulatingDynamicUniformPerFrame();
 
         // update light
 
@@ -429,11 +429,11 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_quad_mat.BeginFrame();
-        m_quad_mat.BeginObject();
-        m_quad_mat.SetLocalUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
-        m_quad_mat.EndObject();
-        m_quad_mat.EndFrame();
+        m_quad_mat.BeginPopulatingDynamicUniformPerFrame();
+        m_quad_mat.BeginPopulatingDynamicUniformPerObject();
+        m_quad_mat.PopulateDynamicUniform("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
+        m_quad_mat.EndPopulatingDynamicUniformPerObject();
+        m_quad_mat.EndPopulatingDynamicUniformPerFrame();
     }
 
     void EditorDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
