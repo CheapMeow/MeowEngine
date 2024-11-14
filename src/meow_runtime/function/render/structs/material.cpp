@@ -196,7 +196,7 @@ namespace Meow
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
 
-    void Material::BeginPopulatingDynamicUniformPerFrame()
+    void Material::BeginPopulatingDynamicUniformBufferPerFrame()
     {
         FUNCTION_TIMER();
 
@@ -212,14 +212,14 @@ namespace Meow
         per_obj_dynamic_offsets.clear();
     }
 
-    void Material::EndPopulatingDynamicUniformPerFrame()
+    void Material::EndPopulatingDynamicUniformBufferPerFrame()
     {
         FUNCTION_TIMER();
 
         actived = false;
     }
 
-    void Material::BeginPopulatingDynamicUniformPerObject()
+    void Material::BeginPopulatingDynamicUniformBufferPerObject()
     {
         FUNCTION_TIMER();
 
@@ -227,7 +227,7 @@ namespace Meow
             std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
     }
 
-    void Material::EndPopulatingDynamicUniformPerObject()
+    void Material::EndPopulatingDynamicUniformBufferPerObject()
     {
         FUNCTION_TIMER();
 
@@ -249,7 +249,7 @@ namespace Meow
         ++obj_count;
     }
 
-    void Material::PopulateDynamicUniform(const std::string& name, void* dataPtr, uint32_t size)
+    void Material::PopulateDynamicUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
     {
         FUNCTION_TIMER();
 

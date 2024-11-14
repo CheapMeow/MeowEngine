@@ -57,15 +57,15 @@ namespace Meow
                             vk::FrontFace               front_face,
                             bool                        depth_buffered);
 
-        void BeginPopulatingDynamicUniformPerFrame();
+        void BeginPopulatingDynamicUniformBufferPerFrame();
 
-        void EndPopulatingDynamicUniformPerFrame();
+        void EndPopulatingDynamicUniformBufferPerFrame();
 
-        void BeginPopulatingDynamicUniformPerObject();
+        void BeginPopulatingDynamicUniformBufferPerObject();
 
-        void EndPopulatingDynamicUniformPerObject();
+        void EndPopulatingDynamicUniformBufferPerObject();
 
-        void PopulateDynamicUniform(const std::string& name, void* dataPtr, uint32_t size);
+        void PopulateDynamicUniformBuffer(const std::string& name, void* dataPtr, uint32_t size);
 
         void SetStorageBuffer(vk::raii::Device const&     logical_device,
                               const std::string&          name,

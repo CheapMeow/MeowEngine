@@ -241,7 +241,7 @@ namespace Meow
 
         // Update mesh uniform
 
-        m_forward_mat.BeginPopulatingDynamicUniformPerFrame();
+        m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
@@ -268,12 +268,12 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.BeginPopulatingDynamicUniformPerObject();
-                m_forward_mat.PopulateDynamicUniform("uboMVP", &ubo_data, sizeof(ubo_data));
-                m_forward_mat.EndPopulatingDynamicUniformPerObject();
+                m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                m_forward_mat.PopulateDynamicUniformBuffer("uboMVP", &ubo_data, sizeof(ubo_data));
+                m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
-        m_forward_mat.EndPopulatingDynamicUniformPerFrame();
+        m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
     }
 
     void GameForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
