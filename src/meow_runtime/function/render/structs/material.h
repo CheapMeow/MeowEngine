@@ -12,20 +12,6 @@
 
 namespace Meow
 {
-
-    /**
-     * @brief Information about uniform buffer that are same for all objects.
-     *
-     * Because it will be copy to new allocation memoty of ring buffer when drawing each new object,
-     * the data should be stored itself.
-     */
-    struct GlobalUniformBufferInfo
-    {
-        uint32_t             dynamic_offset_index = 0;
-        std::vector<uint8_t> data;
-        uint32_t             dynamic_offset = std::numeric_limits<uint32_t>::max();
-    };
-
     class Material : NonCopyable
     {
     public:
@@ -44,7 +30,6 @@ namespace Meow
             std::swap(graphics_pipeline, rhs.graphics_pipeline);
             this->actived   = rhs.actived;
             this->obj_count = rhs.obj_count;
-            std::swap(global_uniform_buffer_infos, rhs.global_uniform_buffer_infos);
             std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
             std::swap(descriptor_sets, rhs.descriptor_sets);
         }
@@ -60,7 +45,6 @@ namespace Meow
                 std::swap(graphics_pipeline, rhs.graphics_pipeline);
                 this->actived   = rhs.actived;
                 this->obj_count = rhs.obj_count;
-                std::swap(global_uniform_buffer_infos, rhs.global_uniform_buffer_infos);
                 std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
                 std::swap(descriptor_sets, rhs.descriptor_sets);
             }
@@ -95,7 +79,7 @@ namespace Meow
 
         void BindPipeline(vk::raii::CommandBuffer const& command_buffer);
 
-        void BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index);
+        void BindAllDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index);
 
         RingUniformBuffer const& GetRingUniformBuffer() const { return ring_buffer; }
 
@@ -111,11 +95,10 @@ namespace Meow
 
         // stored for binding descriptor set
 
-        bool                                 actived   = false;
-        int32_t                              obj_count = 0;
-        std::vector<GlobalUniformBufferInfo> global_uniform_buffer_infos;
-        std::vector<std::vector<uint32_t>>   per_obj_dynamic_offsets;
-        std::vector<vk::DescriptorSet>       descriptor_sets;
+        bool                               actived   = false;
+        int32_t                            obj_count = 0;
+        std::vector<std::vector<uint32_t>> per_obj_dynamic_offsets;
+        std::vector<vk::DescriptorSet>     descriptor_sets;
     };
 
 } // namespace Meow

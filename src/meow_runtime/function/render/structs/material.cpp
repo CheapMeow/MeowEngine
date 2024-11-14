@@ -210,23 +210,6 @@ namespace Meow
 
         obj_count = 0;
         per_obj_dynamic_offsets.clear();
-
-        // copy global uniform buffer data to ring buffer
-
-        // global uniform buffer should be set before BeginFrame() is called
-        // so copy global uniform buffer to ring buffer here
-        // then it does not need to copy global uniform buffer later during this frame
-
-        for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
-        {
-            uint8_t* ringCPUData = (uint8_t*)(ring_buffer.mapped_data_ptr);
-            uint64_t bufferSize  = global_uniform_buffer_info.data.size();
-            uint64_t ringOffset  = ring_buffer.AllocateMemory(bufferSize);
-
-            memcpy(ringCPUData + ringOffset, global_uniform_buffer_info.data.data(), bufferSize);
-
-            global_uniform_buffer_info.dynamic_offset = (uint32_t)ringOffset;
-        }
     }
 
     void Material::EndFrame()
@@ -234,23 +217,6 @@ namespace Meow
         FUNCTION_TIMER();
 
         actived = false;
-
-        // if no object
-        // all elements of per_obj_dynamic_offsets[0] are global uniform buffer offset
-
-        if (per_obj_dynamic_offsets.size() == 0)
-        {
-            per_obj_dynamic_offsets.push_back(
-                std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
-
-            // copy global uniform buffer offset
-
-            for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
-            {
-                per_obj_dynamic_offsets[0][global_uniform_buffer_info.dynamic_offset_index] =
-                    global_uniform_buffer_info.dynamic_offset;
-            }
-        }
     }
 
     void Material::BeginObject()
@@ -259,14 +225,6 @@ namespace Meow
 
         per_obj_dynamic_offsets.push_back(
             std::vector<uint32_t>(shader_ptr->uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
-
-        // copy global uniform buffer offset
-
-        for (auto& global_uniform_buffer_info : global_uniform_buffer_infos)
-        {
-            per_obj_dynamic_offsets[obj_count][global_uniform_buffer_info.dynamic_offset_index] =
-                global_uniform_buffer_info.dynamic_offset;
-        }
     }
 
     void Material::EndObject()
@@ -289,43 +247,6 @@ namespace Meow
         }
 
         ++obj_count;
-    }
-
-    void Material::SetGlobalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
-    {
-        FUNCTION_TIMER();
-
-        auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
-        if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
-        {
-            MEOW_ERROR("Uniform {} not found.", name);
-            return;
-        }
-
-        if (buffer_meta_iter->second.bufferSize != size)
-        {
-            MEOW_WARN("Uniform {} size not match, dst={} src={}", name, buffer_meta_iter->second.bufferSize, size);
-        }
-
-        // store data into info class instance
-
-        auto global_uniform_buffer_info_iter = std::find_if(
-            global_uniform_buffer_infos.begin(), global_uniform_buffer_infos.end(), [&](auto& rhs) -> bool {
-                return rhs.dynamic_offset_index == buffer_meta_iter->second.dynamic_offset_index;
-            });
-
-        if (global_uniform_buffer_info_iter == global_uniform_buffer_infos.end())
-        {
-            GlobalUniformBufferInfo global_uniform_buffer_info;
-            global_uniform_buffer_info.dynamic_offset_index = buffer_meta_iter->second.dynamic_offset_index;
-            memcpy(global_uniform_buffer_info.data.data(), dataPtr, size);
-
-            global_uniform_buffer_infos.push_back(global_uniform_buffer_info);
-        }
-        else
-        {
-            memcpy(global_uniform_buffer_info_iter->data.data(), dataPtr, size);
-        }
     }
 
     void Material::SetLocalUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
@@ -380,7 +301,7 @@ namespace Meow
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
-    void Material::BindDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index)
+    void Material::BindAllDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index)
     {
         FUNCTION_TIMER();
 

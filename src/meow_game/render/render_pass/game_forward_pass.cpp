@@ -304,7 +304,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.BindDescriptorSets(command_buffer, draw_call);
+                m_forward_mat.BindAllDescriptorSets(command_buffer, draw_call);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;

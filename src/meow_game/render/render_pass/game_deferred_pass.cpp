@@ -522,7 +522,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.BindDescriptorSets(command_buffer, draw_call[0]);
+                m_obj2attachment_mat.BindAllDescriptorSets(command_buffer, draw_call[0]);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
@@ -535,7 +535,7 @@ namespace Meow
 
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
-            m_quad_mat.BindDescriptorSets(command_buffer, draw_call[1]);
+            m_quad_mat.BindAllDescriptorSets(command_buffer, draw_call[1]);
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
 
             ++draw_call[1];

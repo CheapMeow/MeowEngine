@@ -78,11 +78,11 @@ namespace Meow
         if (!model_go_ptr)
             MEOW_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->SetName("Backpack");
+        model_go_ptr->SetName("Nanosuit");
         TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
         TryAddComponent(model_go_ptr,
                         "ModelComponent",
-                        std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                        std::make_shared<ModelComponent>("builtin/models/nanosuit/nanosuit.obj",
                                                          m_render_pass_ptr->input_vertex_attributes));
 
         for (int i = 0; i < 200; i++)
