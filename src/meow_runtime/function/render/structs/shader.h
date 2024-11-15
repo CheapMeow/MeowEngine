@@ -29,7 +29,7 @@ namespace Meow
     {
         uint32_t             set            = 0;
         uint32_t             binding        = 0;
-        uint32_t             bufferSize     = 0;
+        uint32_t             size           = 0;
         vk::DescriptorType   descriptorType = vk::DescriptorType::eUniformBuffer;
         vk::ShaderStageFlags stageFlags     = {};
 
@@ -61,7 +61,6 @@ namespace Meow
 
     class DescriptorSetLayoutMeta
     {
-    private:
         using BindingsArray = std::vector<vk::DescriptorSetLayoutBinding>;
 
     public:
@@ -69,7 +68,6 @@ namespace Meow
 
         ~DescriptorSetLayoutMeta() {}
 
-    public:
         uint32_t      set = -1;
         BindingsArray bindings;
     };
@@ -150,7 +148,6 @@ namespace Meow
             binding_meta_map.insert(std::make_pair(varName, paramInfo));
         }
 
-    public:
         std::unordered_map<std::string, BindingMeta> binding_meta_map;
         std::vector<DescriptorSetLayoutMeta>         metas;
     };
@@ -162,7 +159,6 @@ namespace Meow
      */
     struct Shader
     {
-    public:
         using InputBindingsVector   = std::vector<vk::VertexInputBindingDescription>;
         using InputAttributesVector = std::vector<vk::VertexInputAttributeDescription>;
 

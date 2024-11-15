@@ -162,12 +162,12 @@ namespace Meow
     {
         for (int32_t i = 0; i < resources.uniform_buffers.size(); ++i)
         {
-            spirv_cross::Resource& res                        = resources.uniform_buffers[i];
-            spirv_cross::SPIRType  type                       = compiler.get_type(res.type_id);
-            spirv_cross::SPIRType  base_type                  = compiler.get_type(res.base_type_id);
-            const std::string&     var_name                   = compiler.get_name(res.id);
-            const std::string&     type_name                  = compiler.get_name(res.base_type_id);
-            uint32_t               uniform_buffer_struct_size = (uint32_t)compiler.get_declared_struct_size(type);
+            spirv_cross::Resource& res          = resources.uniform_buffers[i];
+            spirv_cross::SPIRType  type         = compiler.get_type(res.type_id);
+            spirv_cross::SPIRType  base_type    = compiler.get_type(res.base_type_id);
+            const std::string&     var_name     = compiler.get_name(res.id);
+            const std::string&     type_name    = compiler.get_name(res.base_type_id);
+            uint32_t uniform_buffer_struct_size = static_cast<uint32_t>(compiler.get_declared_struct_size(type));
 
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
@@ -189,7 +189,7 @@ namespace Meow
                 BufferMeta buffer_meta     = {};
                 buffer_meta.set            = set;
                 buffer_meta.binding        = binding;
-                buffer_meta.bufferSize     = uniform_buffer_struct_size;
+                buffer_meta.size           = uniform_buffer_struct_size;
                 buffer_meta.stageFlags     = stageFlags;
                 buffer_meta.descriptorType = set_layout_binding.descriptorType;
 
@@ -325,7 +325,7 @@ namespace Meow
                 BufferMeta buffer_meta     = {};
                 buffer_meta.set            = set;
                 buffer_meta.binding        = binding;
-                buffer_meta.bufferSize     = 0;
+                buffer_meta.size           = 0;
                 buffer_meta.stageFlags     = stageFlags;
                 buffer_meta.descriptorType = set_layout_binding.descriptorType;
                 buffer_meta_map.insert(std::make_pair(var_name, buffer_meta));
@@ -490,7 +490,7 @@ namespace Meow
         }
 
         vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
-            {}, (uint32_t)descriptor_set_layouts.size(), descriptor_set_layouts.data());
+            {}, static_cast<uint32_t>(descriptor_set_layouts.size()), descriptor_set_layouts.data());
         pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
     }
 
@@ -551,8 +551,17 @@ namespace Meow
 
         auto bindInfo = it->second;
 
-        // Default is offset = 0, buffer size = whole size
-        // Maybe it needs to be configurable?
+        // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
+        for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
+        {
+            if (it->first == name)
+            {
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                {
+                    range = it->second.size;
+                }
+            }
+        }
         vk::DescriptorBufferInfo descriptor_buffer_info(*buffer, 0, range);
 
         // TODO: store buffer view in an vector

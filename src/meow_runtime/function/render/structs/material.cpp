@@ -6,39 +6,15 @@
 
 namespace Meow
 {
-    Material::Material(vk::raii::PhysicalDevice const& physical_device,
-                       vk::raii::Device const&         logical_device,
+    Material::Material(const vk::raii::PhysicalDevice& physical_device,
+                       const vk::raii::Device&         logical_device,
                        std::shared_ptr<Shader>         shader_ptr)
-        : ring_buffer(physical_device, logical_device)
     {
         this->shader_ptr = shader_ptr;
-
-        // convert type from vk::raii::DescriptorSet to vk::DescriptorSet
-
-        descriptor_sets.resize(shader_ptr->descriptor_sets.size());
-        for (size_t i = 0; i < descriptor_sets.size(); ++i)
-        {
-            descriptor_sets[i] = *shader_ptr->descriptor_sets[i];
-        }
-
-        // bind ring buffer to descriptor set
-        // There are two parts about binding resources to descriptor set
-        // One is binding ring buffer. It is known by Material class, so it is done in Material ctor
-        // The second is other's binding, such as image. It is done outside of Material ctor
-
-        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
-        {
-            if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer ||
-                it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
-            {
-                shader_ptr->SetBuffer(
-                    logical_device, it->first, ring_buffer.buffer_data_ptr->buffer, it->second.bufferSize);
-            }
-        }
     }
 
-    void Material::CreatePipeline(vk::raii::Device const&     logical_device,
-                                  vk::raii::RenderPass const& render_pass,
+    void Material::CreatePipeline(const vk::raii::Device&     logical_device,
+                                  const vk::raii::RenderPass& render_pass,
                                   vk::FrontFace               front_face,
                                   bool                        depth_buffered)
     {
@@ -249,59 +225,39 @@ namespace Meow
         ++obj_count;
     }
 
-    void Material::PopulateDynamicUniformBuffer(const std::string& name, void* dataPtr, uint32_t size)
+    void Material::PopulateDynamicUniformBuffer(std::shared_ptr<UniformBuffer> buffer,
+                                                const std::string&             name,
+                                                void*                          dataPtr,
+                                                uint32_t                       size)
     {
         FUNCTION_TIMER();
 
-        auto buffer_meta_iter = shader_ptr->buffer_meta_map.find(name);
-        if (buffer_meta_iter == shader_ptr->buffer_meta_map.end())
+        auto it = shader_ptr->buffer_meta_map.find(name);
+        if (it == shader_ptr->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
             return;
         }
 
-        if (buffer_meta_iter->second.bufferSize != size)
+        if (it->second.size != size)
         {
-            MEOW_WARN("Uniform {} size not match, dst={} src={}", name, buffer_meta_iter->second.bufferSize, size);
+            MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
 
-        // copy local uniform buffer to ring buffer
-
-        uint8_t* ringCPUData = (uint8_t*)(ring_buffer.mapped_data_ptr);
-        uint64_t bufferSize  = buffer_meta_iter->second.bufferSize;
-        uint64_t ringOffset  = ring_buffer.AllocateMemory(bufferSize);
-
-        memcpy(ringCPUData + ringOffset, dataPtr, bufferSize);
-
-        per_obj_dynamic_offsets[obj_count][buffer_meta_iter->second.dynamic_seq] = (uint32_t)ringOffset;
+        per_obj_dynamic_offsets[obj_count][it->second.dynamic_seq] =
+            static_cast<uint32_t>(buffer->Populate(dataPtr, it->second.size));
     }
 
-    void Material::SetStorageBuffer(vk::raii::Device const&     logical_device,
-                                    const std::string&          name,
-                                    vk::raii::Buffer const&     buffer,
-                                    vk::DeviceSize              range,
-                                    vk::raii::BufferView const* raii_buffer_view)
-    {
-        FUNCTION_TIMER();
-
-        shader_ptr->SetBuffer(logical_device, name, buffer, range, raii_buffer_view);
-    }
-
-    void Material::SetImage(vk::raii::Device const& logical_device, const std::string& name, ImageData& image_data)
-    {
-        FUNCTION_TIMER();
-
-        shader_ptr->SetImage(logical_device, name, image_data);
-    }
-
-    void Material::BindPipeline(vk::raii::CommandBuffer const& command_buffer)
+    void Material::BindPipeline(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
-    void Material::BindAllDescriptorSets(vk::raii::CommandBuffer const& command_buffer, int32_t obj_index)
+    void Material::BindDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
+                                               const std::string&             name,
+                                               int32_t                        obj_index)
     {
         FUNCTION_TIMER();
 

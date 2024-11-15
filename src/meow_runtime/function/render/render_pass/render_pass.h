@@ -27,7 +27,7 @@ namespace Meow
             return *this;
         }
 
-        ~RenderPass() override {}
+        virtual ~RenderPass() override = default;
 
         virtual void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
                                          const vk::raii::Device&           device,

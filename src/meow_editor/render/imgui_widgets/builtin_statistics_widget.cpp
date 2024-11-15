@@ -14,7 +14,7 @@ namespace Meow
         for (int i = 0; i < k_gredint_count; i++)
         {
             float        saturation_ratio = static_cast<float>(i + 1) / k_gredint_count;
-            glm::vec3    red_rgb          = glm::rgbColor(glm::vec3(120.0, saturation_ratio, 0.5));
+            glm::vec3    red_rgb          = rgbColor(glm::vec3(120.0, saturation_ratio, 0.5));
             unsigned int alpha            = 255;
             unsigned int red              = 255 * red_rgb.x;
             unsigned int green            = 255 * red_rgb.y;
@@ -24,7 +24,7 @@ namespace Meow
         for (int i = 0; i < k_gredint_count; i++)
         {
             float        saturation_ratio = static_cast<float>(i + 1) / k_gredint_count;
-            glm::vec3    red_rgb          = glm::rgbColor(glm::vec3(120.0, saturation_ratio, 0.8));
+            glm::vec3    red_rgb          = rgbColor(glm::vec3(120.0, saturation_ratio, 0.8));
             unsigned int alpha            = 255;
             unsigned int red              = 255 * red_rgb.x;
             unsigned int green            = 255 * red_rgb.y;
@@ -53,7 +53,6 @@ namespace Meow
                     DrawVertexAttributesStat(stat);
                     DrawBufferStat(stat);
                     DrawImageStat(stat);
-                    DrawRingBufferStat(pass_name, stat.ringbuf_stat);
 
                     ImGui::TreePop();
                 }
@@ -161,7 +160,7 @@ namespace Meow
                     ImGui::NextColumn();
                     ImGui::Text("%d", meta->second.binding);
                     ImGui::NextColumn();
-                    ImGui::Text("%d", meta->second.bufferSize);
+                    ImGui::Text("%d", meta->second.size);
                     ImGui::NextColumn();
                     ImGui::Text("%s", to_string(meta->second.descriptorType).c_str());
                     ImGui::Columns();
@@ -224,93 +223,6 @@ namespace Meow
             ImGui::TreePop();
         }
 
-        ImGui::PopID();
-    }
-
-    void BuiltinStatisticsWidget::DrawRingBufferStat(const std::string& pass_name, const RingUniformBufferStat& stat)
-    {
-        ImGuiWindow* window = ImGui::GetCurrentWindow();
-        if (window->SkipItems)
-            return;
-
-        ImGuiContext&     g     = *GImGui;
-        const ImGuiStyle& style = g.Style;
-
-        const RingUniformBufferStat& cur_stat =
-            m_is_ringbuf_stat_shapshot_enabled[pass_name] ? m_ringbuf_stat_snapshot[pass_name] : stat;
-
-        ImGui::PushID(&cur_stat);
-
-        ImGuiTreeNodeFlags flag = ImGuiTreeNodeFlags_DefaultOpen;
-
-        if (ImGui::TreeNodeEx("Ring Uniform Buffer", flag))
-        {
-            ImVec2 graph_size;
-            graph_size.x = 0.8 * ImGui::GetWindowWidth() - 2.0 * style.FramePadding.x;
-            graph_size.y = 2.0 * ImGui::GetTextLineHeight() + (style.FramePadding.y * 2);
-
-            const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + graph_size);
-            const ImRect inner_bb(frame_bb.Min + style.FramePadding,
-                                  frame_bb.Max - style.FramePadding - ImVec2(0.0f, ImGui::GetTextLineHeight()));
-
-            float inner_width = inner_bb.Max.x - inner_bb.Min.x;
-
-            ImGui::ItemSize(frame_bb, style.FramePadding.y);
-            if (!ImGui::ItemAdd(frame_bb, 0, &frame_bb))
-            {
-                ImGui::TreePop();
-                ImGui::PopID();
-                return;
-            }
-
-            ImGui::RenderFrame(
-                inner_bb.Min, inner_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
-
-            float start_x_percent = (double)cur_stat.begin / cur_stat.size;
-            float end_x_percent   = (double)(cur_stat.begin + cur_stat.usage) / cur_stat.size;
-
-            float begin_pos_x = start_x_percent * inner_width;
-            float end_pos_x   = end_x_percent * inner_width;
-
-            auto res_stat_pos0 = inner_bb.Min;
-            auto res_stat_pos1 = inner_bb.Min + ImVec2(begin_pos_x, ImGui::GetTextLineHeight());
-            auto cur_stat_pos0 = inner_bb.Min + ImVec2(begin_pos_x, 0);
-            auto cur_stat_pos1 = inner_bb.Min + ImVec2(end_pos_x, ImGui::GetTextLineHeight());
-
-            int color_table_index = start_x_percent / k_gredint_partition;
-            color_table_index     = std::clamp(color_table_index, 0, k_gredint_count - 1);
-            window->DrawList->AddRectFilled(res_stat_pos0, res_stat_pos1, m_col_base_table[color_table_index]);
-            window->DrawList->AddRect(res_stat_pos0, res_stat_pos1, col_outline);
-            window->DrawList->AddRectFilled(cur_stat_pos0, cur_stat_pos1, m_col_hovered_table[color_table_index]);
-            window->DrawList->AddRect(cur_stat_pos0, cur_stat_pos1, col_outline);
-
-            auto text_size1 = ImGui::CalcTextSize(std::to_string(cur_stat.begin).c_str());
-
-            ImGui::RenderText(inner_bb.Min + ImVec2(0.0, 1.5 * ImGui::GetTextLineHeight()), "0");
-            ImGui::RenderText(inner_bb.Min + ImVec2(begin_pos_x - text_size1.x, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(cur_stat.begin).c_str());
-            ImGui::RenderText(inner_bb.Min + ImVec2(end_pos_x, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(cur_stat.begin + cur_stat.usage).c_str());
-            ImGui::RenderText(inner_bb.Min + ImVec2(inner_width, 1.5 * ImGui::GetTextLineHeight()),
-                              std::to_string(cur_stat.size).c_str());
-
-            if (ImGui::Button("Capture Snapshot"))
-            {
-                m_is_ringbuf_stat_shapshot_enabled[pass_name] = true;
-                m_ringbuf_stat_snapshot[pass_name]            = stat;
-            }
-
-            if (m_is_ringbuf_stat_shapshot_enabled[pass_name])
-            {
-                ImGui::SameLine();
-                if (ImGui::Button("Leave Snapshot"))
-                {
-                    m_is_ringbuf_stat_shapshot_enabled[pass_name] = false;
-                }
-            }
-
-            ImGui::TreePop();
-        }
         ImGui::PopID();
     }
 } // namespace Meow

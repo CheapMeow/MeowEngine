@@ -12,7 +12,7 @@ namespace Meow
         vk::raii::Buffer       buffer        = nullptr;
 
         vk::DeviceSize          device_size;
-        vk::BufferUsageFlags    usage;
+        vk::BufferUsageFlags    usage_flags;
         vk::MemoryPropertyFlags property_flags;
 
         BufferData(vk::raii::PhysicalDevice const& physical_device,
@@ -24,7 +24,7 @@ namespace Meow
             : buffer(device, vk::BufferCreateInfo({}, size, usage))
 #if defined(MEOW_DEBUG)
             , device_size(size)
-            , usage(usage)
+            , usage_flags(usage)
             , property_flags(property_flags)
 #endif
         {
@@ -43,7 +43,7 @@ namespace Meow
             : device_memory(std::exchange(rhs.device_memory, nullptr))
             , buffer(std::exchange(rhs.buffer, nullptr))
             , device_size(rhs.device_size)
-            , usage(rhs.usage)
+            , usage_flags(rhs.usage_flags)
             , property_flags(rhs.property_flags)
         {}
         BufferData& operator=(BufferData const&) = delete;
@@ -56,7 +56,7 @@ namespace Meow
                 device_memory  = std::exchange(rhs.device_memory, nullptr);
                 buffer         = std::exchange(rhs.buffer, nullptr);
                 device_size    = rhs.device_size;
-                usage          = rhs.usage;
+                usage_flags          = rhs.usage_flags;
                 property_flags = rhs.property_flags;
             }
             return *this;
@@ -99,7 +99,7 @@ namespace Meow
                     std::vector<DataType> const&    data,
                     size_t                          stride) const
         {
-            assert(usage & vk::BufferUsageFlagBits::eTransferDst);
+            assert(usage_flags & vk::BufferUsageFlagBits::eTransferDst);
             assert(property_flags & vk::MemoryPropertyFlagBits::eDeviceLocal);
 
             size_t element_size = stride ? stride : sizeof(DataType);

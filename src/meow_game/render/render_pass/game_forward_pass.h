@@ -1,16 +1,14 @@
 #pragma once
 
-#include "function/render/structs/material.h"
-#include "function/render/structs/shader.h"
-#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/render_pass/forward_pass.h"
 
 namespace Meow
 {
-    class GameForwardPass : public RenderPass
+    class GameForwardPass : public ForwardPass
     {
     public:
         GameForwardPass(std::nullptr_t)
-            : RenderPass(nullptr)
+            : ForwardPass(nullptr)
         {}
 
         GameForwardPass(const vk::raii::PhysicalDevice& physical_device,
@@ -21,52 +19,20 @@ namespace Meow
                         DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         GameForwardPass(GameForwardPass&& rhs) noexcept
-            : RenderPass(std::move(rhs))
-        {
-            swap(*this, rhs);
-        }
+            : ForwardPass(std::move(rhs))
+        {}
 
         GameForwardPass& operator=(GameForwardPass&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                RenderPass::operator=(std::move(rhs));
-
-                swap(*this, rhs);
+                ForwardPass::operator=(std::move(rhs));
             }
             return *this;
         }
 
-        ~GameForwardPass() override
-        {
-            m_forward_mat = nullptr;
-            render_pass   = nullptr;
-            framebuffers.clear();
-            m_depth_attachment = nullptr;
-        }
-
-        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                 const vk::raii::Device&           device,
-                                 const vk::raii::CommandPool&      command_pool,
-                                 const vk::raii::Queue&            queue,
-                                 const std::vector<vk::ImageView>& output_image_views,
-                                 const vk::Extent2D&               extent) override;
-
-        void UpdateUniformBuffer() override;
-
-        void Start(const vk::raii::CommandBuffer& command_buffer,
-                   vk::Extent2D                   extent,
-                   uint32_t                       current_image_index) override;
+        ~GameForwardPass() override = default;
 
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
-
-        void AfterPresent() override;
-
-        friend void swap(GameForwardPass& lhs, GameForwardPass& rhs);
-
-    private:
-        Material m_forward_mat = nullptr;
-
-        int draw_call = 0;
     };
 } // namespace Meow

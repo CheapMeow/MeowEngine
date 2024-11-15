@@ -11,7 +11,6 @@ set(EDITOR_HEADER_FILES
     render/render_pass/editor_forward_pass.h
     render/render_pass/imgui_pass.h
     render/structs/builtin_render_stat.h
-    render/structs/ring_uniform_buffer_stat.h
     profile/profile_system.h
     global/editor_context.h)
 set(EDITOR_SOURCE_FILES
