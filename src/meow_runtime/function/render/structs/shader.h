@@ -230,17 +230,18 @@ namespace Meow
             }
         }
 
-        void BindBuffer(const vk::raii::Device&     logical_device,
-                        const std::string&          name,
-                        const vk::raii::Buffer&     buffer,
-                        vk::DeviceSize              range            = VK_WHOLE_SIZE,
-                        const vk::raii::BufferView* raii_buffer_view = nullptr);
+        void BindBufferToDescriptor(const vk::raii::Device&     logical_device,
+                                    const std::string&          name,
+                                    const vk::raii::Buffer&     buffer,
+                                    vk::DeviceSize              range            = VK_WHOLE_SIZE,
+                                    const vk::raii::BufferView* raii_buffer_view = nullptr);
 
-        void BindImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data);
+        void
+        BindImageToDescriptor(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data);
 
-        void UpdateDynamicUniformBuffer(const vk::raii::CommandBuffer& command_buffer,
-                                        const std::string&             name,
-                                        const std::vector<uint32_t>&   dynamic_offsets);
+        void BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
+                                                const std::string&             name,
+                                                const std::vector<uint32_t>&   dynamic_offsets);
 
     private:
         bool CreateShaderModuleAndGetMeta(

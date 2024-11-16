@@ -274,6 +274,6 @@ namespace Meow
             return;
         }
 
-        shader_ptr->UpdateDynamicUniformBuffer(command_buffer, name, per_obj_dynamic_offsets[obj_index]);
+        shader_ptr->BindDynamicUniformBufferToPipeline(command_buffer, name, per_obj_dynamic_offsets[obj_index]);
     }
 } // namespace Meow

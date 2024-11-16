@@ -16,10 +16,10 @@ namespace Meow
         vk::Extent2D extent;
         /**
          * @brief `ImageAspectFlags` should be stored because it is only known in specific ctor, and it can't be
-         * deducted from other information in other places. For example, in `BindImageLayout`, if you haven't store
-         * `ImageAspectFlags`, then you should deduct ImageAspectFlags from new_image_layout, if `new_image_layout ==
-         * vk::ImageLayout::eDepthStencilAttachmentOptimal` then you set `vk::ImageAspectFlagBits::eDepth`, otherwise
-         * you set `vk::ImageAspectFlagBits::eColor`. But
+         * deducted from other information in other places. For example, in `BindImageToDescriptorLayout`, if you
+         * haven't store `ImageAspectFlags`, then you should deduct ImageAspectFlags from new_image_layout, if
+         * `new_image_layout == vk::ImageLayout::eDepthStencilAttachmentOptimal` then you set
+         * `vk::ImageAspectFlagBits::eDepth`, otherwise you set `vk::ImageAspectFlagBits::eColor`. But
          *
          */
         vk::ImageAspectFlags aspect_mask;
@@ -55,9 +55,9 @@ namespace Meow
          * @param old_image_layout Old image layout
          * @param new_image_layout New image layout
          */
-        void BindImageLayout(const vk::raii::CommandBuffer& command_buffer,
-                             vk::ImageLayout                old_image_layout,
-                             vk::ImageLayout                new_image_layout);
+        void BindImageToDescriptorLayout(const vk::raii::CommandBuffer& command_buffer,
+                                         vk::ImageLayout                old_image_layout,
+                                         vk::ImageLayout                new_image_layout);
 
         static std::shared_ptr<ImageData> CreateDepthBuffer(const vk::raii::PhysicalDevice& physical_device,
                                                             const vk::raii::Device&         device,

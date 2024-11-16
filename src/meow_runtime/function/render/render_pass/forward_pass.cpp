@@ -34,7 +34,7 @@ namespace Meow
                                                                    vk::BufferUsageFlagBits::eUniformBuffer |
                                                                        vk::BufferUsageFlagBits::eTransferDst);
 
-        m_forward_mat.GetShader()->BindBuffer(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,

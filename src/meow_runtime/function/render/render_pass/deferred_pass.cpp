@@ -85,8 +85,8 @@ namespace Meow
                                                                       vk::BufferUsageFlagBits::eUniformBuffer |
                                                                           vk::BufferUsageFlagBits::eTransferDst);
 
-        m_obj2attachment_mat.GetShader()->BindBuffer(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->BindBuffer(device, "lightDatas", m_light_data_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.GetShader()->BindBufferToDescriptor(device, "lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -180,10 +180,10 @@ namespace Meow
 
         // Update descriptor set
 
-        m_quad_mat.GetShader()->BindImage(device, "inputColor", *m_color_attachment);
-        m_quad_mat.GetShader()->BindImage(device, "inputNormal", *m_normal_attachment);
-        m_quad_mat.GetShader()->BindImage(device, "inputPosition", *m_position_attachment);
-        m_quad_mat.GetShader()->BindImage(device, "inputDepth", *m_depth_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputColor", *m_color_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputNormal", *m_normal_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputPosition", *m_position_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()

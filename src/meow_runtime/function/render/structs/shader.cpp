@@ -536,11 +536,11 @@ namespace Meow
         descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
     }
 
-    void Shader::BindBuffer(const vk::raii::Device&     logical_device,
-                            const std::string&          name,
-                            const vk::raii::Buffer&     buffer,
-                            vk::DeviceSize              range,
-                            const vk::raii::BufferView* raii_buffer_view)
+    void Shader::BindBufferToDescriptor(const vk::raii::Device&     logical_device,
+                                        const std::string&          name,
+                                        const vk::raii::Buffer&     buffer,
+                                        vk::DeviceSize              range,
+                                        const vk::raii::BufferView* raii_buffer_view)
     {
         BufferMeta* meta = nullptr;
         // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
@@ -591,7 +591,9 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::BindImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data)
+    void Shader::BindImageToDescriptor(const vk::raii::Device& logical_device,
+                                       const std::string&      name,
+                                       ImageData&              image_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -619,9 +621,9 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::UpdateDynamicUniformBuffer(const vk::raii::CommandBuffer& command_buffer,
-                                            const std::string&             name,
-                                            const std::vector<uint32_t>&   dynamic_offsets)
+    void Shader::BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
+                                                    const std::string&             name,
+                                                    const std::vector<uint32_t>&   dynamic_offsets)
     {
         BufferMeta* meta = nullptr;
         // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
