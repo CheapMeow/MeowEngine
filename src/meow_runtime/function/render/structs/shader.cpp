@@ -536,32 +536,38 @@ namespace Meow
         descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
     }
 
-    void Shader::SetBuffer(const vk::raii::Device&     logical_device,
-                           const std::string&          name,
-                           const vk::raii::Buffer&     buffer,
-                           vk::DeviceSize              range,
-                           const vk::raii::BufferView* raii_buffer_view)
+    void Shader::BindBuffer(const vk::raii::Device&     logical_device,
+                            const std::string&          name,
+                            const vk::raii::Buffer&     buffer,
+                            vk::DeviceSize              range,
+                            const vk::raii::BufferView* raii_buffer_view)
     {
-        auto it = set_layout_metas.binding_meta_map.find(name);
-        if (it == set_layout_metas.binding_meta_map.end())
-        {
-            MEOW_ERROR("Failed write buffer, {} not found!", name);
-            return;
-        }
-
-        auto bindInfo = it->second;
-
+        BufferMeta* meta = nullptr;
         // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
         for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
         {
             if (it->first == name)
             {
-                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
                 {
-                    range = it->second.size;
+                    meta = &it->second;
+                    break;
+                }
+                else if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                {
+                    meta  = &it->second;
+                    range = meta->size;
+                    break;
                 }
             }
         }
+
+        if (meta == nullptr)
+        {
+            MEOW_ERROR("Binding buffer failed, {} not found!", name);
+            return;
+        }
+
         vk::DescriptorBufferInfo descriptor_buffer_info(*buffer, 0, range);
 
         // TODO: store buffer view in an vector
@@ -572,25 +578,25 @@ namespace Meow
         }
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *descriptor_sets[bindInfo.set],                                     // dstSet
-            bindInfo.binding,                                                   // dstBinding
-            0,                                                                  // dstArrayElement
-            1,                                                                  // descriptorCount
-            set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
-            nullptr,                                                            // pImageInfo
-            &descriptor_buffer_info,                                            // pBufferInfo
-            raii_buffer_view ? &buffer_view : nullptr                           // pTexelBufferView
+            *descriptor_sets[meta->set],                                  // dstSet
+            meta->binding,                                                // dstBinding
+            0,                                                            // dstArrayElement
+            1,                                                            // descriptorCount
+            set_layout_metas.GetDescriptorType(meta->set, meta->binding), // descriptorType
+            nullptr,                                                      // pImageInfo
+            &descriptor_buffer_info,                                      // pBufferInfo
+            raii_buffer_view ? &buffer_view : nullptr                     // pTexelBufferView
         );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::SetImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data)
+    void Shader::BindImage(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
         {
-            MEOW_ERROR("Failed write buffer, {} not found!", name);
+            MEOW_ERROR("Writing buffer failed, {} not found!", name);
             return;
         }
 
@@ -611,5 +617,33 @@ namespace Meow
         );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
+    }
+
+    void Shader::UpdateDynamicUniformBuffer(const vk::raii::CommandBuffer& command_buffer,
+                                            const std::string&             name,
+                                            const std::vector<uint32_t>&   dynamic_offsets)
+    {
+        BufferMeta* meta = nullptr;
+        // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
+        for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
+        {
+            if (it->first == name)
+            {
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                {
+                    meta = &it->second;
+                    break;
+                }
+            }
+        }
+
+        if (meta == nullptr)
+        {
+            MEOW_ERROR("Updating buffer failed, {} not found!", name);
+            return;
+        }
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, *descriptor_sets[meta->set], dynamic_offsets);
     }
 } // namespace Meow

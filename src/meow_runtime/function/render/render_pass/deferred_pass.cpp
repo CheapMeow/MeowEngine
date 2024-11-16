@@ -85,8 +85,8 @@ namespace Meow
                                                                       vk::BufferUsageFlagBits::eUniformBuffer |
                                                                           vk::BufferUsageFlagBits::eTransferDst);
 
-        m_obj2attachment_mat.GetShader()->SetBuffer(device, "lightDatas", m_light_data_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->SetBuffer(device, "lightDatas", m_light_data_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBuffer(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.GetShader()->BindBuffer(device, "lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -180,10 +180,10 @@ namespace Meow
 
         // Update descriptor set
 
-        m_quad_mat.GetShader()->SetImage(device, "inputColor", *m_color_attachment);
-        m_quad_mat.GetShader()->SetImage(device, "inputNormal", *m_normal_attachment);
-        m_quad_mat.GetShader()->SetImage(device, "inputPosition", *m_position_attachment);
-        m_quad_mat.GetShader()->SetImage(device, "inputDepth", *m_depth_attachment);
+        m_quad_mat.GetShader()->BindImage(device, "inputColor", *m_color_attachment);
+        m_quad_mat.GetShader()->BindImage(device, "inputNormal", *m_normal_attachment);
+        m_quad_mat.GetShader()->BindImage(device, "inputPosition", *m_position_attachment);
+        m_quad_mat.GetShader()->BindImage(device, "inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -275,12 +275,8 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_quad_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        m_quad_mat.BeginPopulatingDynamicUniformBufferPerObject();
-        m_quad_mat.PopulateDynamicUniformBuffer(
-            m_dynamic_uniform_buffer, "lightDatas", &m_LightDatas, sizeof(m_LightDatas));
-        m_quad_mat.EndPopulatingDynamicUniformBufferPerObject();
-        m_quad_mat.EndPopulatingDynamicUniformBufferPerFrame();
+        m_dynamic_uniform_buffer->Reset();
+        m_dynamic_uniform_buffer->Populate(&m_LightDatas, sizeof(m_LightDatas));
     }
 
     void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -312,7 +308,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.BindDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[0]);
+                m_obj2attachment_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[0]);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
@@ -326,7 +322,7 @@ namespace Meow
 
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
-            m_quad_mat.BindDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[1]);
+            m_quad_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[1]);
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
 
             ++draw_call[1];

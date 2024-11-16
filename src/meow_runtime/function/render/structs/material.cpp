@@ -244,6 +244,14 @@ namespace Meow
             MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
 
+        if (per_obj_dynamic_offsets[obj_count].size() <= it->second.dynamic_seq)
+        {
+            MEOW_ERROR("per_obj_dynamic_offsets[obj_count] size {} <= dynamic sequence {} from uniform buffer meta.",
+                       per_obj_dynamic_offsets[obj_count].size(),
+                       it->second.dynamic_seq);
+            return;
+        }
+
         per_obj_dynamic_offsets[obj_count][it->second.dynamic_seq] =
             static_cast<uint32_t>(buffer->Populate(dataPtr, it->second.size));
     }
@@ -255,9 +263,9 @@ namespace Meow
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
-    void Material::BindDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
-                                               const std::string&             name,
-                                               int32_t                        obj_index)
+    void Material::UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
+                                                 const std::string&             name,
+                                                 int32_t                        obj_index)
     {
         FUNCTION_TIMER();
 
@@ -266,10 +274,6 @@ namespace Meow
             return;
         }
 
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *shader_ptr->pipeline_layout,
-                                          0,
-                                          descriptor_sets,
-                                          per_obj_dynamic_offsets[obj_index]);
+        shader_ptr->UpdateDynamicUniformBuffer(command_buffer, name, per_obj_dynamic_offsets[obj_index]);
     }
 } // namespace Meow

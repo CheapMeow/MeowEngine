@@ -347,7 +347,7 @@ namespace Meow
             g_editor_context.profile_system->ClearProfile();
         });
 
-        m_render_pass_ptr = &m_forward_pass;
+        m_render_pass_ptr = &m_deferred_pass;
     }
 
     void EditorWindow::InitImGui()

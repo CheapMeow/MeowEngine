@@ -33,6 +33,8 @@ namespace Meow
                                                                    32 * 1024,
                                                                    vk::BufferUsageFlagBits::eUniformBuffer |
                                                                        vk::BufferUsageFlagBits::eTransferDst);
+
+        m_forward_mat.GetShader()->BindBuffer(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -187,7 +189,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.BindDynamicUniformPerObject(command_buffer, "uboMVP", draw_call);
+                m_forward_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;

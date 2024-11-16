@@ -71,9 +71,9 @@ namespace Meow
 
         void BindPipeline(const vk::raii::CommandBuffer& command_buffer);
 
-        void BindDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
-                                         const std::string&             name,
-                                         int32_t                        obj_index);
+        void UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
+                                           const std::string&             name,
+                                           int32_t                        obj_index);
 
         std::shared_ptr<Shader> shader_ptr             = nullptr;
         int                     color_attachment_count = 1;
