@@ -621,12 +621,36 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
+    void Shader::BindUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer, const std::string& name)
+    {
+        BufferMeta* meta = nullptr;
+        for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
+        {
+            if (it->first == name)
+            {
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
+                {
+                    meta = &it->second;
+                    break;
+                }
+            }
+        }
+
+        if (meta == nullptr)
+        {
+            MEOW_ERROR("Updating buffer failed, {} not found!", name);
+            return;
+        }
+
+        command_buffer.bindDescriptorSets(
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, *descriptor_sets[meta->set], {});
+    }
+
     void Shader::BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                                     const std::string&             name,
                                                     const std::vector<uint32_t>&   dynamic_offsets)
     {
         BufferMeta* meta = nullptr;
-        // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
         for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
         {
             if (it->first == name)

@@ -239,6 +239,8 @@ namespace Meow
         void
         BindImageToDescriptor(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data);
 
+        void BindUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer, const std::string& name);
+
         void BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                                 const std::string&             name,
                                                 const std::vector<uint32_t>&   dynamic_offsets);

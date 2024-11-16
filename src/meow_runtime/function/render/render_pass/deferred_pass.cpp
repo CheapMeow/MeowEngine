@@ -87,6 +87,10 @@ namespace Meow
 
         m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
         m_quad_mat.GetShader()->BindBufferToDescriptor(device, "lightDatas", m_light_data_uniform_buffer->buffer);
+
+        OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer& command_buffer) {
+            m_quad_mat.GetShader()->BindUniformBufferToPipeline(command_buffer, "lightDatas");
+        });
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
