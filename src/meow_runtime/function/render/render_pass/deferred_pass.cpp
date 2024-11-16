@@ -87,10 +87,6 @@ namespace Meow
 
         m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
         m_quad_mat.GetShader()->BindBufferToDescriptor(device, "lightDatas", m_light_data_uniform_buffer->buffer);
-
-        OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer& command_buffer) {
-            m_quad_mat.GetShader()->BindUniformBufferToPipeline(command_buffer, "lightDatas");
-        });
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -324,9 +320,9 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        m_quad_mat.GetShader()->BindUniformBufferToPipeline(command_buffer, "lightDatas");
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
-            m_quad_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[1]);
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
 
             ++draw_call[1];
