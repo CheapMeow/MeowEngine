@@ -16,20 +16,20 @@
 
 namespace Meow
 {
-    Model::Model(vk::raii::PhysicalDevice const& physical_device,
-                 vk::raii::Device const&         device,
-                 vk::raii::CommandPool const&    command_pool,
-                 vk::raii::Queue const&          queue,
+    Model::Model(const vk::raii::PhysicalDevice& physical_device,
+                 const vk::raii::Device&         device,
+                 const vk::raii::CommandPool&    command_pool,
+                 const vk::raii::Queue&          queue,
                  std::vector<float>&&            vertices,
                  std::vector<uint32_t>&&         indices,
                  BitMask<VertexAttributeBit>     attributes)
     {
-        vk::IndexType index_type = vk::IndexType::eUint32;
-        uint32_t      stride     = VertexAttributesToSize(attributes);
-        ModelMesh*    mesh       = new ModelMesh();
-        mesh->vertices           = std::move(vertices);
-        mesh->indices            = std::move(indices);
-        mesh->vertex_count       = mesh->vertices.size() / stride * 4;
+        auto     index_type = vk::IndexType::eUint32;
+        uint32_t stride     = VertexAttributesToSize(attributes);
+        auto     mesh       = new ModelMesh();
+        mesh->vertices      = std::move(vertices);
+        mesh->indices       = std::move(indices);
+        mesh->vertex_count  = mesh->vertices.size() / stride * 4;
 
         if (mesh->vertices.size() > 0)
         {
@@ -54,15 +54,15 @@ namespace Meow
         meshes.push_back(mesh);
     }
 
-    Model::Model(vk::raii::PhysicalDevice const& physical_device,
-                 vk::raii::Device const&         device,
-                 vk::raii::CommandPool const&    command_pool,
-                 vk::raii::Queue const&          queue,
+    Model::Model(const vk::raii::PhysicalDevice& physical_device,
+                 const vk::raii::Device&         device,
+                 const vk::raii::CommandPool&    command_pool,
+                 const vk::raii::Queue&          queue,
                  const std::string&              file_path,
                  BitMask<VertexAttributeBit>     attributes)
     {
-        vk::IndexType index_type = vk::IndexType::eUint32;
-        this->attributes         = attributes;
+        auto index_type  = vk::IndexType::eUint32;
+        this->attributes = attributes;
 
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
 
@@ -91,12 +91,14 @@ namespace Meow
             loadSkin = true;
         }
 
-        auto [data_ptr, data_size] = g_runtime_context.file_system.get()->ReadBinaryFile(file_path);
-
         Assimp::Importer importer;
-        const aiScene*   scene = importer.ReadFileFromMemory((void*)data_ptr, data_size, assimpFlags);
-
-        delete[] data_ptr;
+        const aiScene*   scene =
+            importer.ReadFile(g_runtime_context.file_system->GetAbsolutePath(file_path), assimpFlags);
+        if (scene == nullptr)
+        {
+            MEOW_ERROR("Read model file {} failed!", file_path);
+            return;
+        }
 
         LoadBones(scene);
         LoadNode(physical_device, device, command_pool, queue, scene->mRootNode, scene);
@@ -253,15 +255,15 @@ namespace Meow
         }
     }
 
-    ModelNode* Model::LoadNode(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
+    ModelNode* Model::LoadNode(const vk::raii::PhysicalDevice& physical_device,
+                               const vk::raii::Device&         device,
+                               const vk::raii::CommandPool&    command_pool,
+                               const vk::raii::Queue&          queue,
                                const aiNode*                   aiNode,
                                const aiScene*                  ai_scene)
     {
-        ModelNode* model_node = new ModelNode();
-        model_node->name      = aiNode->mName.C_Str();
+        auto model_node  = new ModelNode();
+        model_node->name = aiNode->mName.C_Str();
 
         if (root_node == nullptr)
         {
@@ -318,14 +320,14 @@ namespace Meow
         return model_node;
     }
 
-    ModelMesh* Model::LoadMesh(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue,
+    ModelMesh* Model::LoadMesh(const vk::raii::PhysicalDevice& physical_device,
+                               const vk::raii::Device&         device,
+                               const vk::raii::CommandPool&    command_pool,
+                               const vk::raii::Queue&          queue,
                                const aiMesh*                   ai_mesh,
                                const aiScene*                  ai_scene)
     {
-        ModelMesh* mesh = new ModelMesh();
+        auto mesh = new ModelMesh();
 
         // load material
         aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
@@ -382,8 +384,8 @@ namespace Meow
                 if (it == bone_index_map.end())
                 {
                     // new bone
-                    size_t     index        = (size_t)bones.size();
-                    ModelBone* bone         = new ModelBone();
+                    size_t index            = (size_t)bones.size();
+                    auto   bone             = new ModelBone();
                     bone->index             = index;
                     bone->parent            = -1;
                     bone->name              = name;
@@ -684,18 +686,18 @@ namespace Meow
         }
     }
 
-    void Model::MergeAllMeshes(vk::raii::PhysicalDevice const& physical_device,
-                               vk::raii::Device const&         device,
-                               vk::raii::CommandPool const&    command_pool,
-                               vk::raii::Queue const&          queue)
+    void Model::MergeAllMeshes(const vk::raii::PhysicalDevice& physical_device,
+                               const vk::raii::Device&         device,
+                               const vk::raii::CommandPool&    command_pool,
+                               const vk::raii::Queue&          queue)
     {
         if (meshes.size() < 2)
             return;
 
-        ModelNode* new_node    = new ModelNode();
+        auto new_node          = new ModelNode();
         new_node->local_matrix = glm::mat4(1.0f);
 
-        ModelMesh* new_mesh = new ModelMesh();
+        auto new_mesh = new ModelMesh();
         new_node->meshes.push_back(new_mesh);
 
         nodes_map.clear();
