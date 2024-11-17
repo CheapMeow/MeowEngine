@@ -35,7 +35,14 @@ namespace Meow
             }
         }
 
-        std::shared_ptr<ImageData> texture_ptr = g_runtime_context.render_system->CreateTexture(file_path);
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        std::shared_ptr<ImageData> texture_ptr = ImageData::CreateTexture(
+            physical_device, logical_device, onetime_submit_command_pool, graphics_queue, file_path);
 
         if (texture_ptr)
         {
@@ -79,8 +86,19 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        std::shared_ptr<Model> model_ptr =
-            g_runtime_context.render_system->CreateModel(std::move(vertices), std::move(indices), attributes);
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        auto model_ptr = std::make_shared<Model>(physical_device,
+                                                 logical_device,
+                                                 onetime_submit_command_pool,
+                                                 graphics_queue,
+                                                 std::move(vertices),
+                                                 std::move(indices),
+                                                 attributes);
 
         if (model_ptr)
         {
@@ -107,7 +125,14 @@ namespace Meow
             }
         }
 
-        std::shared_ptr<Model> model_ptr = g_runtime_context.render_system->CreateModel(file_path, attributes);
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        auto model_ptr = std::make_shared<Model>(
+            physical_device, logical_device, onetime_submit_command_pool, graphics_queue, file_path, attributes);
 
         if (model_ptr)
         {

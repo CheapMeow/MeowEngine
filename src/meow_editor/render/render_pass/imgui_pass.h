@@ -33,25 +33,25 @@ namespace Meow
             return *this;
         }
 
-        ImGuiPass(vk::raii::PhysicalDevice const& physical_device,
-                  vk::raii::Device const&         logical_device,
+        ImGuiPass(const vk::raii::PhysicalDevice& physical_device,
+                  const vk::raii::Device&         logical_device,
                   SurfaceData&                    surface_data,
-                  vk::raii::CommandPool const&    command_pool,
-                  vk::raii::Queue const&          queue,
+                  const vk::raii::CommandPool&    command_pool,
+                  const vk::raii::Queue&          queue,
                   DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
-        void RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
-                                 vk::raii::Device const&           logical_device,
-                                 vk::raii::CommandPool const&      command_pool,
-                                 vk::raii::Queue const&            queue,
+        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
+                                 const vk::raii::Device&           logical_device,
+                                 const vk::raii::CommandPool&      command_pool,
+                                 const vk::raii::Queue&            queue,
                                  const std::vector<vk::ImageView>& output_image_views,
-                                 vk::Extent2D const&               extent) override;
+                                 const vk::Extent2D&               extent) override;
 
-        void Start(vk::raii::CommandBuffer const& command_buffer,
+        void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
-        void Draw(vk::raii::CommandBuffer const& command_buffer) override;
+        void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
         Signal<int>& OnPassChanged() { return m_on_pass_changed; }
 

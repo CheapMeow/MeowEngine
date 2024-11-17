@@ -34,7 +34,7 @@ namespace Meow
             return *this;
         }
 
-        virtual ~ForwardPass() override = default;
+        ~ForwardPass() override = default;
 
         void CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
                             const vk::raii::Device&         logical_device,
@@ -49,9 +49,9 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
-        virtual void Start(const vk::raii::CommandBuffer& command_buffer,
-                           vk::Extent2D                   extent,
-                           uint32_t                       current_image_index) override;
+        void Start(const vk::raii::CommandBuffer& command_buffer,
+                   vk::Extent2D                   extent,
+                   uint32_t                       current_image_index) override;
 
         void DrawOnly(const vk::raii::CommandBuffer& command_buffer);
 

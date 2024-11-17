@@ -34,14 +34,6 @@ namespace Meow
         const vk::raii::Queue&          GetGraphicsQueue() const { return m_graphics_queue; }
         const vk::raii::Queue&          GetPresentQueue() const { return m_present_queue; }
 
-        std::shared_ptr<ImageData> CreateTexture(const std::string& file_path);
-
-        std::shared_ptr<Model> CreateModel(std::vector<float>&&        vertices,
-                                           std::vector<uint32_t>&&     indices,
-                                           BitMask<VertexAttributeBit> attributes);
-
-        std::shared_ptr<Model> CreateModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
-
     private:
         void CreateVulkanInstance();
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)

@@ -184,36 +184,4 @@ namespace Meow
     void RenderSystem::Start() {}
 
     void RenderSystem::Tick(float dt) {}
-
-    std::shared_ptr<ImageData> RenderSystem::CreateTexture(const std::string& file_path)
-    {
-        FUNCTION_TIMER();
-
-        return ImageData::CreateTexture(
-            m_physical_device, m_logical_device, m_onetime_submit_command_pool, m_graphics_queue, file_path);
-    }
-
-    std::shared_ptr<Model> RenderSystem::CreateModel(std::vector<float>&&        vertices,
-                                                     std::vector<uint32_t>&&     indices,
-                                                     BitMask<VertexAttributeBit> attributes)
-    {
-        FUNCTION_TIMER();
-
-        return std::make_shared<Model>(m_physical_device,
-                                       m_logical_device,
-                                       m_onetime_submit_command_pool,
-                                       m_present_queue,
-                                       std::move(vertices),
-                                       std::move(indices),
-                                       attributes);
-    }
-
-    std::shared_ptr<Model> RenderSystem::CreateModel(const std::string&          file_path,
-                                                     BitMask<VertexAttributeBit> attributes)
-    {
-        FUNCTION_TIMER();
-
-        return std::make_shared<Model>(
-            m_physical_device, m_logical_device, m_onetime_submit_command_pool, m_present_queue, file_path, attributes);
-    }
 } // namespace Meow

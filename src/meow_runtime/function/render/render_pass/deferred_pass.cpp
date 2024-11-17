@@ -85,8 +85,10 @@ namespace Meow
                                                                       vk::BufferUsageFlagBits::eUniformBuffer |
                                                                           vk::BufferUsageFlagBits::eTransferDst);
 
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->BindBufferToDescriptor(logical_device, "lightDatas", m_light_data_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(
+            logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.GetShader()->BindBufferToDescriptor(
+            logical_device, "lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,

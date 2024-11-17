@@ -96,7 +96,7 @@ namespace Meow
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         CreateMaterial(physical_device, logical_device, m_descriptor_allocator);
-        
+
         // Debug
 
         VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,

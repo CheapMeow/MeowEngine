@@ -56,7 +56,7 @@ namespace Meow
             return *this;
         }
 
-        virtual ~DeferredPass() override = default;
+        ~DeferredPass() override = default;
 
         void CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
                             const vk::raii::Device&         logical_device,

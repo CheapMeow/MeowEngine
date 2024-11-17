@@ -157,8 +157,10 @@ namespace Meow
                                               initial_layout);
         image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
-        image_data_ptr->device_memory = AllocateDeviceMemory(
-            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+        image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
+                                                             physical_device.getMemoryProperties(),
+                                                             image_data_ptr->image.getMemoryRequirements(),
+                                                             requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
@@ -220,9 +222,11 @@ namespace Meow
         if (image_data_ptr->need_staging)
         {
             assert((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags);
-            image_data_ptr->staging_buffer_data = BufferData(
-                physical_device, logical_device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc);
-            image_tiling = vk::ImageTiling::eOptimal;
+            image_data_ptr->staging_buffer_data = BufferData(physical_device,
+                                                             logical_device,
+                                                             extent.width * extent.height * 4,
+                                                             vk::BufferUsageFlagBits::eTransferSrc);
+            image_tiling                        = vk::ImageTiling::eOptimal;
             usage_flags |= vk::ImageUsageFlagBits::eTransferDst;
             initial_layout = vk::ImageLayout::eUndefined;
         }
@@ -249,8 +253,10 @@ namespace Meow
                                               initial_layout);
         image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
-        image_data_ptr->device_memory = AllocateDeviceMemory(
-            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+        image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
+                                                             physical_device.getMemoryProperties(),
+                                                             image_data_ptr->image.getMemoryRequirements(),
+                                                             requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
@@ -375,8 +381,10 @@ namespace Meow
                                               initial_layout);
         image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
-        image_data_ptr->device_memory = AllocateDeviceMemory(
-            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+        image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
+                                                             physical_device.getMemoryProperties(),
+                                                             image_data_ptr->image.getMemoryRequirements(),
+                                                             requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
@@ -454,8 +462,10 @@ namespace Meow
                                               initial_layout);
         image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
-        image_data_ptr->device_memory = AllocateDeviceMemory(
-            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+        image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
+                                                             physical_device.getMemoryProperties(),
+                                                             image_data_ptr->image.getMemoryRequirements(),
+                                                             requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
