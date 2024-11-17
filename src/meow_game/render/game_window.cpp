@@ -71,35 +71,12 @@ namespace Meow
         if (!model_go_ptr)
             MEOW_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->SetName("Backpack");
+        model_go_ptr->SetName("Nanosuit");
         TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
         TryAddComponent(model_go_ptr,
                         "ModelComponent",
-                        std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
+                        std::make_shared<ModelComponent>("builtin/models/nanosuit/nanosuit.obj",
                                                          m_render_pass_ptr->input_vertex_attributes));
-
-        for (int i = 0; i < 200; i++)
-        {
-            UUID                        model_go_id1  = level_ptr->CreateObject();
-            std::shared_ptr<GameObject> model_go_ptr1 = level_ptr->GetGameObjectByID(model_go_id1).lock();
-
-            model_go_ptr1->SetName("Backpack" + std::to_string(i + 1));
-
-#ifdef MEOW_DEBUG
-            if (!model_go_ptr1)
-                MEOW_ERROR("GameObject is invalid!");
-#endif
-            std::shared_ptr<Transform3DComponent> model_transform_comp_ptr =
-                TryAddComponent(model_go_ptr1, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-            TryAddComponent(model_go_ptr1,
-                            "ModelComponent",
-                            std::make_shared<ModelComponent>("builtin/models/backpack/backpack.obj",
-                                                             m_render_pass_ptr->input_vertex_attributes));
-
-            model_transform_comp_ptr->position = glm::vec3(10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                           10.0 * glm::linearRand(-1.0f, 1.0f),
-                                                           10.0 * glm::linearRand(-1.0f, 1.0f));
-        }
     }
 
     GameWindow::~GameWindow()
