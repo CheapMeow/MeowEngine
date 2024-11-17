@@ -255,6 +255,7 @@ namespace Meow
 
             // ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
+            m_dynamic_uniform_buffer->Reset();
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
@@ -275,8 +276,8 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_dynamic_uniform_buffer->Reset();
-        m_dynamic_uniform_buffer->Populate(&m_LightDatas, sizeof(m_LightDatas));
+        m_light_data_uniform_buffer->Reset();
+        m_light_data_uniform_buffer->Populate(&m_LightDatas, sizeof(m_LightDatas));
     }
 
     void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
