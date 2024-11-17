@@ -34,14 +34,14 @@ namespace Meow
         }
 
         ImGuiPass(vk::raii::PhysicalDevice const& physical_device,
-                  vk::raii::Device const&         device,
+                  vk::raii::Device const&         logical_device,
                   SurfaceData&                    surface_data,
                   vk::raii::CommandPool const&    command_pool,
                   vk::raii::Queue const&          queue,
                   DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         void RefreshFrameBuffers(vk::raii::PhysicalDevice const&   physical_device,
-                                 vk::raii::Device const&           device,
+                                 vk::raii::Device const&           logical_device,
                                  vk::raii::CommandPool const&      command_pool,
                                  vk::raii::Queue const&            queue,
                                  const std::vector<vk::ImageView>& output_image_views,

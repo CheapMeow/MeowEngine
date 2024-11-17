@@ -19,12 +19,12 @@ namespace Meow
     {}
 
     ImGuiPass::ImGuiPass(const vk::raii::PhysicalDevice& physical_device,
-                         const vk::raii::Device&         device,
+                         const vk::raii::Device&         logical_device,
                          SurfaceData&                    surface_data,
                          const vk::raii::CommandPool&    command_pool,
                          const vk::raii::Queue&          queue,
                          DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : RenderPass(device)
+        : RenderPass(logical_device)
     {
         m_pass_name = "ImGui Pass";
 
@@ -66,7 +66,7 @@ namespace Meow
                                                          subpass_description,         /* pSubpasses */
                                                          dependencies);               /* pDependencies */
 
-        render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+        render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
         // loadOp is load, clear value doesn't matter
         clear_values.resize(1);
@@ -74,7 +74,7 @@ namespace Meow
     }
 
     void ImGuiPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                        const vk::raii::Device&           device,
+                                        const vk::raii::Device&           logical_device,
                                         const vk::raii::CommandPool&      command_pool,
                                         const vk::raii::Queue&            queue,
                                         const std::vector<vk::ImageView>& output_image_views,
@@ -100,7 +100,7 @@ namespace Meow
         for (const auto& imageView : output_image_views)
         {
             attachments[0] = imageView;
-            framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
     }
 

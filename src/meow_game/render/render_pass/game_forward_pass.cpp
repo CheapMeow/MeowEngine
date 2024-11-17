@@ -5,12 +5,12 @@
 namespace Meow
 {
     GameForwardPass::GameForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                                     const vk::raii::Device&         device,
+                                     const vk::raii::Device&         logical_device,
                                      SurfaceData&                    surface_data,
                                      const vk::raii::CommandPool&    command_pool,
                                      const vk::raii::Queue&          queue,
                                      DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : ForwardPass(device)
+        : ForwardPass(logical_device)
     {
         m_pass_name = "Forward Pass";
 
@@ -122,13 +122,13 @@ namespace Meow
                                                          /* pSubpasses */
                                                          dependencies); /* pDependencies */
 
-        render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+        render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
         clear_values.resize(2);
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        CreateMaterial(physical_device, device, m_descriptor_allocator);
+        CreateMaterial(physical_device, logical_device, m_descriptor_allocator);
     }
 
     void GameForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)

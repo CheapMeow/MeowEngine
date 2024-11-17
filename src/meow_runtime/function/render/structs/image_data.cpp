@@ -119,7 +119,7 @@ namespace Meow
     }
 
     std::shared_ptr<ImageData> ImageData::CreateDepthBuffer(const vk::raii::PhysicalDevice& physical_device,
-                                                            const vk::raii::Device&         device,
+                                                            const vk::raii::Device&         logical_device,
                                                             const vk::raii::CommandPool&    command_pool,
                                                             const vk::raii::Queue&          queue,
                                                             vk::Format                      format,
@@ -155,18 +155,18 @@ namespace Meow
                                               vk::SharingMode::eExclusive,
                                               {},
                                               initial_layout);
-        image_data_ptr->image = vk::raii::Image(device, image_create_info);
+        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(
-            device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
-            device,
+            logical_device,
             vk::ImageViewCreateInfo(
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
         // Transit Layout
-        OneTimeSubmit(device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
             image_data_ptr->SetLayout(
                 command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
         });
@@ -175,7 +175,7 @@ namespace Meow
     }
 
     std::shared_ptr<ImageData> ImageData::CreateTexture(const vk::raii::PhysicalDevice& physical_device,
-                                                        const vk::raii::Device&         device,
+                                                        const vk::raii::Device&         logical_device,
                                                         vk::Format                      format,
                                                         const vk::Extent2D&             extent,
                                                         vk::ImageUsageFlags             usage_flags,
@@ -207,7 +207,7 @@ namespace Meow
                                                   0.0f,
                                                   0.0f,
                                                   vk::BorderColor::eFloatOpaqueBlack);
-        image_data_ptr->sampler = vk::raii::Sampler(device, sampler_create_info);
+        image_data_ptr->sampler = vk::raii::Sampler(logical_device, sampler_create_info);
 
         vk::FormatProperties format_properties = physical_device.getFormatProperties(format);
 
@@ -221,7 +221,7 @@ namespace Meow
         {
             assert((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags);
             image_data_ptr->staging_buffer_data = BufferData(
-                physical_device, device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc);
+                physical_device, logical_device, extent.width * extent.height * 4, vk::BufferUsageFlagBits::eTransferSrc);
             image_tiling = vk::ImageTiling::eOptimal;
             usage_flags |= vk::ImageUsageFlagBits::eTransferDst;
             initial_layout = vk::ImageLayout::eUndefined;
@@ -247,13 +247,13 @@ namespace Meow
                                               vk::SharingMode::eExclusive,
                                               {},
                                               initial_layout);
-        image_data_ptr->image = vk::raii::Image(device, image_create_info);
+        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(
-            device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
-            device,
+            logical_device,
             vk::ImageViewCreateInfo(
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
@@ -261,7 +261,7 @@ namespace Meow
     }
 
     std::shared_ptr<ImageData> ImageData::CreateTexture(const vk::raii::PhysicalDevice& physical_device,
-                                                        const vk::raii::Device&         device,
+                                                        const vk::raii::Device&         logical_device,
                                                         const vk::raii::CommandPool&    command_pool,
                                                         const vk::raii::Queue&          queue,
                                                         const std::string&              file_path,
@@ -279,7 +279,7 @@ namespace Meow
         }
 
         std::shared_ptr<ImageData> image_data_ptr = ImageData::CreateTexture(physical_device,
-                                                                             device,
+                                                                             logical_device,
                                                                              format,
                                                                              vk::Extent2D {width, height},
                                                                              usage_flags,
@@ -303,7 +303,7 @@ namespace Meow
 
         // Transit Layout
 
-        OneTimeSubmit(device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
             if (image_data_ptr->need_staging)
             {
                 // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
@@ -335,7 +335,7 @@ namespace Meow
     }
 
     std::shared_ptr<ImageData> ImageData::CreateAttachment(const vk::raii::PhysicalDevice& physical_device,
-                                                           const vk::raii::Device&         device,
+                                                           const vk::raii::Device&         logical_device,
                                                            const vk::raii::CommandPool&    command_pool,
                                                            const vk::raii::Queue&          queue,
                                                            vk::Format                      format,
@@ -373,18 +373,18 @@ namespace Meow
                                               vk::SharingMode::eExclusive,
                                               {},
                                               initial_layout);
-        image_data_ptr->image = vk::raii::Image(device, image_create_info);
+        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(
-            device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
-            device,
+            logical_device,
             vk::ImageViewCreateInfo(
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
         // Transit Layout
-        OneTimeSubmit(device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
             if (aspect_mask & vk::ImageAspectFlagBits::eColor)
                 image_data_ptr->SetLayout(
                     command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal);
@@ -397,7 +397,7 @@ namespace Meow
     }
 
     std::shared_ptr<ImageData> ImageData::CreateRenderTarget(const vk::raii::PhysicalDevice& physical_device,
-                                                             const vk::raii::Device&         device,
+                                                             const vk::raii::Device&         logical_device,
                                                              const vk::raii::CommandPool&    command_pool,
                                                              const vk::raii::Queue&          queue,
                                                              vk::Format                      format,
@@ -436,7 +436,7 @@ namespace Meow
                                                   0.0f,
                                                   0.0f,
                                                   vk::BorderColor::eFloatOpaqueBlack);
-        image_data_ptr->sampler = vk::raii::Sampler(device, sampler_create_info);
+        image_data_ptr->sampler = vk::raii::Sampler(logical_device, sampler_create_info);
 
         // Create Image
 
@@ -452,18 +452,18 @@ namespace Meow
                                               vk::SharingMode::eExclusive,
                                               {},
                                               initial_layout);
-        image_data_ptr->image = vk::raii::Image(device, image_create_info);
+        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(
-            device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
+            logical_device, physical_device.getMemoryProperties(), image_data_ptr->image.getMemoryRequirements(), requirements);
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
-            device,
+            logical_device,
             vk::ImageViewCreateInfo(
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
 
         // Transit Layout
-        OneTimeSubmit(device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
             image_data_ptr->SetLayout(
                 command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
         });

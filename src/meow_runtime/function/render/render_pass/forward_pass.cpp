@@ -14,31 +14,31 @@
 namespace Meow
 {
     void ForwardPass::CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                                     const vk::raii::Device&         device,
+                                     const vk::raii::Device&         logical_device,
                                      DescriptorAllocatorGrowable&    m_descriptor_allocator)
     {
         auto mesh_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                        device,
+                                                        logical_device,
                                                         m_descriptor_allocator,
                                                         "builtin/shaders/mesh.vert.spv",
                                                         "builtin/shaders/mesh.frag.spv");
 
-        m_forward_mat = Material(physical_device, device, mesh_shader_ptr);
-        m_forward_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        m_forward_mat = Material(physical_device, logical_device, mesh_shader_ptr);
+        m_forward_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
 
         m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device,
-                                                                   device,
+                                                                   logical_device,
                                                                    32 * 1024,
                                                                    vk::BufferUsageFlagBits::eUniformBuffer |
                                                                        vk::BufferUsageFlagBits::eTransferDst);
 
-        m_forward_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptor(logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                          const vk::raii::Device&           device,
+                                          const vk::raii::Device&           logical_device,
                                           const vk::raii::CommandPool&      command_pool,
                                           const vk::raii::Queue&            queue,
                                           const std::vector<vk::ImageView>& output_image_views,
@@ -53,7 +53,7 @@ namespace Meow
         // Create attachment
 
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
-                                                         device,
+                                                         logical_device,
                                                          command_pool,
                                                          queue,
                                                          m_depth_format,
@@ -80,7 +80,7 @@ namespace Meow
         for (const auto& imageView : output_image_views)
         {
             attachments[0] = imageView;
-            framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
     }
 

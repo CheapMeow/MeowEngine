@@ -60,7 +60,7 @@ namespace Meow
                        vk::ImageLayout                new_image_layout);
 
         static std::shared_ptr<ImageData> CreateDepthBuffer(const vk::raii::PhysicalDevice& physical_device,
-                                                            const vk::raii::Device&         device,
+                                                            const vk::raii::Device&         logical_device,
                                                             const vk::raii::CommandPool&    command_pool,
                                                             const vk::raii::Queue&          queue,
                                                             vk::Format                      format,
@@ -68,7 +68,7 @@ namespace Meow
 
         static std::shared_ptr<ImageData>
         CreateTexture(const vk::raii::PhysicalDevice& physical_device,
-                      const vk::raii::Device&         device,
+                      const vk::raii::Device&         logical_device,
                       vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
                       const vk::Extent2D&             extent               = {256, 256},
                       vk::ImageUsageFlags             usage_flags          = {},
@@ -79,7 +79,7 @@ namespace Meow
 
         static std::shared_ptr<ImageData>
         CreateTexture(const vk::raii::PhysicalDevice& physical_device,
-                      const vk::raii::Device&         device,
+                      const vk::raii::Device&         logical_device,
                       const vk::raii::CommandPool&    command_pool,
                       const vk::raii::Queue&          queue,
                       const std::string&              file_path,
@@ -92,7 +92,7 @@ namespace Meow
 
         static std::shared_ptr<ImageData>
         CreateAttachment(const vk::raii::PhysicalDevice& physical_device,
-                         const vk::raii::Device&         device,
+                         const vk::raii::Device&         logical_device,
                          const vk::raii::CommandPool&    command_pool,
                          const vk::raii::Queue&          queue,
                          vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
@@ -104,7 +104,7 @@ namespace Meow
 
         static std::shared_ptr<ImageData>
         CreateRenderTarget(const vk::raii::PhysicalDevice& physical_device,
-                           const vk::raii::Device&         device,
+                           const vk::raii::Device&         logical_device,
                            const vk::raii::CommandPool&    command_pool,
                            const vk::raii::Queue&          queue,
                            vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,

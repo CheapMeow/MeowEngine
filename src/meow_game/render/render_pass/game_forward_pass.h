@@ -12,7 +12,7 @@ namespace Meow
         {}
 
         GameForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                        const vk::raii::Device&         device,
+                        const vk::raii::Device&         logical_device,
                         SurfaceData&                    surface_data,
                         const vk::raii::CommandPool&    command_pool,
                         const vk::raii::Queue&          queue,

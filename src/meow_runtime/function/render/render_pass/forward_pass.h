@@ -13,8 +13,8 @@ namespace Meow
             : RenderPass(nullptr)
         {}
 
-        ForwardPass(const vk::raii::Device& device)
-            : RenderPass(device)
+        ForwardPass(const vk::raii::Device& logical_device)
+            : RenderPass(logical_device)
         {}
 
         ForwardPass(ForwardPass&& rhs) noexcept
@@ -37,11 +37,11 @@ namespace Meow
         virtual ~ForwardPass() override = default;
 
         void CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                            const vk::raii::Device&         device,
+                            const vk::raii::Device&         logical_device,
                             DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                 const vk::raii::Device&           device,
+                                 const vk::raii::Device&           logical_device,
                                  const vk::raii::CommandPool&      command_pool,
                                  const vk::raii::Queue&            queue,
                                  const std::vector<vk::ImageView>& output_image_views,

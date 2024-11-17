@@ -7,12 +7,12 @@
 namespace Meow
 {
     EditorForwardPass::EditorForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                                         const vk::raii::Device&         device,
+                                         const vk::raii::Device&         logical_device,
                                          SurfaceData&                    surface_data,
                                          const vk::raii::CommandPool&    command_pool,
                                          const vk::raii::Queue&          queue,
                                          DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : ForwardPass(device)
+        : ForwardPass(logical_device)
     {
         m_pass_name = "Forward Pass";
 
@@ -89,13 +89,13 @@ namespace Meow
                                                          subpass_descriptions,        /* pSubpasses */
                                                          dependencies);               /* pDependencies */
 
-        render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+        render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
         clear_values.resize(2);
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        CreateMaterial(physical_device, device, m_descriptor_allocator);
+        CreateMaterial(physical_device, logical_device, m_descriptor_allocator);
         
         // Debug
 
@@ -104,7 +104,7 @@ namespace Meow
                                                         .queryCount         = 1,
                                                         .pipelineStatistics = (1 << 11) - 1};
 
-        query_pool = device.createQueryPool(query_pool_create_info, nullptr);
+        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
         m_render_stat.vertex_attribute_metas = m_forward_mat.shader_ptr->vertex_attribute_metas;
         m_render_stat.buffer_meta_map        = m_forward_mat.shader_ptr->buffer_meta_map;

@@ -7,12 +7,12 @@
 namespace Meow
 {
     EditorDeferredPass::EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                                           const vk::raii::Device&         device,
+                                           const vk::raii::Device&         logical_device,
                                            SurfaceData&                    surface_data,
                                            const vk::raii::CommandPool&    command_pool,
                                            const vk::raii::Queue&          queue,
                                            DescriptorAllocatorGrowable&    m_descriptor_allocator)
-        : DeferredPass(device)
+        : DeferredPass(logical_device)
     {
         m_pass_name = "Deferred Pass";
 
@@ -150,7 +150,7 @@ namespace Meow
                                                          subpass_descriptions,        /* pSubpasses */
                                                          dependencies);               /* pDependencies */
 
-        render_pass = vk::raii::RenderPass(device, render_pass_create_info);
+        render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
         clear_values.resize(5);
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
@@ -159,7 +159,7 @@ namespace Meow
         clear_values[3].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        CreateMaterial(physical_device, device, command_pool, queue, m_descriptor_allocator);
+        CreateMaterial(physical_device, logical_device, command_pool, queue, m_descriptor_allocator);
 
         // Debug
 
@@ -168,7 +168,7 @@ namespace Meow
                                                         .queryCount         = 2,
                                                         .pipelineStatistics = (1 << 11) - 1};
 
-        query_pool = device.createQueryPool(query_pool_create_info, nullptr);
+        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
         m_render_stat[0].vertex_attribute_metas = m_obj2attachment_mat.shader_ptr->vertex_attribute_metas;
         m_render_stat[0].buffer_meta_map        = m_obj2attachment_mat.shader_ptr->buffer_meta_map;

@@ -16,30 +16,30 @@
 namespace Meow
 {
     void DeferredPass::CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                                      const vk::raii::Device&         device,
+                                      const vk::raii::Device&         logical_device,
                                       const vk::raii::CommandPool&    command_pool,
                                       const vk::raii::Queue&          queue,
                                       DescriptorAllocatorGrowable&    m_descriptor_allocator)
     {
         auto obj_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                       device,
+                                                       logical_device,
                                                        m_descriptor_allocator,
                                                        "builtin/shaders/obj.vert.spv",
                                                        "builtin/shaders/obj.frag.spv");
 
-        m_obj2attachment_mat                        = Material(physical_device, device, obj_shader_ptr);
+        m_obj2attachment_mat                        = Material(physical_device, logical_device, obj_shader_ptr);
         m_obj2attachment_mat.color_attachment_count = 3;
-        m_obj2attachment_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, true);
+        m_obj2attachment_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
         auto quad_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                        device,
+                                                        logical_device,
                                                         m_descriptor_allocator,
                                                         "builtin/shaders/quad.vert.spv",
                                                         "builtin/shaders/quad.frag.spv");
 
-        m_quad_mat         = Material(physical_device, device, quad_shader_ptr);
+        m_quad_mat         = Material(physical_device, logical_device, quad_shader_ptr);
         m_quad_mat.subpass = 1;
-        m_quad_mat.CreatePipeline(device, render_pass, vk::FrontFace::eClockwise, false);
+        m_quad_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, false);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
@@ -47,7 +47,7 @@ namespace Meow
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
         m_quad_model = std::move(Model(physical_device,
-                                       device,
+                                       logical_device,
                                        command_pool,
                                        queue,
                                        std::move(vertices),
@@ -75,22 +75,22 @@ namespace Meow
         }
 
         m_dynamic_uniform_buffer    = std::make_shared<UniformBuffer>(physical_device,
-                                                                   device,
+                                                                   logical_device,
                                                                    32 * 1024,
                                                                    vk::BufferUsageFlagBits::eUniformBuffer |
                                                                        vk::BufferUsageFlagBits::eTransferDst);
         m_light_data_uniform_buffer = std::make_shared<UniformBuffer>(physical_device,
-                                                                      device,
+                                                                      logical_device,
                                                                       sizeof(m_LightDatas),
                                                                       vk::BufferUsageFlagBits::eUniformBuffer |
                                                                           vk::BufferUsageFlagBits::eTransferDst);
 
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(device, "uboMVP", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->BindBufferToDescriptor(device, "lightDatas", m_light_data_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.GetShader()->BindBufferToDescriptor(logical_device, "lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                           const vk::raii::Device&           device,
+                                           const vk::raii::Device&           logical_device,
                                            const vk::raii::CommandPool&      command_pool,
                                            const vk::raii::Queue&            queue,
                                            const std::vector<vk::ImageView>& output_image_views,
@@ -108,7 +108,7 @@ namespace Meow
         // Create attachment
 
         m_color_attachment = ImageData::CreateAttachment(physical_device,
-                                                         device,
+                                                         logical_device,
                                                          command_pool,
                                                          queue,
                                                          m_color_format,
@@ -120,7 +120,7 @@ namespace Meow
                                                          false);
 
         m_normal_attachment = ImageData::CreateAttachment(physical_device,
-                                                          device,
+                                                          logical_device,
                                                           command_pool,
                                                           queue,
                                                           vk::Format::eR8G8B8A8Unorm,
@@ -132,7 +132,7 @@ namespace Meow
                                                           false);
 
         m_position_attachment = ImageData::CreateAttachment(physical_device,
-                                                            device,
+                                                            logical_device,
                                                             command_pool,
                                                             queue,
                                                             vk::Format::eR16G16B16A16Sfloat,
@@ -144,7 +144,7 @@ namespace Meow
                                                             false);
 
         m_depth_attachment = ImageData::CreateAttachment(physical_device,
-                                                         device,
+                                                         logical_device,
                                                          command_pool,
                                                          queue,
                                                          m_depth_format,
@@ -175,15 +175,15 @@ namespace Meow
         for (const auto& imageView : output_image_views)
         {
             attachments[0] = imageView;
-            framebuffers.push_back(vk::raii::Framebuffer(device, framebuffer_create_info));
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
 
         // Update descriptor set
 
-        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputColor", *m_color_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputNormal", *m_normal_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputPosition", *m_position_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(device, "inputDepth", *m_depth_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputColor", *m_color_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputNormal", *m_normal_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputPosition", *m_position_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
