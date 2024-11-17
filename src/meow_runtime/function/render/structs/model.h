@@ -19,11 +19,12 @@ namespace Meow
 {
     struct Model : NonCopyable
     {
-        typedef std::unordered_map<std::string, ModelNode*> NodesMap;
-        typedef std::unordered_map<std::string, ModelBone*> BonesMap;
+        using NodesMap = std::unordered_map<std::string, ModelNode*>;
+        using BonesMap = std::unordered_map<std::string, ModelBone*>;
 
         UUID uuid;
 
+        std::string             root_path;
         ModelNode*              root_node = nullptr;
         std::vector<ModelNode*> linear_nodes;
         std::vector<ModelMesh*> meshes;
@@ -73,10 +74,10 @@ namespace Meow
             return *this;
         }
 
-        Model(vk::raii::PhysicalDevice const& physical_device,
-              vk::raii::Device const&         device,
-              vk::raii::CommandPool const&    command_pool,
-              vk::raii::Queue const&          queue,
+        Model(const vk::raii::PhysicalDevice& physical_device,
+              const vk::raii::Device&         device,
+              const vk::raii::CommandPool&    command_pool,
+              const vk::raii::Queue&          queue,
               std::vector<float>&&            vertices,
               std::vector<uint32_t>&&         indices,
               BitMask<VertexAttributeBit>     attributes);
@@ -89,14 +90,14 @@ namespace Meow
          * If you keep local transform matrix of model node, it means you should create uniform buffer for each model
          * node. Then when draw a mesh once you should update buffer data once.
          */
-        Model(vk::raii::PhysicalDevice const& physical_device,
-              vk::raii::Device const&         device,
-              vk::raii::CommandPool const&    command_pool,
-              vk::raii::Queue const&          queue,
+        Model(const vk::raii::PhysicalDevice& physical_device,
+              const vk::raii::Device&         device,
+              const vk::raii::CommandPool&    command_pool,
+              const vk::raii::Queue&          queue,
               const std::string&              file_path,
               BitMask<VertexAttributeBit>     attributes);
 
-        ~Model()
+        ~Model() override
         {
             delete root_node;
             root_node = nullptr;
@@ -122,17 +123,17 @@ namespace Meow
         void GotoAnimation(float time);
 
     protected:
-        ModelNode* LoadNode(vk::raii::PhysicalDevice const& physical_device,
-                            vk::raii::Device const&         device,
-                            vk::raii::CommandPool const&    command_pool,
-                            vk::raii::Queue const&          queue,
+        ModelNode* LoadNode(const vk::raii::PhysicalDevice& physical_device,
+                            const vk::raii::Device&         device,
+                            const vk::raii::CommandPool&    command_pool,
+                            const vk::raii::Queue&          queue,
                             const aiNode*                   node,
                             const aiScene*                  scene);
 
-        ModelMesh* LoadMesh(vk::raii::PhysicalDevice const& physical_device,
-                            vk::raii::Device const&         device,
-                            vk::raii::CommandPool const&    command_pool,
-                            vk::raii::Queue const&          queue,
+        ModelMesh* LoadMesh(const vk::raii::PhysicalDevice& physical_device,
+                            const vk::raii::Device&         device,
+                            const vk::raii::CommandPool&    command_pool,
+                            const vk::raii::Queue&          queue,
                             const aiMesh*                   mesh,
                             const aiScene*                  scene);
 
@@ -155,9 +156,9 @@ namespace Meow
 
         void LoadAnim(const aiScene* ai_scene);
 
-        void MergeAllMeshes(vk::raii::PhysicalDevice const& physical_device,
-                            vk::raii::Device const&         device,
-                            vk::raii::CommandPool const&    command_pool,
-                            vk::raii::Queue const&          queue);
+        void MergeAllMeshes(const vk::raii::PhysicalDevice& physical_device,
+                            const vk::raii::Device&         device,
+                            const vk::raii::CommandPool&    command_pool,
+                            const vk::raii::Queue&          queue);
     };
 } // namespace Meow

@@ -100,12 +100,11 @@ namespace Meow
             return;
         }
 
+        root_path = std::filesystem::path(file_path).root_path().string();
+
         LoadBones(scene);
         LoadNode(physical_device, device, command_pool, queue, scene->mRootNode, scene);
         LoadAnim(scene);
-
-        // TODO: tooltip imgui
-        MergeAllMeshes(physical_device, device, command_pool, queue);
     }
 
     void Model::Update(float time, float delta)
@@ -213,21 +212,6 @@ namespace Meow
         }
     }
 
-    void SimplifyTexturePath(std::string& path)
-    {
-        const size_t lastSlashIdx = path.find_last_of("\\/");
-        if (std::string::npos != lastSlashIdx)
-        {
-            path.erase(0, lastSlashIdx + 1);
-        }
-
-        const size_t periodIdx = path.rfind('.');
-        if (std::string::npos != periodIdx)
-        {
-            path.erase(periodIdx);
-        }
-    }
-
     void FillMaterialTextures(aiMaterial* ai_material, MaterialInfo& material)
     {
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE))
@@ -235,7 +219,6 @@ namespace Meow
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
             material.diffuse = texture_path.C_Str();
-            SimplifyTexturePath(material.diffuse);
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
@@ -243,7 +226,6 @@ namespace Meow
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
             material.normalmap = texture_path.C_Str();
-            SimplifyTexturePath(material.normalmap);
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
@@ -251,7 +233,6 @@ namespace Meow
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
             material.specular = texture_path.C_Str();
-            SimplifyTexturePath(material.specular);
         }
     }
 
