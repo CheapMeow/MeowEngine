@@ -24,7 +24,7 @@ namespace Meow
 
         UUID uuid;
 
-        std::string             root_path;
+        std::filesystem::path   root_path;
         ModelNode*              root_node = nullptr;
         std::vector<ModelNode*> linear_nodes;
         std::vector<ModelMesh*> meshes;
@@ -123,6 +123,8 @@ namespace Meow
         void GotoAnimation(float time);
 
     protected:
+        void FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info);
+
         ModelNode* LoadNode(const vk::raii::PhysicalDevice& physical_device,
                             const vk::raii::Device&         device,
                             const vk::raii::CommandPool&    command_pool,

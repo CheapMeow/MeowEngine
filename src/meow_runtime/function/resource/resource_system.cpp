@@ -22,16 +22,16 @@ namespace Meow
 
     void ResourceSystem::Tick(float dt) {}
 
-    bool ResourceSystem::LoadTexture(const std::string& file_path, UUID& uuid)
+    std::tuple<bool, UUID> ResourceSystem::LoadTexture(const std::string& file_path)
     {
         FUNCTION_TIMER();
 
         if (m_textures_path2id.find(file_path) != m_textures_path2id.end())
         {
-            uuid = m_textures_path2id[file_path];
+            UUID uuid = m_textures_path2id[file_path];
             if (m_textures_id2data.find(uuid) != m_textures_id2data.end())
             {
-                return true;
+                return {true, uuid};
             }
         }
 
@@ -48,11 +48,11 @@ namespace Meow
         {
             m_textures_path2id[file_path]         = texture_ptr->uuid;
             m_textures_id2data[texture_ptr->uuid] = texture_ptr;
-            return true;
+            return {true, texture_ptr->uuid};
         }
         else
         {
-            return false;
+            return {false, UUID(0)};
         }
     }
 

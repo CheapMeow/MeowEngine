@@ -100,7 +100,7 @@ namespace Meow
             return;
         }
 
-        root_path = std::filesystem::path(file_path).root_path().string();
+        root_path = std::filesystem::path(g_runtime_context.file_system->GetAbsolutePath(file_path)).parent_path();
 
         LoadBones(scene);
         LoadNode(physical_device, device, command_pool, queue, scene->mRootNode, scene);
@@ -212,27 +212,42 @@ namespace Meow
         }
     }
 
-    void FillMaterialTextures(aiMaterial* ai_material, MaterialInfo& material)
+    void Model::FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info)
     {
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE))
         {
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
-            material.diffuse = texture_path.C_Str();
+            texture_info.diffuse = texture_path.C_Str();
+
+            auto path            = root_path / texture_info.diffuse;
+            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
+            if (success)
+                texture_info.diffuse_texture = g_runtime_context.resource_system->GetTexture(uuid);
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
         {
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
-            material.normalmap = texture_path.C_Str();
+            texture_info.normal = texture_path.C_Str();
+
+            auto path            = root_path / texture_info.normal;
+            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
+            if (success)
+                texture_info.normal_texture = g_runtime_context.resource_system->GetTexture(uuid);
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
         {
             aiString texture_path;
             ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
-            material.specular = texture_path.C_Str();
+            texture_info.specular = texture_path.C_Str();
+
+            auto path            = root_path / texture_info.specular;
+            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
+            if (success)
+                texture_info.specular_texture = g_runtime_context.resource_system->GetTexture(uuid);
         }
     }
 
@@ -314,7 +329,7 @@ namespace Meow
         aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
         if (material)
         {
-            FillMaterialTextures(material, mesh->material);
+            FillMaterialTextures(material, mesh->texture_info);
         }
 
         // load bones

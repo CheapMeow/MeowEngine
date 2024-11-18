@@ -80,15 +80,10 @@ namespace Meow
 #endif
         model_go_ptr->SetName("Nanosuit");
         TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-        auto model_comp_ptr =
-            TryAddComponent(model_go_ptr,
-                            "ModelComponent",
-                            std::make_shared<ModelComponent>("builtin/models/nanosuit/nanosuit.obj",
-                                                             m_render_pass_ptr->input_vertex_attributes));
-
-        MEOW_INFO("{}", model_comp_ptr->model_ptr.lock()->meshes[0]->material.diffuse);
-        MEOW_INFO("{}", model_comp_ptr->model_ptr.lock()->meshes[0]->material.normalmap);
-        MEOW_INFO("{}", model_comp_ptr->model_ptr.lock()->meshes[0]->material.specular);
+        TryAddComponent(model_go_ptr,
+                        "ModelComponent",
+                        std::make_shared<ModelComponent>("builtin/models/nanosuit/nanosuit.obj",
+                                                         m_render_pass_ptr->input_vertex_attributes));
     }
 
     EditorWindow::~EditorWindow()

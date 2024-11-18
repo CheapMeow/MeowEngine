@@ -41,7 +41,7 @@ namespace Meow
 
         void Tick(float dt) override;
 
-        bool LoadTexture(const std::string& file_path, UUID& uuid);
+        std::tuple<bool, UUID> LoadTexture(const std::string& file_path);
 
         std::shared_ptr<ImageData> GetTexture(const UUID& uuid);
 

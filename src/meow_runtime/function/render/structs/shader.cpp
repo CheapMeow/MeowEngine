@@ -643,7 +643,7 @@ namespace Meow
         }
 
         command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, *descriptor_sets[meta->set], {});
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, meta->set, *descriptor_sets[meta->set], {});
     }
 
     void Shader::BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
