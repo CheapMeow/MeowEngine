@@ -669,7 +669,10 @@ namespace Meow
             return;
         }
 
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, *descriptor_sets[meta->set], dynamic_offsets);
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *pipeline_layout,
+                                          meta->set,
+                                          *descriptor_sets[meta->set],
+                                          dynamic_offsets);
     }
 } // namespace Meow
