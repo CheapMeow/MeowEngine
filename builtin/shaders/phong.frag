@@ -6,9 +6,9 @@ layout (location = 2) in vec2 inUV0;
 
 layout (location = 0) out vec4 outFragColor;
 
-layout (binding = 1) uniform sampler2D diffuseMap;
+layout (set = 1, binding = 0) uniform sampler2D diffuseMap;
 
-layout (binding = 2) uniform PointLight{
+layout (set = 1, binding = 1) uniform PointLight{
 	vec3 pos;
 	vec3 viewPos;
     int blinn;

@@ -1,9 +1,9 @@
 #version 450
 
-layout (input_attachment_index = 0, set = 0, binding = 0) uniform subpassInput inputColor;
-layout (input_attachment_index = 1, set = 0, binding = 1) uniform subpassInput inputNormal;
-layout (input_attachment_index = 2, set = 0, binding = 2) uniform subpassInput inputPosition;
-layout (input_attachment_index = 3, set = 0, binding = 3) uniform subpassInput inputDepth;
+layout (input_attachment_index = 0, set = 1, binding = 0) uniform subpassInput inputColor;
+layout (input_attachment_index = 1, set = 1, binding = 1) uniform subpassInput inputNormal;
+layout (input_attachment_index = 2, set = 1, binding = 2) uniform subpassInput inputPosition;
+layout (input_attachment_index = 3, set = 1, binding = 3) uniform subpassInput inputDepth;
 
 struct PointLight {
 	vec4 position;
@@ -12,7 +12,7 @@ struct PointLight {
 
 #define NUM_LIGHTS 64
 
-layout (binding = 4) uniform ParamBlock
+layout (set = 1, binding = 4) uniform ParamBlock
 {
 	PointLight lights[NUM_LIGHTS];
 } lightDatas;
