@@ -187,10 +187,6 @@ namespace Meow
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputNormal", *m_normal_attachment);
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputPosition", *m_position_attachment);
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputDepth", *m_depth_attachment);
-
-        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
-            m_quad_mat.GetShader()->BindPerMaterialDescriptorSetToPipeline(command_buffer);
-        });
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -327,6 +323,8 @@ namespace Meow
     void DeferredPass::DrawQuadOnly(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
+
+        m_quad_mat.GetShader()->BindPerMaterialDescriptorSetToPipeline(command_buffer);
 
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {

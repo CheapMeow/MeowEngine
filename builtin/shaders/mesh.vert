@@ -9,7 +9,7 @@ layout (set = 0, binding = 0) uniform PerSceneData
 	mat4 projectionMatrix;
 } sceneData;
 
-layout (set = 4, binding = 0) uniform PerObjDataDynamic 
+layout (set = 3, binding = 0) uniform PerObjDataDynamic 
 {
 	mat4 modelMatrix;
 } objData;
