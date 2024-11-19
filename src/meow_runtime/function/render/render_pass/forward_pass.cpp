@@ -208,6 +208,8 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
+
+        swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
 
         swap(lhs.draw_call, rhs.draw_call);

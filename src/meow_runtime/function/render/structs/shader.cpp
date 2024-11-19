@@ -73,7 +73,7 @@ namespace Meow
             is_tese_shader_valid = false;
 
         GenerateInputInfo();
-        GenerateLayout(logical_device);
+        GeneratePipelineLayout(logical_device);
         GenerateDynamicUniformBufferOffset();
         AllocateDescriptorSet(logical_device, descriptor_allocator);
     }
@@ -450,7 +450,7 @@ namespace Meow
         }
     }
 
-    void Shader::GenerateLayout(const vk::raii::Device& raii_logical_device)
+    void Shader::GeneratePipelineLayout(const vk::raii::Device& raii_logical_device)
     {
         std::vector<DescriptorSetLayoutMeta>& metas = set_layout_metas.metas;
 
@@ -471,27 +471,55 @@ namespace Meow
                       });
         }
 
-        // support multiple descriptor set layout
-        for (int32_t i = 0; i < metas.size(); ++i)
+        if (metas.size() == 0)
         {
-            DescriptorSetLayoutMeta& set_layout_meta = metas[i];
-
-            vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(vk::DescriptorSetLayoutCreateFlags {},
-                                                                                set_layout_meta.bindings);
-
-            vk::DescriptorSetLayout setLayout;
-            raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
-                static_cast<VkDevice>(*raii_logical_device),
-                reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(&descriptor_set_layout_create_info),
-                nullptr,
-                reinterpret_cast<VkDescriptorSetLayout*>(&setLayout));
-
-            descriptor_set_layouts.push_back(setLayout);
+            vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 0, nullptr);
+            pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
         }
+        else
+        {
+            uint32_t max_set_number = metas[0].set;
+            for (int32_t i = 0; i < metas.size(); ++i)
+                max_set_number = max_set_number < metas[i].set ? metas[i].set : max_set_number;
 
-        vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
-            {}, static_cast<uint32_t>(descriptor_set_layouts.size()), descriptor_set_layouts.data());
-        pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
+            for (int32_t i = 0, j = 0; i <= max_set_number; ++i)
+            {
+                if (j >= metas.size())
+                {
+                    MEOW_ERROR("DescriptorSetLayoutMeta index out of range.");
+                    break;
+                }
+
+                DescriptorSetLayoutMeta& set_layout_meta = metas[j];
+
+                // There may be empty descriptor set
+                vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info;
+                if (set_layout_meta.set == i)
+                {
+                    descriptor_set_layout_create_info = vk::DescriptorSetLayoutCreateInfo(
+                        vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
+                    j++;
+                }
+                else
+                {
+                    descriptor_set_layout_create_info =
+                        vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags {}, nullptr);
+                }
+
+                vk::DescriptorSetLayout setLayout;
+                raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
+                    static_cast<VkDevice>(*raii_logical_device),
+                    reinterpret_cast<const VkDescriptorSetLayoutCreateInfo*>(&descriptor_set_layout_create_info),
+                    nullptr,
+                    reinterpret_cast<VkDescriptorSetLayout*>(&setLayout));
+
+                descriptor_set_layouts.push_back(setLayout);
+            }
+
+            vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
+                {}, static_cast<uint32_t>(descriptor_set_layouts.size()), descriptor_set_layouts.data());
+            pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
+        }
     }
 
     void Shader::GenerateDynamicUniformBufferOffset()

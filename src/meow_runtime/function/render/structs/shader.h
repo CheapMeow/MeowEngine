@@ -279,7 +279,7 @@ namespace Meow
 
         void GenerateInputInfo();
 
-        void GenerateLayout(const vk::raii::Device& raii_logical_device);
+        void GeneratePipelineLayout(const vk::raii::Device& raii_logical_device);
 
         void GenerateDynamicUniformBufferOffset();
 

@@ -324,7 +324,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_quad_mat.GetShader()->BindPerMaterialDescriptorSetToPipeline(command_buffer);
+        m_quad_mat.GetShader()->BindPerShaderDescriptorSetToPipeline(command_buffer);
 
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
@@ -351,6 +351,7 @@ namespace Meow
         swap(lhs.m_LightDatas, rhs.m_LightDatas);
         swap(lhs.m_LightInfos, rhs.m_LightInfos);
 
+        swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
         swap(lhs.m_light_data_uniform_buffer, rhs.m_light_data_uniform_buffer);
 
