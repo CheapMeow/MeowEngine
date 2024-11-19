@@ -101,13 +101,13 @@ namespace Meow
     }
 
     template<typename Func>
-    void OneTimeSubmit(vk::raii::Device const&      device,
+    void OneTimeSubmit(vk::raii::Device const&      logical_device,
                        vk::raii::CommandPool const& command_pool,
                        vk::raii::Queue const&       queue,
                        Func const&                  func)
     {
         vk::raii::CommandBuffer command_buffer =
-            std::move(vk::raii::CommandBuffers(device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
+            std::move(vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
         command_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
         func(command_buffer);
         command_buffer.end();

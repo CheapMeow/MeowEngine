@@ -263,9 +263,7 @@ namespace Meow
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
-    void Material::UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer,
-                                                 const std::string&             name,
-                                                 int32_t                        obj_index)
+    void Material::UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer, int32_t obj_index)
     {
         FUNCTION_TIMER();
 
@@ -274,6 +272,6 @@ namespace Meow
             return;
         }
 
-        shader_ptr->BindDynamicUniformBufferToPipeline(command_buffer, name, per_obj_dynamic_offsets[obj_index]);
+        shader_ptr->BindPerObjectDescriptorSetToPipeline(command_buffer, per_obj_dynamic_offsets[obj_index]);
     }
 } // namespace Meow

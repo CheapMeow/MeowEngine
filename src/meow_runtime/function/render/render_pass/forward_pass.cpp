@@ -7,7 +7,7 @@
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_context.h"
-#include "function/render/structs/ubo_data.h"
+#include "function/render/structs/per_scene_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -15,6 +15,8 @@ namespace Meow
 {
     void ForwardPass::CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
                                      const vk::raii::Device&         logical_device,
+                                     const vk::raii::CommandPool&    command_pool,
+                                     const vk::raii::Queue&          queue,
                                      DescriptorAllocatorGrowable&    m_descriptor_allocator)
     {
         auto mesh_shader_ptr = std::make_shared<Shader>(physical_device,
@@ -28,13 +30,17 @@ namespace Meow
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
 
-        m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device,
-                                                                   logical_device,
-                                                                   32 * 1024,
-                                                                   vk::BufferUsageFlagBits::eUniformBuffer |
-                                                                       vk::BufferUsageFlagBits::eTransferDst);
+        m_per_scene_uniform_buffer =
+            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
+        m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
 
-        m_forward_mat.GetShader()->BindBufferToDescriptor(logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptor(
+            logical_device, "sceneData", m_per_scene_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptor(logical_device, "objData", m_dynamic_uniform_buffer->buffer);
+
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+            m_forward_mat.GetShader()->BindPerSceneDescriptorSetToPipeline(command_buffer);
+        });
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -88,8 +94,6 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        UBOData ubo_data;
-
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
@@ -118,12 +122,16 @@ namespace Meow
         glm::mat4 view =
             lookAt(transfrom_comp_ptr->position, transfrom_comp_ptr->position + forward, glm::vec3(0.0f, 1.0f, 0.0f));
 
-        ubo_data.view = view;
-        ubo_data.projection =
+        PerSceneData per_scene_data;
+        per_scene_data.view = view;
+        per_scene_data.projection =
             Math::perspective_vk(camera_comp_ptr->field_of_view,
                                  static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
                                  camera_comp_ptr->near_plane,
                                  camera_comp_ptr->far_plane);
+
+        m_per_scene_uniform_buffer->Reset();
+        m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
 
         // Update mesh uniform
 
@@ -150,14 +158,12 @@ namespace Meow
                 MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            ubo_data.model = transfrom_comp_ptr2->GetTransform();
-            ubo_data.model = rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            auto model = transfrom_comp_ptr2->GetTransform();
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                m_forward_mat.PopulateDynamicUniformBuffer(
-                    m_dynamic_uniform_buffer, "uboMVP", &ubo_data, sizeof(ubo_data));
+                m_forward_mat.PopulateDynamicUniformBuffer(m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
                 m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -189,7 +195,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call);
+                m_forward_mat.UpdateDynamicUniformPerObject(command_buffer, draw_call);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;

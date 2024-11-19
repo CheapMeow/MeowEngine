@@ -38,6 +38,8 @@ namespace Meow
 
         void CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
                             const vk::raii::Device&         logical_device,
+                            const vk::raii::CommandPool&    command_pool,
+                            const vk::raii::Queue&          queue,
                             DescriptorAllocatorGrowable&    m_descriptor_allocator);
 
         void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -60,6 +62,7 @@ namespace Meow
     protected:
         Material m_forward_mat = nullptr;
 
+        std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
 
         int draw_call = 0;

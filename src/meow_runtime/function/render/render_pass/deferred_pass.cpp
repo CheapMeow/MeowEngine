@@ -8,7 +8,7 @@
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
-#include "function/render/structs/ubo_data.h"
+#include "function/render/structs/per_scene_data.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -74,21 +74,22 @@ namespace Meow
             m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(1.0f, 2.0f);
         }
 
-        m_dynamic_uniform_buffer    = std::make_shared<UniformBuffer>(physical_device,
-                                                                   logical_device,
-                                                                   32 * 1024,
-                                                                   vk::BufferUsageFlagBits::eUniformBuffer |
-                                                                       vk::BufferUsageFlagBits::eTransferDst);
-        m_light_data_uniform_buffer = std::make_shared<UniformBuffer>(physical_device,
-                                                                      logical_device,
-                                                                      sizeof(m_LightDatas),
-                                                                      vk::BufferUsageFlagBits::eUniformBuffer |
-                                                                          vk::BufferUsageFlagBits::eTransferDst);
+        m_per_scene_uniform_buffer =
+            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
+        m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
+        m_light_data_uniform_buffer =
+            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(m_LightDatas));
 
         m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(
-            logical_device, "uboMVP", m_dynamic_uniform_buffer->buffer);
+            logical_device, "sceneData", m_per_scene_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(
+            logical_device, "objData", m_dynamic_uniform_buffer->buffer);
         m_quad_mat.GetShader()->BindBufferToDescriptor(
             logical_device, "lightDatas", m_light_data_uniform_buffer->buffer);
+
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+            m_obj2attachment_mat.GetShader()->BindPerSceneDescriptorSetToPipeline(command_buffer);
+        });
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -186,13 +187,15 @@ namespace Meow
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputNormal", *m_normal_attachment);
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputPosition", *m_position_attachment);
         m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputDepth", *m_depth_attachment);
+
+        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
+            m_quad_mat.GetShader()->BindPerMaterialDescriptorSetToPipeline(command_buffer);
+        });
     }
 
     void DeferredPass::UpdateUniformBuffer()
     {
         FUNCTION_TIMER();
-
-        UBOData ubo_data;
 
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
@@ -222,12 +225,16 @@ namespace Meow
         glm::mat4 view =
             lookAt(transfrom_comp_ptr->position, transfrom_comp_ptr->position + forward, glm::vec3(0.0f, 1.0f, 0.0f));
 
-        ubo_data.view = view;
-        ubo_data.projection =
+        PerSceneData per_scene_data;
+        per_scene_data.view = view;
+        per_scene_data.projection =
             Math::perspective_vk(camera_comp_ptr->field_of_view,
                                  static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
                                  camera_comp_ptr->near_plane,
                                  camera_comp_ptr->far_plane);
+
+        m_per_scene_uniform_buffer->Reset();
+        m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
 
         // Update mesh uniform
 
@@ -254,15 +261,13 @@ namespace Meow
                 MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            ubo_data.model = transfrom_comp_ptr2->GetTransform();
-
-            // ubo_data.model = glm::rotate(ubo_data.model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            auto model = transfrom_comp_ptr2->GetTransform();
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_obj2attachment_mat.PopulateDynamicUniformBuffer(
-                    m_dynamic_uniform_buffer, "uboMVP", &ubo_data, sizeof(ubo_data));
+                    m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
                 m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -311,7 +316,7 @@ namespace Meow
 
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.UpdateDynamicUniformPerObject(command_buffer, "uboMVP", draw_call[0]);
+                m_obj2attachment_mat.UpdateDynamicUniformPerObject(command_buffer, draw_call[0]);
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
@@ -323,7 +328,6 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_quad_mat.GetShader()->BindUniformBufferToPipeline(command_buffer, "lightDatas");
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);

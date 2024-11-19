@@ -16,12 +16,12 @@ namespace Meow
         vk::MemoryPropertyFlags property_flags;
 
         BufferData(vk::raii::PhysicalDevice const& physical_device,
-                   vk::raii::Device const&         device,
+                   vk::raii::Device const&         logical_device,
                    vk::DeviceSize                  size,
                    vk::BufferUsageFlags            usage,
                    vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                             vk::MemoryPropertyFlagBits::eHostCoherent)
-            : buffer(device, vk::BufferCreateInfo({}, size, usage))
+            : buffer(logical_device, vk::BufferCreateInfo({}, size, usage))
 #if defined(MEOW_DEBUG)
             , device_size(size)
             , usage_flags(usage)
@@ -29,7 +29,7 @@ namespace Meow
 #endif
         {
             device_memory = AllocateDeviceMemory(
-                device, physical_device.getMemoryProperties(), buffer.getMemoryRequirements(), property_flags);
+                logical_device, physical_device.getMemoryProperties(), buffer.getMemoryRequirements(), property_flags);
             buffer.bindMemory(*device_memory, 0);
         }
 
@@ -56,7 +56,7 @@ namespace Meow
                 device_memory  = std::exchange(rhs.device_memory, nullptr);
                 buffer         = std::exchange(rhs.buffer, nullptr);
                 device_size    = rhs.device_size;
-                usage_flags          = rhs.usage_flags;
+                usage_flags    = rhs.usage_flags;
                 property_flags = rhs.property_flags;
             }
             return *this;
@@ -93,7 +93,7 @@ namespace Meow
 
         template<typename DataType>
         void Upload(vk::raii::PhysicalDevice const& physical_device,
-                    vk::raii::Device const&         device,
+                    vk::raii::Device const&         logical_device,
                     vk::raii::CommandPool const&    command_pool,
                     vk::raii::Queue const&          queue,
                     std::vector<DataType> const&    data,
@@ -108,10 +108,10 @@ namespace Meow
             size_t dataSize = data.size() * element_size;
             assert(dataSize <= device_size);
 
-            BufferData staging_buffer(physical_device, device, dataSize, vk::BufferUsageFlagBits::eTransferSrc);
+            BufferData staging_buffer(physical_device, logical_device, dataSize, vk::BufferUsageFlagBits::eTransferSrc);
             CopyToDevice(staging_buffer.device_memory, data.data(), data.size(), element_size);
 
-            OneTimeSubmit(device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
+            OneTimeSubmit(logical_device, command_pool, queue, [&](vk::raii::CommandBuffer const& command_buffer) {
                 command_buffer.copyBuffer(*staging_buffer.buffer, *this->buffer, vk::BufferCopy(0, 0, dataSize));
             });
         }

@@ -639,64 +639,10 @@ namespace Meow
             vk::PipelineBindPoint::eGraphics, *pipeline_layout, 2, *descriptor_sets[2], {});
     }
 
-    void Shader::BindPerObjectDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer)
+    void Shader::BindPerObjectDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
+                                                      const std::vector<uint32_t>&   dynamic_offsets)
     {
         command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 3, *descriptor_sets[3], {});
-    }
-
-    void Shader::BindUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer, const std::string& name)
-    {
-        BufferMeta* meta = nullptr;
-        for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
-        {
-            if (it->first == name)
-            {
-                if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
-                {
-                    meta = &it->second;
-                    break;
-                }
-            }
-        }
-
-        if (meta == nullptr)
-        {
-            MEOW_ERROR("Updating buffer failed, {} not found!", name);
-            return;
-        }
-
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, meta->set, *descriptor_sets[meta->set], {});
-    }
-
-    void Shader::BindDynamicUniformBufferToPipeline(const vk::raii::CommandBuffer& command_buffer,
-                                                    const std::string&             name,
-                                                    const std::vector<uint32_t>&   dynamic_offsets)
-    {
-        BufferMeta* meta = nullptr;
-        for (auto it = buffer_meta_map.begin(); it != buffer_meta_map.end(); ++it)
-        {
-            if (it->first == name)
-            {
-                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
-                {
-                    meta = &it->second;
-                    break;
-                }
-            }
-        }
-
-        if (meta == nullptr)
-        {
-            MEOW_ERROR("Updating buffer failed, {} not found!", name);
-            return;
-        }
-
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *pipeline_layout,
-                                          meta->set,
-                                          *descriptor_sets[meta->set],
-                                          dynamic_offsets);
+            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 3, *descriptor_sets[3], dynamic_offsets);
     }
 } // namespace Meow

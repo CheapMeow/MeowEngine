@@ -19,11 +19,12 @@ namespace Meow
 
         UniformBuffer(const vk::raii::PhysicalDevice& physical_device,
                       const vk::raii::Device&         logical_device,
-                      vk::DeviceSize                  size,
-                      vk::BufferUsageFlags            usage,
-                      vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
-                                                               vk::MemoryPropertyFlagBits::eHostCoherent)
-            : BufferData(physical_device, logical_device, size, usage, property_flags)
+                      vk::DeviceSize                  size)
+            : BufferData(physical_device,
+                         logical_device,
+                         size,
+                         vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
+                         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent)
         {
             min_alignment   = physical_device.getProperties().limits.minUniformBufferOffsetAlignment;
             mapped_data_ptr = (uint8_t*)device_memory.mapMemory(0, VK_WHOLE_SIZE);
