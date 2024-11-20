@@ -54,12 +54,12 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/model_mesh.h
     function/render/structs/model_node.h
     function/render/structs/per_frame_data.h
+    function/render/structs/per_scene_data.h
     function/render/structs/pipeline_info.h
     function/render/structs/uniform_buffer.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
-    function/render/structs/ubo_data.h
     function/render/structs/vertex_attribute.h
     function/render/structs/vertex_buffer.h
     function/render/utils/vulkan_initialize_utils.hpp

@@ -476,14 +476,21 @@ namespace Meow
         }
         else
         {
-            for (int32_t i = 0, j = 0; i < metas.size(); ++i)
+            for (uint32_t i = 0; i < metas.size(); ++i)
             {
-                DescriptorSetLayoutMeta& set_layout_meta = metas[j];
+                DescriptorSetLayoutMeta& set_layout_meta = metas[i];
 
                 // There may be empty descriptor set
                 vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
                     vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
 
+                // Debug
+                for (int j = 0; j < set_layout_meta.bindings.size(); j++)
+                {
+                    MEOW_INFO("----------------");
+                    MEOW_INFO("Binding = {}", set_layout_meta.bindings[j].binding);
+                    MEOW_INFO("descriptorType = {}", static_cast<uint32_t>(set_layout_meta.bindings[j].descriptorType));
+                }
                 vk::DescriptorSetLayout setLayout;
                 raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
                     static_cast<VkDevice>(*raii_logical_device),
@@ -554,7 +561,7 @@ namespace Meow
                     meta = &it->second;
                     break;
                 }
-                else if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
                 {
                     meta  = &it->second;
                     range = meta->size;
