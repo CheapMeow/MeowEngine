@@ -476,7 +476,7 @@ namespace Meow
         }
         else
         {
-            for (int32_t i = 0, j = 0; i <= metas.size(); ++i)
+            for (int32_t i = 0, j = 0; i < metas.size(); ++i)
             {
                 DescriptorSetLayoutMeta& set_layout_meta = metas[j];
 
