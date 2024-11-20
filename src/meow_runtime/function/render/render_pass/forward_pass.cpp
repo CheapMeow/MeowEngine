@@ -37,14 +37,6 @@ namespace Meow
             logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
-
-        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
-            command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                              *m_forward_mat.GetShader()->pipeline_layout,
-                                              0,
-                                              *m_forward_descriptor_sets[0],
-                                              {});
-        });
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -186,6 +178,12 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                                      *m_forward_mat.GetShader()->pipeline_layout,
+                                                      0,
+                                                      *m_forward_descriptor_sets[0],
+                                                      {});
+        
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
