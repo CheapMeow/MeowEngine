@@ -6,7 +6,6 @@
 #include "core/base/bitmask.hpp"
 #include "descriptor_allocator_growable.h"
 #include "image_data.h"
-#include "ubo_data.h"
 #include "vertex_attribute.h"
 
 #include <spirv_glsl.hpp>
