@@ -43,25 +43,25 @@ set(RUNTIME_HEADER_FILES
     function/render/render_pass/deferred_pass.h
     function/render/render_pass/forward_pass.h
     function/render/render_pass/render_pass.h
-    function/render/structs/buffer_data.h
+    function/render/render_resources/buffer_data.h
     function/render/structs/descriptor_allocator_growable.h
-    function/render/structs/image_data.h
-    function/render/structs/index_buffer.h
+    function/render/render_resources/image_data.h
+    function/render/render_resources/index_buffer.h
     function/render/structs/material.h
-    function/render/structs/model.h
-    function/render/structs/model_anim.h
-    function/render/structs/model_bone.h
-    function/render/structs/model_mesh.h
-    function/render/structs/model_node.h
+    function/render/render_resources/model.h
+    function/render/render_resources/model_anim.h
+    function/render/render_resources/model_bone.h
+    function/render/render_resources/model_mesh.h
+    function/render/render_resources/model_node.h
     function/render/structs/per_frame_data.h
     function/render/structs/per_scene_data.h
     function/render/structs/pipeline_info.h
-    function/render/structs/uniform_buffer.h
+    function/render/render_resources/uniform_buffer.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
-    function/render/structs/vertex_attribute.h
-    function/render/structs/vertex_buffer.h
+    function/render/render_resources/vertex_attribute.h
+    function/render/render_resources/vertex_buffer.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
     function/resource/resource_system.h
@@ -93,16 +93,16 @@ set(RUNTIME_SOURCE_FILES
     function/render/render_pass/forward_pass.cpp
     function/render/render_pass/render_pass.cpp
     function/render/structs/descriptor_allocator_growable.cpp
-    function/render/structs/image_data.cpp
+    function/render/render_resources/image_data.cpp
     function/render/structs/material.cpp
-    function/render/structs/model.cpp
-    function/render/structs/model_mesh.cpp
-    function/render/structs/model_node.cpp
-    function/render/structs/uniform_buffer.cpp
+    function/render/render_resources/model.cpp
+    function/render/render_resources/model_mesh.cpp
+    function/render/render_resources/model_node.cpp
+    function/render/render_resources/uniform_buffer.cpp
     function/render/structs/shader.cpp
     function/render/structs/surface_data.cpp
     function/render/structs/swapchain_data.cpp
-    function/render/structs/vertex_attribute.cpp
+    function/render/render_resources/vertex_attribute.cpp
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
     function/resource/resource_info/model_res_info.cpp

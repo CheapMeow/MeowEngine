@@ -2,7 +2,7 @@
 
 #include "core/base/bitmask.hpp"
 #include "function/object/game_object.h"
-#include "function/render/structs/model.h"
+#include "function/render/render_resources/model.h"
 
 #include <vector>
 

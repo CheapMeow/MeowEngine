@@ -1,8 +1,8 @@
 #pragma once
 
 #include "function/render/render_pass/render_pass.h"
+#include "function/render/render_resources/model.h"
 #include "function/render/structs/material.h"
-#include "function/render/structs/model.h"
 #include "function/render/structs/shader.h"
 
 namespace Meow

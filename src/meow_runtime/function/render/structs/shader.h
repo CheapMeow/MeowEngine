@@ -2,11 +2,10 @@
 
 #include "pch.h"
 
-#include "buffer_data.h"
 #include "core/base/bitmask.hpp"
 #include "descriptor_allocator_growable.h"
-#include "image_data.h"
-#include "vertex_attribute.h"
+#include "function/render/render_resources/image_data.h"
+#include "function/render/render_resources/vertex_attribute.h"
 
 #include <spirv_glsl.hpp>
 #include <vulkan/vulkan_raii.hpp>

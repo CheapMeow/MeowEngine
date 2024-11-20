@@ -2,8 +2,8 @@
 
 #include "core/base/bitmask.hpp"
 #include "core/uuid/uuid.h"
-#include "function/render/structs/image_data.h"
-#include "function/render/structs/model.h"
+#include "function/render/render_resources/image_data.h"
+#include "function/render/render_resources/model.h"
 #include "function/render/structs/shader.h"
 #include "function/system.h"
 
