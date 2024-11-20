@@ -172,6 +172,13 @@ namespace Meow
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
 
+    void Material::BindPipeline(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
+    }
+
     void Material::BeginPopulatingDynamicUniformBufferPerFrame()
     {
         FUNCTION_TIMER();
@@ -256,22 +263,15 @@ namespace Meow
             static_cast<uint32_t>(buffer->Populate(dataPtr, it->second.size));
     }
 
-    void Material::BindPipeline(const vk::raii::CommandBuffer& command_buffer)
-    {
-        FUNCTION_TIMER();
-
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
-    }
-
-    void Material::UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer, int32_t obj_index)
+    std::vector<uint32_t> Material::GetDynamicOffsets(uint32_t obj_index)
     {
         FUNCTION_TIMER();
 
         if (obj_index >= per_obj_dynamic_offsets.size())
         {
-            return;
+            return {};
         }
 
-        shader_ptr->BindPerObjectDescriptorSetToPipeline(command_buffer, per_obj_dynamic_offsets[obj_index]);
+        return per_obj_dynamic_offsets[obj_index];
     }
 } // namespace Meow

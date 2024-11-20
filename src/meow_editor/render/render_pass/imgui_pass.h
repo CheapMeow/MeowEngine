@@ -38,7 +38,7 @@ namespace Meow
                   SurfaceData&                    surface_data,
                   const vk::raii::CommandPool&    command_pool,
                   const vk::raii::Queue&          queue,
-                  DescriptorAllocatorGrowable&    m_descriptor_allocator);
+                  DescriptorAllocatorGrowable&    descriptor_allocator);
 
         void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
                                  const vk::raii::Device&           logical_device,

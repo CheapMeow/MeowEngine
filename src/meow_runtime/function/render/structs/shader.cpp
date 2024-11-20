@@ -6,7 +6,6 @@ namespace Meow
 {
     Shader::Shader(const vk::raii::PhysicalDevice& physical_device,
                    const vk::raii::Device&         logical_device,
-                   DescriptorAllocatorGrowable&    descriptor_allocator,
                    std::string                     vert_shader_file_path,
                    std::string                     frag_shader_file_path,
                    std::string                     geom_shader_file_path,
@@ -75,7 +74,6 @@ namespace Meow
         GenerateInputInfo();
         GeneratePipelineLayout(logical_device);
         GenerateDynamicUniformBufferOffset();
-        AllocateDescriptorSet(logical_device, descriptor_allocator);
     }
 
     bool Shader::CreateShaderModuleAndGetMeta(
@@ -478,33 +476,13 @@ namespace Meow
         }
         else
         {
-            uint32_t max_set_number = metas[0].set;
-            for (int32_t i = 0; i < metas.size(); ++i)
-                max_set_number = max_set_number < metas[i].set ? metas[i].set : max_set_number;
-
-            for (int32_t i = 0, j = 0; i <= max_set_number; ++i)
+            for (int32_t i = 0, j = 0; i <= metas.size(); ++i)
             {
-                if (j >= metas.size())
-                {
-                    MEOW_ERROR("DescriptorSetLayoutMeta index out of range.");
-                    break;
-                }
-
                 DescriptorSetLayoutMeta& set_layout_meta = metas[j];
 
                 // There may be empty descriptor set
-                vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info;
-                if (set_layout_meta.set == i)
-                {
-                    descriptor_set_layout_create_info = vk::DescriptorSetLayoutCreateInfo(
-                        vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
-                    j++;
-                }
-                else
-                {
-                    descriptor_set_layout_create_info =
-                        vk::DescriptorSetLayoutCreateInfo(vk::DescriptorSetLayoutCreateFlags {}, nullptr);
-                }
+                vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
+                    vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
 
                 vk::DescriptorSetLayout setLayout;
                 raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
@@ -558,17 +536,12 @@ namespace Meow
         }
     }
 
-    void Shader::AllocateDescriptorSet(const vk::raii::Device&      logical_device,
-                                       DescriptorAllocatorGrowable& descriptor_allocator)
-    {
-        descriptor_sets = descriptor_allocator.Allocate(logical_device, descriptor_set_layouts);
-    }
-
-    void Shader::BindBufferToDescriptor(const vk::raii::Device&     logical_device,
-                                        const std::string&          name,
-                                        const vk::raii::Buffer&     buffer,
-                                        vk::DeviceSize              range,
-                                        const vk::raii::BufferView* raii_buffer_view)
+    void Shader::BindBufferToDescriptorSet(const vk::raii::Device&         logical_device,
+                                           const vk::raii::DescriptorSets& descriptor_sets,
+                                           const std::string&              name,
+                                           const vk::raii::Buffer&         buffer,
+                                           vk::DeviceSize                  range,
+                                           const vk::raii::BufferView*     raii_buffer_view)
     {
         BufferMeta* meta = nullptr;
         // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
@@ -619,9 +592,10 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Shader::BindImageToDescriptor(const vk::raii::Device& logical_device,
-                                       const std::string&      name,
-                                       ImageData&              image_data)
+    void Shader::BindImageToDescriptorSet(const vk::raii::Device&         logical_device,
+                                          const vk::raii::DescriptorSets& descriptor_sets,
+                                          const std::string&              name,
+                                          ImageData&                      image_data)
     {
         auto it = set_layout_metas.binding_meta_map.find(name);
         if (it == set_layout_metas.binding_meta_map.end())
@@ -647,30 +621,5 @@ namespace Meow
         );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
-    }
-
-    void Shader::BindPerSceneDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer)
-    {
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 0, *descriptor_sets[0], {});
-    }
-
-    void Shader::BindPerShaderDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer)
-    {
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 1, *descriptor_sets[1], {});
-    }
-
-    void Shader::BindPerMaterialDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer)
-    {
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 2, *descriptor_sets[2], {});
-    }
-
-    void Shader::BindPerObjectDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
-                                                      const std::vector<uint32_t>&   dynamic_offsets)
-    {
-        command_buffer.bindDescriptorSets(
-            vk::PipelineBindPoint::eGraphics, *pipeline_layout, 3, *descriptor_sets[3], dynamic_offsets);
     }
 } // namespace Meow

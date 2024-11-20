@@ -19,23 +19,20 @@ namespace Meow
                                       const vk::raii::Device&         logical_device,
                                       const vk::raii::CommandPool&    command_pool,
                                       const vk::raii::Queue&          queue,
-                                      DescriptorAllocatorGrowable&    m_descriptor_allocator)
+                                      DescriptorAllocatorGrowable&    descriptor_allocator)
     {
-        auto obj_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                       logical_device,
-                                                       m_descriptor_allocator,
-                                                       "builtin/shaders/obj.vert.spv",
-                                                       "builtin/shaders/obj.frag.spv");
+        auto obj_shader_ptr = std::make_shared<Shader>(
+            physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
+        m_obj2attachment_descriptor_sets =
+            descriptor_allocator.Allocate(logical_device, obj_shader_ptr->descriptor_set_layouts);
 
         m_obj2attachment_mat                        = Material(physical_device, logical_device, obj_shader_ptr);
         m_obj2attachment_mat.color_attachment_count = 3;
         m_obj2attachment_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
-        auto quad_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                        logical_device,
-                                                        m_descriptor_allocator,
-                                                        "builtin/shaders/quad.vert.spv",
-                                                        "builtin/shaders/quad.frag.spv");
+        auto quad_shader_ptr = std::make_shared<Shader>(
+            physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
+        m_quad_descriptor_sets = descriptor_allocator.Allocate(logical_device, quad_shader_ptr->descriptor_set_layouts);
 
         m_quad_mat         = Material(physical_device, logical_device, quad_shader_ptr);
         m_quad_mat.subpass = 1;
@@ -80,16 +77,12 @@ namespace Meow
         m_light_data_uniform_buffer =
             std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(m_LightDatas));
 
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(
-            logical_device, "sceneData", m_per_scene_uniform_buffer->buffer);
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptor(
-            logical_device, "objData", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->BindBufferToDescriptor(
-            logical_device, "lightDatas", m_light_data_uniform_buffer->buffer);
-
-        OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
-            m_obj2attachment_mat.GetShader()->BindPerSceneDescriptorSetToPipeline(command_buffer);
-        });
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_obj2attachment_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
+        m_obj2attachment_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_obj2attachment_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_quad_descriptor_sets, "lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -183,10 +176,14 @@ namespace Meow
 
         // Update descriptor set
 
-        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputColor", *m_color_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputNormal", *m_normal_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputPosition", *m_position_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptor(logical_device, "inputDepth", *m_depth_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptorSet(
+            logical_device, m_quad_descriptor_sets, "inputColor", *m_color_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptorSet(
+            logical_device, m_quad_descriptor_sets, "inputNormal", *m_normal_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptorSet(
+            logical_device, m_quad_descriptor_sets, "inputPosition", *m_position_attachment);
+        m_quad_mat.GetShader()->BindImageToDescriptorSet(
+            logical_device, m_quad_descriptor_sets, "inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -299,6 +296,12 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *m_obj2attachment_mat.GetShader()->pipeline_layout,
+                                          0,
+                                          *m_obj2attachment_descriptor_sets[0],
+                                          {});
+
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
@@ -310,9 +313,13 @@ namespace Meow
             if (!model_comp_ptr)
                 continue;
 
-            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_obj2attachment_mat.UpdateDynamicUniformPerObject(command_buffer, draw_call[0]);
+                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                                  *m_obj2attachment_mat.GetShader()->pipeline_layout,
+                                                  1,
+                                                  *m_obj2attachment_descriptor_sets[1],
+                                                  m_obj2attachment_mat.GetDynamicOffsets(i));
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
@@ -324,7 +331,11 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_quad_mat.GetShader()->BindPerShaderDescriptorSetToPipeline(command_buffer);
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *m_quad_mat.GetShader()->pipeline_layout,
+                                          0,
+                                          *m_quad_descriptor_sets[0],
+                                          {});
 
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
@@ -342,6 +353,10 @@ namespace Meow
 
         swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
         swap(lhs.m_quad_mat, rhs.m_quad_mat);
+
+        swap(lhs.m_obj2attachment_descriptor_sets, rhs.m_obj2attachment_descriptor_sets);
+        swap(lhs.m_quad_descriptor_sets, rhs.m_quad_descriptor_sets);
+
         swap(lhs.m_quad_model, rhs.m_quad_model);
 
         swap(lhs.m_color_attachment, rhs.m_color_attachment);

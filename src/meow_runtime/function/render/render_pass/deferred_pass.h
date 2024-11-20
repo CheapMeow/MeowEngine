@@ -62,7 +62,7 @@ namespace Meow
                             const vk::raii::Device&         logical_device,
                             const vk::raii::CommandPool&    command_pool,
                             const vk::raii::Queue&          queue,
-                            DescriptorAllocatorGrowable&    m_descriptor_allocator);
+                            DescriptorAllocatorGrowable&    descriptor_allocator);
 
         void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
                                  const vk::raii::Device&           logical_device,
@@ -88,7 +88,11 @@ namespace Meow
 
         Material m_obj2attachment_mat = nullptr;
         Material m_quad_mat           = nullptr;
-        Model    m_quad_model         = nullptr;
+
+        vk::raii::DescriptorSets m_obj2attachment_descriptor_sets = nullptr;
+        vk::raii::DescriptorSets m_quad_descriptor_sets           = nullptr;
+
+        Model m_quad_model = nullptr;
 
         std::shared_ptr<ImageData> m_color_attachment    = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment   = nullptr;

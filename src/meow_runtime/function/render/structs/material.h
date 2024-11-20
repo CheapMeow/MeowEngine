@@ -56,6 +56,8 @@ namespace Meow
 
         std::shared_ptr<Shader> GetShader() { return shader_ptr; }
 
+        void BindPipeline(const vk::raii::CommandBuffer& command_buffer);
+
         void BeginPopulatingDynamicUniformBufferPerFrame();
 
         void EndPopulatingDynamicUniformBufferPerFrame();
@@ -69,9 +71,7 @@ namespace Meow
                                           void*                          dataPtr,
                                           uint32_t                       size);
 
-        void BindPipeline(const vk::raii::CommandBuffer& command_buffer);
-
-        void UpdateDynamicUniformPerObject(const vk::raii::CommandBuffer& command_buffer, int32_t obj_index);
+        std::vector<uint32_t> GetDynamicOffsets(uint32_t obj_index);
 
         std::shared_ptr<Shader> shader_ptr             = nullptr;
         int                     color_attachment_count = 1;

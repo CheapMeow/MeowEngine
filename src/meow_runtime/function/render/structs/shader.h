@@ -195,12 +195,9 @@ namespace Meow
         InputBindingsVector   input_bindings;
         InputAttributesVector input_attributes;
 
-        // stored to create descriptor pool
         std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
 
         vk::raii::PipelineLayout pipeline_layout = nullptr;
-
-        vk::raii::DescriptorSets descriptor_sets = nullptr;
 
     private:
         vk::Device                        m_device     = {};
@@ -211,7 +208,6 @@ namespace Meow
 
         Shader(const vk::raii::PhysicalDevice& physical_device,
                const vk::raii::Device&         logical_device,
-               DescriptorAllocatorGrowable&    descriptor_allocator,
                std::string                     vert_shader_file_path,
                std::string                     frag_shader_file_path,
                std::string                     geom_shader_file_path = "",
@@ -230,20 +226,17 @@ namespace Meow
             }
         }
 
-        void BindBufferToDescriptor(const vk::raii::Device&     logical_device,
-                                    const std::string&          name,
-                                    const vk::raii::Buffer&     buffer,
-                                    vk::DeviceSize              range            = VK_WHOLE_SIZE,
-                                    const vk::raii::BufferView* raii_buffer_view = nullptr);
+        void BindBufferToDescriptorSet(const vk::raii::Device&         logical_device,
+                                       const vk::raii::DescriptorSets& descriptor_sets,
+                                       const std::string&              name,
+                                       const vk::raii::Buffer&         buffer,
+                                       vk::DeviceSize                  range            = VK_WHOLE_SIZE,
+                                       const vk::raii::BufferView*     raii_buffer_view = nullptr);
 
-        void
-        BindImageToDescriptor(const vk::raii::Device& logical_device, const std::string& name, ImageData& image_data);
-
-        void BindPerSceneDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer);
-        void BindPerShaderDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer);
-        void BindPerMaterialDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer);
-        void BindPerObjectDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
-                                                  const std::vector<uint32_t>&   dynamic_offsets);
+        void BindImageToDescriptorSet(const vk::raii::Device&         logical_device,
+                                      const vk::raii::DescriptorSets& descriptor_sets,
+                                      const std::string&              name,
+                                      ImageData&                      image_data);
 
     private:
         bool CreateShaderModuleAndGetMeta(
@@ -282,21 +275,6 @@ namespace Meow
         void GeneratePipelineLayout(const vk::raii::Device& raii_logical_device);
 
         void GenerateDynamicUniformBufferOffset();
-
-        /**
-         * @brief Allocate multiple descriptor sets
-         * Each set correspond to different set number in glsl, for example:
-         *
-         * layout (set = 0, binding = 0) ...
-         * layout (set = 1, binding = 0) ...
-         *
-         * It will result in two descriptor sets allocated.
-         *
-         * @param logical_device logical device
-         * @param descriptor_allocator descriptor allocator
-         */
-        void AllocateDescriptorSet(const vk::raii::Device&      logical_device,
-                                   DescriptorAllocatorGrowable& descriptor_allocator);
     };
 
 } // namespace Meow

@@ -16,7 +16,7 @@ namespace Meow
                         SurfaceData&                    surface_data,
                         const vk::raii::CommandPool&    command_pool,
                         const vk::raii::Queue&          queue,
-                        DescriptorAllocatorGrowable&    m_descriptor_allocator);
+                        DescriptorAllocatorGrowable&    descriptor_allocator);
 
         GameForwardPass(GameForwardPass&& rhs) noexcept
             : ForwardPass(std::move(rhs))

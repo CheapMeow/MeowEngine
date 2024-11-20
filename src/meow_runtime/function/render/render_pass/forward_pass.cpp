@@ -17,13 +17,12 @@ namespace Meow
                                      const vk::raii::Device&         logical_device,
                                      const vk::raii::CommandPool&    command_pool,
                                      const vk::raii::Queue&          queue,
-                                     DescriptorAllocatorGrowable&    m_descriptor_allocator)
+                                     DescriptorAllocatorGrowable&    descriptor_allocator)
     {
-        auto mesh_shader_ptr = std::make_shared<Shader>(physical_device,
-                                                        logical_device,
-                                                        m_descriptor_allocator,
-                                                        "builtin/shaders/mesh.vert.spv",
-                                                        "builtin/shaders/mesh.frag.spv");
+        auto mesh_shader_ptr = std::make_shared<Shader>(
+            physical_device, logical_device, "builtin/shaders/mesh.vert.spv", "builtin/shaders/mesh.frag.spv");
+        m_forward_descriptor_sets =
+            descriptor_allocator.Allocate(logical_device, mesh_shader_ptr->descriptor_set_layouts);
 
         m_forward_mat = Material(physical_device, logical_device, mesh_shader_ptr);
         m_forward_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
@@ -34,12 +33,17 @@ namespace Meow
             std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
         m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
 
-        m_forward_mat.GetShader()->BindBufferToDescriptor(
-            logical_device, "sceneData", m_per_scene_uniform_buffer->buffer);
-        m_forward_mat.GetShader()->BindBufferToDescriptor(logical_device, "objData", m_dynamic_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
 
         OneTimeSubmit(logical_device, command_pool, queue, [&](const vk::raii::CommandBuffer& command_buffer) {
-            m_forward_mat.GetShader()->BindPerSceneDescriptorSetToPipeline(command_buffer);
+            command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                              *m_forward_mat.GetShader()->pipeline_layout,
+                                              0,
+                                              *m_forward_descriptor_sets[0],
+                                              {});
         });
     }
 
@@ -193,9 +197,13 @@ namespace Meow
             if (!model_comp_ptr)
                 continue;
 
-            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
-                m_forward_mat.UpdateDynamicUniformPerObject(command_buffer, draw_call);
+                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                                  *m_forward_mat.GetShader()->pipeline_layout,
+                                                  1,
+                                                  *m_forward_descriptor_sets[1],
+                                                  m_forward_mat.GetDynamicOffsets(i));
                 model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;
@@ -208,6 +216,8 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
+
+        swap(lhs.m_forward_descriptor_sets, rhs.m_forward_descriptor_sets);
 
         swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
