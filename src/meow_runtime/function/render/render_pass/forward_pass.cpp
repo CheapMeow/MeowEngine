@@ -20,7 +20,7 @@ namespace Meow
                                      DescriptorAllocatorGrowable&    descriptor_allocator)
     {
         auto mesh_shader_ptr = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/mesh.vert.spv", "builtin/shaders/mesh.frag.spv");
+            physical_device, logical_device, "builtin/shaders/phong.vert.spv", "builtin/shaders/phong.frag.spv");
         m_forward_descriptor_sets =
             descriptor_allocator.Allocate(logical_device, mesh_shader_ptr->descriptor_set_layouts);
 
@@ -31,10 +31,14 @@ namespace Meow
 
         m_per_scene_uniform_buffer =
             std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
+        m_light_uniform_buffer =
+            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(ForwardPointLight));
         m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
 
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_forward_descriptor_sets, "light", m_light_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
     }
@@ -90,6 +94,8 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
 #ifdef MEOW_DEBUG
@@ -129,6 +135,14 @@ namespace Meow
         m_per_scene_uniform_buffer->Reset();
         m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
 
+        ForwardPointLight point_light_data;
+        point_light_data.pos     = glm::vec3(1.0f, 1.0f, 1.0f);
+        point_light_data.viewPos = transfrom_comp_ptr->position;
+        point_light_data.blinn   = 1;
+
+        m_light_uniform_buffer->Reset();
+        m_light_uniform_buffer->Populate(&point_light_data, sizeof(ForwardPointLight));
+
         // Update mesh uniform
 
         m_dynamic_uniform_buffer->Reset();
@@ -164,6 +178,30 @@ namespace Meow
             }
         }
         m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
+
+        // temporary loading textures
+
+        for (const auto& kv : all_gameobjects_map)
+        {
+            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
+            if (!model_go_ptr)
+                continue;
+
+            std::shared_ptr<ModelComponent> model_comp_ptr =
+                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+            if (!model_comp_ptr)
+                continue;
+
+            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+            if (!model_res_ptr)
+                continue;
+
+            m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                logical_device,
+                m_forward_descriptor_sets,
+                "diffuseMap",
+                *model_res_ptr->meshes[0]->texture_info.diffuse_texture);
+        }
     }
 
     void
@@ -179,30 +217,42 @@ namespace Meow
         FUNCTION_TIMER();
 
         command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                                      *m_forward_mat.GetShader()->pipeline_layout,
-                                                      0,
-                                                      *m_forward_descriptor_sets[0],
-                                                      {});
-        
+                                          *m_forward_mat.GetShader()->pipeline_layout,
+                                          0,
+                                          *m_forward_descriptor_sets[0],
+                                          {});
+
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>     model_go_ptr = kv.second.lock();
+            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
+            if (!model_go_ptr)
+                continue;
+
             std::shared_ptr<ModelComponent> model_comp_ptr =
                 model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-
             if (!model_comp_ptr)
                 continue;
 
-            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+            if (!model_res_ptr)
+                continue;
+
+            command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                              *m_forward_mat.GetShader()->pipeline_layout,
+                                              1,
+                                              *m_forward_descriptor_sets[1],
+                                              {});
+
+            for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_forward_mat.GetShader()->pipeline_layout,
-                                                  1,
-                                                  *m_forward_descriptor_sets[1],
+                                                  2,
+                                                  *m_forward_descriptor_sets[2],
                                                   m_forward_mat.GetDynamicOffsets(i));
-                model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
+                model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;
             }
@@ -218,6 +268,7 @@ namespace Meow
         swap(lhs.m_forward_descriptor_sets, rhs.m_forward_descriptor_sets);
 
         swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
+        swap(lhs.m_light_uniform_buffer, rhs.m_light_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
 
         swap(lhs.draw_call, rhs.draw_call);

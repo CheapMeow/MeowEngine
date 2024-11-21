@@ -78,11 +78,11 @@ namespace Meow
         if (!model_go_ptr)
             MEOW_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->SetName("Nanosuit");
+        model_go_ptr->SetName("TreeStump");
         TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
         TryAddComponent(model_go_ptr,
                         "ModelComponent",
-                        std::make_shared<ModelComponent>("builtin/models/nanosuit/nanosuit.obj",
+                        std::make_shared<ModelComponent>("builtin/models/tree_stump/tree_stump.obj",
                                                          m_render_pass_ptr->input_vertex_attributes));
     }
 
@@ -324,7 +324,7 @@ namespace Meow
             g_editor_context.profile_system->ClearProfile();
         });
 
-        m_render_pass_ptr = &m_deferred_pass;
+        m_render_pass_ptr = &m_forward_pass;
     }
 
     void EditorWindow::InitImGui()

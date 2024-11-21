@@ -306,21 +306,27 @@ namespace Meow
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>     model_go_ptr = kv.second.lock();
+            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
+            if (!model_go_ptr)
+                continue;
+
             std::shared_ptr<ModelComponent> model_comp_ptr =
                 model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-
             if (!model_comp_ptr)
                 continue;
 
-            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+            if (!model_res_ptr)
+                continue;
+
+            for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_obj2attachment_mat.GetShader()->pipeline_layout,
                                                   1,
                                                   *m_obj2attachment_descriptor_sets[1],
                                                   m_obj2attachment_mat.GetDynamicOffsets(i));
-                model_comp_ptr->model_ptr.lock()->meshes[i]->BindDrawCmd(command_buffer);
+                model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
             }

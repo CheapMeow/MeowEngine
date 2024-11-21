@@ -12,7 +12,7 @@ layout (set = 1, binding = 0) uniform PointLight{
     int blinn;
 } light;
 
-layout (set = 2, binding = 0) uniform sampler2D diffuseMap;
+layout (set = 1, binding = 1) uniform sampler2D diffuseMap;
 
 void main() 
 {

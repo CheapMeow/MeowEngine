@@ -6,6 +6,13 @@
 
 namespace Meow
 {
+    struct ForwardPointLight
+    {
+        glm::vec3 pos;
+        glm::vec3 viewPos;
+        int       blinn;
+    };
+
     class ForwardPass : public RenderPass
     {
     public:
@@ -65,8 +72,9 @@ namespace Meow
         vk::raii::DescriptorSets m_forward_descriptor_sets = nullptr;
 
         std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
+        std::shared_ptr<UniformBuffer> m_light_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
-
+        
         int draw_call = 0;
     };
 } // namespace Meow
