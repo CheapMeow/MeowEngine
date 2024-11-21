@@ -114,10 +114,6 @@ namespace Meow
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // auto dockspace_id = ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
-        // auto demo_node_id = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.3f, nullptr, &dockspace_id);
-        // ImGui::DockBuilderDockWindow("Demo", demo_node_id);
-
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
@@ -127,9 +123,38 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
+        static bool               p_open          = true;
+        static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-        ImGui::ShowDemoWindow();
+        // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+        // because it would be confusing to have two docking targets within each others.
+        ImGuiWindowFlags     window_flags = ImGuiWindowFlags_NoDocking;
+        const ImGuiViewport* viewport     = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+                        ImGuiWindowFlags_NoMove;
+        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+
+        ImGui::PopStyleVar(3);
+
+        // Submit the DockSpace
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+        {
+            ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+            ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+        }
+
+        ImGui::End();
+
+        const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
 
         ImGui::Begin("Demo");
         const auto camera_id = level_ptr->GetMainCameraID();
