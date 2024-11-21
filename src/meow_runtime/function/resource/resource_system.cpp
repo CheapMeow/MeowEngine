@@ -80,9 +80,9 @@ namespace Meow
     //     return m_materials[file_path];
     // }
 
-    std::tuple<bool, UUID> ResourceSystem::LoadModel(std::vector<float>&&        vertices,
-                                                     std::vector<uint32_t>&&     indices,
-                                                     BitMask<VertexAttributeBit> attributes)
+    std::tuple<bool, UUID> ResourceSystem::LoadModel(std::vector<float>&&            vertices,
+                                                     std::vector<uint32_t>&&         indices,
+                                                     std::vector<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
 
@@ -111,8 +111,8 @@ namespace Meow
         }
     }
 
-    std::tuple<bool, UUID> ResourceSystem::LoadModel(const std::string&          file_path,
-                                                     BitMask<VertexAttributeBit> attributes)
+    std::tuple<bool, UUID> ResourceSystem::LoadModel(const std::string&              file_path,
+                                                     std::vector<VertexAttributeBit> attributes)
     {
         FUNCTION_TIMER();
 

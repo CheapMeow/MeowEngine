@@ -387,11 +387,11 @@ namespace Meow
             if (attribute == VertexAttributeBit::InstanceFloat1 || attribute == VertexAttributeBit::InstanceFloat2 ||
                 attribute == VertexAttributeBit::InstanceFloat3 || attribute == VertexAttributeBit::InstanceFloat4)
             {
-                instance_attributes |= attribute;
+                instance_attributes.push_back(attribute);
             }
             else
             {
-                per_vertex_attributes |= attribute;
+                per_vertex_attributes.push_back(attribute);
             }
         }
 
@@ -399,14 +399,14 @@ namespace Meow
         // first is per_vertex_input_binding
         // second is instanceInputBinding
         input_bindings.resize(0);
-        if (per_vertex_attributes.count() > 0)
+        if (per_vertex_attributes.size() > 0)
         {
             uint32_t                          stride = VertexAttributesToSize(per_vertex_attributes);
             vk::VertexInputBindingDescription per_vertex_input_binding {0, stride, vk::VertexInputRate::eVertex};
             input_bindings.push_back(per_vertex_input_binding);
         }
 
-        if (instance_attributes.count() > 0)
+        if (instance_attributes.size() > 0)
         {
             uint32_t                          stride = VertexAttributesToSize(instance_attributes);
             vk::VertexInputBindingDescription instanceInputBinding {1, stride, vk::VertexInputRate::eInstance};
@@ -417,30 +417,28 @@ namespace Meow
         // first is per_vertex_attributes
         // second is instance_attributes
         uint32_t location = 0;
-        if (per_vertex_attributes.count() > 0)
+        if (per_vertex_attributes.size() > 0)
         {
-            uint32_t offset     = 0;
-            auto     attributes = per_vertex_attributes.split();
-            for (int32_t i = 0; i < attributes.size(); ++i)
+            uint32_t offset = 0;
+            for (int32_t i = 0; i < per_vertex_attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
-                    0, location, VertexAttributeToVkFormat(attributes[i]), offset};
-                offset += VertexAttributeToSize(attributes[i]);
+                    0, location, VertexAttributeToVkFormat(per_vertex_attributes[i]), offset};
+                offset += VertexAttributeToSize(per_vertex_attributes[i]);
                 input_attributes.push_back(input_attribute);
 
                 location += 1;
             }
         }
 
-        if (instance_attributes.count() > 0)
+        if (instance_attributes.size() > 0)
         {
-            uint32_t offset     = 0;
-            auto     attributes = instance_attributes.split();
-            for (int32_t i = 0; i < attributes.size(); ++i)
+            uint32_t offset = 0;
+            for (int32_t i = 0; i < instance_attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
-                    1, location, VertexAttributeToVkFormat(attributes[i]), offset};
-                offset += VertexAttributeToSize(attributes[i]);
+                    1, location, VertexAttributeToVkFormat(instance_attributes[i]), offset};
+                offset += VertexAttributeToSize(instance_attributes[i]);
                 input_attributes.push_back(input_attribute);
 
                 location += 1;

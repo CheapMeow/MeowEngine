@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/bitmask.hpp"
 #include "core/uuid/uuid.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/model.h"
@@ -49,11 +48,11 @@ namespace Meow
 
         // std::shared_ptr<Material> GetMaterial(const UUID& uuid);
 
-        std::tuple<bool, UUID> LoadModel(std::vector<float>&&        vertices,
-                                         std::vector<uint32_t>&&     indices,
-                                         BitMask<VertexAttributeBit> attributes);
+        std::tuple<bool, UUID> LoadModel(std::vector<float>&&            vertices,
+                                         std::vector<uint32_t>&&         indices,
+                                         std::vector<VertexAttributeBit> attributes);
 
-        std::tuple<bool, UUID> LoadModel(const std::string& file_path, BitMask<VertexAttributeBit> attributes);
+        std::tuple<bool, UUID> LoadModel(const std::string& file_path, std::vector<VertexAttributeBit> attributes);
 
         std::shared_ptr<Model> GetModel(const UUID& uuid);
 

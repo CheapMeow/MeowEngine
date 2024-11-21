@@ -53,7 +53,7 @@ namespace Meow
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;
         std::vector<vk::ClearValue>        clear_values;
-        BitMask<VertexAttributeBit>        input_vertex_attributes;
+        std::vector<VertexAttributeBit>    input_vertex_attributes;
 
         std::string m_pass_name = "Default Pass";
 

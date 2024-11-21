@@ -4,9 +4,9 @@
 
 namespace Meow
 {
-    ModelComponent::ModelComponent(std::vector<float>&&        vertices,
-                                   std::vector<uint32_t>&&     indices,
-                                   BitMask<VertexAttributeBit> attributes)
+    ModelComponent::ModelComponent(std::vector<float>&&            vertices,
+                                   std::vector<uint32_t>&&         indices,
+                                   std::vector<VertexAttributeBit> attributes)
     {
         auto [success, model_uuid] =
             g_runtime_context.resource_system->LoadModel(std::move(vertices), std::move(indices), attributes);
@@ -14,7 +14,7 @@ namespace Meow
             model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
     }
 
-    ModelComponent::ModelComponent(const std::string& file_path, BitMask<VertexAttributeBit> attributes)
+    ModelComponent::ModelComponent(const std::string& file_path, std::vector<VertexAttributeBit> attributes)
     {
         auto [success, model_uuid] = g_runtime_context.resource_system->LoadModel(file_path, attributes);
         if (success)

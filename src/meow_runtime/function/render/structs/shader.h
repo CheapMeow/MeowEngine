@@ -2,7 +2,6 @@
 
 #include "pch.h"
 
-#include "core/base/bitmask.hpp"
 #include "descriptor_allocator_growable.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/vertex_attribute.h"
@@ -187,8 +186,8 @@ namespace Meow
 
         uint32_t dynamic_uniform_buffer_count = 0;
 
-        BitMask<VertexAttributeBit> per_vertex_attributes;
-        BitMask<VertexAttributeBit> instance_attributes;
+        std::vector<VertexAttributeBit> per_vertex_attributes;
+        std::vector<VertexAttributeBit> instance_attributes;
 
         InputBindingsVector   input_bindings;
         InputAttributesVector input_attributes;

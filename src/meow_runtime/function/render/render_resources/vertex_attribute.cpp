@@ -65,67 +65,13 @@ namespace Meow
         return 0;
     }
 
-    uint32_t VertexAttributesToSize(BitMask<VertexAttributeBit> attributes)
+    uint32_t VertexAttributesToSize(std::vector<VertexAttributeBit> attributes)
     {
         uint32_t size = 0;
-        if (attributes & VertexAttributeBit::Position)
+        for (size_t i = 0; i < attributes.size(); ++i)
         {
-            size += 3 * sizeof(float);
+            size += VertexAttributeToSize(attributes[i]);
         }
-        if (attributes & VertexAttributeBit::UV0)
-        {
-            size += 2 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::UV1)
-        {
-            size += 2 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::Normal)
-        {
-            size += 3 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::Tangent)
-        {
-            size += 4 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::Color)
-        {
-            size += 3 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::SkinWeight)
-        {
-            size += 4 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::SkinIndex)
-        {
-            size += 4 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::SkinPack)
-        {
-            size += 3 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::Custom0 || attributes & VertexAttributeBit::Custom1 ||
-            attributes & VertexAttributeBit::Custom2 || attributes & VertexAttributeBit::Custom3)
-        {
-            size += 4 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::InstanceFloat1)
-        {
-            size += 1 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::InstanceFloat2)
-        {
-            size += 2 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::InstanceFloat3)
-        {
-            size += 3 * sizeof(float);
-        }
-        if (attributes & VertexAttributeBit::InstanceFloat4)
-        {
-            size += 4 * sizeof(float);
-        }
-
         return size;
     }
 

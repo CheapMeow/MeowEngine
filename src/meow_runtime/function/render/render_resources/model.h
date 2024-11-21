@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/base/bitmask.hpp"
 #include "core/base/non_copyable.h"
 #include "core/math/bounding_box.h"
 #include "core/uuid/uuid.h"
@@ -34,9 +33,9 @@ namespace Meow
         std::vector<ModelBone*> bones;
         BonesMap                bones_map;
 
-        BitMask<VertexAttributeBit> attributes;
-        std::vector<ModelAnimation> animations;
-        size_t                      animIndex = -1;
+        std::vector<VertexAttributeBit> attributes;
+        std::vector<ModelAnimation>     animations;
+        size_t                          animIndex = -1;
 
         bool loadSkin = false;
 
@@ -74,13 +73,13 @@ namespace Meow
             return *this;
         }
 
-        Model(const vk::raii::PhysicalDevice& physical_device,
-              const vk::raii::Device&         device,
-              const vk::raii::CommandPool&    command_pool,
-              const vk::raii::Queue&          queue,
-              std::vector<float>&&            vertices,
-              std::vector<uint32_t>&&         indices,
-              BitMask<VertexAttributeBit>     attributes);
+        Model(const vk::raii::PhysicalDevice&        physical_device,
+              const vk::raii::Device&                device,
+              const vk::raii::CommandPool&           command_pool,
+              const vk::raii::Queue&                 queue,
+              std::vector<float>&&                   vertices,
+              std::vector<uint32_t>&&                indices,
+              const std::vector<VertexAttributeBit>& attributes);
 
         /**
          * @brief Load model from file using assimp.
@@ -90,12 +89,12 @@ namespace Meow
          * If you keep local transform matrix of model node, it means you should create uniform buffer for each model
          * node. Then when draw a mesh once you should update buffer data once.
          */
-        Model(const vk::raii::PhysicalDevice& physical_device,
-              const vk::raii::Device&         device,
-              const vk::raii::CommandPool&    command_pool,
-              const vk::raii::Queue&          queue,
-              const std::string&              file_path,
-              BitMask<VertexAttributeBit>     attributes);
+        Model(const vk::raii::PhysicalDevice&        physical_device,
+              const vk::raii::Device&                device,
+              const vk::raii::CommandPool&           command_pool,
+              const vk::raii::Queue&                 queue,
+              const std::string&                     file_path,
+              const std::vector<VertexAttributeBit>& attributes);
 
         ~Model() override
         {
