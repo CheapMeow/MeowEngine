@@ -140,7 +140,7 @@ namespace Meow
                         ImGuiWindowFlags_NoMove;
         window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-        ImGui::Begin("DockSpace Demo", &p_open, window_flags);
+        ImGui::Begin("DockSpace", &p_open, window_flags);
 
         ImGui::PopStyleVar(3);
 
@@ -156,7 +156,7 @@ namespace Meow
 
         const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
 
-        ImGui::Begin("Demo");
+        ImGui::Begin("Scene");
         const auto camera_id = level_ptr->GetMainCameraID();
         auto       it        = all_gameobjects_map.find(camera_id);
         if (it != all_gameobjects_map.end())
