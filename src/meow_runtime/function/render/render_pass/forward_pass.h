@@ -10,7 +10,6 @@ namespace Meow
     {
         glm::vec3 pos;
         glm::vec3 viewPos;
-        int       blinn;
     };
 
     class ForwardPass : public RenderPass
@@ -74,7 +73,7 @@ namespace Meow
         std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_light_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
-        
+
         int draw_call = 0;
     };
 } // namespace Meow

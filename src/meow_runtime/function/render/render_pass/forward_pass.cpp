@@ -138,7 +138,6 @@ namespace Meow
         ForwardPointLight point_light_data;
         point_light_data.pos     = glm::vec3(1.0f, 1.0f, 1.0f);
         point_light_data.viewPos = transfrom_comp_ptr->position;
-        point_light_data.blinn   = 1;
 
         m_light_uniform_buffer->Reset();
         m_light_uniform_buffer->Populate(&point_light_data, sizeof(ForwardPointLight));
@@ -201,6 +200,16 @@ namespace Meow
                 m_forward_descriptor_sets,
                 "diffuseMap",
                 *model_res_ptr->meshes[0]->texture_info.diffuse_texture);
+
+            auto path            = model_res_ptr->root_path / "tree_stump_NormalGL.jpg";
+            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
+            if (success)
+                model_res_ptr->meshes[0]->texture_info.normal_texture = g_runtime_context.resource_system->GetTexture(uuid);
+            
+            m_forward_mat.GetShader()->BindImageToDescriptorSet(logical_device,
+                                                                m_forward_descriptor_sets,
+                                                                "normalMap",
+                                                                *model_res_ptr->meshes[0]->texture_info.normal_texture);
         }
     }
 

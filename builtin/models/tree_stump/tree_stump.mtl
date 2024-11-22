@@ -9,7 +9,7 @@ Ni 1.45
 d 1.000000
 illum 2
 map_Kd tree_stump_Color.jpg
-map_bump -bm 1 tree_stump_NormalGL.jpg
+bump tree_stump_NormalGL.jpg
 map_Ka tree_stump_AmbientOcclusion.jpg
 
 
