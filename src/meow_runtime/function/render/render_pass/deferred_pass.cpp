@@ -43,11 +43,7 @@ namespace Meow
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
-        m_quad_model = std::move(Model(physical_device,
-                                       logical_device,
-                                       command_pool,
-                                       queue,
-                                       std::move(vertices),
+        m_quad_model = std::move(Model(std::move(vertices),
                                        std::move(indices),
                                        m_quad_mat.shader_ptr->per_vertex_attributes));
 
@@ -103,11 +99,7 @@ namespace Meow
 
         // Create attachment
 
-        m_color_attachment = ImageData::CreateAttachment(physical_device,
-                                                         logical_device,
-                                                         command_pool,
-                                                         queue,
-                                                         m_color_format,
+        m_color_attachment = ImageData::CreateAttachment(m_color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,
@@ -115,11 +107,7 @@ namespace Meow
                                                          {},
                                                          false);
 
-        m_normal_attachment = ImageData::CreateAttachment(physical_device,
-                                                          logical_device,
-                                                          command_pool,
-                                                          queue,
-                                                          vk::Format::eR8G8B8A8Unorm,
+        m_normal_attachment = ImageData::CreateAttachment(vk::Format::eR8G8B8A8Unorm,
                                                           extent,
                                                           vk::ImageUsageFlagBits::eColorAttachment |
                                                               vk::ImageUsageFlagBits::eInputAttachment,
@@ -127,11 +115,7 @@ namespace Meow
                                                           {},
                                                           false);
 
-        m_position_attachment = ImageData::CreateAttachment(physical_device,
-                                                            logical_device,
-                                                            command_pool,
-                                                            queue,
-                                                            vk::Format::eR16G16B16A16Sfloat,
+        m_position_attachment = ImageData::CreateAttachment(vk::Format::eR16G16B16A16Sfloat,
                                                             extent,
                                                             vk::ImageUsageFlagBits::eColorAttachment |
                                                                 vk::ImageUsageFlagBits::eInputAttachment,
@@ -139,11 +123,7 @@ namespace Meow
                                                             {},
                                                             false);
 
-        m_depth_attachment = ImageData::CreateAttachment(physical_device,
-                                                         logical_device,
-                                                         command_pool,
-                                                         queue,
-                                                         m_depth_format,
+        m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,

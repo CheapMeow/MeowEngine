@@ -31,14 +31,15 @@ namespace Meow
 
         m_per_scene_uniform_buffer =
             std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
-        m_light_uniform_buffer =
-            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(ForwardPointLight));
+        m_light_uniform_buffer   = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(LightData));
         m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
 
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "light", m_light_uniform_buffer->buffer);
+        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_forward_descriptor_sets, "pbrParam", m_dynamic_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
     }
@@ -58,11 +59,7 @@ namespace Meow
 
         // Create attachment
 
-        m_depth_attachment = ImageData::CreateAttachment(physical_device,
-                                                         logical_device,
-                                                         command_pool,
-                                                         queue,
-                                                         m_depth_format,
+        m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
                                                          vk::ImageAspectFlagBits::eDepth,
@@ -135,82 +132,63 @@ namespace Meow
         m_per_scene_uniform_buffer->Reset();
         m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
 
-        ForwardPointLight point_light_data;
-        point_light_data.pos     = glm::vec3(1.0f, 1.0f, 1.0f);
-        point_light_data.viewPos = transfrom_comp_ptr->position;
+        LightData lights;
+        lights.camPos = transfrom_comp_ptr->position;
 
         m_light_uniform_buffer->Reset();
-        m_light_uniform_buffer->Populate(&point_light_data, sizeof(ForwardPointLight));
+        m_light_uniform_buffer->Populate(&lights, sizeof(lights));
 
         // Update mesh uniform
+
+        std::size_t row_number    = 7;
+        std::size_t column_number = 7;
+        float       spacing       = 2.5;
 
         m_dynamic_uniform_buffer->Reset();
         m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject>           model_go_ptr = kv.second.lock();
+            std::shared_ptr<GameObject>           gameobject_ptr = kv.second.lock();
             std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
-                model_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-            std::shared_ptr<ModelComponent> model_comp_ptr =
-                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+                gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+            std::shared_ptr<ModelComponent> model_ptr =
+                gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
 
-            if (!transfrom_comp_ptr2 || !model_comp_ptr)
+            if (!transfrom_comp_ptr2 || !model_ptr)
                 continue;
 
 #ifdef MEOW_DEBUG
-            if (!model_go_ptr)
+            if (!gameobject_ptr)
                 MEOW_ERROR("shared ptr is invalid!");
             if (!transfrom_comp_ptr2)
                 MEOW_ERROR("shared ptr is invalid!");
-            if (!model_comp_ptr)
+            if (!model_ptr)
                 MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            auto model = transfrom_comp_ptr2->GetTransform();
+            auto model    = transfrom_comp_ptr2->GetTransform();
+            auto position = transfrom_comp_ptr2->position;
 
-            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            int row = (position.y + (float)row_number / 2.0f * spacing) / spacing;
+            int col = (position.x + (float)column_number / 2.0f * spacing) / spacing;
+
+            glm::vec3 albedo    = glm::vec3(0.5f, 0.0f, 0.0f);
+            float     metallic  = (float)row / row_number;
+            float     roughness = glm::clamp((float)col / (float)column_number, 0.05f, 1.0f);
+            float     ao        = 1.0f;
+            PBRParam  pbrParam  = {albedo, metallic, roughness, ao};
+
+            for (int32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_forward_mat.PopulateDynamicUniformBuffer(m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
+                m_forward_mat.PopulateDynamicUniformBuffer(
+                    m_dynamic_uniform_buffer, "pbrParam", &pbrParam, sizeof(pbrParam));
                 m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
         m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
-
-        // temporary loading textures
-
-        for (const auto& kv : all_gameobjects_map)
-        {
-            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
-            if (!model_go_ptr)
-                continue;
-
-            std::shared_ptr<ModelComponent> model_comp_ptr =
-                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-            if (!model_comp_ptr)
-                continue;
-
-            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
-            if (!model_res_ptr)
-                continue;
-
-            m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                logical_device,
-                m_forward_descriptor_sets,
-                "diffuseMap",
-                *model_res_ptr->meshes[0]->texture_info.diffuse_texture);
-
-            auto path            = model_res_ptr->root_path / "tree_stump_NormalGL.jpg";
-            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
-            if (success)
-                model_res_ptr->meshes[0]->texture_info.normal_texture = g_runtime_context.resource_system->GetTexture(uuid);
-            
-            m_forward_mat.GetShader()->BindImageToDescriptorSet(logical_device,
-                                                                m_forward_descriptor_sets,
-                                                                "normalMap",
-                                                                *model_res_ptr->meshes[0]->texture_info.normal_texture);
-        }
     }
 
     void
@@ -235,16 +213,16 @@ namespace Meow
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
         {
-            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
-            if (!model_go_ptr)
+            std::shared_ptr<GameObject> gameobject_ptr = kv.second.lock();
+            if (!gameobject_ptr)
                 continue;
 
-            std::shared_ptr<ModelComponent> model_comp_ptr =
-                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-            if (!model_comp_ptr)
+            std::shared_ptr<ModelComponent> model_ptr =
+                gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+            if (!model_ptr)
                 continue;
 
-            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+            auto model_res_ptr = model_ptr->model_ptr.lock();
             if (!model_res_ptr)
                 continue;
 
@@ -259,7 +237,7 @@ namespace Meow
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_forward_mat.GetShader()->pipeline_layout,
                                                   2,
-                                                  *m_forward_descriptor_sets[2],
+                                                  {*m_forward_descriptor_sets[2], *m_forward_descriptor_sets[3]},
                                                   m_forward_mat.GetDynamicOffsets(i));
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 

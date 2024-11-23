@@ -48,7 +48,7 @@ set(RUNTIME_HEADER_FILES
     function/render/render_resources/image_data.h
     function/render/render_resources/index_buffer.h
     function/render/structs/material.h
-    function/render/render_resources/model.h
+    function/render/render_resources/model.hpp
     function/render/render_resources/model_anim.h
     function/render/render_resources/model_bone.h
     function/render/render_resources/model_mesh.h
@@ -62,9 +62,10 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/swapchain_data.h
     function/render/render_resources/vertex_attribute.h
     function/render/render_resources/vertex_buffer.h
+    function/render/utils/model_utils.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
-    function/resource/resource_system.h
+    function/resource/resource_system.hpp
     function/time/time_system.h
     function/window/window.h
     function/window/window_system.h
@@ -77,7 +78,6 @@ set(RUNTIME_SOURCE_FILES
     core/math/plane.cpp
     core/uuid/uuid.cpp
     function/components/camera/camera_3d_component.cpp
-    function/components/model/model_component.cpp
     function/file/file_system.cpp
     function/global/runtime_context.cpp
     function/input/input_system.cpp
@@ -102,6 +102,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/surface_data.cpp
     function/render/structs/swapchain_data.cpp
     function/render/render_resources/vertex_attribute.cpp
+    function/render/utils/model_utils.cpp
     function/render/utils/vulkan_initialize_utils.cpp
     function/resource/resource_system.cpp
     function/time/time_system.cpp

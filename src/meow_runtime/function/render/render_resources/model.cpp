@@ -1,4 +1,4 @@
-#include "model.h"
+#include "model.hpp"
 
 #include "pch.h"
 
@@ -16,53 +16,8 @@
 
 namespace Meow
 {
-    Model::Model(const vk::raii::PhysicalDevice&        physical_device,
-                 const vk::raii::Device&                device,
-                 const vk::raii::CommandPool&           command_pool,
-                 const vk::raii::Queue&                 queue,
-                 std::vector<float>&&                   vertices,
-                 std::vector<uint32_t>&&                indices,
-                 const std::vector<VertexAttributeBit>& attributes)
+    Model::Model(const std::string& file_path, const std::vector<VertexAttributeBit>& attributes)
     {
-        auto     index_type = vk::IndexType::eUint32;
-        uint32_t stride     = VertexAttributesToSize(attributes);
-        auto     mesh       = new ModelMesh();
-        this->attributes    = attributes;
-        mesh->vertices      = std::move(vertices);
-        mesh->indices       = std::move(indices);
-        mesh->vertex_count  = mesh->vertices.size() / stride * 4;
-
-        if (mesh->vertices.size() > 0)
-        {
-            mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-                physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
-        }
-        if (mesh->indices.size() > 0)
-        {
-            mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
-                physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
-        }
-
-        mesh->bounding.min = glm::vec3(-1.0f, -1.0f, 0.0f);
-        mesh->bounding.max = glm::vec3(1.0f, 1.0f, 0.0f);
-
-        root_node       = new ModelNode();
-        root_node->name = "RootNode";
-        root_node->meshes.push_back(mesh);
-        root_node->local_matrix = glm::mat4(1.0f);
-        mesh->link_node         = root_node;
-
-        meshes.push_back(mesh);
-    }
-
-    Model::Model(const vk::raii::PhysicalDevice&        physical_device,
-                 const vk::raii::Device&                device,
-                 const vk::raii::CommandPool&           command_pool,
-                 const vk::raii::Queue&                 queue,
-                 const std::string&                     file_path,
-                 const std::vector<VertexAttributeBit>& attributes)
-    {
-        auto index_type  = vk::IndexType::eUint32;
         this->attributes = attributes;
 
         int assimpFlags = aiProcess_Triangulate | aiProcess_FlipUVs;
@@ -107,7 +62,7 @@ namespace Meow
         root_path = std::filesystem::path(g_runtime_context.file_system->GetAbsolutePath(file_path)).parent_path();
 
         LoadBones(scene);
-        LoadNode(physical_device, device, command_pool, queue, scene->mRootNode, scene);
+        LoadNode(scene->mRootNode, scene);
         LoadAnim(scene);
     }
 
@@ -255,12 +210,7 @@ namespace Meow
         }
     }
 
-    ModelNode* Model::LoadNode(const vk::raii::PhysicalDevice& physical_device,
-                               const vk::raii::Device&         device,
-                               const vk::raii::CommandPool&    command_pool,
-                               const vk::raii::Queue&          queue,
-                               const aiNode*                   aiNode,
-                               const aiScene*                  ai_scene)
+    ModelNode* Model::LoadNode(const aiNode* aiNode, const aiScene* ai_scene)
     {
         auto model_node  = new ModelNode();
         model_node->name = aiNode->mName.C_Str();
@@ -277,8 +227,7 @@ namespace Meow
         {
             for (size_t i = 0; i < aiNode->mNumMeshes; ++i)
             {
-                ModelMesh* vkMesh = LoadMesh(
-                    physical_device, device, command_pool, queue, ai_scene->mMeshes[aiNode->mMeshes[i]], ai_scene);
+                ModelMesh* vkMesh = LoadMesh(ai_scene->mMeshes[aiNode->mMeshes[i]], ai_scene);
                 vkMesh->link_node = model_node;
                 model_node->meshes.push_back(vkMesh);
                 meshes.push_back(vkMesh);
@@ -302,9 +251,8 @@ namespace Meow
         // children node
         for (size_t i = 0; i < (size_t)aiNode->mNumChildren; ++i)
         {
-            ModelNode* childNode =
-                LoadNode(physical_device, device, command_pool, queue, aiNode->mChildren[i], ai_scene);
-            childNode->parent = model_node;
+            ModelNode* childNode = LoadNode(aiNode->mChildren[i], ai_scene);
+            childNode->parent    = model_node;
             model_node->children.push_back(childNode);
 
             // bones relationship
@@ -320,12 +268,7 @@ namespace Meow
         return model_node;
     }
 
-    ModelMesh* Model::LoadMesh(const vk::raii::PhysicalDevice& physical_device,
-                               const vk::raii::Device&         device,
-                               const vk::raii::CommandPool&    command_pool,
-                               const vk::raii::Queue&          queue,
-                               const aiMesh*                   ai_mesh,
-                               const aiScene*                  ai_scene)
+    ModelMesh* Model::LoadMesh(const aiMesh* ai_mesh, const aiScene* ai_scene)
     {
         auto mesh = new ModelMesh();
 
@@ -359,10 +302,7 @@ namespace Meow
         // load indices
         LoadIndices(mesh->indices, ai_mesh, ai_scene);
 
-        mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->vertices);
-        mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, mesh->indices);
+        mesh->RefreshBuffer();
         mesh->vertex_count   = ai_mesh->mNumVertices;
         mesh->triangle_count = (size_t)mesh->indices.size() / 3;
 

@@ -20,8 +20,7 @@ namespace Meow
 			.AddField("far_plane", "float", &Camera3DComponent::far_plane)
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
 
-		reflect::AddClass<ModelComponent>("ModelComponent")
-			.AddArray("m_image_paths", "std::vector<std::string>", "std::string", &ModelComponent::m_image_paths);
+		reflect::AddClass<ModelComponent>("ModelComponent");
 	}
 
 	VertexAttributeBit to_enum(const std::string& str)

@@ -2,7 +2,7 @@
 
 #include "core/base/bitmask.hpp"
 #include "function/render/render_resources/image_data.h"
-#include "function/render/render_resources/model.h"
+#include "function/render/render_resources/model.hpp"
 #include "function/system.h"
 #include "function/window/window.h"
 

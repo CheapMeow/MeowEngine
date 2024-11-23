@@ -1,8 +1,6 @@
-#include "resource_system.h"
+#include "resource_system.hpp"
 
 #include "pch.h"
-
-#include "function/global/runtime_context.h"
 
 namespace Meow
 {
@@ -35,14 +33,7 @@ namespace Meow
             }
         }
 
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        std::shared_ptr<ImageData> texture_ptr = ImageData::CreateTexture(
-            physical_device, logical_device, onetime_submit_command_pool, graphics_queue, file_path);
+        std::shared_ptr<ImageData> texture_ptr = ImageData::CreateTexture(file_path);
 
         if (texture_ptr)
         {
@@ -80,37 +71,6 @@ namespace Meow
     //     return m_materials[file_path];
     // }
 
-    std::tuple<bool, UUID> ResourceSystem::LoadModel(std::vector<float>&&            vertices,
-                                                     std::vector<uint32_t>&&         indices,
-                                                     std::vector<VertexAttributeBit> attributes)
-    {
-        FUNCTION_TIMER();
-
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        auto model_ptr = std::make_shared<Model>(physical_device,
-                                                 logical_device,
-                                                 onetime_submit_command_pool,
-                                                 graphics_queue,
-                                                 std::move(vertices),
-                                                 std::move(indices),
-                                                 attributes);
-
-        if (model_ptr)
-        {
-            m_models_id2data[model_ptr->uuid] = model_ptr;
-            return {true, model_ptr->uuid};
-        }
-        else
-        {
-            return {false, UUID(0)};
-        }
-    }
-
     std::tuple<bool, UUID> ResourceSystem::LoadModel(const std::string&              file_path,
                                                      std::vector<VertexAttributeBit> attributes)
     {
@@ -125,14 +85,7 @@ namespace Meow
             }
         }
 
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        auto model_ptr = std::make_shared<Model>(
-            physical_device, logical_device, onetime_submit_command_pool, graphics_queue, file_path, attributes);
+        auto model_ptr = std::make_shared<Model>(file_path, attributes);
 
         if (model_ptr)
         {

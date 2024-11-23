@@ -73,13 +73,30 @@ namespace Meow
             return *this;
         }
 
-        Model(const vk::raii::PhysicalDevice&        physical_device,
-              const vk::raii::Device&                device,
-              const vk::raii::CommandPool&           command_pool,
-              const vk::raii::Queue&                 queue,
-              std::vector<float>&&                   vertices,
-              std::vector<uint32_t>&&                indices,
-              const std::vector<VertexAttributeBit>& attributes);
+        template<typename VerticesType, typename IndicesType>
+        Model(VerticesType&& vertices, IndicesType&& indices, const std::vector<VertexAttributeBit>& attributes)
+        {
+            uint32_t stride  = VertexAttributesToSize(attributes);
+            auto     mesh    = new ModelMesh();
+            this->attributes = attributes;
+
+            mesh->vertices     = std::forward<VerticesType>(vertices);
+            mesh->indices      = std::forward<IndicesType>(indices);
+            mesh->vertex_count = mesh->vertices.size() / stride * 4;
+
+            mesh->RefreshBuffer();
+
+            mesh->bounding.min = glm::vec3(-1.0f, -1.0f, 0.0f);
+            mesh->bounding.max = glm::vec3(1.0f, 1.0f, 0.0f);
+
+            root_node       = new ModelNode();
+            root_node->name = "RootNode";
+            root_node->meshes.push_back(mesh);
+            root_node->local_matrix = glm::mat4(1.0f);
+            mesh->link_node         = root_node;
+
+            meshes.push_back(mesh);
+        }
 
         /**
          * @brief Load model from file using assimp.
@@ -89,12 +106,7 @@ namespace Meow
          * If you keep local transform matrix of model node, it means you should create uniform buffer for each model
          * node. Then when draw a mesh once you should update buffer data once.
          */
-        Model(const vk::raii::PhysicalDevice&        physical_device,
-              const vk::raii::Device&                device,
-              const vk::raii::CommandPool&           command_pool,
-              const vk::raii::Queue&                 queue,
-              const std::string&                     file_path,
-              const std::vector<VertexAttributeBit>& attributes);
+        Model(const std::string& file_path, const std::vector<VertexAttributeBit>& attributes);
 
         ~Model() override
         {
@@ -124,19 +136,9 @@ namespace Meow
     protected:
         void FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info);
 
-        ModelNode* LoadNode(const vk::raii::PhysicalDevice& physical_device,
-                            const vk::raii::Device&         device,
-                            const vk::raii::CommandPool&    command_pool,
-                            const vk::raii::Queue&          queue,
-                            const aiNode*                   node,
-                            const aiScene*                  scene);
+        ModelNode* LoadNode(const aiNode* node, const aiScene* scene);
 
-        ModelMesh* LoadMesh(const vk::raii::PhysicalDevice& physical_device,
-                            const vk::raii::Device&         device,
-                            const vk::raii::CommandPool&    command_pool,
-                            const vk::raii::Queue&          queue,
-                            const aiMesh*                   mesh,
-                            const aiScene*                  scene);
+        ModelMesh* LoadMesh(const aiMesh* mesh, const aiScene* scene);
 
         void LoadBones(const aiScene* aiScene);
 

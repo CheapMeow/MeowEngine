@@ -4,7 +4,7 @@
 #include "function/input/input_system.h"
 #include "function/level/level_system.h"
 #include "function/render/render_system.h"
-#include "function/resource/resource_system.h"
+#include "function/resource/resource_system.hpp"
 #include "function/time/time_system.h"
 #include "function/window/window_system.h"
 

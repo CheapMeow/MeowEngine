@@ -2,7 +2,7 @@
 
 #include "core/uuid/uuid.h"
 #include "function/render/render_resources/image_data.h"
-#include "function/render/render_resources/model.h"
+#include "function/render/render_resources/model.hpp"
 #include "function/render/structs/shader.h"
 #include "function/system.h"
 
@@ -48,9 +48,25 @@ namespace Meow
 
         // std::shared_ptr<Material> GetMaterial(const UUID& uuid);
 
-        std::tuple<bool, UUID> LoadModel(std::vector<float>&&            vertices,
-                                         std::vector<uint32_t>&&         indices,
-                                         std::vector<VertexAttributeBit> attributes);
+        template<typename VerticesType, typename IndicesType>
+        std::tuple<bool, UUID>
+        LoadModel(VerticesType&& vertices, IndicesType&& indices, std::vector<VertexAttributeBit> attributes)
+        {
+            FUNCTION_TIMER();
+
+            auto model_ptr = std::make_shared<Model>(
+                std::forward<VerticesType>(vertices), std::forward<IndicesType>(indices), attributes);
+
+            if (model_ptr)
+            {
+                m_models_id2data[model_ptr->uuid] = model_ptr;
+                return {true, model_ptr->uuid};
+            }
+            else
+            {
+                return {false, UUID(0)};
+            }
+        }
 
         std::tuple<bool, UUID> LoadModel(const std::string& file_path, std::vector<VertexAttributeBit> attributes);
 

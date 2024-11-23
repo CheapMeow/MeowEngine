@@ -44,6 +44,8 @@ namespace Meow
 
         TextureInfo texture_info;
 
+        void RefreshBuffer();
+        
         void BindOnly(const vk::raii::CommandBuffer& cmd_buffer);
 
         void DrawOnly(const vk::raii::CommandBuffer& cmd_buffer);

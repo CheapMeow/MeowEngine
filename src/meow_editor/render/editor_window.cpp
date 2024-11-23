@@ -6,6 +6,7 @@
 #include "meow_runtime/function/components/transform/transform_3d_component.hpp"
 #include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/function/level/level.h"
+#include "meow_runtime/function/render/utils/model_utils.h"
 #include "meow_runtime/function/render/utils/vulkan_initialize_utils.hpp"
 
 #include <backends/imgui_impl_glfw.h>
@@ -45,45 +46,67 @@ namespace Meow
             MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-        auto main_camera_id = level_ptr->CreateObject();
-        level_ptr->SetMainCameraID(main_camera_id);
-        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(main_camera_id).lock();
+        {
+            auto uuid = level_ptr->CreateObject();
+            level_ptr->SetMainCameraID(uuid);
+            std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
 
 #ifdef MEOW_DEBUG
-        if (!camera_go_ptr)
-            MEOW_ERROR("GameObject is invalid!");
+            if (!gameobject_ptr)
+                MEOW_ERROR("GameObject is invalid!");
 #endif
 
-        camera_go_ptr->SetName("Camera");
-        std::shared_ptr<Transform3DComponent> camera_transform_comp_ptr =
-            TryAddComponent(camera_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            TryAddComponent(camera_go_ptr, "Camera3DComponent", std::make_shared<Camera3DComponent>());
+            gameobject_ptr->SetName("Camera");
+            std::shared_ptr<Transform3DComponent> transform_ptr =
+                TryAddComponent(gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+            std::shared_ptr<Camera3DComponent> camera_ptr =
+                TryAddComponent(gameobject_ptr, "Camera3DComponent", std::make_shared<Camera3DComponent>());
 
 #ifdef MEOW_DEBUG
-        if (!camera_transform_comp_ptr)
-            MEOW_ERROR("shared ptr is invalid!");
-        if (!camera_comp_ptr)
-            MEOW_ERROR("shared ptr is invalid!");
+            if (!transform_ptr)
+                MEOW_ERROR("shared ptr is invalid!");
+            if (!camera_ptr)
+                MEOW_ERROR("shared ptr is invalid!");
 #endif
-        camera_transform_comp_ptr->position = glm::vec3(0.0f, 0.0f, -10.0f);
+            transform_ptr->position = glm::vec3(0.0f, 0.0f, -10.0f);
 
-        camera_comp_ptr->camera_mode  = CameraMode::Free;
-        camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+            camera_ptr->camera_mode  = CameraMode::Free;
+            camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+        }
 
-        UUID                        model_go_id  = level_ptr->CreateObject();
-        std::shared_ptr<GameObject> model_go_ptr = level_ptr->GetGameObjectByID(model_go_id).lock();
+        {
+            std::size_t row_number    = 7;
+            std::size_t column_number = 7;
+            float       spacing       = 2.5;
+            auto [sphere_vertices, sphere_indices] =
+                GenerateSphereVerticesAndIndices(64, 64, m_render_pass_ptr->input_vertex_attributes);
+            for (std::size_t row = 0; row < row_number; ++row)
+            {
+                for (std::size_t col = 0; col < column_number; ++col)
+                {
+                    UUID                        uuid           = level_ptr->CreateObject();
+                    std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
 
 #ifdef MEOW_DEBUG
-        if (!model_go_ptr)
-            MEOW_ERROR("GameObject is invalid!");
+                    if (!gameobject_ptr)
+                        MEOW_ERROR("GameObject is invalid!");
 #endif
-        model_go_ptr->SetName("TreeStump");
-        TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-        TryAddComponent(model_go_ptr,
-                        "ModelComponent",
-                        std::make_shared<ModelComponent>("builtin/models/tree_stump/tree_stump.obj",
-                                                         m_render_pass_ptr->input_vertex_attributes));
+                    gameobject_ptr->SetName("Sphere");
+                    auto transform_ptr = TryAddComponent(
+                        gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+                    transform_ptr->position = glm::vec3(col * spacing - (float)column_number / 2.0f * spacing,
+                                                        row * spacing - (float)row_number / 2.0f * spacing,
+                                                        0.0f);
+
+                    auto model_comp_ptr =
+                        TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());
+                    auto [success, model_uuid] = g_runtime_context.resource_system->LoadModel(
+                        sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+                    if (success)
+                        model_comp_ptr->model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
+                }
+            }
+        }
     }
 
     EditorWindow::~EditorWindow()
@@ -226,11 +249,7 @@ namespace Meow
 
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
-        m_offscreen_render_target = ImageData::CreateRenderTarget(physical_device,
-                                                                  logical_device,
-                                                                  onetime_submit_command_pool,
-                                                                  graphics_queue,
-                                                                  color_format,
+        m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
                                                                   temp_extent,
                                                                   vk::ImageUsageFlagBits::eColorAttachment |
                                                                       vk::ImageUsageFlagBits::eInputAttachment,
@@ -433,16 +452,16 @@ namespace Meow
 
         // update aspect ratio
 
-        std::shared_ptr<Level>      level_ptr     = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
+        std::shared_ptr<Level>      level_ptr      = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
 
-        if (!camera_go_ptr)
+        if (!gameobject_ptr)
             return;
 
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+        std::shared_ptr<Camera3DComponent> camera_ptr =
+            gameobject_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        camera_comp_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+        camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
     }
 
     void EditorWindow::RefreshRenderPass()

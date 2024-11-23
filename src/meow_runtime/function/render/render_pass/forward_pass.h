@@ -6,10 +6,29 @@
 
 namespace Meow
 {
-    struct ForwardPointLight
+    struct LightData
     {
-        glm::vec3 pos;
-        glm::vec3 viewPos;
+        glm::vec3 pos[4] = {
+            glm::vec3(-10.0f, 10.0f, 10.0f),
+            glm::vec3(10.0f, 10.0f, 10.0f),
+            glm::vec3(-10.0f, -10.0f, 10.0f),
+            glm::vec3(10.0f, -10.0f, 10.0f),
+        };
+        glm::vec3 color[4] = {
+            glm::vec3(300.0f, 300.0f, 300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
+            glm::vec3(300.0f, 300.0f, 300.0f),
+        };
+        glm::vec3 camPos;
+    };
+
+    struct PBRParam
+    {
+        glm::vec3 albedo;
+        float     metallic;
+        float     roughness;
+        float     ao;
     };
 
     class ForwardPass : public RenderPass

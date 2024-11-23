@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function/object/game_object.h"
-#include "function/render/render_resources/model.h"
+#include "function/render/render_resources/model.hpp"
 
 #include <vector>
 
@@ -12,14 +12,5 @@ namespace Meow
     public:
         UUID                 uuid;
         std::weak_ptr<Model> model_ptr;
-
-        [[reflectable_field()]]
-        std::vector<std::string> m_image_paths;
-
-        ModelComponent(std::vector<float>&&            vertices,
-                       std::vector<uint32_t>&&         indices,
-                       std::vector<VertexAttributeBit> attributes);
-
-        ModelComponent(const std::string& file_path, std::vector<VertexAttributeBit> attributes);
     };
 } // namespace Meow
