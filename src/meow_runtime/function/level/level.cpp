@@ -68,10 +68,12 @@ namespace Meow
         {
             for (const auto& pair : m_gameobjects)
             {
-                if (camera_comp_ptr->FrustumCulling(pair.second))
-                {
-                    m_visibles[pair.first] = pair.second;
-                }
+                // if (camera_comp_ptr->FrustumCulling(pair.second))
+                // {
+                //     m_visibles[pair.first] = pair.second;
+                // }
+
+                m_visibles[pair.first] = pair.second;
             }
         }
     }

@@ -8,17 +8,17 @@ namespace Meow
 {
     struct LightData
     {
-        glm::vec3 pos[4] = {
-            glm::vec3(-10.0f, 10.0f, 10.0f),
-            glm::vec3(10.0f, 10.0f, 10.0f),
-            glm::vec3(-10.0f, -10.0f, 10.0f),
-            glm::vec3(10.0f, -10.0f, 10.0f),
+        glm::vec4 pos[4] = {
+            glm::vec4(-10.0f, 10.0f, 10.0f, 0.0f),
+            glm::vec4(10.0f, 10.0f, 10.0f, 0.0f),
+            glm::vec4(-10.0f, -10.0f, 10.0f, 0.0f),
+            glm::vec4(10.0f, -10.0f, 10.0f, 0.0f),
         };
-        glm::vec3 color[4] = {
-            glm::vec3(300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f),
-            glm::vec3(300.0f, 300.0f, 300.0f),
+        glm::vec4 color[4] = {
+            glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+            glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+            glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+            glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
         };
         glm::vec3 camPos;
     };
