@@ -37,7 +37,7 @@ namespace Meow
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "light", m_light_uniform_buffer->buffer);
+            logical_device, m_forward_descriptor_sets, "lights", m_light_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "pbrParam", m_dynamic_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
