@@ -167,7 +167,7 @@ namespace Meow
                 MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            auto model    = transfrom_comp_ptr2->GetTransform();
+            auto model = transfrom_comp_ptr2->GetTransform();
             // auto position = transfrom_comp_ptr2->position;
             //
             // int row = (position.y + (float)row_number / 2.0f * spacing) / spacing;
@@ -238,12 +238,12 @@ namespace Meow
                 //                                   *m_forward_mat.GetShader()->pipeline_layout,
                 //                                   2,
                 //                                   {*m_forward_descriptor_sets[2], *m_forward_descriptor_sets[3]},
-                //                                   m_forward_mat.GetDynamicOffsets(i));
+                //                                   m_forward_mat.GetDynamicOffsets(draw_call));
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_forward_mat.GetShader()->pipeline_layout,
                                                   2,
                                                   *m_forward_descriptor_sets[2],
-                                                  m_forward_mat.GetDynamicOffsets(i));
+                                                  m_forward_mat.GetDynamicOffsets(draw_call));
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;

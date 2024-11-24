@@ -305,7 +305,7 @@ namespace Meow
                                                   *m_obj2attachment_mat.GetShader()->pipeline_layout,
                                                   1,
                                                   *m_obj2attachment_descriptor_sets[1],
-                                                  m_obj2attachment_mat.GetDynamicOffsets(i));
+                                                  m_obj2attachment_mat.GetDynamicOffsets(draw_call[0]));
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
