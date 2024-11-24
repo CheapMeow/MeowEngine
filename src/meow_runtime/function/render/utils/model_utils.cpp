@@ -6,51 +6,79 @@
 namespace Meow
 {
     std::tuple<std::vector<float>, std::vector<uint32_t>>
-    GenerateSphereVerticesAndIndices(uint32_t                        x_segments,
-                                     uint32_t                        y_segments,
+    GenerateSphereVerticesAndIndices(uint32_t                        sector_count,
+                                     uint32_t                        stack_count,
+                                     float                           radius,
                                      std::vector<VertexAttributeBit> attributes)
     {
         std::vector<glm::vec3> positions;
         std::vector<glm::vec2> uv;
         std::vector<glm::vec3> normals;
-        std::vector<uint32_t>  indices;
 
-        for (std::size_t x = 0; x <= x_segments; ++x)
+        float x, y, z, xy;                           // vertex position
+        float nx, ny, nz, lengthInv = 1.0f / radius; // vertex normal
+        float s, t;                                  // vertex texCoord
+
+        float sectorStep = 2 * std::numbers::pi / sector_count;
+        float stackStep  = std::numbers::pi / stack_count;
+        float sectorAngle, stackAngle;
+
+        for (int i = 0; i <= stack_count; ++i)
         {
-            for (std::size_t y = 0; y <= y_segments; ++y)
-            {
-                float u     = (float)x / (float)x_segments;
-                float v     = (float)y / (float)y_segments;
-                float x_pos = std::cos(u * 2.0f * std::numbers::pi) * std::sin(v * std::numbers::pi);
-                float y_pos = std::cos(v * std::numbers::pi);
-                float z_pos = std::sin(u * 2.0f * std::numbers::pi) * std::sin(v * std::numbers::pi);
+            stackAngle = std::numbers::pi / 2 - i * stackStep; // starting from pi/2 to -pi/2
+            xy         = radius * cosf(stackAngle);            // r * cos(u)
+            z          = radius * sinf(stackAngle);            // r * sin(u)
 
-                positions.push_back(glm::vec3(x_pos, y_pos, z_pos));
-                uv.push_back(glm::vec2(u, v));
-                normals.push_back(glm::vec3(x_pos, y_pos, z_pos));
+            // add (sector_count+1) positions per stack
+            // first and last positions have same position and normal, but different tex coords
+            for (int j = 0; j <= sector_count; ++j)
+            {
+                sectorAngle = j * sectorStep; // starting from 0 to 2pi
+
+                // vertex position (x, y, z)
+                x = xy * cosf(sectorAngle); // r * cos(u) * cos(v)
+                y = xy * sinf(sectorAngle); // r * cos(u) * sin(v)
+                positions.push_back({x, y, z});
+
+                // normalized vertex normal (nx, ny, nz)
+                nx = x * lengthInv;
+                ny = y * lengthInv;
+                nz = z * lengthInv;
+                normals.push_back({nx, ny, nz});
+
+                // vertex tex coord (s, t) range between [0, 1]
+                s = (float)j / sector_count;
+                t = (float)i / stack_count;
+                uv.push_back({s, t});
             }
         }
 
-        bool odd_row = false;
-        for (std::size_t y = 0; y < y_segments; ++y)
+        std::vector<uint32_t> indices;
+        int                   k1, k2;
+        for (int i = 0; i < stack_count; ++i)
         {
-            if (!odd_row) // even rows: y == 0, y == 2; and so on
+            k1 = i * (sector_count + 1); // beginning of current stack
+            k2 = k1 + sector_count + 1;  // beginning of next stack
+
+            for (int j = 0; j < sector_count; ++j, ++k1, ++k2)
             {
-                for (std::size_t x = 0; x <= x_segments; ++x)
+                // 2 triangles per sector excluding first and last stacks
+                // k1 => k2 => k1+1
+                if (i != 0)
                 {
-                    indices.push_back(y * (x_segments + 1) + x);
-                    indices.push_back((y + 1) * (x_segments + 1) + x);
+                    indices.push_back(k1);
+                    indices.push_back(k2);
+                    indices.push_back(k1 + 1);
+                }
+
+                // k1+1 => k2 => k2+1
+                if (i != (stack_count - 1))
+                {
+                    indices.push_back(k1 + 1);
+                    indices.push_back(k2);
+                    indices.push_back(k2 + 1);
                 }
             }
-            else
-            {
-                for (int x = x_segments; x >= 0; --x)
-                {
-                    indices.push_back((y + 1) * (x_segments + 1) + x);
-                    indices.push_back(y * (x_segments + 1) + x);
-                }
-            }
-            odd_row = !odd_row;
         }
 
         std::vector<float> data;

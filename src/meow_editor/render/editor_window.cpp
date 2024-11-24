@@ -79,7 +79,7 @@ namespace Meow
             std::size_t column_number = 7;
             float       spacing       = 2.5;
             auto [sphere_vertices, sphere_indices] =
-                GenerateSphereVerticesAndIndices(64, 64, m_render_pass_ptr->input_vertex_attributes);
+                GenerateSphereVerticesAndIndices(64, 64, 1.0f, m_render_pass_ptr->input_vertex_attributes);
             for (std::size_t row = 0; row < row_number; ++row)
             {
                 for (std::size_t col = 0; col < column_number; ++col)

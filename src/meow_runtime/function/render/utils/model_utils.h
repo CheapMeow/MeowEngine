@@ -8,7 +8,8 @@
 namespace Meow
 {
     std::tuple<std::vector<float>, std::vector<uint32_t>>
-    GenerateSphereVerticesAndIndices(uint32_t                        x_segments,
-                                     uint32_t                        y_segments,
+    GenerateSphereVerticesAndIndices(uint32_t                        sector_count,
+                                     uint32_t                        stack_count,
+                                     float                           radius,
                                      std::vector<VertexAttributeBit> attributes);
 } // namespace Meow
