@@ -38,8 +38,8 @@ namespace Meow
             logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "lights", m_light_uniform_buffer->buffer);
-        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "pbrParam", m_dynamic_uniform_buffer->buffer);
+        // m_forward_mat.GetShader()->BindBufferToDescriptorSet(
+        //     logical_device, m_forward_descriptor_sets, "pbrParam", m_dynamic_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
     }
@@ -168,23 +168,23 @@ namespace Meow
 #endif
 
             auto model    = transfrom_comp_ptr2->GetTransform();
-            auto position = transfrom_comp_ptr2->position;
-
-            int row = (position.y + (float)row_number / 2.0f * spacing) / spacing;
-            int col = (position.x + (float)column_number / 2.0f * spacing) / spacing;
-
-            glm::vec3 albedo    = glm::vec3(0.5f, 0.0f, 0.0f);
-            float     metallic  = (float)row / row_number;
-            float     roughness = glm::clamp((float)col / (float)column_number, 0.05f, 1.0f);
-            float     ao        = 1.0f;
-            PBRParam  pbrParam  = {albedo, metallic, roughness, ao};
+            // auto position = transfrom_comp_ptr2->position;
+            //
+            // int row = (position.y + (float)row_number / 2.0f * spacing) / spacing;
+            // int col = (position.x + (float)column_number / 2.0f * spacing) / spacing;
+            //
+            // glm::vec3 albedo    = glm::vec3(0.5f, 0.0f, 0.0f);
+            // float     metallic  = (float)row / row_number;
+            // float     roughness = glm::clamp((float)col / (float)column_number, 0.05f, 1.0f);
+            // float     ao        = 1.0f;
+            // PBRParam  pbrParam  = {albedo, metallic, roughness, ao};
 
             for (int32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_forward_mat.PopulateDynamicUniformBuffer(m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
-                m_forward_mat.PopulateDynamicUniformBuffer(
-                    m_dynamic_uniform_buffer, "pbrParam", &pbrParam, sizeof(pbrParam));
+                // m_forward_mat.PopulateDynamicUniformBuffer(
+                //     m_dynamic_uniform_buffer, "pbrParam", &pbrParam, sizeof(pbrParam));
                 m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -234,10 +234,15 @@ namespace Meow
 
             for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
+                // command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                //                                   *m_forward_mat.GetShader()->pipeline_layout,
+                //                                   2,
+                //                                   {*m_forward_descriptor_sets[2], *m_forward_descriptor_sets[3]},
+                //                                   m_forward_mat.GetDynamicOffsets(i));
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_forward_mat.GetShader()->pipeline_layout,
                                                   2,
-                                                  {*m_forward_descriptor_sets[2], *m_forward_descriptor_sets[3]},
+                                                  *m_forward_descriptor_sets[2],
                                                   m_forward_mat.GetDynamicOffsets(i));
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
