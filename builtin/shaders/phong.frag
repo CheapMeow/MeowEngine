@@ -11,17 +11,36 @@ layout (set = 1, binding = 0) uniform LightData
     vec3 camPos;
 } lights;
 
-layout (set = 3, binding = 0) uniform PBRParamDynamic
-{
-    vec3 albedo;
-    float metallic;
-    float roughness;
-    float ao;
-} pbrParam;
+layout (set = 3, binding = 0) uniform sampler2D albedoMap;
+layout (set = 3, binding = 1) uniform sampler2D normalMap;
+layout (set = 3, binding = 2) uniform sampler2D metallicMap;
+layout (set = 3, binding = 3) uniform sampler2D roughnessMap;
+layout (set = 3, binding = 4) uniform sampler2D aoMap;
 
 layout (location = 0) out vec4 outFragColor;
 
 const float PI = 3.14159265359;
+// ----------------------------------------------------------------------------
+// Easy trick to get tangent-normals to world-space to keep PBR code simplified.
+// Don't worry if you don't get what's going on; you generally want to do normal 
+// mapping the usual way for performance anyways; I do plan make a note of this 
+// technique somewhere later in the normal mapping tutorial.
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalMap, inUV0).xyz * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(inPosition);
+    vec3 Q2  = dFdy(inPosition);
+    vec2 st1 = dFdx(inUV0);
+    vec2 st2 = dFdy(inUV0);
+
+    vec3 N   = normalize(inNormal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
 // ----------------------------------------------------------------------------
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
@@ -65,13 +84,18 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 // ----------------------------------------------------------------------------
 void main()
 {		
-    vec3 N = inNormal;
+    vec3 albedo     = pow(texture(albedoMap, inUV0).rgb, vec3(2.2));
+    float metallic  = texture(metallicMap, inUV0).r;
+    float roughness = texture(roughnessMap, inUV0).r;
+    float ao        = texture(aoMap, inUV0).r;
+
+    vec3 N = getNormalFromMap();
     vec3 V = normalize(lights.camPos - inPosition);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, pbrParam.albedo, pbrParam.metallic);
+    F0 = mix(F0, albedo, metallic);
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -85,9 +109,9 @@ void main()
         vec3 radiance = lights.color[i] * attenuation;
 
         // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, pbrParam.roughness);   
-        float G   = GeometrySmith(N, V, L, pbrParam.roughness);      
-        vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+        float NDF = DistributionGGX(N, H, roughness);   
+        float G   = GeometrySmith(N, V, L, roughness);      
+        vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
            
         vec3 numerator    = NDF * G * F; 
         float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
@@ -102,19 +126,19 @@ void main()
         // multiply kD by the inverse metalness such that only non-metals 
         // have diffuse lighting, or a linear blend if partly metal (pure metals
         // have no diffuse light).
-        kD *= 1.0 - pbrParam.metallic;	  
+        kD *= 1.0 - metallic;	  
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);        
 
         // add to outgoing radiance Lo
-        Lo += (kD * pbrParam.albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     }   
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * pbrParam.albedo * pbrParam.ao;
-
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    
     vec3 color = ambient + Lo;
 
     // HDR tonemapping

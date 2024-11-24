@@ -39,9 +39,62 @@ namespace Meow
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "lights", m_light_uniform_buffer->buffer);
         m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "pbrParam", m_dynamic_uniform_buffer->buffer);
-        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
+
+        {
+            auto [success, texture_uuid] =
+                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/albedo.png");
+            if (success)
+            {
+                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_forward_descriptor_sets, "albedoMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto [success, texture_uuid] =
+                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/normal.png");
+            if (success)
+            {
+                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_forward_descriptor_sets, "normalMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto [success, texture_uuid] =
+                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/metallic.png");
+            if (success)
+            {
+                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_forward_descriptor_sets, "metallicMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto [success, texture_uuid] =
+                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/roughness.png");
+            if (success)
+            {
+                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_forward_descriptor_sets, "roughnessMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto [success, texture_uuid] =
+                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/ao.png");
+            if (success)
+            {
+                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                m_forward_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_forward_descriptor_sets, "aoMap", *texture_ptr);
+            }
+        }
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -140,10 +193,6 @@ namespace Meow
 
         // Update mesh uniform
 
-        std::size_t row_number    = 7;
-        std::size_t column_number = 7;
-        float       spacing       = 2.5;
-
         m_dynamic_uniform_buffer->Reset();
         m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
@@ -167,24 +216,12 @@ namespace Meow
                 MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            auto model    = transfrom_comp_ptr2->GetTransform();
-            auto position = transfrom_comp_ptr2->position;
-
-            int row = (position.y + (float)row_number / 2.0f * spacing) / spacing;
-            int col = (position.x + (float)column_number / 2.0f * spacing) / spacing;
-
-            glm::vec3 albedo    = glm::vec3(0.5f, 0.0f, 0.0f);
-            float     metallic  = (float)row / row_number;
-            float     roughness = glm::clamp((float)col / (float)column_number, 0.05f, 1.0f);
-            float     ao        = 1.0f;
-            PBRParam  pbrParam  = {albedo, metallic, roughness, ao};
+            auto model = transfrom_comp_ptr2->GetTransform();
 
             for (int32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_forward_mat.PopulateDynamicUniformBuffer(m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
-                m_forward_mat.PopulateDynamicUniformBuffer(
-                    m_dynamic_uniform_buffer, "pbrParam", &pbrParam, sizeof(pbrParam));
                 m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -207,6 +244,11 @@ namespace Meow
                                           *m_forward_mat.GetShader()->pipeline_layout,
                                           0,
                                           *m_forward_descriptor_sets[0],
+                                          {});
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *m_forward_mat.GetShader()->pipeline_layout,
+                                          3,
+                                          *m_forward_descriptor_sets[3],
                                           {});
 
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
@@ -237,7 +279,7 @@ namespace Meow
                 command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                                   *m_forward_mat.GetShader()->pipeline_layout,
                                                   2,
-                                                  {*m_forward_descriptor_sets[2], *m_forward_descriptor_sets[3]},
+                                                  *m_forward_descriptor_sets[2],
                                                   m_forward_mat.GetDynamicOffsets(draw_call));
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
