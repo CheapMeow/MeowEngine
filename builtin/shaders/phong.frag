@@ -11,6 +11,14 @@ layout (set = 1, binding = 0) uniform LightData
     vec3 camPos;
 } lights;
 
+layout (set = 3, binding = 0) uniform PBRParamDynamic
+{
+    vec3 albedo;
+    float metallic;
+    float roughness;
+    float ao;
+} pbrParam;
+
 layout (location = 0) out vec4 outFragColor;
 
 const float PI = 3.14159265359;
@@ -56,19 +64,14 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 }
 // ----------------------------------------------------------------------------
 void main()
-{	
-    vec3 albedo = vec3(0.5, 0.0, 0.0);
-    float metallic = 0.5;
-    float roughness = 0.5;
-    float ao = 1.0;
-
+{		
     vec3 N = inNormal;
     vec3 V = normalize(lights.camPos - inPosition);
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
     vec3 F0 = vec3(0.04); 
-    F0 = mix(F0, albedo, metallic);
+    F0 = mix(F0, pbrParam.albedo, pbrParam.metallic);
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
@@ -82,8 +85,8 @@ void main()
         vec3 radiance = lights.color[i] * attenuation;
 
         // Cook-Torrance BRDF
-        float NDF = DistributionGGX(N, H, roughness);   
-        float G   = GeometrySmith(N, V, L, roughness);      
+        float NDF = DistributionGGX(N, H, pbrParam.roughness);   
+        float G   = GeometrySmith(N, V, L, pbrParam.roughness);      
         vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
            
         vec3 numerator    = NDF * G * F; 
@@ -99,18 +102,18 @@ void main()
         // multiply kD by the inverse metalness such that only non-metals 
         // have diffuse lighting, or a linear blend if partly metal (pure metals
         // have no diffuse light).
-        kD *= 1.0 - metallic;	  
+        kD *= 1.0 - pbrParam.metallic;	  
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);        
 
         // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * pbrParam.albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     }   
     
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 ambient = vec3(0.03) * pbrParam.albedo * pbrParam.ao;
 
     vec3 color = ambient + Lo;
 
