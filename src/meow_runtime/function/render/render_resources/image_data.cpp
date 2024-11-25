@@ -97,16 +97,21 @@ namespace Meow
                 break;
         }
 
-        vk::ImageSubresourceRange image_subresource_range(aspect_mask, 0, 1, 0, 1);
-
-        vk::ImageMemoryBarrier image_memory_barrier(source_access_mask,       /* srcAccessMask */
-                                                    destination_access_mask,  /* dstAccessMask */
-                                                    old_image_layout,         /* oldLayout */
-                                                    new_image_layout,         /* newLayout */
-                                                    VK_QUEUE_FAMILY_IGNORED,  /* srcQueueFamilyIndex */
-                                                    VK_QUEUE_FAMILY_IGNORED,  /* dstQueueFamilyIndex */
-                                                    *image,                   /* image */
-                                                    image_subresource_range); /* subresourceRange */
+        vk::ImageSubresourceRange image_subresource_range = {
+            .aspectMask     = aspect_mask,
+            .baseMipLevel   = 0,
+            .levelCount     = 1,
+            .baseArrayLayer = 0,
+            .layerCount     = 1,
+        };
+        vk::ImageMemoryBarrier image_memory_barrier = {.srcAccessMask       = source_access_mask,
+                                                       .dstAccessMask       = destination_access_mask,
+                                                       .oldLayout           = old_image_layout,
+                                                       .newLayout           = new_image_layout,
+                                                       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                                       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                                                       .image               = *image,
+                                                       .subresourceRange    = image_subresource_range};
 
         command_buffer.pipelineBarrier(source_stage,          /* srcStageMask */
                                        destination_stage,     /* dstStageMask */
@@ -144,19 +149,23 @@ namespace Meow
 
         // Create Image
 
-        vk::ImageCreateInfo image_create_info(vk::ImageCreateFlags(),
-                                              vk::ImageType::e2D,
-                                              format,
-                                              vk::Extent3D(extent, 1),
-                                              1,
-                                              1,
-                                              vk::SampleCountFlagBits::e1,
-                                              image_tiling,
-                                              usage_flags | vk::ImageUsageFlagBits::eSampled,
-                                              vk::SharingMode::eExclusive,
-                                              {},
-                                              initial_layout);
-        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
+        vk::ImageCreateInfo image_create_info = {.flags     = vk::ImageCreateFlags(),
+                                                 .imageType = vk::ImageType::e2D,
+                                                 .format    = format,
+                                                 .extent =
+                                                     vk::Extent3D {
+                                                         .width  = extent.width,
+                                                         .height = extent.height,
+                                                         .depth  = 1,
+                                                     },
+                                                 .mipLevels     = 1,
+                                                 .arrayLayers   = 1,
+                                                 .samples       = vk::SampleCountFlagBits::e1,
+                                                 .tiling        = image_tiling,
+                                                 .usage         = usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                                 .sharingMode   = vk::SharingMode::eExclusive,
+                                                 .initialLayout = initial_layout};
+        image_data_ptr->image                 = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
                                                              physical_device.getMemoryProperties(),
@@ -165,8 +174,14 @@ namespace Meow
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
-            vk::ImageViewCreateInfo(
-                {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
+            vk::ImageViewCreateInfo {.image            = *image_data_ptr->image,
+                                     .viewType         = vk::ImageViewType::e2D,
+                                     .format           = format,
+                                     .subresourceRange = vk::ImageSubresourceRange {.aspectMask     = aspect_mask,
+                                                                                    .baseMipLevel   = 0,
+                                                                                    .levelCount     = 1,
+                                                                                    .baseArrayLayer = 0,
+                                                                                    .layerCount     = 1}});
 
         // Transit Layout
         OneTimeSubmit(logical_device,
@@ -181,16 +196,26 @@ namespace Meow
         return image_data_ptr;
     }
 
-    std::shared_ptr<ImageData> ImageData::CreateTexture(vk::Format             format,
-                                                        const vk::Extent2D&    extent,
+    std::shared_ptr<ImageData> ImageData::CreateTexture(const std::string&     file_path,
+                                                        vk::Format             format,
                                                         vk::ImageUsageFlags    usage_flags,
                                                         vk::ImageAspectFlags   aspect_mask,
                                                         vk::FormatFeatureFlags format_feature_flags,
                                                         bool                   anisotropy_enable,
                                                         bool                   force_staging)
     {
+        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_path);
+        if (width == 0 || height == 0)
+        {
+            return nullptr;
+        }
+        vk::Extent2D extent = {width, height};
+
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         auto image_data_ptr = std::make_shared<ImageData>(nullptr);
 
@@ -200,22 +225,22 @@ namespace Meow
         image_data_ptr->extent      = extent;
         image_data_ptr->aspect_mask = aspect_mask;
 
-        vk::SamplerCreateInfo sampler_create_info({},
-                                                  vk::Filter::eLinear,
-                                                  vk::Filter::eLinear,
-                                                  vk::SamplerMipmapMode::eLinear,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  0.0f,
-                                                  anisotropy_enable,
-                                                  16.0f,
-                                                  false,
-                                                  vk::CompareOp::eNever,
-                                                  0.0f,
-                                                  0.0f,
-                                                  vk::BorderColor::eFloatOpaqueBlack);
-        image_data_ptr->sampler = vk::raii::Sampler(logical_device, sampler_create_info);
+        vk::SamplerCreateInfo sampler_create_info = {.flags            = {},
+                                                     .magFilter        = vk::Filter::eLinear,
+                                                     .minFilter        = vk::Filter::eLinear,
+                                                     .mipmapMode       = vk::SamplerMipmapMode::eLinear,
+                                                     .addressModeU     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeV     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeW     = vk::SamplerAddressMode::eRepeat,
+                                                     .mipLodBias       = 0.0f,
+                                                     .anisotropyEnable = anisotropy_enable,
+                                                     .maxAnisotropy    = 16.0f,
+                                                     .compareEnable    = false,
+                                                     .compareOp        = vk::CompareOp::eNever,
+                                                     .minLod           = 0.0f,
+                                                     .maxLod           = 0.0f,
+                                                     .borderColor      = vk::BorderColor::eFloatOpaqueBlack};
+        image_data_ptr->sampler                   = vk::raii::Sampler(logical_device, sampler_create_info);
 
         vk::FormatProperties format_properties = physical_device.getFormatProperties(format);
 
@@ -245,19 +270,23 @@ namespace Meow
 
         // Create Image
 
-        vk::ImageCreateInfo image_create_info(vk::ImageCreateFlags(),
-                                              vk::ImageType::e2D,
-                                              format,
-                                              vk::Extent3D(extent, 1),
-                                              1,
-                                              1,
-                                              vk::SampleCountFlagBits::e1,
-                                              image_tiling,
-                                              usage_flags | vk::ImageUsageFlagBits::eSampled,
-                                              vk::SharingMode::eExclusive,
-                                              {},
-                                              initial_layout);
-        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
+        vk::ImageCreateInfo image_create_info = {.flags     = vk::ImageCreateFlags(),
+                                                 .imageType = vk::ImageType::e2D,
+                                                 .format    = format,
+                                                 .extent =
+                                                     vk::Extent3D {
+                                                         .width  = extent.width,
+                                                         .height = extent.height,
+                                                         .depth  = 1,
+                                                     },
+                                                 .mipLevels     = 1,
+                                                 .arrayLayers   = 1,
+                                                 .samples       = vk::SampleCountFlagBits::e1,
+                                                 .tiling        = image_tiling,
+                                                 .usage         = usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                                 .sharingMode   = vk::SharingMode::eExclusive,
+                                                 .initialLayout = initial_layout};
+        image_data_ptr->image                 = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
                                                              physical_device.getMemoryProperties(),
@@ -266,38 +295,14 @@ namespace Meow
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
-            vk::ImageViewCreateInfo(
-                {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
-
-        return image_data_ptr;
-    }
-
-    std::shared_ptr<ImageData> ImageData::CreateTexture(const std::string&     file_path,
-                                                        vk::Format             format,
-                                                        vk::ImageUsageFlags    usage_flags,
-                                                        vk::ImageAspectFlags   aspect_mask,
-                                                        vk::FormatFeatureFlags format_feature_flags,
-                                                        bool                   anisotropy_enable,
-                                                        bool                   force_staging)
-    {
-        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_path);
-        if (width == 0 || height == 0)
-        {
-            return nullptr;
-        }
-
-        const vk::raii::Device&      logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool& onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        std::shared_ptr<ImageData> image_data_ptr = ImageData::CreateTexture(format,
-                                                                             vk::Extent2D {width, height},
-                                                                             usage_flags,
-                                                                             aspect_mask,
-                                                                             format_feature_flags,
-                                                                             anisotropy_enable,
-                                                                             force_staging);
+            vk::ImageViewCreateInfo {.image            = *image_data_ptr->image,
+                                     .viewType         = vk::ImageViewType::e2D,
+                                     .format           = format,
+                                     .subresourceRange = vk::ImageSubresourceRange {.aspectMask     = aspect_mask,
+                                                                                    .baseMipLevel   = 0,
+                                                                                    .levelCount     = 1,
+                                                                                    .baseArrayLayer = 0,
+                                                                                    .layerCount     = 1}});
 
         // Read image from file to device memory
 
@@ -323,12 +328,19 @@ namespace Meow
                               // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
                               image_data_ptr->SetLayout(
                                   command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
-                              vk::BufferImageCopy copy_region(0,
-                                                              image_data_ptr->extent.width,
-                                                              image_data_ptr->extent.height,
-                                                              vk::ImageSubresourceLayers(aspect_mask, 0, 0, 1),
-                                                              vk::Offset3D(0, 0, 0),
-                                                              vk::Extent3D(image_data_ptr->extent, 1));
+                              vk::BufferImageCopy copy_region = {
+                                  .bufferOffset      = 0,
+                                  .bufferRowLength   = image_data_ptr->extent.width,
+                                  .bufferImageHeight = image_data_ptr->extent.height,
+                                  .imageSubresource  = vk::ImageSubresourceLayers {aspect_mask, 0, 0, 1},
+                                  .imageOffset       = vk::Offset3D {0, 0, 0},
+                                  .imageExtent =
+                                      vk::Extent3D {
+                                          .width  = image_data_ptr->extent.width,
+                                          .height = image_data_ptr->extent.height,
+                                          .depth  = 1,
+                                      },
+                              };
                               command_buffer.copyBufferToImage(*image_data_ptr->staging_buffer_data.buffer,
                                                                *image_data_ptr->image,
                                                                vk::ImageLayout::eTransferDstOptimal,
@@ -350,12 +362,10 @@ namespace Meow
         return image_data_ptr;
     }
 
-    std::shared_ptr<ImageData> ImageData::CreateAttachment(vk::Format             format,
-                                                           const vk::Extent2D&    extent,
-                                                           vk::ImageUsageFlags    usage_flags,
-                                                           vk::ImageAspectFlags   aspect_mask,
-                                                           vk::FormatFeatureFlags format_feature_flags,
-                                                           bool                   anisotropy_enable)
+    std::shared_ptr<ImageData> ImageData::CreateAttachment(vk::Format           format,
+                                                           const vk::Extent2D&  extent,
+                                                           vk::ImageUsageFlags  usage_flags,
+                                                           vk::ImageAspectFlags aspect_mask)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -379,19 +389,23 @@ namespace Meow
 
         // Create Image
 
-        vk::ImageCreateInfo image_create_info(vk::ImageCreateFlags(),
-                                              vk::ImageType::e2D,
-                                              format,
-                                              vk::Extent3D(extent, 1),
-                                              1,
-                                              1,
-                                              vk::SampleCountFlagBits::e1,
-                                              image_tiling,
-                                              usage_flags | vk::ImageUsageFlagBits::eSampled,
-                                              vk::SharingMode::eExclusive,
-                                              {},
-                                              initial_layout);
-        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
+        vk::ImageCreateInfo image_create_info = {.flags     = vk::ImageCreateFlags(),
+                                                 .imageType = vk::ImageType::e2D,
+                                                 .format    = format,
+                                                 .extent =
+                                                     vk::Extent3D {
+                                                         .width  = extent.width,
+                                                         .height = extent.height,
+                                                         .depth  = 1,
+                                                     },
+                                                 .mipLevels     = 1,
+                                                 .arrayLayers   = 1,
+                                                 .samples       = vk::SampleCountFlagBits::e1,
+                                                 .tiling        = image_tiling,
+                                                 .usage         = usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                                 .sharingMode   = vk::SharingMode::eExclusive,
+                                                 .initialLayout = initial_layout};
+        image_data_ptr->image                 = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
                                                              physical_device.getMemoryProperties(),
@@ -400,8 +414,14 @@ namespace Meow
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
-            vk::ImageViewCreateInfo(
-                {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
+            vk::ImageViewCreateInfo {.image            = *image_data_ptr->image,
+                                     .viewType         = vk::ImageViewType::e2D,
+                                     .format           = format,
+                                     .subresourceRange = vk::ImageSubresourceRange {.aspectMask     = aspect_mask,
+                                                                                    .baseMipLevel   = 0,
+                                                                                    .levelCount     = 1,
+                                                                                    .baseArrayLayer = 0,
+                                                                                    .layerCount     = 1}});
 
         // Transit Layout
         OneTimeSubmit(logical_device,
@@ -448,38 +468,42 @@ namespace Meow
 
         // need sampler
 
-        vk::SamplerCreateInfo sampler_create_info({},
-                                                  vk::Filter::eLinear,
-                                                  vk::Filter::eLinear,
-                                                  vk::SamplerMipmapMode::eLinear,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  vk::SamplerAddressMode::eRepeat,
-                                                  0.0f,
-                                                  anisotropy_enable,
-                                                  16.0f,
-                                                  false,
-                                                  vk::CompareOp::eNever,
-                                                  0.0f,
-                                                  0.0f,
-                                                  vk::BorderColor::eFloatOpaqueBlack);
-        image_data_ptr->sampler = vk::raii::Sampler(logical_device, sampler_create_info);
+        vk::SamplerCreateInfo sampler_create_info = {.flags            = {},
+                                                     .magFilter        = vk::Filter::eLinear,
+                                                     .minFilter        = vk::Filter::eLinear,
+                                                     .mipmapMode       = vk::SamplerMipmapMode::eLinear,
+                                                     .addressModeU     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeV     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeW     = vk::SamplerAddressMode::eRepeat,
+                                                     .mipLodBias       = 0.0f,
+                                                     .anisotropyEnable = anisotropy_enable,
+                                                     .maxAnisotropy    = 16.0f,
+                                                     .compareEnable    = false,
+                                                     .compareOp        = vk::CompareOp::eNever,
+                                                     .minLod           = 0.0f,
+                                                     .maxLod           = 0.0f,
+                                                     .borderColor      = vk::BorderColor::eFloatOpaqueBlack};
+        image_data_ptr->sampler                   = vk::raii::Sampler(logical_device, sampler_create_info);
 
         // Create Image
 
-        vk::ImageCreateInfo image_create_info(vk::ImageCreateFlags(),
-                                              vk::ImageType::e2D,
-                                              format,
-                                              vk::Extent3D(extent, 1),
-                                              1,
-                                              1,
-                                              vk::SampleCountFlagBits::e1,
-                                              image_tiling,
-                                              usage_flags | vk::ImageUsageFlagBits::eSampled,
-                                              vk::SharingMode::eExclusive,
-                                              {},
-                                              initial_layout);
-        image_data_ptr->image = vk::raii::Image(logical_device, image_create_info);
+        vk::ImageCreateInfo image_create_info = {.flags     = vk::ImageCreateFlags(),
+                                                 .imageType = vk::ImageType::e2D,
+                                                 .format    = format,
+                                                 .extent =
+                                                     vk::Extent3D {
+                                                         .width  = extent.width,
+                                                         .height = extent.height,
+                                                         .depth  = 1,
+                                                     },
+                                                 .mipLevels     = 1,
+                                                 .arrayLayers   = 1,
+                                                 .samples       = vk::SampleCountFlagBits::e1,
+                                                 .tiling        = image_tiling,
+                                                 .usage         = usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                                 .sharingMode   = vk::SharingMode::eExclusive,
+                                                 .initialLayout = initial_layout};
+        image_data_ptr->image                 = vk::raii::Image(logical_device, image_create_info);
 
         image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
                                                              physical_device.getMemoryProperties(),
@@ -488,8 +512,14 @@ namespace Meow
         image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
         image_data_ptr->image_view = vk::raii::ImageView(
             logical_device,
-            vk::ImageViewCreateInfo(
-                {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
+            vk::ImageViewCreateInfo {.image            = *image_data_ptr->image,
+                                     .viewType         = vk::ImageViewType::e2D,
+                                     .format           = format,
+                                     .subresourceRange = vk::ImageSubresourceRange {.aspectMask     = aspect_mask,
+                                                                                    .baseMipLevel   = 0,
+                                                                                    .levelCount     = 1,
+                                                                                    .baseArrayLayer = 0,
+                                                                                    .layerCount     = 1}});
 
         // Transit Layout
         OneTimeSubmit(logical_device,
@@ -498,6 +528,179 @@ namespace Meow
                       [&](const vk::raii::CommandBuffer& command_buffer) {
                           image_data_ptr->SetLayout(
                               command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal);
+                      });
+
+        return image_data_ptr;
+    }
+
+    std::shared_ptr<ImageData> ImageData::CreateCubemap(const std::vector<std::string>& file_paths,
+                                                        vk::Format                      format,
+                                                        vk::ImageUsageFlags             usage_flags,
+                                                        vk::ImageAspectFlags            aspect_mask,
+                                                        vk::FormatFeatureFlags          format_feature_flags,
+                                                        bool                            anisotropy_enable,
+                                                        bool                            force_staging)
+    {
+        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_paths[0]);
+        if (width == 0 || height == 0)
+        {
+            return nullptr;
+        }
+        vk::Extent2D extent = {width, height};
+
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        auto image_data_ptr = std::make_shared<ImageData>(nullptr);
+
+        // Create Texture
+
+        image_data_ptr->format      = format;
+        image_data_ptr->extent      = extent;
+        image_data_ptr->aspect_mask = aspect_mask;
+
+        vk::SamplerCreateInfo sampler_create_info = {.flags            = {},
+                                                     .magFilter        = vk::Filter::eLinear,
+                                                     .minFilter        = vk::Filter::eLinear,
+                                                     .mipmapMode       = vk::SamplerMipmapMode::eLinear,
+                                                     .addressModeU     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeV     = vk::SamplerAddressMode::eRepeat,
+                                                     .addressModeW     = vk::SamplerAddressMode::eRepeat,
+                                                     .mipLodBias       = 0.0f,
+                                                     .anisotropyEnable = anisotropy_enable,
+                                                     .maxAnisotropy    = 16.0f,
+                                                     .compareEnable    = false,
+                                                     .compareOp        = vk::CompareOp::eNever,
+                                                     .minLod           = 0.0f,
+                                                     .maxLod           = 0.0f,
+                                                     .borderColor      = vk::BorderColor::eFloatOpaqueBlack};
+        image_data_ptr->sampler                   = vk::raii::Sampler(logical_device, sampler_create_info);
+
+        vk::FormatProperties format_properties = physical_device.getFormatProperties(format);
+
+        format_feature_flags |= vk::FormatFeatureFlagBits::eSampledImage;
+        image_data_ptr->need_staging =
+            force_staging || ((format_properties.linearTilingFeatures & format_feature_flags) != format_feature_flags);
+        vk::ImageTiling         image_tiling;
+        vk::ImageLayout         initial_layout;
+        vk::MemoryPropertyFlags requirements;
+        if (image_data_ptr->need_staging)
+        {
+            assert((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags);
+            image_data_ptr->staging_buffer_data =
+                BufferData(physical_device,
+                           logical_device,
+                           extent.width * extent.height * 4 * 6, // cubemap have 6 images
+                           vk::BufferUsageFlagBits::eTransferSrc);
+            image_tiling = vk::ImageTiling::eOptimal;
+            usage_flags |= vk::ImageUsageFlagBits::eTransferDst;
+            initial_layout = vk::ImageLayout::eUndefined;
+        }
+        else
+        {
+            image_tiling   = vk::ImageTiling::eLinear;
+            initial_layout = vk::ImageLayout::ePreinitialized;
+            requirements   = vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible;
+        }
+
+        // Create Image
+
+        vk::ImageCreateInfo image_create_info = {.flags     = vk::ImageCreateFlagBits::eCubeCompatible,
+                                                 .imageType = vk::ImageType::e2D,
+                                                 .format    = format,
+                                                 .extent =
+                                                     vk::Extent3D {
+                                                         .width  = extent.width,
+                                                         .height = extent.height,
+                                                         .depth  = 1,
+                                                     },
+                                                 .mipLevels     = 1,
+                                                 .arrayLayers   = 6,
+                                                 .samples       = vk::SampleCountFlagBits::e1,
+                                                 .tiling        = image_tiling,
+                                                 .usage         = usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                                 .sharingMode   = vk::SharingMode::eExclusive,
+                                                 .initialLayout = initial_layout};
+        image_data_ptr->image                 = vk::raii::Image(logical_device, image_create_info);
+
+        image_data_ptr->device_memory = AllocateDeviceMemory(logical_device,
+                                                             physical_device.getMemoryProperties(),
+                                                             image_data_ptr->image.getMemoryRequirements(),
+                                                             requirements);
+        image_data_ptr->image.bindMemory(*image_data_ptr->device_memory, 0);
+        image_data_ptr->image_view = vk::raii::ImageView(
+            logical_device,
+            vk::ImageViewCreateInfo {.image            = *image_data_ptr->image,
+                                     .viewType         = vk::ImageViewType::eCube,
+                                     .format           = format,
+                                     .subresourceRange = vk::ImageSubresourceRange {.aspectMask     = aspect_mask,
+                                                                                    .baseMipLevel   = 0,
+                                                                                    .levelCount     = 1,
+                                                                                    .baseArrayLayer = 0,
+                                                                                    .layerCount     = 6}});
+
+        // Read image from file to device memory
+
+        void* data = image_data_ptr->need_staging ?
+                         image_data_ptr->staging_buffer_data.device_memory.mapMemory(
+                             0, image_data_ptr->staging_buffer_data.buffer.getMemoryRequirements().size) :
+                         image_data_ptr->device_memory.mapMemory(0, image_data_ptr->image.getMemoryRequirements().size);
+
+        for (std::size_t i = 0; i < 6; ++i)
+        {
+            if (g_runtime_context.file_system->ReadImageFileToPtr(
+                    file_paths[i], static_cast<uint8_t*>(data) + extent.width * extent.height * 4 * i) == 0)
+                return nullptr;
+        }
+
+        image_data_ptr->need_staging ? image_data_ptr->staging_buffer_data.device_memory.unmapMemory() :
+                                       image_data_ptr->device_memory.unmapMemory();
+
+        // Transit Layout
+
+        OneTimeSubmit(logical_device,
+                      onetime_submit_command_pool,
+                      graphics_queue,
+                      [&](const vk::raii::CommandBuffer& command_buffer) {
+                          if (image_data_ptr->need_staging)
+                          {
+                              // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
+                              image_data_ptr->SetLayout(
+                                  command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
+                              std::vector<vk::BufferImageCopy> copy_regions;
+                              for (std::size_t i = 0; i < 6; ++i)
+                              {
+                                  copy_regions.push_back(vk::BufferImageCopy {
+                                      .bufferOffset      = extent.width * extent.height * 4 * i,
+                                      .bufferRowLength   = image_data_ptr->extent.width,
+                                      .bufferImageHeight = image_data_ptr->extent.height,
+                                      .imageSubresource  = vk::ImageSubresourceLayers {aspect_mask, 0, 0, 1},
+                                      .imageOffset       = vk::Offset3D {0, 0, 0},
+                                      .imageExtent       = vk::Extent3D {
+                                                .width  = image_data_ptr->extent.width,
+                                                .height = image_data_ptr->extent.height,
+                                                .depth  = 1,
+                                      }});
+                              }
+                              command_buffer.copyBufferToImage(*image_data_ptr->staging_buffer_data.buffer,
+                                                               *image_data_ptr->image,
+                                                               vk::ImageLayout::eTransferDstOptimal,
+                                                               copy_regions);
+                              // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
+                              image_data_ptr->SetLayout(command_buffer,
+                                                        vk::ImageLayout::eTransferDstOptimal,
+                                                        vk::ImageLayout::eShaderReadOnlyOptimal);
+                          }
+                          else
+                          {
+                              // If we can use the linear tiled image as a texture, just do it
+                              image_data_ptr->SetLayout(command_buffer,
+                                                        vk::ImageLayout::ePreinitialized,
+                                                        vk::ImageLayout::eShaderReadOnlyOptimal);
+                          }
                       });
 
         return image_data_ptr;

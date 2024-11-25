@@ -13,8 +13,17 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        vk::RenderPassBeginInfo render_pass_begin_info(
-            *render_pass, *framebuffers[current_image_index], vk::Rect2D(vk::Offset2D(0, 0), extent), clear_values);
+        vk::RenderPassBeginInfo render_pass_begin_info = {
+            .renderPass  = *render_pass,
+            .framebuffer = *framebuffers[current_image_index],
+            .renderArea =
+                vk::Rect2D {
+                    .offset = vk::Offset2D(0, 0),
+                    .extent = extent,
+                },
+            .clearValueCount = static_cast<uint32_t>(clear_values.size()),
+            .pClearValues    = clear_values.data(),
+        };
         command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
     }
 

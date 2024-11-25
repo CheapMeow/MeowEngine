@@ -21,7 +21,7 @@ namespace Meow
                    vk::BufferUsageFlags            usage,
                    vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                             vk::MemoryPropertyFlagBits::eHostCoherent)
-            : buffer(logical_device, vk::BufferCreateInfo({}, size, usage))
+            : buffer(logical_device, vk::BufferCreateInfo {.size = size, .usage = usage})
 #if defined(MEOW_DEBUG)
             , device_size(size)
             , usage_flags(usage)

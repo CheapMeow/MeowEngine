@@ -129,6 +129,7 @@ target_compile_definitions(${RUNTIME_NAME} PUBLIC
   $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
   VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
                             # according to cmake build platform
+  VULKAN_HPP_NO_STRUCT_CONSTRUCTORS # for designated initializers
   GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
   IMGUI_DEFINE_MATH_OPERATORS
   # _DISABLE_STRING_ANNOTATION # for ASAN

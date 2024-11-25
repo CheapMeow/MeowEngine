@@ -62,15 +62,6 @@ namespace Meow
         static std::shared_ptr<ImageData> CreateDepthBuffer(vk::Format format, const vk::Extent2D& extent);
 
         static std::shared_ptr<ImageData>
-        CreateTexture(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                      const vk::Extent2D&    extent               = {256, 256},
-                      vk::ImageUsageFlags    usage_flags          = {},
-                      vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                      vk::FormatFeatureFlags format_feature_flags = {},
-                      bool                   anisotropy_enable    = false,
-                      bool                   force_staging        = false);
-
-        static std::shared_ptr<ImageData>
         CreateTexture(const std::string&     file_path,
                       vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
                       vk::ImageUsageFlags    usage_flags          = {},
@@ -80,19 +71,26 @@ namespace Meow
                       bool                   force_staging        = false);
 
         static std::shared_ptr<ImageData>
-        CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                         const vk::Extent2D&    extent               = {256, 256},
-                         vk::ImageUsageFlags    usage_flags          = {},
-                         vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                         vk::FormatFeatureFlags format_feature_flags = {},
-                         bool                   anisotropy_enable    = false);
+        CreateAttachment(vk::Format           format      = vk::Format::eR8G8B8A8Unorm,
+                         const vk::Extent2D&  extent      = {256, 256},
+                         vk::ImageUsageFlags  usage_flags = {},
+                         vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor);
 
         static std::shared_ptr<ImageData>
-        CreateRenderTarget(vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
-                           const vk::Extent2D&             extent               = {256, 256},
-                           vk::ImageUsageFlags             usage_flags          = {},
-                           vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                           vk::FormatFeatureFlags          format_feature_flags = {},
-                           bool                            anisotropy_enable    = false);
+        CreateRenderTarget(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                           const vk::Extent2D&    extent               = {256, 256},
+                           vk::ImageUsageFlags    usage_flags          = {},
+                           vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                           vk::FormatFeatureFlags format_feature_flags = {},
+                           bool                   anisotropy_enable    = false);
+
+        static std::shared_ptr<ImageData>
+        CreateCubemap(const std::vector<std::string>& file_paths,
+                      vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                      vk::ImageUsageFlags             usage_flags          = {},
+                      vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                      vk::FormatFeatureFlags          format_feature_flags = {},
+                      bool                            anisotropy_enable    = false,
+                      bool                            force_staging        = false);
     };
 } // namespace Meow

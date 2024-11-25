@@ -194,11 +194,14 @@ namespace Meow
 
     vk::DebugUtilsMessengerCreateInfoEXT MakeDebugUtilsMessengerCreateInfoEXT()
     {
-        return {{},
+        return vk::DebugUtilsMessengerCreateInfoEXT {
+            .messageSeverity =
                 vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
-                vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
-                    vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
-                &DebugUtilsMessengerCallback};
+            .messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+                           vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+                           vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation,
+            .pfnUserCallback = &DebugUtilsMessengerCallback,
+        };
     }
 
     /**
@@ -452,7 +455,10 @@ namespace Meow
     {
         uint32_t memory_type_index =
             FindMemoryType(memory_properties, memory_requirements.memoryTypeBits, memory_property_flags);
-        vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size, memory_type_index);
+        vk::MemoryAllocateInfo memory_allocate_info = {
+            .allocationSize  = memory_requirements.size,
+            .memoryTypeIndex = memory_type_index,
+        };
         return vk::raii::DeviceMemory(device, memory_allocate_info);
     }
 

@@ -24,70 +24,81 @@ namespace Meow
 
         std::vector<vk::AttachmentDescription> attachment_descriptions;
         // swap chain attachment
-        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),         /* flags */
-                                             color_format,                             /* format */
-                                             m_sample_count,                           /* samples */
-                                             vk::AttachmentLoadOp::eClear,             /* loadOp */
-                                             vk::AttachmentStoreOp::eStore,            /* storeOp */
-                                             vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
-                                             vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
-                                             vk::ImageLayout::eShaderReadOnlyOptimal,  /* initialLayout */
-                                             vk::ImageLayout::eShaderReadOnlyOptimal); /* finalLayout */
+        attachment_descriptions.push_back(vk::AttachmentDescription {
+            .format         = color_format,
+            .samples        = m_sample_count,
+            .loadOp         = vk::AttachmentLoadOp::eClear,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
+            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
+            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
+            .initialLayout  = vk::ImageLayout::eShaderReadOnlyOptimal,
+            .finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal,
+        });
         // depth attachment
-        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
-                                             m_depth_format,                                   /* format */
-                                             m_sample_count,                                   /* samples */
-                                             vk::AttachmentLoadOp::eClear,                     /* loadOp */
-                                             vk::AttachmentStoreOp::eStore,                    /* storeOp */
-                                             vk::AttachmentLoadOp::eClear,                     /* stencilLoadOp */
-                                             vk::AttachmentStoreOp::eStore,                    /* stencilStoreOp */
-                                             vk::ImageLayout::eUndefined,                      /* initialLayout */
-                                             vk::ImageLayout::eDepthStencilAttachmentOptimal); /* finalLayout */
+        attachment_descriptions.push_back(vk::AttachmentDescription {
+            .format         = m_depth_format,
+            .samples        = m_sample_count,
+            .loadOp         = vk::AttachmentLoadOp::eClear,
+            .storeOp        = vk::AttachmentStoreOp::eStore,
+            .stencilLoadOp  = vk::AttachmentLoadOp::eClear,
+            .stencilStoreOp = vk::AttachmentStoreOp::eStore,
+            .initialLayout  = vk::ImageLayout::eUndefined,
+            .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        });
 
         // Create reference to attachment information set
 
-        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
-        vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
+        vk::AttachmentReference swapchain_attachment_reference = {
+            .attachment = 0,
+            .layout     = vk::ImageLayout::eColorAttachmentOptimal,
+        };
+        vk::AttachmentReference depth_attachment_reference = {
+            .attachment = 1,
+            .layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal,
+        };
         // Create subpass
 
         std::vector<vk::SubpassDescription> subpass_descriptions;
         // obj2attachment pass
-        subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
-                                                              vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
-                                                              {},                               /* pInputAttachments */
-                                                              swapchain_attachment_reference,   /* pColorAttachments */
-                                                              {},                          /* pResolveAttachments */
-                                                              &depth_attachment_reference, /* pDepthStencilAttachment */
-                                                              nullptr));                   /* pPreserveAttachments */
+        subpass_descriptions.push_back(vk::SubpassDescription {
+            .pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
+            .pColorAttachments       = &swapchain_attachment_reference,
+            .pDepthStencilAttachment = &depth_attachment_reference,
+        });
 
         // Create subpass dependency
 
         std::vector<vk::SubpassDependency> dependencies;
         // externel -> forward pass
-        dependencies.emplace_back(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
-                                  0,                                                 /* dstSubpass */
-                                  vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
-                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
-                                  vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
-                                  vk::AccessFlagBits::eColorAttachmentWrite |
-                                      vk::AccessFlagBits::eColorAttachmentRead, /* dstAccessMask */
-                                  vk::DependencyFlagBits::eByRegion);           /* dependencyFlags */
+        dependencies.push_back(vk::SubpassDependency {
+            .srcSubpass      = VK_SUBPASS_EXTERNAL,
+            .dstSubpass      = 0,
+            .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
+            .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
+            .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead,
+            .dependencyFlags = vk::DependencyFlagBits::eByRegion,
+        });
         // forward -> externel
-        dependencies.emplace_back(0,                                                 /* srcSubpass */
-                                  VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
-                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
-                                  vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
-                                  vk::AccessFlagBits::eColorAttachmentWrite |
-                                      vk::AccessFlagBits::eColorAttachmentRead, /* srcAccessMask */
-                                  vk::AccessFlagBits::eMemoryRead,              /* dstAccessMask */
-                                  vk::DependencyFlagBits::eByRegion);           /* dependencyFlags */
+        dependencies.push_back(vk::SubpassDependency {
+            .srcSubpass      = 0,
+            .dstSubpass      = VK_SUBPASS_EXTERNAL,
+            .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
+            .dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
+            .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead,
+            .dstAccessMask   = vk::AccessFlagBits::eMemoryRead,
+            .dependencyFlags = vk::DependencyFlagBits::eByRegion,
+        });
 
         // Create render pass
-        vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
-                                                         attachment_descriptions,     /* pAttachments */
-                                                         subpass_descriptions,        /* pSubpasses */
-                                                         dependencies);               /* pDependencies */
+        vk::RenderPassCreateInfo render_pass_create_info = {
+            .attachmentCount = static_cast<uint32_t>(attachment_descriptions.size()),
+            .pAttachments    = attachment_descriptions.data(),
+            .subpassCount    = static_cast<uint32_t>(subpass_descriptions.size()),
+            .pSubpasses      = subpass_descriptions.data(),
+            .dependencyCount = static_cast<uint32_t>(dependencies.size()),
+            .pDependencies   = dependencies.data(),
+        };
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
@@ -99,10 +110,11 @@ namespace Meow
 
         // Debug
 
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 1,
-                                                        .pipelineStatistics = (1 << 11) - 1};
+        vk::QueryPoolCreateInfo query_pool_create_info = {
+            .queryType          = vk::QueryType::ePipelineStatistics,
+            .queryCount         = 1,
+            .pipelineStatistics = vk::QueryPipelineStatisticFlags {(1 << 11) - 1},
+        };
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 

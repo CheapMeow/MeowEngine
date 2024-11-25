@@ -42,22 +42,21 @@ namespace Meow
                 vk::CompositeAlphaFlagBitsKHR::eInherit :
                 vk::CompositeAlphaFlagBitsKHR::eOpaque;
         vk::PresentModeKHR         present_mode = PickPresentMode(physical_device.getSurfacePresentModesKHR(*surface));
-        vk::SwapchainCreateInfoKHR swap_chain_create_info(
-            {},
-            *surface,
-            glm::clamp(3u, surface_capabilities.minImageCount, surface_capabilities.maxImageCount),
-            color_format,
-            surface_format.colorSpace,
-            swapchain_extent,
-            1,
-            usage,
-            vk::SharingMode::eExclusive,
-            {},
-            pre_transform,
-            composite_alpha,
-            present_mode,
-            true,
-            p_old_swapchain ? **p_old_swapchain : nullptr);
+        vk::SwapchainCreateInfoKHR swap_chain_create_info = {
+            .surface          = *surface,
+            .minImageCount    = glm::clamp(3u, surface_capabilities.minImageCount, surface_capabilities.maxImageCount),
+            .imageFormat      = color_format,
+            .imageColorSpace  = surface_format.colorSpace,
+            .imageExtent      = swapchain_extent,
+            .imageArrayLayers = 1,
+            .imageUsage       = usage,
+            .imageSharingMode = vk::SharingMode::eExclusive,
+            .preTransform     = pre_transform,
+            .compositeAlpha   = composite_alpha,
+            .presentMode      = present_mode,
+            .clipped          = true,
+            .oldSwapchain     = p_old_swapchain ? **p_old_swapchain : nullptr,
+        };
         if (graphics_queue_family_index != present_queue_family_index)
         {
             uint32_t queueFamilyIndices[2] = {graphics_queue_family_index, present_queue_family_index};
@@ -73,8 +72,15 @@ namespace Meow
         images = swap_chain.getImages();
 
         image_views.reserve(images.size());
-        vk::ImageViewCreateInfo image_view_create_info(
-            {}, {}, vk::ImageViewType::e2D, color_format, {}, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+        vk::ImageViewCreateInfo image_view_create_info {.viewType         = vk::ImageViewType::e2D,
+                                                        .format           = color_format,
+                                                        .subresourceRange = vk::ImageSubresourceRange {
+                                                            .aspectMask     = vk::ImageAspectFlagBits::eColor,
+                                                            .baseMipLevel   = 0,
+                                                            .levelCount     = 1,
+                                                            .baseArrayLayer = 0,
+                                                            .layerCount     = 1,
+                                                        }};
         for (auto image : images)
         {
             image_view_create_info.image = image;

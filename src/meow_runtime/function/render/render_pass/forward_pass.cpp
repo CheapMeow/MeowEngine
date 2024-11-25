@@ -112,25 +112,22 @@ namespace Meow
 
         // Create attachment
 
-        m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
-                                                         extent,
-                                                         vk::ImageUsageFlagBits::eDepthStencilAttachment,
-                                                         vk::ImageAspectFlagBits::eDepth,
-                                                         {},
-                                                         false);
+        m_depth_attachment = ImageData::CreateAttachment(
+            m_depth_format, extent, vk::ImageUsageFlagBits::eDepthStencilAttachment, vk::ImageAspectFlagBits::eDepth);
 
         // Provide attachment information to frame buffer
 
         vk::ImageView attachments[2];
         attachments[1] = *m_depth_attachment->image_view;
 
-        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
-                                                          *render_pass,                 /* renderPass */
-                                                          2,                            /* attachmentCount */
-                                                          attachments,                  /* pAttachments */
-                                                          extent.width,                 /* width */
-                                                          extent.height,                /* height */
-                                                          1);                           /* layers */
+        vk::FramebufferCreateInfo framebuffer_create_info = {
+            .renderPass      = *render_pass,
+            .attachmentCount = 2,
+            .pAttachments    = attachments,
+            .width           = extent.width,
+            .height          = extent.height,
+            .layers          = 1,
+        };
 
         framebuffers.reserve(output_image_views.size());
         for (const auto& imageView : output_image_views)
