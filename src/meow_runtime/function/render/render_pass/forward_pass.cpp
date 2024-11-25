@@ -95,6 +95,25 @@ namespace Meow
                     logical_device, m_forward_descriptor_sets, "aoMap", *texture_ptr);
             }
         }
+
+        // skybox
+
+        auto skybox_shader_ptr = std::make_shared<Shader>(
+            physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
+        m_skybox_descriptor_sets =
+            descriptor_allocator.Allocate(logical_device, skybox_shader_ptr->descriptor_set_layouts);
+
+        m_skybox_mat = Material(physical_device, logical_device, skybox_shader_ptr);
+        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
+
+        m_skybox_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(MVPBlock));
+
+        m_skybox_mat.GetShader()->BindBufferToDescriptorSet(
+            logical_device, m_skybox_descriptor_sets, "uboMVP", m_skybox_uniform_buffer->buffer);
+
+        {
+            // load cubemap
+        }
     }
 
     void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
@@ -293,9 +312,7 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
-
         swap(lhs.m_forward_descriptor_sets, rhs.m_forward_descriptor_sets);
-
         swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
         swap(lhs.m_light_uniform_buffer, rhs.m_light_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);

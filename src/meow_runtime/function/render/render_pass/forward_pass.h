@@ -31,6 +31,13 @@ namespace Meow
         float     ao;
     };
 
+    struct MVPBlock
+    {
+        glm::mat4 modelMatrix;
+        glm::mat4 viewMatrix;
+        glm::mat4 projectionMatrix;
+    };
+
     class ForwardPass : public RenderPass
     {
     public:
@@ -85,13 +92,15 @@ namespace Meow
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material m_forward_mat = nullptr;
-
-        vk::raii::DescriptorSets m_forward_descriptor_sets = nullptr;
-
+        Material                       m_forward_mat             = nullptr;
+        vk::raii::DescriptorSets       m_forward_descriptor_sets = nullptr;
         std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_light_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
+
+        Material                       m_skybox_mat             = nullptr;
+        vk::raii::DescriptorSets       m_skybox_descriptor_sets = nullptr;
+        std::shared_ptr<UniformBuffer> m_skybox_uniform_buffer;
 
         int draw_call = 0;
     };
