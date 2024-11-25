@@ -5,6 +5,56 @@
 
 namespace Meow
 {
+    std::vector<float> GenerateCubeVertices()
+    {
+        // clang-format off
+        return {
+            // back face
+            -1.0f, -1.0f, -1.0f, // bottom-left
+             1.0f,  1.0f, -1.0f, // top-right
+             1.0f, -1.0f, -1.0f, // bottom-right         
+             1.0f,  1.0f, -1.0f, // top-right
+            -1.0f, -1.0f, -1.0f, // bottom-left
+            -1.0f,  1.0f, -1.0f, // top-left
+            // front face
+            -1.0f, -1.0f,  1.0f, // bottom-left
+             1.0f, -1.0f,  1.0f, // bottom-right
+             1.0f,  1.0f,  1.0f, // top-right
+             1.0f,  1.0f,  1.0f, // top-right
+            -1.0f,  1.0f,  1.0f, // top-left
+            -1.0f, -1.0f,  1.0f, // bottom-left
+            // left face
+            -1.0f,  1.0f,  1.0f, // top-right
+            -1.0f,  1.0f, -1.0f, // top-left
+            -1.0f, -1.0f, -1.0f, // bottom-left
+            -1.0f, -1.0f, -1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, // bottom-right
+            -1.0f,  1.0f,  1.0f, // top-right
+            // right face
+             1.0f,  1.0f,  1.0f, // top-left
+             1.0f, -1.0f, -1.0f, // bottom-right
+             1.0f,  1.0f, -1.0f, // top-right         
+             1.0f, -1.0f, -1.0f, // bottom-right
+             1.0f,  1.0f,  1.0f, // top-left
+             1.0f, -1.0f,  1.0f, // bottom-left     
+            // bottom face
+            -1.0f, -1.0f, -1.0f, // top-right
+             1.0f, -1.0f, -1.0f, // top-left
+             1.0f, -1.0f,  1.0f, // bottom-left
+             1.0f, -1.0f,  1.0f, // bottom-left
+            -1.0f, -1.0f,  1.0f, // bottom-right
+            -1.0f, -1.0f, -1.0f, // top-right
+            // top face
+            -1.0f,  1.0f, -1.0f, // top-left
+             1.0f,  1.0f , 1.0f, // bottom-right
+             1.0f,  1.0f, -1.0f, // top-right     
+             1.0f,  1.0f,  1.0f, // bottom-right
+            -1.0f,  1.0f, -1.0f, // top-left
+            -1.0f,  1.0f,  1.0f  // bottom-left        
+        };
+        // clang-format on
+    }
+
     std::tuple<std::vector<float>, std::vector<uint32_t>>
     GenerateSphereVerticesAndIndices(uint32_t                        sector_count,
                                      uint32_t                        stack_count,
