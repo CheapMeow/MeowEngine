@@ -181,16 +181,26 @@ namespace Meow
         return image_data_ptr;
     }
 
-    std::shared_ptr<ImageData> ImageData::CreateTexture(vk::Format             format,
-                                                        const vk::Extent2D&    extent,
+    std::shared_ptr<ImageData> ImageData::CreateTexture(const std::string&     file_path,
+                                                        vk::Format             format,
                                                         vk::ImageUsageFlags    usage_flags,
                                                         vk::ImageAspectFlags   aspect_mask,
                                                         vk::FormatFeatureFlags format_feature_flags,
                                                         bool                   anisotropy_enable,
                                                         bool                   force_staging)
     {
+        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_path);
+        if (width == 0 || height == 0)
+        {
+            return nullptr;
+        }
+        vk::Extent2D extent = {width, height};
+
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         auto image_data_ptr = std::make_shared<ImageData>(nullptr);
 
@@ -268,36 +278,6 @@ namespace Meow
             logical_device,
             vk::ImageViewCreateInfo(
                 {}, *image_data_ptr->image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1}));
-
-        return image_data_ptr;
-    }
-
-    std::shared_ptr<ImageData> ImageData::CreateTexture(const std::string&     file_path,
-                                                        vk::Format             format,
-                                                        vk::ImageUsageFlags    usage_flags,
-                                                        vk::ImageAspectFlags   aspect_mask,
-                                                        vk::FormatFeatureFlags format_feature_flags,
-                                                        bool                   anisotropy_enable,
-                                                        bool                   force_staging)
-    {
-        auto [width, height] = g_runtime_context.file_system->GetImageFileWidthHeight(file_path);
-        if (width == 0 || height == 0)
-        {
-            return nullptr;
-        }
-
-        const vk::raii::Device&      logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool& onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        std::shared_ptr<ImageData> image_data_ptr = ImageData::CreateTexture(format,
-                                                                             vk::Extent2D {width, height},
-                                                                             usage_flags,
-                                                                             aspect_mask,
-                                                                             format_feature_flags,
-                                                                             anisotropy_enable,
-                                                                             force_staging);
 
         // Read image from file to device memory
 
