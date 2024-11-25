@@ -19,7 +19,7 @@ namespace Meow
     struct VertexAttributeMeta
     {
         VertexAttributeBit attribute;
-        uint32_t            location;
+        int32_t            location;
     };
 
     struct BufferMeta
@@ -74,21 +74,21 @@ namespace Meow
     public:
         struct BindingMeta
         {
-            uint32_t set;
-            uint32_t binding;
+            int32_t set;
+            int32_t binding;
         };
 
         DescriptorSetLayoutMetas() {}
 
         ~DescriptorSetLayoutMetas() {}
 
-        vk::DescriptorType GetDescriptorType(uint32_t set, uint32_t binding)
+        vk::DescriptorType GetDescriptorType(int32_t set, int32_t binding)
         {
-            for (uint32_t i = 0; i < metas.size(); ++i)
+            for (int32_t i = 0; i < metas.size(); ++i)
             {
                 if (metas[i].set == set)
                 {
-                    for (uint32_t j = 0; j < metas[i].bindings.size(); ++j)
+                    for (int32_t j = 0; j < metas[i].bindings.size(); ++j)
                     {
                         if (metas[i].bindings[j].binding == binding)
                         {
@@ -103,13 +103,13 @@ namespace Meow
         }
 
         void
-        AddDescriptorSetLayoutBinding(const std::string& varName, uint32_t set, vk::DescriptorSetLayoutBinding binding)
+        AddDescriptorSetLayoutBinding(const std::string& varName, int32_t set, vk::DescriptorSetLayoutBinding binding)
         {
             DescriptorSetLayoutMeta* setLayout = nullptr;
 
             // find existing set layout
             // this supports multiple set
-            for (uint32_t i = 0; i < metas.size(); ++i)
+            for (int32_t i = 0; i < metas.size(); ++i)
             {
                 if (metas[i].set == set)
                 {
@@ -125,7 +125,7 @@ namespace Meow
                 setLayout = &(metas[metas.size() - 1]);
             }
 
-            for (uint32_t i = 0; i < setLayout->bindings.size(); ++i)
+            for (int32_t i = 0; i < setLayout->bindings.size(); ++i)
             {
                 vk::DescriptorSetLayoutBinding& setBinding = setLayout->bindings[i];
                 if (setBinding.binding == binding.binding && setBinding.descriptorType == binding.descriptorType)

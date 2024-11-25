@@ -167,11 +167,7 @@ namespace Meow
                                             -static_cast<float>(m_surface_data.extent.height),
                                             0.0f,
                                             1.0f));
-        cmd_buffer.setScissor(0,
-                              vk::Rect2D {
-                                  .offset = vk::Offset2D(0, 0),
-                                  .extent = m_surface_data.extent,
-                              });
+        cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
         // TODO: temp
 
@@ -188,15 +184,8 @@ namespace Meow
         cmd_buffer.end();
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-        vk::SubmitInfo         submit_info = {
-                    .waitSemaphoreCount   = 1,
-                    .pWaitSemaphores      = &(*image_acquired_semaphore),
-                    .pWaitDstStageMask    = &wait_destination_stage_mask,
-                    .commandBufferCount   = 1,
-                    .pCommandBuffers      = &(*cmd_buffer),
-                    .signalSemaphoreCount = 1,
-                    .pSignalSemaphores    = &(*render_finished_semaphore),
-        };
+        vk::SubmitInfo         submit_info(
+            *image_acquired_semaphore, wait_destination_stage_mask, *cmd_buffer, *render_finished_semaphore);
         graphics_queue.submit(submit_info, *in_flight_fence);
 
         while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
@@ -204,13 +193,8 @@ namespace Meow
         cmd_buffer.reset();
         logical_device.resetFences({*in_flight_fence});
 
-        vk::PresentInfoKHR present_info = {
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores    = &(*render_finished_semaphore),
-            .swapchainCount     = 1,
-            .pSwapchains        = &(*m_swapchain_data.swap_chain),
-            .pImageIndices      = &m_current_image_index,
-        };
+        vk::PresentInfoKHR present_info(
+            *render_finished_semaphore, *m_swapchain_data.swap_chain, m_current_image_index);
         result = QueuePresentWrapper(present_queue, present_info);
         switch (result)
         {
@@ -304,17 +288,12 @@ namespace Meow
         m_per_frame_data.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
-            vk::CommandPoolCreateInfo command_pool_create_info = {
-                .flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                .queueFamilyIndex = graphics_queue_family_index,
-            };
+            vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                               graphics_queue_family_index);
             m_per_frame_data[i].command_pool = vk::raii::CommandPool(logical_device, command_pool_create_info);
 
-            vk::CommandBufferAllocateInfo command_buffer_allocate_info = {
-                .commandPool        = *m_per_frame_data[i].command_pool,
-                .level              = vk::CommandBufferLevel::ePrimary,
-                .commandBufferCount = 1,
-            };
+            vk::CommandBufferAllocateInfo command_buffer_allocate_info(
+                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
             m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
 
@@ -377,25 +356,19 @@ namespace Meow
         const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
         const vk::raii::Queue& graphics_queue  = g_runtime_context.render_system->GetGraphicsQueue();
 
-        std::vector<vk::DescriptorPoolSize> pool_sizes = {
-            {vk::DescriptorType::eSampler, 1000},
-            {vk::DescriptorType::eCombinedImageSampler, 1000},
-            {vk::DescriptorType::eSampledImage, 1000},
-            {vk::DescriptorType::eStorageImage, 1000},
-            {vk::DescriptorType::eUniformTexelBuffer, 1000},
-            {vk::DescriptorType::eStorageTexelBuffer, 1000},
-            {vk::DescriptorType::eUniformBuffer, 1000},
-            {vk::DescriptorType::eStorageBuffer, 1000},
-            {vk::DescriptorType::eUniformBufferDynamic, 1000},
-            {vk::DescriptorType::eStorageBufferDynamic, 1000},
-            {vk::DescriptorType::eInputAttachment, 1000},
-        };
-        vk::DescriptorPoolCreateInfo descriptor_pool_create_info = {
-            .flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets       = 1000,
-            .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-            .pPoolSizes    = pool_sizes.data(),
-        };
+        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
+                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
+                                                          {vk::DescriptorType::eSampledImage, 1000},
+                                                          {vk::DescriptorType::eStorageImage, 1000},
+                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eInputAttachment, 1000}};
+        vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
         m_imgui_descriptor_pool = vk::raii::DescriptorPool(logical_device, descriptor_pool_create_info);
 
         // Setup Dear ImGui context

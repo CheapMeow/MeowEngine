@@ -106,20 +106,12 @@ namespace Meow
                        vk::raii::Queue const&       queue,
                        Func const&                  func)
     {
-        vk::CommandBufferAllocateInfo command_buffer_allocate_info = {
-            .commandPool        = *command_pool,
-            .level              = vk::CommandBufferLevel::ePrimary,
-            .commandBufferCount = 1,
-        };
         vk::raii::CommandBuffer command_buffer =
-            std::move(vk::raii::CommandBuffers(logical_device, command_buffer_allocate_info).front());
-        command_buffer.begin(vk::CommandBufferBeginInfo {.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+            std::move(vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
+        command_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
         func(command_buffer);
         command_buffer.end();
-        vk::SubmitInfo submit_info = {
-            .commandBufferCount = 1,
-            .pCommandBuffers    = &(*command_buffer),
-        };
+        vk::SubmitInfo submit_info(nullptr, nullptr, *command_buffer);
         queue.submit(submit_info, nullptr);
         queue.waitIdle();
     }

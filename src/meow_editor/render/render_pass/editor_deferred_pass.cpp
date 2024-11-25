@@ -27,146 +27,128 @@ namespace Meow
 
         m_color_format = color_format;
 
-        std::vector<vk::AttachmentDescription> attachment_descriptions = {
-            // swap chain attachment
-            vk::AttachmentDescription {
-                .format         = color_format,
-                .samples        = m_sample_count,
-                .loadOp         = vk::AttachmentLoadOp::eClear,
-                .storeOp        = vk::AttachmentStoreOp::eStore,
-                .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-                .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                .initialLayout  = vk::ImageLayout::eShaderReadOnlyOptimal,
-                .finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal,
-            },
-            // color attachment
-            vk::AttachmentDescription {
-                .format         = color_format,
-                .samples        = m_sample_count,
-                .loadOp         = vk::AttachmentLoadOp::eClear,
-                .storeOp        = vk::AttachmentStoreOp::eStore,
-                .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-                .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                .initialLayout  = vk::ImageLayout::eUndefined,
-                .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
-            },
-            // normal attachment
-            vk::AttachmentDescription {
-                .format         = vk::Format::eR8G8B8A8Unorm,
-                .samples        = m_sample_count,
-                .loadOp         = vk::AttachmentLoadOp::eClear,
-                .storeOp        = vk::AttachmentStoreOp::eStore,
-                .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-                .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                .initialLayout  = vk::ImageLayout::eUndefined,
-                .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
-            },
-            // position attachment
-            vk::AttachmentDescription {
-                .format         = vk::Format::eR16G16B16A16Sfloat,
-                .samples        = m_sample_count,
-                .loadOp         = vk::AttachmentLoadOp::eClear,
-                .storeOp        = vk::AttachmentStoreOp::eStore,
-                .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-                .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-                .initialLayout  = vk::ImageLayout::eUndefined,
-                .finalLayout    = vk::ImageLayout::eColorAttachmentOptimal,
-            },
-        };
-
+        std::vector<vk::AttachmentDescription> attachment_descriptions;
+        // swap chain attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),         /* flags */
+                                             color_format,                             /* format */
+                                             m_sample_count,                           /* samples */
+                                             vk::AttachmentLoadOp::eClear,             /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,            /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal,  /* initialLayout */
+                                             vk::ImageLayout::eShaderReadOnlyOptimal); /* finalLayout */
+        // color attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                             color_format,                              /* format */
+                                             m_sample_count,                            /* samples */
+                                             vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,               /* initialLayout */
+                                             vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
+        // normal attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                             vk::Format::eR8G8B8A8Unorm,                /* format */
+                                             m_sample_count,                            /* samples */
+                                             vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,               /* initialLayout */
+                                             vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
+        // position attachment
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),          /* flags */
+                                             vk::Format::eR16G16B16A16Sfloat,           /* format */
+                                             m_sample_count,                            /* samples */
+                                             vk::AttachmentLoadOp::eClear,              /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,             /* storeOp */
+                                             vk::AttachmentLoadOp::eDontCare,           /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eDontCare,          /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,               /* initialLayout */
+                                             vk::ImageLayout::eColorAttachmentOptimal); /* finalLayout */
         // depth attachment
-        attachment_descriptions.push_back(vk::AttachmentDescription {
-            .format         = m_depth_format,
-            .samples        = m_sample_count,
-            .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eStore,
-            .stencilLoadOp  = vk::AttachmentLoadOp::eClear,
-            .stencilStoreOp = vk::AttachmentStoreOp::eStore,
-            .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        });
+        attachment_descriptions.emplace_back(vk::AttachmentDescriptionFlags(),                 /* flags */
+                                             m_depth_format,                                   /* format */
+                                             m_sample_count,                                   /* samples */
+                                             vk::AttachmentLoadOp::eClear,                     /* loadOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* storeOp */
+                                             vk::AttachmentLoadOp::eClear,                     /* stencilLoadOp */
+                                             vk::AttachmentStoreOp::eStore,                    /* stencilStoreOp */
+                                             vk::ImageLayout::eUndefined,                      /* initialLayout */
+                                             vk::ImageLayout::eDepthStencilAttachmentOptimal); /* finalLayout */
 
         // Create reference to attachment information set
 
-        vk::AttachmentReference swapchain_attachment_reference = {
-            .attachment = 0,
-            .layout     = vk::ImageLayout::eColorAttachmentOptimal,
-        };
+        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
 
-        std::vector<vk::AttachmentReference> color_attachment_references = {
-            {.attachment = 1, .layout = vk::ImageLayout::eColorAttachmentOptimal},
-            {.attachment = 2, .layout = vk::ImageLayout::eColorAttachmentOptimal},
-            {.attachment = 3, .layout = vk::ImageLayout::eColorAttachmentOptimal},
-        };
+        std::vector<vk::AttachmentReference> color_attachment_references;
+        color_attachment_references.emplace_back(1, vk::ImageLayout::eColorAttachmentOptimal);
+        color_attachment_references.emplace_back(2, vk::ImageLayout::eColorAttachmentOptimal);
+        color_attachment_references.emplace_back(3, vk::ImageLayout::eColorAttachmentOptimal);
 
-        vk::AttachmentReference depth_attachment_reference = {
-            .attachment = 4,
-            .layout     = vk::ImageLayout::eDepthStencilAttachmentOptimal,
-        };
+        vk::AttachmentReference depth_attachment_reference(4, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-        std::vector<vk::AttachmentReference> input_attachment_references = {
-            {.attachment = 1, .layout = vk::ImageLayout::eShaderReadOnlyOptimal},
-            {.attachment = 2, .layout = vk::ImageLayout::eShaderReadOnlyOptimal},
-            {.attachment = 3, .layout = vk::ImageLayout::eShaderReadOnlyOptimal},
-            {.attachment = 4, .layout = vk::ImageLayout::eShaderReadOnlyOptimal},
-        };
+        std::vector<vk::AttachmentReference> input_attachment_references;
+        input_attachment_references.emplace_back(1, vk::ImageLayout::eShaderReadOnlyOptimal);
+        input_attachment_references.emplace_back(2, vk::ImageLayout::eShaderReadOnlyOptimal);
+        input_attachment_references.emplace_back(3, vk::ImageLayout::eShaderReadOnlyOptimal);
+        input_attachment_references.emplace_back(4, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         // Create subpass
 
-        std::vector<vk::SubpassDescription> subpass_descriptions = {
-            vk::SubpassDescription {
-                .pipelineBindPoint       = vk::PipelineBindPoint::eGraphics,
-                .pColorAttachments       = color_attachment_references.data(),
-                .pDepthStencilAttachment = &depth_attachment_reference,
-            },
-            vk::SubpassDescription {
-                .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-                .pInputAttachments = input_attachment_references.data(),
-                .pColorAttachments = &swapchain_attachment_reference,
-            },
-        };
+        std::vector<vk::SubpassDescription> subpass_descriptions;
+        // obj2attachment pass
+        subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                              vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                              {},                               /* pInputAttachments */
+                                                              color_attachment_references,      /* pColorAttachments */
+                                                              {},                          /* pResolveAttachments */
+                                                              &depth_attachment_reference, /* pDepthStencilAttachment */
+                                                              nullptr));                   /* pPreserveAttachments */
+        // quad renderering pass
+        subpass_descriptions.push_back(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                              vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                              input_attachment_references,      /* pInputAttachments */
+                                                              swapchain_attachment_reference,   /* pColorAttachments */
+                                                              {},        /* pResolveAttachments */
+                                                              {},        /* pDepthStencilAttachment */
+                                                              nullptr)); /* pPreserveAttachments */
 
         // Create subpass dependency
 
-        std::vector<vk::SubpassDependency> dependencies = {
-            vk::SubpassDependency {
-                .srcSubpass      = VK_SUBPASS_EXTERNAL,
-                .dstSubpass      = 0,
-                .srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe,
-                .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .srcAccessMask   = vk::AccessFlagBits::eMemoryRead,
-                .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-                .dependencyFlags = vk::DependencyFlagBits::eByRegion,
-            },
-            vk::SubpassDependency {
-                .srcSubpass      = 0,
-                .dstSubpass      = 1,
-                .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .dstStageMask    = vk::PipelineStageFlagBits::eFragmentShader,
-                .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-                .dstAccessMask   = vk::AccessFlagBits::eShaderRead,
-                .dependencyFlags = vk::DependencyFlagBits::eByRegion,
-            },
-            vk::SubpassDependency {
-                .srcSubpass      = 1,
-                .dstSubpass      = VK_SUBPASS_EXTERNAL,
-                .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                .dstStageMask    = vk::PipelineStageFlagBits::eFragmentShader,
-                .srcAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-                .dstAccessMask   = vk::AccessFlagBits::eShaderRead,
-                .dependencyFlags = vk::DependencyFlagBits::eByRegion,
-            },
-        };
+        std::vector<vk::SubpassDependency> dependencies;
+        // externel -> obj2attachment pass
+        dependencies.emplace_back(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+                                  0,                                                 /* dstSubpass */
+                                  vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
+                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+                                  vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
+                                  vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                                  vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
+        // obj2attachment pass -> quad renderering pass
+        dependencies.emplace_back(0,                                                 /* srcSubpass */
+                                  1,                                                 /* dstSubpass */
+                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                                  vk::PipelineStageFlagBits::eFragmentShader,        /* dstStageMask */
+                                  vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                                  vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                                  vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
+        // quad renderering pass -> externel
+        dependencies.emplace_back(1,                                                 /* srcSubpass */
+                                  VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                                  vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                                  vk::PipelineStageFlagBits::eFragmentShader,        /* dstStageMask */
+                                  vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                                  vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                                  vk::DependencyFlagBits::eByRegion);                /* dependencyFlags */
 
         // Create render pass
-        vk::RenderPassCreateInfo render_pass_create_info = {
-            .attachmentCount = static_cast<uint32_t>(attachment_descriptions.size()),
-            .pAttachments    = attachment_descriptions.data(),
-            .subpassCount    = static_cast<uint32_t>(subpass_descriptions.size()),
-            .pSubpasses      = subpass_descriptions.data(),
-            .dependencyCount = static_cast<uint32_t>(dependencies.size()),
-            .pDependencies   = dependencies.data(),
-        };
+        vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
+                                                         attachment_descriptions,     /* pAttachments */
+                                                         subpass_descriptions,        /* pSubpasses */
+                                                         dependencies);               /* pDependencies */
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
@@ -181,11 +163,10 @@ namespace Meow
 
         // Debug
 
-        vk::QueryPoolCreateInfo query_pool_create_info = {
-            .queryType          = vk::QueryType::ePipelineStatistics,
-            .queryCount         = 1,
-            .pipelineStatistics = vk::QueryPipelineStatisticFlags {(1 << 11) - 1},
-        };
+        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
+                                                        .queryCount         = 2,
+                                                        .pipelineStatistics = (1 << 11) - 1};
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 

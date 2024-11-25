@@ -43,8 +43,9 @@ namespace Meow
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
-        m_quad_model =
-            std::move(Model(std::move(vertices), std::move(indices), m_quad_mat.shader_ptr->per_vertex_attributes));
+        m_quad_model = std::move(Model(std::move(vertices),
+                                       std::move(indices),
+                                       m_quad_mat.shader_ptr->per_vertex_attributes));
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
 
@@ -102,25 +103,33 @@ namespace Meow
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,
-                                                         vk::ImageAspectFlagBits::eColor);
+                                                         vk::ImageAspectFlagBits::eColor,
+                                                         {},
+                                                         false);
 
         m_normal_attachment = ImageData::CreateAttachment(vk::Format::eR8G8B8A8Unorm,
                                                           extent,
                                                           vk::ImageUsageFlagBits::eColorAttachment |
                                                               vk::ImageUsageFlagBits::eInputAttachment,
-                                                          vk::ImageAspectFlagBits::eColor);
+                                                          vk::ImageAspectFlagBits::eColor,
+                                                          {},
+                                                          false);
 
         m_position_attachment = ImageData::CreateAttachment(vk::Format::eR16G16B16A16Sfloat,
                                                             extent,
                                                             vk::ImageUsageFlagBits::eColorAttachment |
                                                                 vk::ImageUsageFlagBits::eInputAttachment,
-                                                            vk::ImageAspectFlagBits::eColor);
+                                                            vk::ImageAspectFlagBits::eColor,
+                                                            {},
+                                                            false);
 
         m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,
-                                                         vk::ImageAspectFlagBits::eDepth);
+                                                         vk::ImageAspectFlagBits::eDepth,
+                                                         {},
+                                                         false);
 
         // Provide attachment information to frame buffer
 
@@ -130,14 +139,13 @@ namespace Meow
         attachments[3] = *m_position_attachment->image_view;
         attachments[4] = *m_depth_attachment->image_view;
 
-        vk::FramebufferCreateInfo framebuffer_create_info = {
-            .renderPass      = *render_pass, 
-            .attachmentCount = 5,            
-            .pAttachments    = attachments, 
-            .width           = extent.width,
-            .height          = extent.height,
-            .layers          = 1,
-        };
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          5,                            /* attachmentCount */
+                                                          attachments,                  /* pAttachments */
+                                                          extent.width,                 /* width */
+                                                          extent.height,                /* height */
+                                                          1);                           /* layers */
 
         framebuffers.reserve(output_image_views.size());
         for (const auto& imageView : output_image_views)

@@ -20,12 +20,8 @@ namespace Meow
 
             setsPerPool = initialSets * 1.5; // grow it next allocation
 
-            vk::DescriptorPoolCreateInfo descriptor_pool_create_info = {
-                .flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-                .maxSets       = initialSets,
-                .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-                .pPoolSizes    = pool_sizes.data(),
-            };
+            vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
+                vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, initialSets, pool_sizes);
             readyPools.push_back(std::make_shared<vk::raii::DescriptorPool>(device, descriptor_pool_create_info));
         }
 

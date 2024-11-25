@@ -91,19 +91,13 @@ namespace Meow
 
         auto [data_ptr, data_size] = g_runtime_context.file_system.get()->ReadBinaryFile(shader_file_path);
 
-        vk::ShaderModuleCreateInfo shader_module_create_info = {
-            .codeSize = data_size,
-            .pCode    = (uint32_t*)data_ptr,
-        };
-        shader_module = vk::raii::ShaderModule(logical_device, shader_module_create_info);
+        shader_module =
+            vk::raii::ShaderModule(logical_device, {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
 
         // store stage create info for creating pipeline
 
-        pipeline_shader_stage_create_infos.push_back(vk::PipelineShaderStageCreateInfo {
-            .stage  = stage,
-            .module = *shader_module,
-            .pName  = "main",
-        });
+        pipeline_shader_stage_create_infos.emplace_back(
+            vk::PipelineShaderStageCreateFlags {}, stage, *shader_module, "main", nullptr);
 
         // Cross compile spv to get meta information
 
@@ -127,7 +121,7 @@ namespace Meow
                                     spirv_cross::ShaderResources& resources,
                                     vk::ShaderStageFlags          stageFlags)
     {
-        for (uint32_t i = 0; i < resources.subpass_inputs.size(); ++i)
+        for (int32_t i = 0; i < resources.subpass_inputs.size(); ++i)
         {
             spirv_cross::Resource& res       = resources.subpass_inputs[i];
             spirv_cross::SPIRType  type      = compiler.get_type(res.type_id);
@@ -137,10 +131,8 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding = {.binding        = binding,
-                                                                 .descriptorType = vk::DescriptorType::eInputAttachment,
-                                                                 .descriptorCount = 1,
-                                                                 .stageFlags      = stageFlags};
+            vk::DescriptorSetLayoutBinding set_layout_binding {
+                binding, vk::DescriptorType::eInputAttachment, 1, stageFlags, nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -166,7 +158,7 @@ namespace Meow
                                        spirv_cross::ShaderResources& resources,
                                        vk::ShaderStageFlags          stageFlags)
     {
-        for (uint32_t i = 0; i < resources.uniform_buffers.size(); ++i)
+        for (int32_t i = 0; i < resources.uniform_buffers.size(); ++i)
         {
             spirv_cross::Resource& res          = resources.uniform_buffers[i];
             spirv_cross::SPIRType  type         = compiler.get_type(res.type_id);
@@ -178,13 +170,13 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding = {.binding = binding,
-                                                                 .descriptorType =
-                                                                     (type_name.find("Dynamic") != std::string::npos) ?
-                                                                         vk::DescriptorType::eUniformBufferDynamic :
-                                                                         vk::DescriptorType::eUniformBuffer,
-                                                                 .descriptorCount = 1,
-                                                                 .stageFlags      = stageFlags};
+            vk::DescriptorSetLayoutBinding set_layout_binding {binding,
+                                                               (type_name.find("Dynamic") != std::string::npos) ?
+                                                                   vk::DescriptorType::eUniformBufferDynamic :
+                                                                   vk::DescriptorType::eUniformBuffer,
+                                                               1,
+                                                               stageFlags,
+                                                               nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -217,7 +209,7 @@ namespace Meow
                                  spirv_cross::ShaderResources& resources,
                                  vk::ShaderStageFlags          stageFlags)
     {
-        for (uint32_t i = 0; i < resources.sampled_images.size(); ++i)
+        for (int32_t i = 0; i < resources.sampled_images.size(); ++i)
         {
             spirv_cross::Resource& res       = resources.sampled_images[i];
             spirv_cross::SPIRType  type      = compiler.get_type(res.type_id);
@@ -227,11 +219,8 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding = {.binding = binding,
-                                                                 .descriptorType =
-                                                                     vk::DescriptorType::eCombinedImageSampler,
-                                                                 .descriptorCount = 1,
-                                                                 .stageFlags      = stageFlags};
+            vk::DescriptorSetLayoutBinding set_layout_binding {
+                binding, vk::DescriptorType::eCombinedImageSampler, 1, stageFlags, nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -261,12 +250,12 @@ namespace Meow
             return;
         }
 
-        for (uint32_t i = 0; i < resources.stage_inputs.size(); ++i)
+        for (int32_t i = 0; i < resources.stage_inputs.size(); ++i)
         {
             spirv_cross::Resource& res                  = resources.stage_inputs[i];
             spirv_cross::SPIRType  type                 = compiler.get_type(res.type_id);
             const std::string&     var_name             = compiler.get_name(res.id);
-            uint32_t               input_attribute_size = type.vecsize;
+            int32_t                input_attribute_size = type.vecsize;
 
             // Convection: input vertex name should be certain name, for example:
             // inPosition, inUV0, ...
@@ -300,7 +289,7 @@ namespace Meow
 
             // store tuple of input attribute and its location
             // location must be continous
-            uint32_t            location              = compiler.get_decoration(res.id, spv::DecorationLocation);
+            int32_t             location              = compiler.get_decoration(res.id, spv::DecorationLocation);
             VertexAttributeMeta vertex_attribute_meta = {};
             vertex_attribute_meta.location            = location;
             vertex_attribute_meta.attribute           = attribute;
@@ -312,7 +301,7 @@ namespace Meow
                                        spirv_cross::ShaderResources& resources,
                                        vk::ShaderStageFlags          stageFlags)
     {
-        for (uint32_t i = 0; i < resources.storage_buffers.size(); ++i)
+        for (int32_t i = 0; i < resources.storage_buffers.size(); ++i)
         {
             spirv_cross::Resource& res       = resources.storage_buffers[i];
             spirv_cross::SPIRType  type      = compiler.get_type(res.type_id);
@@ -322,10 +311,8 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding = {.binding         = binding,
-                                                                 .descriptorType  = vk::DescriptorType::eStorageBuffer,
-                                                                 .descriptorCount = 1,
-                                                                 .stageFlags      = stageFlags};
+            vk::DescriptorSetLayoutBinding set_layout_binding = {
+                binding, vk::DescriptorType::eStorageBuffer, 1, stageFlags, nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -352,7 +339,7 @@ namespace Meow
                                       spirv_cross::ShaderResources& resources,
                                       vk::ShaderStageFlags          stageFlags)
     {
-        for (uint32_t i = 0; i < resources.storage_images.size(); ++i)
+        for (int32_t i = 0; i < resources.storage_images.size(); ++i)
         {
             spirv_cross::Resource& res       = resources.storage_images[i];
             spirv_cross::SPIRType  type      = compiler.get_type(res.type_id);
@@ -362,10 +349,8 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding = {.binding         = binding,
-                                                                 .descriptorType  = vk::DescriptorType::eStorageImage,
-                                                                 .descriptorCount = 1,
-                                                                 .stageFlags      = stageFlags};
+            vk::DescriptorSetLayoutBinding set_layout_binding = {
+                binding, vk::DescriptorType::eStorageImage, 1, stageFlags, nullptr};
 
             set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
@@ -396,7 +381,7 @@ namespace Meow
             [](const VertexAttributeMeta& a, const VertexAttributeMeta& b) -> bool { return a.location < b.location; });
 
         // sort input_attributes to per_vertex_attributes and instance_attributes
-        for (uint32_t i = 0; i < vertex_attribute_metas.size(); ++i)
+        for (int32_t i = 0; i < vertex_attribute_metas.size(); ++i)
         {
             VertexAttributeBit attribute = vertex_attribute_metas[i].attribute;
             if (attribute == VertexAttributeBit::InstanceFloat1 || attribute == VertexAttributeBit::InstanceFloat2 ||
@@ -435,7 +420,7 @@ namespace Meow
         if (per_vertex_attributes.size() > 0)
         {
             uint32_t offset = 0;
-            for (uint32_t i = 0; i < per_vertex_attributes.size(); ++i)
+            for (int32_t i = 0; i < per_vertex_attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
                     0, location, VertexAttributeToVkFormat(per_vertex_attributes[i]), offset};
@@ -449,7 +434,7 @@ namespace Meow
         if (instance_attributes.size() > 0)
         {
             uint32_t offset = 0;
-            for (uint32_t i = 0; i < instance_attributes.size(); ++i)
+            for (int32_t i = 0; i < instance_attributes.size(); ++i)
             {
                 vk::VertexInputAttributeDescription input_attribute {
                     1, location, VertexAttributeToVkFormat(instance_attributes[i]), offset};
@@ -472,7 +457,7 @@ namespace Meow
             });
 
         // first sort according to binding
-        for (uint32_t i = 0; i < metas.size(); ++i)
+        for (int32_t i = 0; i < metas.size(); ++i)
         {
             std::vector<vk::DescriptorSetLayoutBinding>& bindings = metas[i].bindings;
             std::sort(bindings.begin(),
@@ -484,7 +469,7 @@ namespace Meow
 
         if (metas.size() == 0)
         {
-            vk::PipelineLayoutCreateInfo pipeline_layout_create_info {};
+            vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 0, nullptr);
             pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
         }
         else
@@ -493,10 +478,8 @@ namespace Meow
             {
                 DescriptorSetLayoutMeta& set_layout_meta = metas[i];
 
-                vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
-                    .bindingCount = static_cast<uint32_t>(set_layout_meta.bindings.size()),
-                    .pBindings    = set_layout_meta.bindings.data(),
-                };
+                vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
+                    vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
 
                 vk::DescriptorSetLayout setLayout;
                 raii_logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
@@ -508,10 +491,8 @@ namespace Meow
                 descriptor_set_layouts.push_back(setLayout);
             }
 
-            vk::PipelineLayoutCreateInfo pipeline_layout_create_info = {
-                .setLayoutCount = static_cast<uint32_t>(descriptor_set_layouts.size()),
-                .pSetLayouts    = descriptor_set_layouts.data(),
-            };
+            vk::PipelineLayoutCreateInfo pipeline_layout_create_info(
+                {}, static_cast<uint32_t>(descriptor_set_layouts.size()), descriptor_set_layouts.data());
             pipeline_layout = vk::raii::PipelineLayout(raii_logical_device, pipeline_layout_create_info);
         }
     }
@@ -585,11 +566,7 @@ namespace Meow
             return;
         }
 
-        vk::DescriptorBufferInfo descriptor_buffer_info = {
-            .buffer = *buffer,
-            .offset = 0,
-            .range  = range,
-        };
+        vk::DescriptorBufferInfo descriptor_buffer_info(*buffer, 0, range);
 
         // TODO: store buffer view in an vector
         vk::BufferView buffer_view;
@@ -598,15 +575,16 @@ namespace Meow
             buffer_view = **raii_buffer_view;
         }
 
-        vk::WriteDescriptorSet write_descriptor_set = {
-            .dstSet           = *descriptor_sets[meta->set],
-            .dstBinding       = meta->binding,
-            .dstArrayElement  = 0,
-            .descriptorCount  = 1,
-            .descriptorType   = set_layout_metas.GetDescriptorType(meta->set, meta->binding),
-            .pBufferInfo      = &descriptor_buffer_info,
-            .pTexelBufferView = raii_buffer_view ? &buffer_view : nullptr,
-        };
+        vk::WriteDescriptorSet write_descriptor_set(
+            *descriptor_sets[meta->set],                                  // dstSet
+            meta->binding,                                                // dstBinding
+            0,                                                            // dstArrayElement
+            1,                                                            // descriptorCount
+            set_layout_metas.GetDescriptorType(meta->set, meta->binding), // descriptorType
+            nullptr,                                                      // pImageInfo
+            &descriptor_buffer_info,                                      // pBufferInfo
+            raii_buffer_view ? &buffer_view : nullptr                     // pTexelBufferView
+        );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
@@ -625,20 +603,19 @@ namespace Meow
 
         auto bindInfo = it->second;
 
-        vk::DescriptorImageInfo descriptor_image_info = {
-            .sampler     = *image_data.sampler,
-            .imageView   = *image_data.image_view,
-            .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal,
-        };
+        vk::DescriptorImageInfo descriptor_image_info(
+            *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
-        vk::WriteDescriptorSet write_descriptor_set = {
-            .dstSet          = *descriptor_sets[bindInfo.set],
-            .dstBinding      = bindInfo.binding,
-            .dstArrayElement = 0,
-            .descriptorCount = 1,
-            .descriptorType  = set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding),
-            .pImageInfo      = &descriptor_image_info,
-        };
+        vk::WriteDescriptorSet write_descriptor_set(
+            *descriptor_sets[bindInfo.set],                                     // dstSet
+            bindInfo.binding,                                                   // dstBinding
+            0,                                                                  // dstArrayElement
+            1,                                                                  // descriptorCount
+            set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
+            &descriptor_image_info,                                             // pImageInfo
+            nullptr,                                                            // pBufferInfo
+            nullptr                                                             // pTexelBufferView
+        );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }

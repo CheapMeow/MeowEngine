@@ -18,12 +18,8 @@ namespace Meow
 
     std::shared_ptr<vk::raii::DescriptorPool> DescriptorAllocatorGrowable::PopPool(vk::raii::Device const& device)
     {
-        vk::DescriptorPoolCreateInfo descriptor_pool_create_info = {
-            .flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-            .maxSets       = setsPerPool,
-            .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
-            .pPoolSizes    = pool_sizes.data(),
-        };
+        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, setsPerPool, pool_sizes);
 
         std::shared_ptr<vk::raii::DescriptorPool> newPool;
         if (readyPools.size() != 0)
@@ -54,12 +50,8 @@ namespace Meow
         // get or create a pool to allocate from
         std::shared_ptr<vk::raii::DescriptorPool> poolToUse = PopPool(device);
 
-        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info = {
-            .pNext              = pNext,
-            .descriptorPool     = **poolToUse,
-            .descriptorSetCount = static_cast<uint32_t>(descriptor_set_layouts.size()),
-            .pSetLayouts        = descriptor_set_layouts.data(),
-        };
+        vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
+            **poolToUse, descriptor_set_layouts.size(), descriptor_set_layouts.data(), pNext);
 
         vk::raii::DescriptorSets descriptor_sets = nullptr;
 

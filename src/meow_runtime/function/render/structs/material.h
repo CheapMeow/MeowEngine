@@ -73,8 +73,8 @@ namespace Meow
         std::vector<uint32_t> GetDynamicOffsets(uint32_t obj_index);
 
         std::shared_ptr<Shader> shader_ptr             = nullptr;
-        uint32_t                color_attachment_count = 1;
-        uint32_t                subpass                = 0;
+        int                     color_attachment_count = 1;
+        int                     subpass                = 0;
 
     private:
         vk::raii::Pipeline graphics_pipeline = nullptr;
@@ -82,7 +82,7 @@ namespace Meow
         // stored for binding descriptor set
 
         bool                               actived   = false;
-        uint32_t                           obj_count = 0;
+        int32_t                            obj_count = 0;
         std::vector<std::vector<uint32_t>> per_obj_dynamic_offsets;
         std::vector<vk::DescriptorSet>     descriptor_sets;
     };

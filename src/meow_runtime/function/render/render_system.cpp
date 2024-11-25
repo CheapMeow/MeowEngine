@@ -48,19 +48,9 @@ namespace Meow
             MEOW_ERROR("Required validation layers are missing.");
         }
 
-        uint32_t            api_version = m_vulkan_context.enumerateInstanceVersion();
-        vk::ApplicationInfo app         = {
-                    .pApplicationName = "Meow Engine Vulkan Renderer",
-                    .pEngineName      = "Meow Engine",
-                    .apiVersion       = api_version,
-        };
-        vk::InstanceCreateInfo instance_info = {
-            .pApplicationInfo        = &app,
-            .enabledLayerCount       = static_cast<uint32_t>(required_validation_layers.size()),
-            .ppEnabledLayerNames     = required_validation_layers.data(),
-            .enabledExtensionCount   = static_cast<uint32_t>(required_instance_extensions.size()),
-            .ppEnabledExtensionNames = required_instance_extensions.data(),
-        };
+        uint32_t               api_version = m_vulkan_context.enumerateInstanceVersion();
+        vk::ApplicationInfo    app("Meow Engine Vulkan Renderer", {}, "Meow Engine", {}, api_version);
+        vk::InstanceCreateInfo instance_info({}, &app, required_validation_layers, required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         // VkDebugUtilsMessengerEXT only covers stuff from its creation to its destruction.
@@ -126,7 +116,7 @@ namespace Meow
         }
 
         // temp SurfaceData
-        vk::Extent2D extent {1080, 720};
+        vk::Extent2D extent(1080, 720);
         SurfaceData  surface_data(
             m_vulkan_instance, g_runtime_context.window_system->GetCurrentFocusGLFWWindow(), extent);
 
@@ -135,26 +125,27 @@ namespace Meow
         m_present_queue_family_index  = indexs.second;
 
         // Create a device with one queue
-        float                     queue_priority = 1.0f;
-        vk::DeviceQueueCreateInfo queue_info     = {
-                .queueFamilyIndex = m_graphics_queue_family_index,
-                .queueCount       = 1,
-                .pQueuePriorities = &queue_priority,
-        };
+        float                      queue_priority = 1.0f;
+        vk::DeviceQueueCreateInfo  queue_info({}, m_graphics_queue_family_index, 1, &queue_priority);
         vk::PhysicalDeviceFeatures physical_device_feature;
         physical_device_feature.pipelineStatisticsQuery = vk::True;
 
-        vk::DeviceCreateInfo device_info = {
-            .queueCreateInfoCount    = 1,
-            .pQueueCreateInfos       = &queue_info,
-            .ppEnabledLayerNames     = {},
-            .ppEnabledExtensionNames = k_required_device_extensions.data(),
-            .pEnabledFeatures        = &physical_device_feature,
-        };
+        vk::DeviceCreateInfo device_info({},                           /* flags */
+                                         queue_info,                   /* queueCreateInfoCount */
+                                         {},                           /* ppEnabledLayerNames */
+                                         k_required_device_extensions, /* ppEnabledExtensionNames */
+                                         &physical_device_feature);    /* pEnabledFeatures */
         m_logical_device = vk::raii::Device(m_physical_device, device_info);
 
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)
         volkLoadDevice(*logical_device);
+#endif
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        std::string                     object_name = "Logical Device";
+        vk::DebugUtilsObjectNameInfoEXT name_info   = {
+            vk::ObjectType::eDevice, GetVulkanHandle(*m_logical_device), object_name.c_str(), nullptr};
+        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
 
         m_graphics_queue = vk::raii::Queue(m_logical_device, m_graphics_queue_family_index, 0);
@@ -170,7 +161,8 @@ namespace Meow
         CreatePhysicalDevice();
         CreateLogicalDevice();
 
-        vk::CommandPoolCreateInfo command_pool_create_info = {.queueFamilyIndex = m_graphics_queue_family_index};
+        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
+                                                           m_graphics_queue_family_index);
         m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
     }
 

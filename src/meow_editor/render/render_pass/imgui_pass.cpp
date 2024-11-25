@@ -32,46 +32,39 @@ namespace Meow
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
         assert(color_format != vk::Format::eUndefined);
 
-        vk::AttachmentReference swapchain_attachment_reference = {
-            .attachment = 0,
-            .layout     = vk::ImageLayout::eColorAttachmentOptimal,
-        };
+        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
 
         // swap chain attachment
-        vk::AttachmentDescription attachment_description = {
-            .format         = color_format,
-            .samples        = vk::SampleCountFlagBits::e1,
-            .loadOp         = vk::AttachmentLoadOp::eClear,
-            .storeOp        = vk::AttachmentStoreOp::eStore,
-            .stencilLoadOp  = vk::AttachmentLoadOp::eDontCare,
-            .stencilStoreOp = vk::AttachmentStoreOp::eDontCare,
-            .initialLayout  = vk::ImageLayout::eUndefined,
-            .finalLayout    = vk::ImageLayout::ePresentSrcKHR,
-        };
+        vk::AttachmentDescription attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
+                                                         color_format,                     /* format */
+                                                         vk::SampleCountFlagBits::e1,      /* samples */
+                                                         vk::AttachmentLoadOp::eClear,     /* loadOp */
+                                                         vk::AttachmentStoreOp::eStore,    /* storeOp */
+                                                         vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                                                         vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                                                         vk::ImageLayout::eUndefined,      /* initialLayout */
+                                                         vk::ImageLayout::ePresentSrcKHR); /* finalLayout */
 
-        vk::SubpassDescription subpass_description = {
-            .pipelineBindPoint = vk::PipelineBindPoint::eGraphics,
-            .pColorAttachments = &swapchain_attachment_reference,
-        };
+        auto subpass_description(vk::SubpassDescription(vk::SubpassDescriptionFlags(),    /* flags */
+                                                        vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                                                        {},                               /* pInputAttachments */
+                                                        swapchain_attachment_reference,   /* pColorAttachments */
+                                                        {},                               /* pResolveAttachments */
+                                                        {},                               /* pDepthStencilAttachment */
+                                                        nullptr));                        /* pPreserveAttachments */
 
-        vk::SubpassDependency dependencies = {
-            .srcSubpass      = VK_SUBPASS_EXTERNAL,
-            .dstSubpass      = 0,
-            .srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            .dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput,
-            .srcAccessMask   = {},
-            .dstAccessMask   = vk::AccessFlagBits::eColorAttachmentWrite,
-            .dependencyFlags = {},
-        };
+        vk::SubpassDependency dependencies(VK_SUBPASS_EXTERNAL,                               /* srcSubpass */
+                                           0,                                                 /* dstSubpass */
+                                           vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                                           vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
+                                           {},                                                /* srcAccessMask */
+                                           vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                                           {});                                               /* dependencyFlags */
 
-        vk::RenderPassCreateInfo render_pass_create_info = {
-            .attachmentCount = 1,
-            .pAttachments    = &attachment_description,
-            .subpassCount    = 1,
-            .pSubpasses      = &subpass_description,
-            .dependencyCount = 1,
-            .pDependencies   = &dependencies,
-        };
+        vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
+                                                         attachment_description,      /* pAttachments */
+                                                         subpass_description,         /* pSubpasses */
+                                                         dependencies);               /* pDependencies */
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
@@ -95,14 +88,13 @@ namespace Meow
 
         vk::ImageView attachments[1];
 
-        vk::FramebufferCreateInfo framebuffer_create_info = {
-            .renderPass      = *render_pass,
-            .attachmentCount = 1,
-            .pAttachments    = attachments,
-            .width           = extent.width,
-            .height          = extent.height,
-            .layers          = 1,
-        };
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          1,                            /* attachmentCount */
+                                                          attachments,                  /* pAttachments */
+                                                          extent.width,                 /* width */
+                                                          extent.height,                /* height */
+                                                          1);                           /* layers */
 
         framebuffers.reserve(output_image_views.size());
         for (const auto& imageView : output_image_views)
