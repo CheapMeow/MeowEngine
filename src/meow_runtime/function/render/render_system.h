@@ -42,9 +42,6 @@ namespace Meow
         void CreatePhysicalDevice();
         void CreateLogicalDevice();
 
-        bool                           m_is_validation_layer_found  = false;
-        const std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
         uint32_t m_graphics_queue_family_index = 0;
         uint32_t m_present_queue_family_index  = 0;
 

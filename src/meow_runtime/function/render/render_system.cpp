@@ -8,6 +8,8 @@
 #include <volk.h>
 namespace Meow
 {
+    std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
     void RenderSystem::CreateVulkanInstance()
     {
 #ifdef MEOW_DEBUG
@@ -34,6 +36,7 @@ namespace Meow
             required_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
 
+        bool                           m_is_validation_layer_found  = false;
         m_is_validation_layer_found = ValidateLayers(required_validation_layers, supported_validation_layers);
         if (m_is_validation_layer_found)
         {
