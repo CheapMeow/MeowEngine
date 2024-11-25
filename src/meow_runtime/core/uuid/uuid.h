@@ -16,7 +16,7 @@ namespace Meow
         constexpr operator uint64_t() const noexcept { return m_UUID; }
 
     private:
-        uint64_t m_UUID;
+        uint64_t m_UUID = 0;
     };
 
 } // namespace Meow

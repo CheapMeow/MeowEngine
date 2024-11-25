@@ -179,10 +179,13 @@ namespace Meow
             ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
             texture_info.diffuse = texture_path.C_Str();
 
-            auto path            = root_path / texture_info.diffuse;
-            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
-            if (success)
-                texture_info.diffuse_texture = g_runtime_context.resource_system->GetTexture(uuid);
+            auto path        = root_path / texture_info.diffuse;
+            auto texture_ptr = ImageData::CreateTexture(path.string());
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                texture_info.diffuse_texture = texture_ptr;
+            }
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
@@ -191,10 +194,13 @@ namespace Meow
             ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
             texture_info.normal = texture_path.C_Str();
 
-            auto path            = root_path / texture_info.normal;
-            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
-            if (success)
-                texture_info.normal_texture = g_runtime_context.resource_system->GetTexture(uuid);
+            auto path        = root_path / texture_info.normal;
+            auto texture_ptr = ImageData::CreateTexture(path.string());
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                texture_info.diffuse_texture = texture_ptr;
+            }
         }
 
         if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
@@ -203,10 +209,13 @@ namespace Meow
             ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
             texture_info.specular = texture_path.C_Str();
 
-            auto path            = root_path / texture_info.specular;
-            auto [success, uuid] = g_runtime_context.resource_system->LoadTexture(path.string());
-            if (success)
-                texture_info.specular_texture = g_runtime_context.resource_system->GetTexture(uuid);
+            auto path        = root_path / texture_info.specular;
+            auto texture_ptr = ImageData::CreateTexture(path.string());
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                texture_info.diffuse_texture = texture_ptr;
+            }
         }
     }
 

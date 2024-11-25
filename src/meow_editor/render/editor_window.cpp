@@ -100,10 +100,13 @@ namespace Meow
 
                     auto model_comp_ptr =
                         TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());
-                    auto [success, model_uuid] = g_runtime_context.resource_system->LoadModel(
+                    auto model_shared_ptr = std::make_shared<Model>(
                         sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
-                    if (success)
-                        model_comp_ptr->model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
+                    if (model_shared_ptr)
+                    {
+                        g_runtime_context.resource_system->Register(model_shared_ptr);
+                        model_comp_ptr->model_ptr = model_shared_ptr;
+                    }
                 }
             }
         }

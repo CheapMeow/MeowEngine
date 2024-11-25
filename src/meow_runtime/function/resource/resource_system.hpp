@@ -3,12 +3,11 @@
 #include "core/uuid/uuid.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/model.hpp"
+#include "function/render/render_resources/render_resource_base.h"
 #include "function/render/structs/shader.h"
 #include "function/system.h"
 
-#include <tuple>
 #include <unordered_map>
-#include <vector>
 
 namespace Meow
 {
@@ -33,52 +32,32 @@ namespace Meow
     class ResourceSystem final : public System
     {
     public:
-        ResourceSystem();
-        ~ResourceSystem();
+        ResourceSystem()  = default;
+        ~ResourceSystem() = default;
 
-        void Start() override;
+        void Start() override {}
 
-        void Tick(float dt) override;
+        void Tick(float dt) override {}
 
-        std::tuple<bool, UUID> LoadTexture(const std::string& file_path);
-
-        std::shared_ptr<ImageData> GetTexture(const UUID& uuid);
-
-        // bool LoadMaterial(const std::string& file_path, UUID& uuid);
-
-        // std::shared_ptr<Material> GetMaterial(const UUID& uuid);
-
-        template<typename VerticesType, typename IndicesType>
-        std::tuple<bool, UUID>
-        LoadModel(VerticesType&& vertices, IndicesType&& indices, std::vector<VertexAttributeBit> attributes)
+        template<typename ResourceType>
+        UUID Register(std::shared_ptr<ResourceType> res_ptr)
         {
-            FUNCTION_TIMER();
-
-            auto model_ptr = std::make_shared<Model>(
-                std::forward<VerticesType>(vertices), std::forward<IndicesType>(indices), attributes);
-
-            if (model_ptr)
-            {
-                m_models_id2data[model_ptr->uuid] = model_ptr;
-                return {true, model_ptr->uuid};
-            }
-            else
-            {
-                return {false, UUID(0)};
-            }
+            m_resources[res_ptr->uuid] = res_ptr;
+            return res_ptr->uuid;
         }
 
-        std::tuple<bool, UUID> LoadModel(const std::string& file_path, std::vector<VertexAttributeBit> attributes);
+        template<typename ResourceType>
+        std::shared_ptr<ResourceType> GetResource(UUID uuid)
+        {
+            auto it = m_resources.find(uuid);
+            if (it == m_resources.end())
+                return nullptr;
 
-        std::shared_ptr<Model> GetModel(const UUID& uuid);
+            return std::dynamic_pointer_cast<ResourceType>(it->second);
+        }
 
     private:
-        std::unordered_map<std::string, UUID>                m_textures_path2id;
-        std::unordered_map<UUID, std::shared_ptr<ImageData>> m_textures_id2data;
-
-        // std::unordered_map<UUID, std::shared_ptr<Material>> m_materials;
-
-        std::unordered_map<std::string, UUID>            m_models_path2id;
-        std::unordered_map<UUID, std::shared_ptr<Model>> m_models_id2data;
+        std::unordered_map<UUID, std::shared_ptr<RenderResourceBase>> m_resources;
     };
+
 } // namespace Meow

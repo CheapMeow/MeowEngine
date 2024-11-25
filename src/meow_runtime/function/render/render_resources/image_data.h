@@ -1,17 +1,14 @@
 #pragma once
 
 #include "buffer_data.h"
-#include "core/base/non_copyable.h"
-#include "core/uuid/uuid.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
+#include "render_resource_base.h"
 
 namespace Meow
 {
-    struct ImageData : NonCopyable
+    struct ImageData : public RenderResourceBase
     {
     public:
-        UUID uuid;
-
         vk::Format   format;
         vk::Extent2D extent;
         /**

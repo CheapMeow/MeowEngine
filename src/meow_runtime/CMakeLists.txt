@@ -104,7 +104,6 @@ set(RUNTIME_SOURCE_FILES
     function/render/render_resources/vertex_attribute.cpp
     function/render/utils/model_utils.cpp
     function/render/utils/vulkan_initialize_utils.cpp
-    function/resource/resource_system.cpp
     function/time/time_system.cpp
     function/window/window.cpp
     function/window/window_system.cpp

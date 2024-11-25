@@ -42,55 +42,50 @@ namespace Meow
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
 
         {
-            auto [success, texture_uuid] =
-                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/albedo.png");
-            if (success)
+            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/albedo.png");
+            if (texture_ptr)
             {
-                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.GetShader()->BindImageToDescriptorSet(
                     logical_device, m_forward_descriptor_sets, "albedoMap", *texture_ptr);
             }
         }
 
         {
-            auto [success, texture_uuid] =
-                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/normal.png");
-            if (success)
+            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/normal.png");
+            if (texture_ptr)
             {
-                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.GetShader()->BindImageToDescriptorSet(
                     logical_device, m_forward_descriptor_sets, "normalMap", *texture_ptr);
             }
         }
 
         {
-            auto [success, texture_uuid] =
-                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/metallic.png");
-            if (success)
+            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/metallic.png");
+            if (texture_ptr)
             {
-                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.GetShader()->BindImageToDescriptorSet(
                     logical_device, m_forward_descriptor_sets, "metallicMap", *texture_ptr);
             }
         }
 
         {
-            auto [success, texture_uuid] =
-                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/roughness.png");
-            if (success)
+            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/roughness.png");
+            if (texture_ptr)
             {
-                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.GetShader()->BindImageToDescriptorSet(
                     logical_device, m_forward_descriptor_sets, "roughnessMap", *texture_ptr);
             }
         }
 
         {
-            auto [success, texture_uuid] =
-                g_runtime_context.resource_system->LoadTexture("builtin/models/pbr_sphere/ao.png");
-            if (success)
+            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/ao.png");
+            if (texture_ptr)
             {
-                auto texture_ptr = g_runtime_context.resource_system->GetTexture(texture_uuid);
+                g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.GetShader()->BindImageToDescriptorSet(
                     logical_device, m_forward_descriptor_sets, "aoMap", *texture_ptr);
             }

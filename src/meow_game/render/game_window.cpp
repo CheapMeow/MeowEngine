@@ -74,10 +74,13 @@ namespace Meow
         model_go_ptr->SetName("Nanosuit");
         TryAddComponent(model_go_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
         auto model_comp_ptr = TryAddComponent(model_go_ptr, "ModelComponent", std::make_shared<ModelComponent>());
-        auto [success, model_uuid] = g_runtime_context.resource_system->LoadModel(
-            "builtin/models/nanosuit/nanosuit.obj", m_render_pass_ptr->input_vertex_attributes);
-        if (success)
-            model_comp_ptr->model_ptr = g_runtime_context.resource_system->GetModel(model_uuid);
+        auto model_shared_ptr =
+            std::make_shared<Model>("builtin/models/nanosuit/nanosuit.obj", m_render_pass_ptr->input_vertex_attributes);
+        if (model_shared_ptr)
+        {
+            g_runtime_context.resource_system->Register(model_shared_ptr);
+            model_comp_ptr->model_ptr = model_shared_ptr;
+        }
     }
 
     GameWindow::~GameWindow()

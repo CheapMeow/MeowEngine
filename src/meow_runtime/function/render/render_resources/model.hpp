@@ -1,12 +1,11 @@
 #pragma once
 
-#include "core/base/non_copyable.h"
 #include "core/math/bounding_box.h"
-#include "core/uuid/uuid.h"
 #include "model_anim.h"
 #include "model_bone.h"
 #include "model_mesh.h"
 #include "model_node.h"
+#include "render_resource_base.h"
 #include "vertex_attribute.h"
 
 #include <assimp/scene.h>
@@ -16,12 +15,10 @@
 
 namespace Meow
 {
-    struct Model : NonCopyable
+    struct Model : public RenderResourceBase
     {
         using NodesMap = std::unordered_map<std::string, ModelNode*>;
         using BonesMap = std::unordered_map<std::string, ModelBone*>;
-
-        UUID uuid;
 
         std::filesystem::path   root_path;
         ModelNode*              root_node = nullptr;
