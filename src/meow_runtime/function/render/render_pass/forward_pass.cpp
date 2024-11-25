@@ -20,7 +20,7 @@ namespace Meow
                                      DescriptorAllocatorGrowable&    descriptor_allocator)
     {
         auto mesh_shader_ptr = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/phong.vert.spv", "builtin/shaders/phong.frag.spv");
+            physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
         m_forward_descriptor_sets =
             descriptor_allocator.Allocate(logical_device, mesh_shader_ptr->descriptor_set_layouts);
 
