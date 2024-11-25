@@ -65,7 +65,7 @@ namespace Meow
                       vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
                       vk::FormatFeatureFlags format_feature_flags = {},
                       bool                   anisotropy_enable    = false,
-                      bool                   force_staging        = false);
+                      bool                   force_staging        = true);
 
         static std::shared_ptr<ImageData>
         CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
@@ -85,11 +85,11 @@ namespace Meow
 
         static std::shared_ptr<ImageData>
         CreateCubemap(const std::vector<std::string>& file_paths,
-                      vk::Format                      format               = vk::Format::eR8G8B8A8Unorm,
+                      vk::Format                      format               = vk::Format::eR32G32B32A32Sfloat,
                       vk::ImageUsageFlags             usage_flags          = {},
                       vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
                       vk::FormatFeatureFlags          format_feature_flags = {},
                       bool                            anisotropy_enable    = false,
-                      bool                            force_staging        = false);
+                      bool                            force_staging        = true);
     };
 } // namespace Meow

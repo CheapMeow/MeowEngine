@@ -581,7 +581,7 @@ namespace Meow
             vk::raii::ImageView(logical_device,
                                 vk::ImageViewCreateInfo({},
                                                         *image_data_ptr->image,
-                                                        vk::ImageViewType::e2D,
+                                                        vk::ImageViewType::eCube,
                                                         format,
                                                         {},
                                                         {aspect_mask, 0, 1, 0, 6})); // cubemap have 6 images
