@@ -42,7 +42,7 @@ namespace Meow
             logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
 
         {
-            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/albedo.png");
+            auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/albedo.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
@@ -52,7 +52,7 @@ namespace Meow
         }
 
         {
-            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/normal.png");
+            auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/normal.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
@@ -62,7 +62,7 @@ namespace Meow
         }
 
         {
-            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/metallic.png");
+            auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/metallic.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
@@ -72,7 +72,7 @@ namespace Meow
         }
 
         {
-            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/roughness.png");
+            auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/roughness.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
@@ -82,7 +82,7 @@ namespace Meow
         }
 
         {
-            auto texture_ptr = ImageData::CreateTexture("builtin/models/pbr_sphere/ao.png");
+            auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/ao.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
@@ -107,7 +107,20 @@ namespace Meow
             logical_device, m_skybox_descriptor_sets, "uboMVP", m_skybox_uniform_buffer->buffer);
 
         {
-            // load cubemap
+            auto texture_ptr = ImageData::CreateCubemap({
+                "builtin/textures/cubemap/output_skybox_posx.hdr",
+                "builtin/textures/cubemap/output_skybox_negx.hdr",
+                "builtin/textures/cubemap/output_skybox_posy.hdr",
+                "builtin/textures/cubemap/output_skybox_negy.hdr",
+                "builtin/textures/cubemap/output_skybox_posz.hdr",
+                "builtin/textures/cubemap/output_skybox_negz.hdr",
+            });
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                m_skybox_mat.GetShader()->BindImageToDescriptorSet(
+                    logical_device, m_skybox_descriptor_sets, "environmentMap", *texture_ptr);
+            }
         }
     }
 
