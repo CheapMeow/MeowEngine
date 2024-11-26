@@ -2,15 +2,18 @@
 
 #include "pch.h"
 
+#include "function/global/runtime_context.h"
+
 #include <algorithm>
 
 namespace Meow
 {
-    Material::Material(const vk::raii::PhysicalDevice& physical_device,
-                       const vk::raii::Device&         logical_device,
-                       std::shared_ptr<Shader>         shader_ptr)
+    Material::Material(std::shared_ptr<Shader> shader_ptr)
     {
+        DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
+
         this->shader_ptr = shader_ptr;
+        descriptor_sets  = descriptor_allocator.Allocate(shader_ptr->descriptor_set_layouts);
     }
 
     void Material::CreatePipeline(const vk::raii::Device&     logical_device,
@@ -178,6 +181,92 @@ namespace Meow
         command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
     }
 
+    void Material::BindBufferToDescriptorSet(const std::string&          name,
+                                             const vk::raii::Buffer&     buffer,
+                                             vk::DeviceSize              range,
+                                             const vk::raii::BufferView* raii_buffer_view)
+    {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        BufferMeta* meta = nullptr;
+        // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
+        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
+        {
+            if (it->first == name)
+            {
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
+                {
+                    meta = &it->second;
+                    break;
+                }
+                if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+                {
+                    meta  = &it->second;
+                    range = meta->size;
+                    break;
+                }
+            }
+        }
+
+        if (meta == nullptr)
+        {
+            MEOW_ERROR("Binding buffer failed, {} not found!", name);
+            return;
+        }
+
+        vk::DescriptorBufferInfo descriptor_buffer_info(*buffer, 0, range);
+
+        // TODO: store buffer view in an vector
+        vk::BufferView buffer_view;
+        if (raii_buffer_view)
+        {
+            buffer_view = **raii_buffer_view;
+        }
+
+        vk::WriteDescriptorSet write_descriptor_set(
+            *descriptor_sets[meta->set],                                              // dstSet
+            meta->binding,                                                            // dstBinding
+            0,                                                                        // dstArrayElement
+            1,                                                                        // descriptorCount
+            shader_ptr->set_layout_metas.GetDescriptorType(meta->set, meta->binding), // descriptorType
+            nullptr,                                                                  // pImageInfo
+            &descriptor_buffer_info,                                                  // pBufferInfo
+            raii_buffer_view ? &buffer_view : nullptr                                 // pTexelBufferView
+        );
+
+        logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
+    }
+
+    void Material::BindImageToDescriptorSet(const std::string& name, ImageData& image_data)
+    {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        auto it = shader_ptr->set_layout_metas.binding_meta_map.find(name);
+        if (it == shader_ptr->set_layout_metas.binding_meta_map.end())
+        {
+            MEOW_ERROR("Writing buffer failed, {} not found!", name);
+            return;
+        }
+
+        auto bindInfo = it->second;
+
+        vk::DescriptorImageInfo descriptor_image_info(
+            *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
+
+        vk::WriteDescriptorSet write_descriptor_set(
+            *descriptor_sets[bindInfo.set],                                                 // dstSet
+            bindInfo.binding,                                                               // dstBinding
+            0,                                                                              // dstArrayElement
+            1,                                                                              // descriptorCount
+            shader_ptr->set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
+            &descriptor_image_info,                                                         // pImageInfo
+            nullptr,                                                                        // pBufferInfo
+            nullptr                                                                         // pTexelBufferView
+        );
+
+        logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
+    }
+
     void Material::BeginPopulatingDynamicUniformBufferPerFrame()
     {
         FUNCTION_TIMER();
@@ -262,15 +351,34 @@ namespace Meow
             static_cast<uint32_t>(buffer->Populate(dataPtr, it->second.size));
     }
 
-    std::vector<uint32_t> Material::GetDynamicOffsets(uint32_t obj_index)
+    void Material::BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
+                                               uint32_t                       first_set,
+                                               uint32_t                       set_count,
+                                               uint32_t                       draw_call,
+                                               bool                           is_dynamic)
     {
-        FUNCTION_TIMER();
-
-        if (obj_index >= per_obj_dynamic_offsets.size())
+        if (is_dynamic)
         {
-            return {};
+            if (draw_call >= per_obj_dynamic_offsets.size())
+            {
+                return;
+            }
         }
 
-        return per_obj_dynamic_offsets[obj_index];
+        std::vector<vk::DescriptorSet> descriptor_sets_to_bind(set_count);
+        for (uint32_t i = first_set; i < first_set + set_count; ++i)
+        {
+            descriptor_sets_to_bind[i - first_set] = *descriptor_sets[i];
+        }
+
+        std::vector<uint32_t> dynamic_offsets {};
+        if (is_dynamic)
+            dynamic_offsets = per_obj_dynamic_offsets[draw_call];
+
+        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                          *shader_ptr->pipeline_layout,
+                                          first_set,
+                                          descriptor_sets_to_bind,
+                                          dynamic_offsets);
     }
 } // namespace Meow

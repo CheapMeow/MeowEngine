@@ -12,12 +12,7 @@ namespace Meow
             : ForwardPass(nullptr)
         {}
 
-        EditorForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                          const vk::raii::Device&         logical_device,
-                          SurfaceData&                    surface_data,
-                          const vk::raii::CommandPool&    command_pool,
-                          const vk::raii::Queue&          queue,
-                          DescriptorAllocatorGrowable&    descriptor_allocator);
+        EditorForwardPass(SurfaceData& surface_data);
 
         EditorForwardPass(EditorForwardPass&& rhs) noexcept
             : ForwardPass(std::move(rhs))

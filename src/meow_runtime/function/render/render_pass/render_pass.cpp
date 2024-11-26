@@ -6,8 +6,6 @@
 
 namespace Meow
 {
-    RenderPass::RenderPass(const vk::raii::Device& logical_device) {}
-
     void
     RenderPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {

@@ -22,7 +22,6 @@ namespace Meow
     private:
         void CreateSurface();
         void CreateSwapChian();
-        void CreateDescriptorAllocator();
         void CreatePerFrameData();
         void CreateRenderPass();
         void RecreateSwapChain();
@@ -30,7 +29,6 @@ namespace Meow
 
         SwapChainData m_swapchain_data = nullptr;
 
-        DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;
 
         GameDeferredPass m_deferred_pass   = nullptr;

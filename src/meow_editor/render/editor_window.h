@@ -31,7 +31,6 @@ namespace Meow
 
         SwapChainData m_swapchain_data = nullptr;
 
-        DescriptorAllocatorGrowable m_descriptor_allocator = nullptr;
         std::vector<PerFrameData>   m_per_frame_data;
 
         EditorDeferredPass m_deferred_pass   = nullptr;

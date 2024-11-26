@@ -33,18 +33,9 @@ namespace Meow
             return *this;
         }
 
-        ImGuiPass(const vk::raii::PhysicalDevice& physical_device,
-                  const vk::raii::Device&         logical_device,
-                  SurfaceData&                    surface_data,
-                  const vk::raii::CommandPool&    command_pool,
-                  const vk::raii::Queue&          queue,
-                  DescriptorAllocatorGrowable&    descriptor_allocator);
+        ImGuiPass(SurfaceData& surface_data);
 
-        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                 const vk::raii::Device&           logical_device,
-                                 const vk::raii::CommandPool&      command_pool,
-                                 const vk::raii::Queue&            queue,
-                                 const std::vector<vk::ImageView>& output_image_views,
+        void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
 
         void Start(const vk::raii::CommandBuffer& command_buffer,

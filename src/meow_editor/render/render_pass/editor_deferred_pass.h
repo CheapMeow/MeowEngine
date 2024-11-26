@@ -13,12 +13,7 @@ namespace Meow
             : DeferredPass(nullptr)
         {}
 
-        EditorDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                           const vk::raii::Device&         logical_device,
-                           SurfaceData&                    surface_data,
-                           const vk::raii::CommandPool&    command_pool,
-                           const vk::raii::Queue&          queue,
-                           DescriptorAllocatorGrowable&    descriptor_allocator);
+        EditorDeferredPass(SurfaceData& surface_data);
 
         EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
             : DeferredPass(std::move(rhs))

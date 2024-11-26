@@ -2,16 +2,16 @@
 
 #include "meow_runtime/pch.h"
 
+#include "meow_runtime/function/global/runtime_context.h"
+
 namespace Meow
 {
-    GameDeferredPass::GameDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                                       const vk::raii::Device&         logical_device,
-                                       SurfaceData&                    surface_data,
-                                       const vk::raii::CommandPool&    command_pool,
-                                       const vk::raii::Queue&          queue,
-                                       DescriptorAllocatorGrowable&    descriptor_allocator)
-        : DeferredPass(logical_device)
+    GameDeferredPass::GameDeferredPass(SurfaceData& surface_data)
+        : DeferredPass()
     {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
         m_pass_name = "Deferred Pass";
 
         m_pass_names[0] = m_pass_name + " - Obj2Attachment Subpass";
@@ -180,7 +180,7 @@ namespace Meow
         clear_values[3].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        CreateMaterial(physical_device, logical_device, command_pool, queue, descriptor_allocator);
+        CreateMaterial();
     }
 
     void GameDeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)

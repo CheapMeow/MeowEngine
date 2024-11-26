@@ -15,26 +15,22 @@
 
 namespace Meow
 {
-    void DeferredPass::CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                                      const vk::raii::Device&         logical_device,
-                                      const vk::raii::CommandPool&    command_pool,
-                                      const vk::raii::Queue&          queue,
-                                      DescriptorAllocatorGrowable&    descriptor_allocator)
+    void DeferredPass::CreateMaterial()
     {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
         auto obj_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
-        m_obj2attachment_descriptor_sets =
-            descriptor_allocator.Allocate(logical_device, obj_shader_ptr->descriptor_set_layouts);
 
-        m_obj2attachment_mat                        = Material(physical_device, logical_device, obj_shader_ptr);
+        m_obj2attachment_mat                        = Material(obj_shader_ptr);
         m_obj2attachment_mat.color_attachment_count = 3;
         m_obj2attachment_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
         auto quad_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
-        m_quad_descriptor_sets = descriptor_allocator.Allocate(logical_device, quad_shader_ptr->descriptor_set_layouts);
 
-        m_quad_mat         = Material(physical_device, logical_device, quad_shader_ptr);
+        m_quad_mat         = Material(quad_shader_ptr);
         m_quad_mat.subpass = 1;
         m_quad_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, false);
 
@@ -43,9 +39,8 @@ namespace Meow
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
-        m_quad_model = std::move(Model(std::move(vertices),
-                                       std::move(indices),
-                                       m_quad_mat.shader_ptr->per_vertex_attributes));
+        m_quad_model =
+            std::move(Model(std::move(vertices), std::move(indices), m_quad_mat.shader_ptr->per_vertex_attributes));
 
         input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
 
@@ -73,21 +68,16 @@ namespace Meow
         m_light_data_uniform_buffer =
             std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(m_LightDatas));
 
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_obj2attachment_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
-        m_obj2attachment_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_obj2attachment_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_quad_descriptor_sets, "lightDatas", m_light_data_uniform_buffer->buffer);
+        m_obj2attachment_mat.BindBufferToDescriptorSet("sceneData", m_per_scene_uniform_buffer->buffer);
+        m_obj2attachment_mat.BindBufferToDescriptorSet("objData", m_dynamic_uniform_buffer->buffer);
+        m_quad_mat.BindBufferToDescriptorSet("lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
-    void DeferredPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                           const vk::raii::Device&           logical_device,
-                                           const vk::raii::CommandPool&      command_pool,
-                                           const vk::raii::Queue&            queue,
-                                           const std::vector<vk::ImageView>& output_image_views,
+    void DeferredPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                            const vk::Extent2D&               extent)
     {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         // clear
 
         framebuffers.clear();
@@ -156,14 +146,10 @@ namespace Meow
 
         // Update descriptor set
 
-        m_quad_mat.GetShader()->BindImageToDescriptorSet(
-            logical_device, m_quad_descriptor_sets, "inputColor", *m_color_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptorSet(
-            logical_device, m_quad_descriptor_sets, "inputNormal", *m_normal_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptorSet(
-            logical_device, m_quad_descriptor_sets, "inputPosition", *m_position_attachment);
-        m_quad_mat.GetShader()->BindImageToDescriptorSet(
-            logical_device, m_quad_descriptor_sets, "inputDepth", *m_depth_attachment);
+        m_quad_mat.BindImageToDescriptorSet("inputColor", *m_color_attachment);
+        m_quad_mat.BindImageToDescriptorSet("inputNormal", *m_normal_attachment);
+        m_quad_mat.BindImageToDescriptorSet("inputPosition", *m_position_attachment);
+        m_quad_mat.BindImageToDescriptorSet("inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -276,11 +262,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *m_obj2attachment_mat.GetShader()->pipeline_layout,
-                                          0,
-                                          *m_obj2attachment_descriptor_sets[0],
-                                          {});
+        m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
@@ -301,11 +283,7 @@ namespace Meow
 
             for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
-                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                                  *m_obj2attachment_mat.GetShader()->pipeline_layout,
-                                                  1,
-                                                  *m_obj2attachment_descriptor_sets[1],
-                                                  m_obj2attachment_mat.GetDynamicOffsets(draw_call[0]));
+                m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call[0];
@@ -317,12 +295,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *m_quad_mat.GetShader()->pipeline_layout,
-                                          0,
-                                          *m_quad_descriptor_sets[0],
-                                          {});
-
+        m_quad_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
@@ -339,9 +312,6 @@ namespace Meow
 
         swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
         swap(lhs.m_quad_mat, rhs.m_quad_mat);
-
-        swap(lhs.m_obj2attachment_descriptor_sets, rhs.m_obj2attachment_descriptor_sets);
-        swap(lhs.m_quad_descriptor_sets, rhs.m_quad_descriptor_sets);
 
         swap(lhs.m_quad_model, rhs.m_quad_model);
 

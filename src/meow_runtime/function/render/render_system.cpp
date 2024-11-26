@@ -36,8 +36,8 @@ namespace Meow
             required_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
 
-        bool                           m_is_validation_layer_found  = false;
-        m_is_validation_layer_found = ValidateLayers(required_validation_layers, supported_validation_layers);
+        bool m_is_validation_layer_found = false;
+        m_is_validation_layer_found      = ValidateLayers(required_validation_layers, supported_validation_layers);
         if (m_is_validation_layer_found)
         {
             MEOW_INFO("Enabled Validation Layers:");
@@ -78,14 +78,6 @@ namespace Meow
         volkLoadInstance(instance);
 #endif
     }
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-    void RenderSystem::CreateDebugUtilsMessengerEXT()
-    {
-        vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info = MakeDebugUtilsMessengerCreateInfoEXT();
-        m_debug_utils_messenger = vk::raii::DebugUtilsMessengerEXT(m_vulkan_instance, debug_utils_create_info);
-    }
-#endif
 
     void RenderSystem::CreatePhysicalDevice()
     {
@@ -144,47 +136,56 @@ namespace Meow
         volkLoadDevice(*logical_device);
 #endif
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        std::string                     object_name = "Logical Device";
-        vk::DebugUtilsObjectNameInfoEXT name_info   = {
-            vk::ObjectType::eDevice, GetVulkanHandle(*m_logical_device), object_name.c_str(), nullptr};
-        m_logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
-
         m_graphics_queue = vk::raii::Queue(m_logical_device, m_graphics_queue_family_index, 0);
         m_present_queue  = vk::raii::Queue(m_logical_device, m_present_queue_family_index, 0);
+    }
+
+    void RenderSystem::CreateCommandPool()
+    {
+        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
+                                                           m_graphics_queue_family_index);
+        m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+    }
+
+    void RenderSystem::CreateDescriptorAllocator()
+    {
+        // create a descriptor pool
+        // TODO: descriptor pool size is determined by all materials, so
+        // it depends on analysis of shader?
+        // Or you can allocate a very large pool at first?
+        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
+                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
+                                                          {vk::DescriptorType::eSampledImage, 1000},
+                                                          {vk::DescriptorType::eStorageImage, 1000},
+                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eInputAttachment, 1000}};
+        m_descriptor_allocator = DescriptorAllocatorGrowable(m_logical_device, 1000, pool_sizes);
     }
 
     RenderSystem::RenderSystem()
     {
         CreateVulkanInstance();
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        CreateDebugUtilsMessengerEXT();
-#endif
         CreatePhysicalDevice();
         CreateLogicalDevice();
-
-        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
-                                                           m_graphics_queue_family_index);
-        m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+        CreateCommandPool();
+        CreateDescriptorAllocator();
     }
 
     RenderSystem::~RenderSystem()
     {
         m_logical_device.waitIdle();
 
+        m_descriptor_allocator        = nullptr;
         m_onetime_submit_command_pool = nullptr;
         m_present_queue               = nullptr;
         m_graphics_queue              = nullptr;
         m_logical_device              = nullptr;
         m_physical_device             = nullptr;
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        m_debug_utils_messenger = nullptr;
-#endif
-        m_vulkan_instance = nullptr;
+        m_vulkan_instance             = nullptr;
     }
-
-    void RenderSystem::Start() {}
-
-    void RenderSystem::Tick(float dt) {}
 } // namespace Meow

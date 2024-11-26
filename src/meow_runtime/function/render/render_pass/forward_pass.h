@@ -45,8 +45,8 @@ namespace Meow
             : RenderPass(nullptr)
         {}
 
-        ForwardPass(const vk::raii::Device& logical_device)
-            : RenderPass(logical_device)
+        ForwardPass()
+            : RenderPass()
         {}
 
         ForwardPass(ForwardPass&& rhs) noexcept
@@ -68,17 +68,9 @@ namespace Meow
 
         ~ForwardPass() override = default;
 
-        void CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                            const vk::raii::Device&         logical_device,
-                            const vk::raii::CommandPool&    command_pool,
-                            const vk::raii::Queue&          queue,
-                            DescriptorAllocatorGrowable&    descriptor_allocator);
+        void CreateMaterial();
 
-        void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                 const vk::raii::Device&           logical_device,
-                                 const vk::raii::CommandPool&      command_pool,
-                                 const vk::raii::Queue&            queue,
-                                 const std::vector<vk::ImageView>& output_image_views,
+        void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
 
         void UpdateUniformBuffer() override;
@@ -92,14 +84,12 @@ namespace Meow
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material                       m_forward_mat             = nullptr;
-        vk::raii::DescriptorSets       m_forward_descriptor_sets = nullptr;
+        Material                       m_forward_mat = nullptr;
         std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_light_uniform_buffer;
         std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
 
-        Material                       m_skybox_mat             = nullptr;
-        vk::raii::DescriptorSets       m_skybox_descriptor_sets = nullptr;
+        Material                       m_skybox_mat = nullptr;
         std::shared_ptr<UniformBuffer> m_skybox_uniform_buffer;
 
         int draw_call = 0;

@@ -1,8 +1,23 @@
 #include "descriptor_allocator_growable.h"
 
+#include "function/global/runtime_context.h"
+
 namespace Meow
 {
-    void DescriptorAllocatorGrowable::ClearPools(vk::raii::Device const& device)
+    DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(const vk::raii::Device&             logical_device,
+                                                             uint32_t                            initialSets,
+                                                             std::vector<vk::DescriptorPoolSize> pool_sizes)
+    {
+        this->pool_sizes = pool_sizes;
+
+        setsPerPool = initialSets * 1.5; // grow it next allocation
+
+        vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, initialSets, pool_sizes);
+        readyPools.push_back(std::make_shared<vk::raii::DescriptorPool>(logical_device, descriptor_pool_create_info));
+    }
+
+    void DescriptorAllocatorGrowable::ClearPools()
     {
         for (auto p : readyPools)
         {
@@ -16,8 +31,10 @@ namespace Meow
         fullPools.clear();
     }
 
-    std::shared_ptr<vk::raii::DescriptorPool> DescriptorAllocatorGrowable::PopPool(vk::raii::Device const& device)
+    std::shared_ptr<vk::raii::DescriptorPool> DescriptorAllocatorGrowable::PopPool()
     {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         vk::DescriptorPoolCreateInfo descriptor_pool_create_info(
             vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, setsPerPool, pool_sizes);
 
@@ -30,7 +47,7 @@ namespace Meow
         else
         {
             // need to create a new pool
-            newPool = std::make_shared<vk::raii::DescriptorPool>(device, descriptor_pool_create_info);
+            newPool = std::make_shared<vk::raii::DescriptorPool>(logical_device, descriptor_pool_create_info);
 
             setsPerPool = setsPerPool * 1.5;
             if (setsPerPool > 4092)
@@ -43,12 +60,12 @@ namespace Meow
     }
 
     vk::raii::DescriptorSets
-    DescriptorAllocatorGrowable::Allocate(vk::raii::Device const&              device,
-                                          std::vector<vk::DescriptorSetLayout> descriptor_set_layouts,
-                                          void*                                pNext)
+    DescriptorAllocatorGrowable::Allocate(std::vector<vk::DescriptorSetLayout> descriptor_set_layouts, void* pNext)
     {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         // get or create a pool to allocate from
-        std::shared_ptr<vk::raii::DescriptorPool> poolToUse = PopPool(device);
+        std::shared_ptr<vk::raii::DescriptorPool> poolToUse = PopPool();
 
         vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(
             **poolToUse, descriptor_set_layouts.size(), descriptor_set_layouts.data(), pNext);
@@ -57,7 +74,7 @@ namespace Meow
 
         try
         {
-            descriptor_sets = vk::raii::DescriptorSets(device, descriptor_set_allocate_info);
+            descriptor_sets = vk::raii::DescriptorSets(logical_device, descriptor_set_allocate_info);
         }
         catch (const std::exception& e)
         {
@@ -65,10 +82,10 @@ namespace Meow
 
             fullPools.push_back(poolToUse);
 
-            poolToUse                                   = PopPool(device);
+            poolToUse                                   = PopPool();
             descriptor_set_allocate_info.descriptorPool = **poolToUse;
 
-            descriptor_sets = vk::raii::DescriptorSets(device, descriptor_set_allocate_info);
+            descriptor_sets = vk::raii::DescriptorSets(logical_device, descriptor_set_allocate_info);
         }
 
         readyPools.push_back(poolToUse);

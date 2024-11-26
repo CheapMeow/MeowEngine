@@ -18,14 +18,12 @@ namespace Meow
         : RenderPass(nullptr)
     {}
 
-    ImGuiPass::ImGuiPass(const vk::raii::PhysicalDevice& physical_device,
-                         const vk::raii::Device&         logical_device,
-                         SurfaceData&                    surface_data,
-                         const vk::raii::CommandPool&    command_pool,
-                         const vk::raii::Queue&          queue,
-                         DescriptorAllocatorGrowable&    descriptor_allocator)
-        : RenderPass(logical_device)
+    ImGuiPass::ImGuiPass(SurfaceData& surface_data)
+        : RenderPass()
     {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
         m_pass_name = "ImGui Pass";
 
         vk::Format color_format =
@@ -73,13 +71,11 @@ namespace Meow
         clear_values[0].color = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
     }
 
-    void ImGuiPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                        const vk::raii::Device&           logical_device,
-                                        const vk::raii::CommandPool&      command_pool,
-                                        const vk::raii::Queue&            queue,
-                                        const std::vector<vk::ImageView>& output_image_views,
+    void ImGuiPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                         const vk::Extent2D&               extent)
     {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         // clear
 
         framebuffers.clear();

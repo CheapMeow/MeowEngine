@@ -11,12 +11,7 @@ namespace Meow
             : ForwardPass(nullptr)
         {}
 
-        GameForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                        const vk::raii::Device&         logical_device,
-                        SurfaceData&                    surface_data,
-                        const vk::raii::CommandPool&    command_pool,
-                        const vk::raii::Queue&          queue,
-                        DescriptorAllocatorGrowable&    descriptor_allocator);
+        GameForwardPass(SurfaceData& surface_data);
 
         GameForwardPass(GameForwardPass&& rhs) noexcept
             : ForwardPass(std::move(rhs))

@@ -3,17 +3,16 @@
 #include "meow_runtime/pch.h"
 
 #include "global/editor_context.h"
+#include "meow_runtime/function/global/runtime_context.h"
 
 namespace Meow
 {
-    EditorForwardPass::EditorForwardPass(const vk::raii::PhysicalDevice& physical_device,
-                                         const vk::raii::Device&         logical_device,
-                                         SurfaceData&                    surface_data,
-                                         const vk::raii::CommandPool&    command_pool,
-                                         const vk::raii::Queue&          queue,
-                                         DescriptorAllocatorGrowable&    descriptor_allocator)
-        : ForwardPass(logical_device)
+    EditorForwardPass::EditorForwardPass(SurfaceData& surface_data)
+        : ForwardPass()
     {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
         m_pass_name = "Forward Pass";
 
         // Create a set to store all information of attachments
@@ -102,7 +101,7 @@ namespace Meow
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
-        CreateMaterial(physical_device, logical_device, command_pool, queue, descriptor_allocator);
+        CreateMaterial();
 
         // Debug
 

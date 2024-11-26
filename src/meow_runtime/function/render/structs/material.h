@@ -15,9 +15,7 @@ namespace Meow
     public:
         Material(std::nullptr_t) {}
 
-        Material(const vk::raii::PhysicalDevice& physical_device,
-                 const vk::raii::Device&         logical_device,
-                 std::shared_ptr<Shader>         shader_ptr);
+        Material(std::shared_ptr<Shader> shader_ptr);
 
         Material(Material&& rhs) noexcept
         {
@@ -57,6 +55,13 @@ namespace Meow
 
         void BindPipeline(const vk::raii::CommandBuffer& command_buffer);
 
+        void BindBufferToDescriptorSet(const std::string&          name,
+                                       const vk::raii::Buffer&     buffer,
+                                       vk::DeviceSize              range            = VK_WHOLE_SIZE,
+                                       const vk::raii::BufferView* raii_buffer_view = nullptr);
+
+        void BindImageToDescriptorSet(const std::string& name, ImageData& image_data);
+
         void BeginPopulatingDynamicUniformBufferPerFrame();
 
         void EndPopulatingDynamicUniformBufferPerFrame();
@@ -70,7 +75,11 @@ namespace Meow
                                           void*                          dataPtr,
                                           uint32_t                       size);
 
-        std::vector<uint32_t> GetDynamicOffsets(uint32_t obj_index);
+        void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
+                                         uint32_t                       first_set,
+                                         uint32_t                       set_count,
+                                         uint32_t                       draw_call  = 0,
+                                         bool                           is_dynamic = false);
 
         std::shared_ptr<Shader> shader_ptr             = nullptr;
         int                     color_attachment_count = 1;
@@ -84,6 +93,6 @@ namespace Meow
         bool                               actived   = false;
         int32_t                            obj_count = 0;
         std::vector<std::vector<uint32_t>> per_obj_dynamic_offsets;
-        std::vector<vk::DescriptorSet>     descriptor_sets;
+        vk::raii::DescriptorSets           descriptor_sets = nullptr;
     };
 } // namespace Meow

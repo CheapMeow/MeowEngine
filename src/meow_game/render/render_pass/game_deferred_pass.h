@@ -11,12 +11,7 @@ namespace Meow
             : DeferredPass(nullptr)
         {}
 
-        GameDeferredPass(const vk::raii::PhysicalDevice& physical_device,
-                         const vk::raii::Device&         logical_device,
-                         SurfaceData&                    surface_data,
-                         const vk::raii::CommandPool&    command_pool,
-                         const vk::raii::Queue&          queue,
-                         DescriptorAllocatorGrowable&    descriptor_allocator);
+        GameDeferredPass(SurfaceData& surface_data);
 
         GameDeferredPass(GameDeferredPass&& rhs) noexcept
             : DeferredPass(std::move(rhs))

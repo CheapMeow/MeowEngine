@@ -20,7 +20,6 @@ namespace Meow
     {
         CreateSurface();
         CreateSwapChian();
-        CreateDescriptorAllocator();
         CreatePerFrameData();
         CreateRenderPass();
 
@@ -89,11 +88,10 @@ namespace Meow
         logical_device.waitIdle();
 
         m_per_frame_data.clear();
-        m_forward_pass         = nullptr;
-        m_deferred_pass        = nullptr;
-        m_descriptor_allocator = nullptr;
-        m_swapchain_data       = nullptr;
-        m_surface_data         = nullptr;
+        m_forward_pass   = nullptr;
+        m_deferred_pass  = nullptr;
+        m_swapchain_data = nullptr;
+        m_surface_data   = nullptr;
     }
 
     void GameWindow::Tick(float dt)
@@ -199,28 +197,6 @@ namespace Meow
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
     }
 
-    void GameWindow::CreateDescriptorAllocator()
-    {
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-
-        // create a descriptor pool
-        // TODO: descriptor pool size is determined by all materials, so
-        // it depends on analysis of shader?
-        // Or you can allocate a very large pool at first?
-        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
-                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
-                                                          {vk::DescriptorType::eSampledImage, 1000},
-                                                          {vk::DescriptorType::eStorageImage, 1000},
-                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eInputAttachment, 1000}};
-        m_descriptor_allocator                         = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
-    }
-
     void GameWindow::CreatePerFrameData()
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -248,24 +224,8 @@ namespace Meow
 
     void GameWindow::CreateRenderPass()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        m_deferred_pass = GameDeferredPass(physical_device,
-                                           logical_device,
-                                           m_surface_data,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_descriptor_allocator);
-        m_forward_pass  = GameForwardPass(physical_device,
-                                         logical_device,
-                                         m_surface_data,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         m_descriptor_allocator);
+        m_deferred_pass = GameDeferredPass(m_surface_data);
+        m_forward_pass  = GameForwardPass(m_surface_data);
         RefreshRenderPass();
 
         m_render_pass_ptr = &m_deferred_pass;
@@ -323,17 +283,7 @@ namespace Meow
             swapchain_image_views[i] = *m_swapchain_data.image_views[i];
         }
 
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            swapchain_image_views,
-                                            m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           swapchain_image_views,
-                                           m_surface_data.extent);
+        m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
     }
 } // namespace Meow

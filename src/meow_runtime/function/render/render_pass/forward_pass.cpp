@@ -13,18 +13,15 @@
 
 namespace Meow
 {
-    void ForwardPass::CreateMaterial(const vk::raii::PhysicalDevice& physical_device,
-                                     const vk::raii::Device&         logical_device,
-                                     const vk::raii::CommandPool&    command_pool,
-                                     const vk::raii::Queue&          queue,
-                                     DescriptorAllocatorGrowable&    descriptor_allocator)
+    void ForwardPass::CreateMaterial()
     {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
         auto mesh_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
-        m_forward_descriptor_sets =
-            descriptor_allocator.Allocate(logical_device, mesh_shader_ptr->descriptor_set_layouts);
 
-        m_forward_mat = Material(physical_device, logical_device, mesh_shader_ptr);
+        m_forward_mat = Material(mesh_shader_ptr);
         m_forward_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
@@ -34,20 +31,16 @@ namespace Meow
         m_light_uniform_buffer   = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(LightData));
         m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
 
-        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "sceneData", m_per_scene_uniform_buffer->buffer);
-        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "lights", m_light_uniform_buffer->buffer);
-        m_forward_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_forward_descriptor_sets, "objData", m_dynamic_uniform_buffer->buffer);
+        m_forward_mat.BindBufferToDescriptorSet("sceneData", m_per_scene_uniform_buffer->buffer);
+        m_forward_mat.BindBufferToDescriptorSet("lights", m_light_uniform_buffer->buffer);
+        m_forward_mat.BindBufferToDescriptorSet("objData", m_dynamic_uniform_buffer->buffer);
 
         {
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/albedo.png");
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_forward_descriptor_sets, "albedoMap", *texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
             }
         }
 
@@ -56,8 +49,7 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_forward_descriptor_sets, "normalMap", *texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
             }
         }
 
@@ -66,8 +58,7 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_forward_descriptor_sets, "metallicMap", *texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
             }
         }
 
@@ -76,8 +67,7 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_forward_descriptor_sets, "roughnessMap", *texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
             }
         }
 
@@ -86,8 +76,7 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_forward_descriptor_sets, "aoMap", *texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
             }
         }
 
@@ -95,16 +84,13 @@ namespace Meow
 
         auto skybox_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
-        m_skybox_descriptor_sets =
-            descriptor_allocator.Allocate(logical_device, skybox_shader_ptr->descriptor_set_layouts);
 
-        m_skybox_mat = Material(physical_device, logical_device, skybox_shader_ptr);
+        m_skybox_mat = Material(skybox_shader_ptr);
         m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
 
         m_skybox_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(MVPBlock));
 
-        m_skybox_mat.GetShader()->BindBufferToDescriptorSet(
-            logical_device, m_skybox_descriptor_sets, "uboMVP", m_skybox_uniform_buffer->buffer);
+        m_skybox_mat.BindBufferToDescriptorSet("uboMVP", m_skybox_uniform_buffer->buffer);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -118,19 +104,16 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_skybox_mat.GetShader()->BindImageToDescriptorSet(
-                    logical_device, m_skybox_descriptor_sets, "environmentMap", *texture_ptr);
+                m_skybox_mat.BindImageToDescriptorSet("environmentMap", *texture_ptr);
             }
         }
     }
 
-    void ForwardPass::RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                          const vk::raii::Device&           logical_device,
-                                          const vk::raii::CommandPool&      command_pool,
-                                          const vk::raii::Queue&            queue,
-                                          const std::vector<vk::ImageView>& output_image_views,
+    void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                           const vk::Extent2D&               extent)
     {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
         // clear
 
         framebuffers.clear();
@@ -267,16 +250,8 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *m_forward_mat.GetShader()->pipeline_layout,
-                                          0,
-                                          *m_forward_descriptor_sets[0],
-                                          {});
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *m_forward_mat.GetShader()->pipeline_layout,
-                                          3,
-                                          *m_forward_descriptor_sets[3],
-                                          {});
+        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
         std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
         const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
@@ -295,19 +270,11 @@ namespace Meow
             if (!model_res_ptr)
                 continue;
 
-            command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                              *m_forward_mat.GetShader()->pipeline_layout,
-                                              1,
-                                              *m_forward_descriptor_sets[1],
-                                              {});
+            m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1);
 
             for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
-                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                                  *m_forward_mat.GetShader()->pipeline_layout,
-                                                  2,
-                                                  *m_forward_descriptor_sets[2],
-                                                  m_forward_mat.GetDynamicOffsets(draw_call));
+                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call, true);
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                 ++draw_call;
@@ -320,7 +287,6 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
-        swap(lhs.m_forward_descriptor_sets, rhs.m_forward_descriptor_sets);
         swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
         swap(lhs.m_light_uniform_buffer, rhs.m_light_uniform_buffer);
         swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);

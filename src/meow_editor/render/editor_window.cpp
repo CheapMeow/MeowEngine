@@ -22,7 +22,6 @@ namespace Meow
     {
         CreateSurface();
         CreateSwapChian();
-        CreateDescriptorAllocator();
         CreatePerFrameData();
         CreateRenderPass();
         InitImGui();
@@ -124,11 +123,10 @@ namespace Meow
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
         m_per_frame_data.clear();
-        m_forward_pass         = nullptr;
-        m_deferred_pass        = nullptr;
-        m_descriptor_allocator = nullptr;
-        m_swapchain_data       = nullptr;
-        m_surface_data         = nullptr;
+        m_forward_pass   = nullptr;
+        m_deferred_pass  = nullptr;
+        m_swapchain_data = nullptr;
+        m_surface_data   = nullptr;
     }
 
     void EditorWindow::Tick(float dt)
@@ -261,28 +259,6 @@ namespace Meow
                                                                   false);
     }
 
-    void EditorWindow::CreateDescriptorAllocator()
-    {
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-
-        // create a descriptor pool
-        // TODO: descriptor pool size is determined by all materials, so
-        // it depends on analysis of shader?
-        // Or you can allocate a very large pool at first?
-        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
-                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
-                                                          {vk::DescriptorType::eSampledImage, 1000},
-                                                          {vk::DescriptorType::eStorageImage, 1000},
-                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBuffer, 1000},
-                                                          {vk::DescriptorType::eStorageBuffer, 1000},
-                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
-                                                          {vk::DescriptorType::eInputAttachment, 1000}};
-        m_descriptor_allocator                         = DescriptorAllocatorGrowable(logical_device, 1000, pool_sizes);
-    }
-
     void EditorWindow::CreatePerFrameData()
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -310,30 +286,9 @@ namespace Meow
 
     void EditorWindow::CreateRenderPass()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        m_deferred_pass = EditorDeferredPass(physical_device,
-                                             logical_device,
-                                             m_surface_data,
-                                             onetime_submit_command_pool,
-                                             graphics_queue,
-                                             m_descriptor_allocator);
-        m_forward_pass  = EditorForwardPass(physical_device,
-                                           logical_device,
-                                           m_surface_data,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           m_descriptor_allocator);
-        m_imgui_pass    = ImGuiPass(physical_device,
-                                 logical_device,
-                                 m_surface_data,
-                                 onetime_submit_command_pool,
-                                 graphics_queue,
-                                 m_descriptor_allocator);
+        m_deferred_pass = EditorDeferredPass(m_surface_data);
+        m_forward_pass  = EditorForwardPass(m_surface_data);
+        m_imgui_pass    = ImGuiPass(m_surface_data);
         RefreshRenderPass();
 
         m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
@@ -469,12 +424,6 @@ namespace Meow
 
     void EditorWindow::RefreshRenderPass()
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::CommandPool&    onetime_submit_command_pool =
-            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
         std::vector<vk::ImageView> swapchain_image_views;
         swapchain_image_views.resize(m_swapchain_data.image_views.size());
         for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
@@ -486,24 +435,9 @@ namespace Meow
 
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
-        m_deferred_pass.RefreshFrameBuffers(physical_device,
-                                            logical_device,
-                                            onetime_submit_command_pool,
-                                            graphics_queue,
-                                            {*m_offscreen_render_target->image_view},
-                                            temp_extent);
-        m_forward_pass.RefreshFrameBuffers(physical_device,
-                                           logical_device,
-                                           onetime_submit_command_pool,
-                                           graphics_queue,
-                                           {*m_offscreen_render_target->image_view},
-                                           temp_extent);
-        m_imgui_pass.RefreshFrameBuffers(physical_device,
-                                         logical_device,
-                                         onetime_submit_command_pool,
-                                         graphics_queue,
-                                         swapchain_image_views,
-                                         m_surface_data.extent);
+        m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+        m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+        m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 
         if (is_offscreen_valid)
             m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,

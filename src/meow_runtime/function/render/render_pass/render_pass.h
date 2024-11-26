@@ -14,7 +14,7 @@ namespace Meow
     public:
         RenderPass(std::nullptr_t) {}
 
-        RenderPass(const vk::raii::Device& logical_device);
+        RenderPass() {}
 
         RenderPass(RenderPass&& rhs) noexcept { swap(*this, rhs); }
 
@@ -29,11 +29,7 @@ namespace Meow
 
         ~RenderPass() override = default;
 
-        virtual void RefreshFrameBuffers(const vk::raii::PhysicalDevice&   physical_device,
-                                         const vk::raii::Device&           logical_device,
-                                         const vk::raii::CommandPool&      command_pool,
-                                         const vk::raii::Queue&            queue,
-                                         const std::vector<vk::ImageView>& output_image_views,
+        virtual void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                          const vk::Extent2D&               extent)
         {}
 

@@ -2,7 +2,6 @@
 
 #include "pch.h"
 
-#include "descriptor_allocator_growable.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/vertex_attribute.h"
 
@@ -222,18 +221,6 @@ namespace Meow
                     nullptr);
             }
         }
-
-        void BindBufferToDescriptorSet(const vk::raii::Device&         logical_device,
-                                       const vk::raii::DescriptorSets& descriptor_sets,
-                                       const std::string&              name,
-                                       const vk::raii::Buffer&         buffer,
-                                       vk::DeviceSize                  range            = VK_WHOLE_SIZE,
-                                       const vk::raii::BufferView*     raii_buffer_view = nullptr);
-
-        void BindImageToDescriptorSet(const vk::raii::Device&         logical_device,
-                                      const vk::raii::DescriptorSets& descriptor_sets,
-                                      const std::string&              name,
-                                      ImageData&                      image_data);
 
     private:
         bool CreateShaderModuleAndGetMeta(
