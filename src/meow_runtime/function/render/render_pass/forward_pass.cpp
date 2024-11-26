@@ -181,6 +181,23 @@ namespace Meow
 
         m_forward_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
+        struct LightData
+        {
+            glm::vec4 pos[4] = {
+                glm::vec4(-10.0f, 10.0f, 10.0f, 0.0f),
+                glm::vec4(10.0f, 10.0f, 10.0f, 0.0f),
+                glm::vec4(-10.0f, -10.0f, 10.0f, 0.0f),
+                glm::vec4(10.0f, -10.0f, 10.0f, 0.0f),
+            };
+            glm::vec4 color[4] = {
+                glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+                glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+                glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+                glm::vec4(300.0f, 300.0f, 300.0f, 0.0f),
+            };
+            glm::vec3 camPos;
+        };
+
         LightData lights;
         lights.camPos = transfrom_comp_ptr->position;
 
@@ -212,7 +229,7 @@ namespace Meow
 
             auto model = transfrom_comp_ptr2->GetTransform();
 
-            for (int32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
+            for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_forward_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
@@ -220,6 +237,28 @@ namespace Meow
             }
         }
         m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
+
+        // skybox
+
+        static glm::mat4 capture_views[] = {
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+
+        m_skybox_mat.BeginPopulatingDynamicUniformBufferPerFrame();
+        per_scene_data.projection = Math::perspective_vk(
+            glm::radians(90.0f), static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]), 0.1f, 10.0f);
+        for (uint32_t i = 0; i < 6; ++i)
+        {
+            m_skybox_mat.BeginPopulatingDynamicUniformBufferPerObject();
+            per_scene_data.view = capture_views[i];
+            m_skybox_mat.PopulateDynamicUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+            m_skybox_mat.EndPopulatingDynamicUniformBufferPerObject();
+        }
+        m_skybox_mat.EndPopulatingDynamicUniformBufferPerFrame();
     }
 
     void
@@ -271,6 +310,7 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
+        swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
 
         swap(lhs.draw_call, rhs.draw_call);
     }

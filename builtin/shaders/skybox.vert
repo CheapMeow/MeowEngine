@@ -2,12 +2,11 @@
 
 layout (location = 0) in vec3 inPosition;
 
-layout (set = 1, binding = 0) uniform MVPBlock 
+layout (set = 1, binding = 0) uniform PerSceneDataDynamic
 {
-	mat4 modelMatrix;
 	mat4 viewMatrix;
 	mat4 projectionMatrix;
-} uboMVP;
+} sceneData;
 
 layout (location = 0) out vec3 outPosition;
 
@@ -19,5 +18,5 @@ out gl_PerVertex
 void main() 
 {
 	outPosition = inPosition;
-	gl_Position = uboMVP.projectionMatrix * uboMVP.viewMatrix * uboMVP.modelMatrix * vec4(inPosition, 1.0);
+	gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * vec4(inPosition, 1.0);
 }

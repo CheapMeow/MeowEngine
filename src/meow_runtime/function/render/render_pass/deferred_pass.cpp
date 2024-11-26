@@ -210,7 +210,7 @@ namespace Meow
 
             auto model = transfrom_comp_ptr2->GetTransform();
 
-            for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
                 m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
