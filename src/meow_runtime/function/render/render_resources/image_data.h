@@ -11,6 +11,7 @@ namespace Meow
     public:
         vk::Format   format;
         vk::Extent2D extent;
+        uint32_t     size;
         /**
          * @brief `ImageAspectFlags` should be stored because it is only known in specific ctor, and it can't be
          * deducted from other information in other places. For example, in `SetLayout`, if you

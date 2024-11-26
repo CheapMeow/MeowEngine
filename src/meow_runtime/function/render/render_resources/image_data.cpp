@@ -208,6 +208,7 @@ namespace Meow
 
         image_data_ptr->format      = format;
         image_data_ptr->extent      = extent;
+        image_data_ptr->size        = extent.width * extent.height * 4;
         image_data_ptr->aspect_mask = aspect_mask;
 
         vk::SamplerCreateInfo sampler_create_info({},
@@ -238,11 +239,9 @@ namespace Meow
         if (image_data_ptr->need_staging)
         {
             assert((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags);
-            image_data_ptr->staging_buffer_data = BufferData(physical_device,
-                                                             logical_device,
-                                                             extent.width * extent.height * 4,
-                                                             vk::BufferUsageFlagBits::eTransferSrc);
-            image_tiling                        = vk::ImageTiling::eOptimal;
+            image_data_ptr->staging_buffer_data = BufferData(
+                physical_device, logical_device, image_data_ptr->size, vk::BufferUsageFlagBits::eTransferSrc);
+            image_tiling = vk::ImageTiling::eOptimal;
             usage_flags |= vk::ImageUsageFlagBits::eTransferDst;
             initial_layout = vk::ImageLayout::eUndefined;
         }
@@ -353,6 +352,7 @@ namespace Meow
 
         image_data_ptr->format      = format;
         image_data_ptr->extent      = extent;
+        image_data_ptr->size        = extent.width * extent.height * 4;
         image_data_ptr->aspect_mask = aspect_mask;
 
         // doesn't need sampler
@@ -424,6 +424,7 @@ namespace Meow
 
         image_data_ptr->format      = format;
         image_data_ptr->extent      = extent;
+        image_data_ptr->size        = extent.width * extent.height * 4;
         image_data_ptr->aspect_mask = aspect_mask;
 
         // need sampler
@@ -510,6 +511,7 @@ namespace Meow
 
         image_data_ptr->format      = format;
         image_data_ptr->extent      = extent;
+        image_data_ptr->size        = extent.width * extent.height * 4 * 4;
         image_data_ptr->aspect_mask = aspect_mask;
 
         vk::SamplerCreateInfo sampler_create_info({},
@@ -540,12 +542,11 @@ namespace Meow
         if (image_data_ptr->need_staging)
         {
             assert((format_properties.optimalTilingFeatures & format_feature_flags) == format_feature_flags);
-            image_data_ptr->staging_buffer_data =
-                BufferData(physical_device,
-                           logical_device,
-                           extent.width * extent.height * 4 * 6, // cubemap have 6 images
-                           vk::BufferUsageFlagBits::eTransferSrc);
-            image_tiling = vk::ImageTiling::eOptimal;
+            image_data_ptr->staging_buffer_data = BufferData(physical_device,
+                                                             logical_device,
+                                                             image_data_ptr->size * 6, // cubemap have 6 images
+                                                             vk::BufferUsageFlagBits::eTransferSrc);
+            image_tiling                        = vk::ImageTiling::eOptimal;
             usage_flags |= vk::ImageUsageFlagBits::eTransferDst;
             initial_layout = vk::ImageLayout::eUndefined;
         }
@@ -597,7 +598,7 @@ namespace Meow
         for (std::size_t i = 0; i < 6; ++i)
         {
             if (g_runtime_context.file_system->ReadImageFileToPtr(
-                    file_paths[i], static_cast<uint8_t*>(data) + extent.width * extent.height * 4 * i) == 0)
+                    file_paths[i], static_cast<uint8_t*>(data) + image_data_ptr->size * i) == 0)
                 return nullptr;
         }
 
@@ -617,8 +618,10 @@ namespace Meow
                                   command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
                               std::vector<vk::BufferImageCopy> copy_regions;
                               // cubemap have 6 images
+                              MEOW_INFO("image_data_ptr->extent.width = {}", image_data_ptr->extent.width);
+                              MEOW_INFO("image_data_ptr->extent.height = {}", image_data_ptr->extent.height);
                               for (std::size_t i = 0; i < 6; ++i)
-                                  copy_regions.emplace_back(extent.width * extent.height * 4 * i, /* bufferOffset */
+                                  copy_regions.emplace_back(image_data_ptr->size * i, /* bufferOffset */
                                                             image_data_ptr->extent.width,
                                                             image_data_ptr->extent.height,
                                                             vk::ImageSubresourceLayers(aspect_mask, 0, i, 1),
