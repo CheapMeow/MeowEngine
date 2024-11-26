@@ -22,7 +22,7 @@ namespace Meow
         assert(color_format != vk::Format::eUndefined);
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
-            // swap chain attachment
+            // offscreen attachment
             {
                 vk::AttachmentDescriptionFlags(),        /* flags */
                 color_format,                            /* format */
@@ -52,7 +52,7 @@ namespace Meow
         vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
-            // obj2attachment pass
+            // forward pass
             {
                 vk::SubpassDescriptionFlags(),    /* flags */
                 vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
