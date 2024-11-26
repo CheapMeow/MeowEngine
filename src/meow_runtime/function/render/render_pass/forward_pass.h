@@ -84,13 +84,8 @@ namespace Meow
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material                       m_forward_mat = nullptr;
-        std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
-        std::shared_ptr<UniformBuffer> m_light_uniform_buffer;
-        std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
-
-        Material                       m_skybox_mat = nullptr;
-        std::shared_ptr<UniformBuffer> m_skybox_uniform_buffer;
+        Material m_forward_mat = nullptr;
+        Material m_skybox_mat  = nullptr;
 
         int draw_call = 0;
     };

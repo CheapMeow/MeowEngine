@@ -26,15 +26,6 @@ namespace Meow
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
 
-        m_per_scene_uniform_buffer =
-            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
-        m_light_uniform_buffer   = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(LightData));
-        m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
-
-        m_forward_mat.BindBufferToDescriptorSet("sceneData", m_per_scene_uniform_buffer->buffer);
-        m_forward_mat.BindBufferToDescriptorSet("lights", m_light_uniform_buffer->buffer);
-        m_forward_mat.BindBufferToDescriptorSet("objData", m_dynamic_uniform_buffer->buffer);
-
         {
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/albedo.png");
             if (texture_ptr)
@@ -87,10 +78,6 @@ namespace Meow
 
         m_skybox_mat = Material(skybox_shader_ptr);
         m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
-
-        m_skybox_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(MVPBlock));
-
-        m_skybox_mat.BindBufferToDescriptorSet("uboMVP", m_skybox_uniform_buffer->buffer);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -192,18 +179,15 @@ namespace Meow
                                  camera_comp_ptr->near_plane,
                                  camera_comp_ptr->far_plane);
 
-        m_per_scene_uniform_buffer->Reset();
-        m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
+        m_forward_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
         LightData lights;
         lights.camPos = transfrom_comp_ptr->position;
 
-        m_light_uniform_buffer->Reset();
-        m_light_uniform_buffer->Populate(&lights, sizeof(lights));
+        m_forward_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
 
         // Update mesh uniform
 
-        m_dynamic_uniform_buffer->Reset();
         m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
@@ -231,7 +215,7 @@ namespace Meow
             for (int32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                m_forward_mat.PopulateDynamicUniformBuffer(m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
+                m_forward_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
                 m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -287,9 +271,6 @@ namespace Meow
         using std::swap;
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
-        swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
-        swap(lhs.m_light_uniform_buffer, rhs.m_light_uniform_buffer);
-        swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
 
         swap(lhs.draw_call, rhs.draw_call);
     }

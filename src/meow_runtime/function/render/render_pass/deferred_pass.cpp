@@ -61,16 +61,6 @@ namespace Meow
             m_LightInfos.direction[i] = normalize(m_LightInfos.direction[i]);
             m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(1.0f, 2.0f);
         }
-
-        m_per_scene_uniform_buffer =
-            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(PerSceneData));
-        m_dynamic_uniform_buffer = std::make_shared<UniformBuffer>(physical_device, logical_device, 32 * 1024);
-        m_light_data_uniform_buffer =
-            std::make_shared<UniformBuffer>(physical_device, logical_device, sizeof(m_LightDatas));
-
-        m_obj2attachment_mat.BindBufferToDescriptorSet("sceneData", m_per_scene_uniform_buffer->buffer);
-        m_obj2attachment_mat.BindBufferToDescriptorSet("objData", m_dynamic_uniform_buffer->buffer);
-        m_quad_mat.BindBufferToDescriptorSet("lightDatas", m_light_data_uniform_buffer->buffer);
     }
 
     void DeferredPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -192,12 +182,10 @@ namespace Meow
                                  camera_comp_ptr->near_plane,
                                  camera_comp_ptr->far_plane);
 
-        m_per_scene_uniform_buffer->Reset();
-        m_per_scene_uniform_buffer->Populate(&per_scene_data, sizeof(PerSceneData));
+        m_obj2attachment_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
         // Update mesh uniform
 
-        m_dynamic_uniform_buffer->Reset();
         m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
         const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
         for (const auto& kv : all_gameobjects_map)
@@ -225,8 +213,7 @@ namespace Meow
             for (int32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
             {
                 m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                m_obj2attachment_mat.PopulateDynamicUniformBuffer(
-                    m_dynamic_uniform_buffer, "objData", &model, sizeof(model));
+                m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
                 m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerObject();
             }
         }
@@ -242,8 +229,7 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_light_data_uniform_buffer->Reset();
-        m_light_data_uniform_buffer->Populate(&m_LightDatas, sizeof(m_LightDatas));
+        m_quad_mat.PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
     }
 
     void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -321,10 +307,6 @@ namespace Meow
 
         swap(lhs.m_LightDatas, rhs.m_LightDatas);
         swap(lhs.m_LightInfos, rhs.m_LightInfos);
-
-        swap(lhs.m_per_scene_uniform_buffer, rhs.m_per_scene_uniform_buffer);
-        swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
-        swap(lhs.m_light_data_uniform_buffer, rhs.m_light_data_uniform_buffer);
 
         swap(lhs.m_pass_names, rhs.m_pass_names);
         swap(lhs.draw_call, rhs.draw_call);

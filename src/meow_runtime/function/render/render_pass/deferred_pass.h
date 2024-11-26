@@ -90,10 +90,6 @@ namespace Meow
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
 
-        std::shared_ptr<UniformBuffer> m_per_scene_uniform_buffer;
-        std::shared_ptr<UniformBuffer> m_dynamic_uniform_buffer;
-        std::shared_ptr<UniformBuffer> m_light_data_uniform_buffer;
-
         std::string m_pass_names[2];
         int         draw_call[2] = {0, 0};
     };

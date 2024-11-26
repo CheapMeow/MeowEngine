@@ -5,7 +5,7 @@
 #include "shader.h"
 
 #include <memory>
-#include <tuple>
+#include <unordered_map>
 #include <vector>
 
 namespace Meow
@@ -17,30 +17,13 @@ namespace Meow
 
         Material(std::shared_ptr<Shader> shader_ptr);
 
-        Material(Material&& rhs) noexcept
-        {
-            std::swap(shader_ptr, rhs.shader_ptr);
-            this->color_attachment_count = rhs.color_attachment_count;
-            this->subpass                = rhs.subpass;
-            std::swap(graphics_pipeline, rhs.graphics_pipeline);
-            this->actived   = rhs.actived;
-            this->obj_count = rhs.obj_count;
-            std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
-            std::swap(descriptor_sets, rhs.descriptor_sets);
-        }
+        Material(Material&& rhs) noexcept { swap(*this, rhs); }
 
         Material& operator=(Material&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                std::swap(shader_ptr, rhs.shader_ptr);
-                this->color_attachment_count = rhs.color_attachment_count;
-                this->subpass                = rhs.subpass;
-                std::swap(graphics_pipeline, rhs.graphics_pipeline);
-                this->actived   = rhs.actived;
-                this->obj_count = rhs.obj_count;
-                std::swap(per_obj_dynamic_offsets, rhs.per_obj_dynamic_offsets);
-                std::swap(descriptor_sets, rhs.descriptor_sets);
+                swap(*this, rhs);
             }
 
             return *this;
@@ -70,10 +53,9 @@ namespace Meow
 
         void EndPopulatingDynamicUniformBufferPerObject();
 
-        void PopulateDynamicUniformBuffer(std::shared_ptr<UniformBuffer> buffer,
-                                          const std::string&             name,
-                                          void*                          dataPtr,
-                                          uint32_t                       size);
+        void PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size);
+
+        void PopulateUniformBuffer(const std::string& name, void* data, uint32_t size);
 
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                          uint32_t                       first_set,
@@ -81,18 +63,24 @@ namespace Meow
                                          uint32_t                       draw_call  = 0,
                                          bool                           is_dynamic = false);
 
+        friend void swap(Material& lhs, Material& rhs);
+
         std::shared_ptr<Shader> shader_ptr             = nullptr;
         int                     color_attachment_count = 1;
         int                     subpass                = 0;
 
     private:
+        void CreateUniformBuffer();
+
         vk::raii::Pipeline graphics_pipeline = nullptr;
 
         // stored for binding descriptor set
 
-        bool                               actived   = false;
-        int32_t                            obj_count = 0;
-        std::vector<std::vector<uint32_t>> per_obj_dynamic_offsets;
-        vk::raii::DescriptorSets           descriptor_sets = nullptr;
+        bool                                                            m_actived   = false;
+        int32_t                                                         m_obj_count = 0;
+        std::vector<std::vector<uint32_t>>                              m_per_obj_dynamic_offsets;
+        vk::raii::DescriptorSets                                        m_descriptor_sets = nullptr;
+        std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;
+        std::unique_ptr<UniformBuffer>                                  m_dynamic_uniform_buffer;
     };
 } // namespace Meow

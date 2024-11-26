@@ -12,8 +12,33 @@ namespace Meow
     {
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
 
-        this->shader_ptr = shader_ptr;
-        descriptor_sets  = descriptor_allocator.Allocate(shader_ptr->descriptor_set_layouts);
+        this->shader_ptr  = shader_ptr;
+        m_descriptor_sets = descriptor_allocator.Allocate(shader_ptr->descriptor_set_layouts);
+
+        CreateUniformBuffer();
+    }
+
+    void Material::CreateUniformBuffer()
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
+        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
+        {
+            if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
+            {
+                m_uniform_buffers[it->first] =
+                    std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, it->second.size));
+                BindBufferToDescriptorSet(it->first, m_uniform_buffers[it->first]->buffer);
+            }
+            if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
+            {
+                if (!m_dynamic_uniform_buffer)
+                    m_dynamic_uniform_buffer =
+                        std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, 32 * 1024));
+                BindBufferToDescriptorSet(it->first, m_dynamic_uniform_buffer->buffer);
+            }
+        }
     }
 
     void Material::CreatePipeline(const vk::raii::Device&     logical_device,
@@ -224,7 +249,7 @@ namespace Meow
         }
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *descriptor_sets[meta->set],                                              // dstSet
+            *m_descriptor_sets[meta->set],                                            // dstSet
             meta->binding,                                                            // dstBinding
             0,                                                                        // dstArrayElement
             1,                                                                        // descriptorCount
@@ -254,7 +279,7 @@ namespace Meow
             *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *descriptor_sets[bindInfo.set],                                                 // dstSet
+            *m_descriptor_sets[bindInfo.set],                                               // dstSet
             bindInfo.binding,                                                               // dstBinding
             0,                                                                              // dstArrayElement
             1,                                                                              // descriptorCount
@@ -271,30 +296,31 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        if (actived)
+        if (m_actived)
         {
             return;
         }
-        actived = true;
+        m_actived = true;
 
         // clear per obj data
 
-        obj_count = 0;
-        per_obj_dynamic_offsets.clear();
+        m_obj_count = 0;
+        m_per_obj_dynamic_offsets.clear();
+        m_dynamic_uniform_buffer->Reset();
     }
 
     void Material::EndPopulatingDynamicUniformBufferPerFrame()
     {
         FUNCTION_TIMER();
 
-        actived = false;
+        m_actived = false;
     }
 
     void Material::BeginPopulatingDynamicUniformBufferPerObject()
     {
         FUNCTION_TIMER();
 
-        per_obj_dynamic_offsets.push_back(
+        m_per_obj_dynamic_offsets.push_back(
             std::vector<uint32_t>(shader_ptr->dynamic_uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
     }
 
@@ -305,10 +331,10 @@ namespace Meow
         // check if all dynamic offset is set
 
         // if there are objects
-        if (per_obj_dynamic_offsets.size() == obj_count + 1)
+        if (m_per_obj_dynamic_offsets.size() == m_obj_count + 1)
         {
             // check current object
-            for (auto offset : per_obj_dynamic_offsets[obj_count])
+            for (auto offset : m_per_obj_dynamic_offsets[m_obj_count])
             {
                 if (offset == std::numeric_limits<uint32_t>::max())
                 {
@@ -317,17 +343,15 @@ namespace Meow
             }
         }
 
-        ++obj_count;
+        ++m_obj_count;
     }
 
-    void Material::PopulateDynamicUniformBuffer(std::shared_ptr<UniformBuffer> buffer,
-                                                const std::string&             name,
-                                                void*                          dataPtr,
-                                                uint32_t                       size)
+    void Material::PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size)
     {
         FUNCTION_TIMER();
 
         auto it = shader_ptr->buffer_meta_map.find(name);
+#ifdef MEOW_DEBUG
         if (it == shader_ptr->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
@@ -339,16 +363,38 @@ namespace Meow
             MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
 
-        if (per_obj_dynamic_offsets[obj_count].size() <= it->second.dynamic_seq)
+        if (m_per_obj_dynamic_offsets[m_obj_count].size() <= it->second.dynamic_seq)
         {
             MEOW_ERROR("per_obj_dynamic_offsets[obj_count] size {} <= dynamic sequence {} from uniform buffer meta.",
-                       per_obj_dynamic_offsets[obj_count].size(),
+                       m_per_obj_dynamic_offsets[m_obj_count].size(),
                        it->second.dynamic_seq);
             return;
         }
+#endif
 
-        per_obj_dynamic_offsets[obj_count][it->second.dynamic_seq] =
-            static_cast<uint32_t>(buffer->Populate(dataPtr, it->second.size));
+        m_per_obj_dynamic_offsets[m_obj_count][it->second.dynamic_seq] =
+            static_cast<uint32_t>(m_dynamic_uniform_buffer->Populate(data, it->second.size));
+    }
+
+    void Material::PopulateUniformBuffer(const std::string& name, void* data, uint32_t size)
+    {
+
+        auto it = shader_ptr->buffer_meta_map.find(name);
+#ifdef MEOW_DEBUG
+        if (it == shader_ptr->buffer_meta_map.end())
+        {
+            MEOW_ERROR("Uniform {} not found.", name);
+            return;
+        }
+
+        if (it->second.size != size)
+        {
+            MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
+        }
+#endif
+
+        m_uniform_buffers[it->first]->Reset();
+        m_uniform_buffers[it->first]->Populate(data, size);
     }
 
     void Material::BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
@@ -359,7 +405,7 @@ namespace Meow
     {
         if (is_dynamic)
         {
-            if (draw_call >= per_obj_dynamic_offsets.size())
+            if (draw_call >= m_per_obj_dynamic_offsets.size())
             {
                 return;
             }
@@ -368,17 +414,34 @@ namespace Meow
         std::vector<vk::DescriptorSet> descriptor_sets_to_bind(set_count);
         for (uint32_t i = first_set; i < first_set + set_count; ++i)
         {
-            descriptor_sets_to_bind[i - first_set] = *descriptor_sets[i];
+            descriptor_sets_to_bind[i - first_set] = *m_descriptor_sets[i];
         }
 
         std::vector<uint32_t> dynamic_offsets {};
         if (is_dynamic)
-            dynamic_offsets = per_obj_dynamic_offsets[draw_call];
+            dynamic_offsets = m_per_obj_dynamic_offsets[draw_call];
 
         command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                           *shader_ptr->pipeline_layout,
                                           first_set,
                                           descriptor_sets_to_bind,
                                           dynamic_offsets);
+    }
+
+    void swap(Material& lhs, Material& rhs)
+    {
+        using std::swap;
+
+        std::swap(lhs.shader_ptr, rhs.shader_ptr);
+        std::swap(lhs.color_attachment_count, rhs.color_attachment_count);
+        std::swap(lhs.subpass, rhs.subpass);
+
+        std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
+        std::swap(lhs.m_actived, rhs.m_actived);
+        std::swap(lhs.m_obj_count, rhs.m_obj_count);
+        std::swap(lhs.m_per_obj_dynamic_offsets, rhs.m_per_obj_dynamic_offsets);
+        std::swap(lhs.m_descriptor_sets, rhs.m_descriptor_sets);
+        std::swap(lhs.m_uniform_buffers, rhs.m_uniform_buffers);
+        std::swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
     }
 } // namespace Meow
