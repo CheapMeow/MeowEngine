@@ -55,7 +55,8 @@ namespace Meow
          */
         void SetLayout(const vk::raii::CommandBuffer& command_buffer,
                        vk::ImageLayout                old_image_layout,
-                       vk::ImageLayout                new_image_layout);
+                       vk::ImageLayout                new_image_layout,
+                       vk::ImageSubresourceRange      image_subresource_range);
 
         static std::shared_ptr<ImageData> CreateDepthBuffer(vk::Format format, const vk::Extent2D& extent);
 
