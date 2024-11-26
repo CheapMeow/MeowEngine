@@ -618,8 +618,6 @@ namespace Meow
                                   command_buffer, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
                               std::vector<vk::BufferImageCopy> copy_regions;
                               // cubemap have 6 images
-                              MEOW_INFO("image_data_ptr->extent.width = {}", image_data_ptr->extent.width);
-                              MEOW_INFO("image_data_ptr->extent.height = {}", image_data_ptr->extent.height);
                               for (std::size_t i = 0; i < 6; ++i)
                                   copy_regions.emplace_back(image_data_ptr->size * i, /* bufferOffset */
                                                             image_data_ptr->extent.width,
