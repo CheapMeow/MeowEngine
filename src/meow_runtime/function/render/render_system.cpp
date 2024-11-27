@@ -8,7 +8,10 @@
 #include <volk.h>
 namespace Meow
 {
-    std::vector<const char*> k_required_device_extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    std::vector<const char*> k_required_device_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+    };
 
     void RenderSystem::CreateVulkanInstance()
     {
@@ -19,8 +22,9 @@ namespace Meow
         // prepare for create vk::InstanceCreateInfo
         std::vector<vk::ExtensionProperties> available_instance_extensions =
             m_vulkan_context.enumerateInstanceExtensionProperties();
-        std::vector<const char*> required_instance_extensions =
-            GetRequiredInstanceExtensions({VK_KHR_SURFACE_EXTENSION_NAME});
+        std::vector<const char*> required_instance_extensions = GetRequiredInstanceExtensions({
+            VK_KHR_SURFACE_EXTENSION_NAME,
+        });
         if (!ValidateExtensions(required_instance_extensions, available_instance_extensions))
         {
             throw std::runtime_error("Required instance extensions are missing.");
