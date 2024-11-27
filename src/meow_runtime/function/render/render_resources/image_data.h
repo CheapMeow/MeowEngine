@@ -58,8 +58,6 @@ namespace Meow
                        vk::ImageLayout                new_image_layout,
                        vk::ImageSubresourceRange      image_subresource_range);
 
-        static std::shared_ptr<ImageData> CreateDepthBuffer(vk::Format format, const vk::Extent2D& extent);
-
         static std::shared_ptr<ImageData>
         CreateTexture(const std::string&     file_path,
                       vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
