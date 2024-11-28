@@ -53,10 +53,10 @@ namespace Meow
          * @param old_image_layout Old image layout
          * @param new_image_layout New image layout
          */
-        void SetLayout(const vk::raii::CommandBuffer& command_buffer,
-                       vk::ImageLayout                old_image_layout,
-                       vk::ImageLayout                new_image_layout,
-                       vk::ImageSubresourceRange      image_subresource_range);
+        void TransitLayout(const vk::raii::CommandBuffer& command_buffer,
+                           vk::ImageLayout                old_image_layout,
+                           vk::ImageLayout                new_image_layout,
+                           vk::ImageSubresourceRange      image_subresource_range);
 
         static std::shared_ptr<ImageData>
         CreateTexture(const std::string&     file_path,

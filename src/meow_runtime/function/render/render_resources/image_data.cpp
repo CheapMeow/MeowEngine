@@ -4,10 +4,10 @@
 
 namespace Meow
 {
-    void ImageData::SetLayout(const vk::raii::CommandBuffer& command_buffer,
-                              vk::ImageLayout                old_image_layout,
-                              vk::ImageLayout                new_image_layout,
-                              vk::ImageSubresourceRange      image_subresource_range)
+    void ImageData::TransitLayout(const vk::raii::CommandBuffer& command_buffer,
+                                  vk::ImageLayout                old_image_layout,
+                                  vk::ImageLayout                new_image_layout,
+                                  vk::ImageSubresourceRange      image_subresource_range)
     {
         vk::AccessFlags source_access_mask;
         switch (old_image_layout)
@@ -236,10 +236,10 @@ namespace Meow
                           if (image_data_ptr->need_staging)
                           {
                               // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eUndefined,
-                                                        vk::ImageLayout::eTransferDstOptimal,
-                                                        {aspect_mask, 0, 1, 0, 1});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eUndefined,
+                                                            vk::ImageLayout::eTransferDstOptimal,
+                                                            {aspect_mask, 0, 1, 0, 1});
                               vk::BufferImageCopy copy_region(0,
                                                               image_data_ptr->extent.width,
                                                               image_data_ptr->extent.height,
@@ -251,18 +251,18 @@ namespace Meow
                                                                vk::ImageLayout::eTransferDstOptimal,
                                                                copy_region);
                               // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eTransferDstOptimal,
-                                                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                        {aspect_mask, 0, 1, 0, 1});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eTransferDstOptimal,
+                                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                                            {aspect_mask, 0, 1, 0, 1});
                           }
                           else
                           {
                               // If we can use the linear tiled image as a texture, just do it
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::ePreinitialized,
-                                                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                        {aspect_mask, 0, 1, 0, 1});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::ePreinitialized,
+                                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                                            {aspect_mask, 0, 1, 0, 1});
                           }
                       });
 
@@ -329,15 +329,15 @@ namespace Meow
                       graphics_queue,
                       [&](const vk::raii::CommandBuffer& command_buffer) {
                           if (aspect_mask & vk::ImageAspectFlagBits::eColor)
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eUndefined,
-                                                        vk::ImageLayout::eColorAttachmentOptimal,
-                                                        {aspect_mask, 0, 1, 0, 1});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eUndefined,
+                                                            vk::ImageLayout::eColorAttachmentOptimal,
+                                                            {aspect_mask, 0, 1, 0, 1});
                           else if (aspect_mask & vk::ImageAspectFlagBits::eDepth)
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eUndefined,
-                                                        vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                                                        {aspect_mask, 0, 1, 0, 1});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eUndefined,
+                                                            vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                                                            {aspect_mask, 0, 1, 0, 1});
                       });
 
         return image_data_ptr;
@@ -419,10 +419,10 @@ namespace Meow
                       onetime_submit_command_pool,
                       graphics_queue,
                       [&](const vk::raii::CommandBuffer& command_buffer) {
-                          image_data_ptr->SetLayout(command_buffer,
-                                                    vk::ImageLayout::eUndefined,
-                                                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                    {aspect_mask, 0, 1, 0, 1});
+                          image_data_ptr->TransitLayout(command_buffer,
+                                                        vk::ImageLayout::eUndefined,
+                                                        vk::ImageLayout::eShaderReadOnlyOptimal,
+                                                        {aspect_mask, 0, 1, 0, 1});
                       });
 
         return image_data_ptr;
@@ -558,10 +558,10 @@ namespace Meow
                           if (image_data_ptr->need_staging)
                           {
                               // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eUndefined,
-                                                        vk::ImageLayout::eTransferDstOptimal,
-                                                        {aspect_mask, 0, 1, 0, 6});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eUndefined,
+                                                            vk::ImageLayout::eTransferDstOptimal,
+                                                            {aspect_mask, 0, 1, 0, 6});
                               std::vector<vk::BufferImageCopy> copy_regions;
                               // cubemap have 6 images
                               for (std::size_t i = 0; i < 6; ++i)
@@ -576,18 +576,18 @@ namespace Meow
                                                                vk::ImageLayout::eTransferDstOptimal,
                                                                copy_regions);
                               // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::eTransferDstOptimal,
-                                                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                        {aspect_mask, 0, 1, 0, 6});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::eTransferDstOptimal,
+                                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                                            {aspect_mask, 0, 1, 0, 6});
                           }
                           else
                           {
                               // If we can use the linear tiled image as a texture, just do it
-                              image_data_ptr->SetLayout(command_buffer,
-                                                        vk::ImageLayout::ePreinitialized,
-                                                        vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                        {aspect_mask, 0, 1, 0, 6});
+                              image_data_ptr->TransitLayout(command_buffer,
+                                                            vk::ImageLayout::ePreinitialized,
+                                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                                            {aspect_mask, 0, 1, 0, 6});
                           }
                       });
 
