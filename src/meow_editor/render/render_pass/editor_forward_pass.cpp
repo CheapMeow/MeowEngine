@@ -127,6 +127,54 @@ namespace Meow
         ForwardPass::Start(command_buffer, extent, current_image_index);
     }
 
+    void EditorForwardPass::Start2(const vk::raii::CommandBuffer& command_buffer,
+                                   vk::Extent2D                   extent,
+                                   ImageData&                     color_attachment,
+                                   ImageData&                     depth_attachment)
+    {
+        if (m_query_enabled)
+            command_buffer.resetQueryPool(*query_pool, 0, 1);
+
+        color_attachment.TransitLayout(command_buffer,
+                                       vk::ImageLayout::eUndefined,
+                                       vk::ImageLayout::eColorAttachmentOptimal,
+                                       {color_attachment.aspect_mask, 0, 1, 0, 1});
+
+        depth_attachment.TransitLayout(command_buffer,
+                                       vk::ImageLayout::eUndefined,
+                                       vk::ImageLayout::eDepthAttachmentOptimal,
+                                       {depth_attachment.aspect_mask, 0, 1, 0, 1});
+
+        vk::RenderingAttachmentInfoKHR color_attachment_info(
+            *color_attachment.image_view,                 /* imageView */
+            color_attachment.layout,                      /* imageLayout */
+            vk::ResolveModeFlagBits::eNone,               /* resolveMode */
+            {},                                           /* resolveImageView */
+            {},                                           /* resolveImageLayout */
+            vk::AttachmentLoadOp::eClear,                 /* loadOp */
+            vk::AttachmentStoreOp::eStore,                /* storeOp */
+            vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f)); /* clearValue */
+
+        vk::RenderingAttachmentInfoKHR depth_attachment_info(*depth_attachment.image_view,   /* imageView */
+                                                             depth_attachment.layout,        /* imageLayout */
+                                                             vk::ResolveModeFlagBits::eNone, /* resolveMode */
+                                                             {},                             /* resolveImageView */
+                                                             {},                             /* resolveImageLayout */
+                                                             vk::AttachmentLoadOp::eClear,   /* loadOp */
+                                                             vk::AttachmentStoreOp::eStore,  /* storeOp */
+                                                             vk::ClearDepthStencilValue(1.0f, 0)); /* clearValue */
+
+        vk::RenderingInfoKHR rendering_info({},                                 /* flags */
+                                            vk::Rect2D(vk::Offset2D(), extent), /* renderArea */
+                                            1,                                  /* layerCount */
+                                            0,                                  /* viewMask */
+                                            1,                                  /* colorAttachmentCount */
+                                            &color_attachment_info,             /* pColorAttachments */
+                                            &depth_attachment_info);            /* pDepthAttachment */
+
+        command_buffer.beginRenderingKHR(rendering_info);
+    }
+
     void EditorForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
@@ -140,6 +188,13 @@ namespace Meow
 
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
+    }
+
+    void EditorForwardPass::End(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        command_buffer.endRenderingKHR();
     }
 
     void EditorForwardPass::AfterPresent()

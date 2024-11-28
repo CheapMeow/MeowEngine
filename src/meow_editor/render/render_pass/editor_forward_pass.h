@@ -37,6 +37,13 @@ namespace Meow
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
+        void Start2(const vk::raii::CommandBuffer& command_buffer,
+                    vk::Extent2D                   extent,
+                    ImageData&                     color_attachment,
+                    ImageData&                     depth_attachment);
+
+        void End(const vk::raii::CommandBuffer& command_buffer) override;
+        
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
         void AfterPresent() override;

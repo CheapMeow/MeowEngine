@@ -29,6 +29,8 @@ namespace Meow
             return *this;
         }
 
+        void CreatePipeline2(vk::FrontFace front_face = vk::FrontFace::eClockwise, bool depth_buffered = false);
+
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
                             vk::FrontFace               front_face,
