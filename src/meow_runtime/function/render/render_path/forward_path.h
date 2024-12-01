@@ -16,7 +16,7 @@ namespace Meow
         {}
 
         ForwardPath(ForwardPath&& rhs) noexcept
-            : RenderPath(std::move(rhs))
+            : RenderPath(nullptr)
         {
             swap(*this, rhs);
         }
@@ -25,8 +25,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                RenderPath::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

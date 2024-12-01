@@ -247,6 +247,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+
         swap(lhs.m_gbuffer_mat, rhs.m_gbuffer_mat);
     }
 } // namespace Meow

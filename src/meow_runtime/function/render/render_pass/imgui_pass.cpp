@@ -154,6 +154,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+
         swap(lhs.m_cur_render_pass, rhs.m_cur_render_pass);
         swap(lhs.m_render_pass_names, rhs.m_render_pass_names);
         swap(lhs.m_on_pass_changed, rhs.m_on_pass_changed);

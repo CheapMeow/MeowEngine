@@ -255,6 +255,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<RenderPath&>(lhs), static_cast<RenderPath&>(rhs));
+
         swap(lhs.m_gbuffer_pass, rhs.m_gbuffer_pass);
         swap(lhs.m_deferred_light_pass, rhs.m_deferred_light_pass);
 
