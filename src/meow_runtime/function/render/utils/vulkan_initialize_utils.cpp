@@ -375,14 +375,14 @@ namespace Meow
         {
             if (formats[0].format == vk::Format::eUndefined)
             {
-                picked_format.format     = vk::Format::eB8G8R8A8Unorm;
+                picked_format.format     = vk::Format::eR8G8B8A8Unorm;
                 picked_format.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
             }
         }
         else
         {
             // request several formats, the first found will be used
-            vk::Format        requested_formats[]   = {vk::Format::eB8G8R8A8Unorm,
+            vk::Format        requested_formats[]   = {vk::Format::eR8G8B8A8Unorm,
                                                        vk::Format::eR8G8B8A8Unorm,
                                                        vk::Format::eB8G8R8Unorm,
                                                        vk::Format::eR8G8B8Unorm};
