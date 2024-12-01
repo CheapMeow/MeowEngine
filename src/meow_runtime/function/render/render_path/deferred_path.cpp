@@ -113,7 +113,13 @@ namespace Meow
         FUNCTION_TIMER();
 
         {
-#ifndef MEOW_EDITOR
+#ifdef MEOW_EDITOR
+            TransitLayout(command_buffer,
+                          *m_offscreen_render_target.image,
+                          vk::ImageLayout::eShaderReadOnlyOptimal,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          {m_offscreen_render_target.aspect_mask, 0, 1, 0, 1});
+#else
             TransitLayout(command_buffer,
                           swapchain_image,
                           vk::ImageLayout::eUndefined,
@@ -219,13 +225,19 @@ namespace Meow
 
 #ifdef MEOW_EDITOR
         {
-            m_imgui_pass.DrawImGui();
+            TransitLayout(command_buffer,
+                          *m_offscreen_render_target.image,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          vk::ImageLayout::eShaderReadOnlyOptimal,
+                          {m_offscreen_render_target.aspect_mask, 0, 1, 0, 1});
 
             TransitLayout(command_buffer,
                           swapchain_image,
                           vk::ImageLayout::eUndefined,
                           vk::ImageLayout::eColorAttachmentOptimal,
                           {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+
+            m_imgui_pass.DrawImGui();
 
             vk::RenderingAttachmentInfoKHR render_target_info(
                 *swapchain_image_view,                        /* imageView */
