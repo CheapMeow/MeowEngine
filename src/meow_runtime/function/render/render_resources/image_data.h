@@ -38,21 +38,21 @@ namespace Meow
         ImageData(std::nullptr_t) {}
 
         static ImageData CreateTexture(const std::string&     file_path,
-                                       vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                                       vk::Format             format               = vk::Format::eB8G8R8A8Unorm,
                                        vk::ImageUsageFlags    usage_flags          = {},
                                        vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
                                        vk::FormatFeatureFlags format_feature_flags = {},
                                        bool                   anisotropy_enable    = false,
                                        bool                   force_staging        = true);
 
-        static ImageData CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+        static ImageData CreateAttachment(vk::Format             format               = vk::Format::eB8G8R8A8Unorm,
                                           const vk::Extent2D&    extent               = {256, 256},
                                           vk::ImageUsageFlags    usage_flags          = {},
                                           vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
                                           vk::FormatFeatureFlags format_feature_flags = {},
                                           bool                   anisotropy_enable    = false);
 
-        static ImageData CreateRenderTarget(vk::Format             format      = vk::Format::eR8G8B8A8Unorm,
+        static ImageData CreateRenderTarget(vk::Format             format      = vk::Format::eB8G8R8A8Unorm,
                                             const vk::Extent2D&    extent      = {256, 256},
                                             vk::ImageUsageFlags    usage_flags = {},
                                             vk::ImageAspectFlags   aspect_mask = vk::ImageAspectFlagBits::eColor,

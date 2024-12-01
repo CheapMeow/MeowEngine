@@ -178,7 +178,7 @@ namespace Meow
 
         std::vector<vk::Format> color_attachment_formats;
         for (int i = 0; i < color_attachment_count; ++i)
-            color_attachment_formats.push_back(vk::Format::eR8G8B8A8Unorm);
+            color_attachment_formats.push_back(vk::Format::eB8G8R8A8Unorm);
         vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
             {},                       /* viewMask */
             color_attachment_formats, /* colorAttachmentFormats_ */

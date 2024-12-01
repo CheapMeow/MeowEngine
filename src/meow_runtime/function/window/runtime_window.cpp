@@ -336,7 +336,7 @@ namespace Meow
         // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
         // with those in viewports
 
-        vk::Format                      color_attachment_formats[1] = {vk::Format::eR8G8B8A8Unorm};
+        vk::Format                      color_attachment_formats[1] = {vk::Format::eB8G8R8A8Unorm};
         vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
             {},                       /* viewMask */
             1,                        /* colorAttachmentCount */

@@ -17,8 +17,10 @@ namespace Meow
 
         // Create attachment
 
+        vk::Extent2D temp_extent = {extent.width / 2, extent.height / 2};
+
         m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
-                                                         extent,
+                                                         temp_extent,
                                                          vk::ImageUsageFlagBits::eDepthStencilAttachment,
                                                          vk::ImageAspectFlagBits::eDepth,
                                                          {},
@@ -36,7 +38,6 @@ namespace Meow
                       });
 
 #ifdef MEOW_EDITOR
-        vk::Extent2D temp_extent  = {extent.width / 2, extent.height / 2};
         m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
                                                                   temp_extent,
                                                                   vk::ImageUsageFlagBits::eColorAttachment |
@@ -94,13 +95,15 @@ namespace Meow
                 vk::AttachmentStoreOp::eStore,                   /* storeOp */
                 vk::ClearDepthStencilValue(1.0f, 0));            /* clearValue */
 
-            vk::RenderingInfoKHR rendering_info({},                                 /* flags */
-                                                vk::Rect2D(vk::Offset2D(), extent), /* renderArea */
-                                                1,                                  /* layerCount */
-                                                0,                                  /* viewMask */
-                                                1,                                  /* colorAttachmentCount */
-                                                &render_target_info,                /* pColorAttachments */
-                                                &depth_attachment_info);            /* pDepthAttachment */
+            vk::Extent2D temp_extent = {extent.width / 2, extent.height / 2};
+
+            vk::RenderingInfoKHR rendering_info({},                                      /* flags */
+                                                vk::Rect2D(vk::Offset2D(), temp_extent), /* renderArea */
+                                                1,                                       /* layerCount */
+                                                0,                                       /* viewMask */
+                                                1,                                       /* colorAttachmentCount */
+                                                &render_target_info,                     /* pColorAttachments */
+                                                &depth_attachment_info);                 /* pDepthAttachment */
 
             command_buffer.beginRenderingKHR(rendering_info);
 
