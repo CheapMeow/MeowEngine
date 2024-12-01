@@ -18,6 +18,9 @@ namespace Meow
             case vk::ImageLayout::ePreinitialized:
                 source_access_mask = vk::AccessFlagBits::eHostWrite;
                 break;
+            case vk::ImageLayout::eColorAttachmentOptimal:
+                source_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
+                break;
             case vk::ImageLayout::eGeneral: // source_access_mask is empty
             case vk::ImageLayout::eUndefined:
                 break;
@@ -35,6 +38,9 @@ namespace Meow
                 break;
             case vk::ImageLayout::eTransferDstOptimal:
                 source_stage = vk::PipelineStageFlagBits::eTransfer;
+                break;
+            case vk::ImageLayout::eColorAttachmentOptimal:
+                source_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
                 break;
             case vk::ImageLayout::eUndefined:
                 source_stage = vk::PipelineStageFlagBits::eTopOfPipe;
