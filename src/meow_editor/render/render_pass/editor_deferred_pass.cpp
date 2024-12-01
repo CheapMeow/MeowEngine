@@ -228,7 +228,7 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 0, {});
 
-        DrawObjOnly(command_buffer);
+        RenderGBuffer(command_buffer);
 
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
@@ -240,7 +240,7 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 1, {});
 
-        DrawQuadOnly(command_buffer);
+        MeshLighting(command_buffer);
 
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 1);

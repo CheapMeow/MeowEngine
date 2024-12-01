@@ -69,9 +69,9 @@ namespace Meow
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
-        void DrawObjOnly(const vk::raii::CommandBuffer& command_buffer);
+        void RenderGBuffer(const vk::raii::CommandBuffer& command_buffer);
 
-        void DrawQuadOnly(const vk::raii::CommandBuffer& command_buffer);
+        void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
 
         friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 

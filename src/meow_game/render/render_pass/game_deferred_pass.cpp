@@ -189,12 +189,12 @@ namespace Meow
 
         m_obj2attachment_mat.BindPipeline(command_buffer);
 
-        DrawObjOnly(command_buffer);
+        RenderGBuffer(command_buffer);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_quad_mat.BindPipeline(command_buffer);
 
-        DrawQuadOnly(command_buffer);
+        MeshLighting(command_buffer);
     }
 } // namespace Meow

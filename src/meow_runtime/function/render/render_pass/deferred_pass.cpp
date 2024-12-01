@@ -244,7 +244,7 @@ namespace Meow
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void DeferredPass::DrawObjOnly(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPass::RenderGBuffer(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -277,7 +277,7 @@ namespace Meow
         }
     }
 
-    void DeferredPass::DrawQuadOnly(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPass::MeshLighting(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
