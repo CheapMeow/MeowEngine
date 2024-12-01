@@ -12,7 +12,7 @@ namespace Meow
     {
         std::vector<const char*> required_instance_extensions(required_instance_extensions_base);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+#ifdef MEOW_DEBUG
         required_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
