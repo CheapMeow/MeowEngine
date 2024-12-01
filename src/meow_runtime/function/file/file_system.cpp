@@ -111,7 +111,7 @@ namespace Meow
 
         float* pixels = stbi_loadf(
             absolute_file_path.string().c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
-        uint32_t data_size = texture_width * texture_height * 4;
+        uint32_t data_size = texture_width * texture_height * 4 * 4;
 
         if (!pixels)
         {
