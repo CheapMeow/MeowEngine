@@ -35,6 +35,8 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
+        void BeforeRender(const vk::raii::CommandBuffer& command_buffer) override;
+
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
         void AfterPresent() override;

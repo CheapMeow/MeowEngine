@@ -126,73 +126,18 @@ namespace Meow
         m_gbuffer_mat.EndPopulatingDynamicUniformBufferPerFrame();
     }
 
-    void GbufferPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                            vk::Extent2D                   extent,
-                            ImageData&                     color_attachment,
-                            ImageData&                     normal_attachment,
-                            ImageData&                     position_attachment,
-                            ImageData&                     depth_attachment)
-    {
-        vk::RenderingAttachmentInfoKHR color_attachment_infos[3] = {
-            {
-                *color_attachment.image_view,               /* imageView */
-                color_attachment.layout,                    /* imageLayout */
-                vk::ResolveModeFlagBits::eNone,             /* resolveMode */
-                {},                                         /* resolveImageView */
-                {},                                         /* resolveImageLayout */
-                vk::AttachmentLoadOp::eClear,               /* loadOp */
-                vk::AttachmentStoreOp::eStore,              /* storeOp */
-                vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f) /* clearValue */
-            },
-            {
-                *normal_attachment.image_view,              /* imageView */
-                normal_attachment.layout,                   /* imageLayout */
-                vk::ResolveModeFlagBits::eNone,             /* resolveMode */
-                {},                                         /* resolveImageView */
-                {},                                         /* resolveImageLayout */
-                vk::AttachmentLoadOp::eClear,               /* loadOp */
-                vk::AttachmentStoreOp::eStore,              /* storeOp */
-                vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f) /* clearValue */
-            },
-            {
-                *position_attachment.image_view,            /* imageView */
-                position_attachment.layout,                 /* imageLayout */
-                vk::ResolveModeFlagBits::eNone,             /* resolveMode */
-                {},                                         /* resolveImageView */
-                {},                                         /* resolveImageLayout */
-                vk::AttachmentLoadOp::eClear,               /* loadOp */
-                vk::AttachmentStoreOp::eStore,              /* storeOp */
-                vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f) /* clearValue */
-            },
-        };
-
-        vk::RenderingAttachmentInfoKHR depth_attachment_info(*depth_attachment.image_view,   /* imageView */
-                                                             depth_attachment.layout,        /* imageLayout */
-                                                             vk::ResolveModeFlagBits::eNone, /* resolveMode */
-                                                             {},                             /* resolveImageView */
-                                                             {},                             /* resolveImageLayout */
-                                                             vk::AttachmentLoadOp::eClear,   /* loadOp */
-                                                             vk::AttachmentStoreOp::eStore,  /* storeOp */
-                                                             vk::ClearDepthStencilValue(1.0f, 0)); /* clearValue */
-
-        vk::RenderingInfoKHR rendering_info({},                                 /* flags */
-                                            vk::Rect2D(vk::Offset2D(), extent), /* renderArea */
-                                            1,                                  /* layerCount */
-                                            0,                                  /* viewMask */
-                                            1,                                  /* colorAttachmentCount */
-                                            color_attachment_infos,             /* pColorAttachments */
-                                            &depth_attachment_info);            /* pDepthAttachment */
-
-        command_buffer.beginRenderingKHR(rendering_info);
-    }
-
-    void GbufferPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void GbufferPass::BeforeRender(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
 #ifdef MEOW_EDITOR
         command_buffer.resetQueryPool(*m_query_pool, 0, 1);
 #endif
+    }
+
+    void GbufferPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
 
         m_gbuffer_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 

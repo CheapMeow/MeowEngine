@@ -31,6 +31,8 @@ namespace Meow
 
         virtual void UpdateUniformBuffer() {}
 
+        virtual void BeforeRender(const vk::raii::CommandBuffer& command_buffer) {};
+
         virtual void Draw(const vk::raii::CommandBuffer& command_buffer) {}
 
         virtual void AfterPresent() {}

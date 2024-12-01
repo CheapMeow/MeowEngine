@@ -195,6 +195,9 @@ namespace Meow
                                                 color_attachment_infos,                  /* pColorAttachments */
                                                 &depth_attachment_info);                 /* pDepthAttachment */
 
+            m_gbuffer_pass.BeforeRender(command_buffer);
+            m_deferred_light_pass.BeforeRender(command_buffer);
+
             command_buffer.beginRenderingKHR(rendering_info);
 
             m_gbuffer_pass.Draw(command_buffer);

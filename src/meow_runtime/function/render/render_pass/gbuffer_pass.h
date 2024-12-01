@@ -35,12 +35,7 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
-        void Start(const vk::raii::CommandBuffer& command_buffer,
-                   vk::Extent2D                   extent,
-                   ImageData&                     color_attachment,
-                   ImageData&                     normal_attachment,
-                   ImageData&                     position_attachment,
-                   ImageData&                     depth_attachment);
+        void BeforeRender(const vk::raii::CommandBuffer& command_buffer) override;
 
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 

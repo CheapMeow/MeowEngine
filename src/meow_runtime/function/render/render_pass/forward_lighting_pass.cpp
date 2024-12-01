@@ -246,13 +246,18 @@ namespace Meow
         m_skybox_mat.EndPopulatingDynamicUniformBufferPerFrame();
     }
 
-    void ForwardLightingPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardLightingPass::BeforeRender(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
 #ifdef MEOW_EDITOR
         command_buffer.resetQueryPool(*m_query_pool, 0, 1);
 #endif
+    }
+
+    void ForwardLightingPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
 
         m_forward_lighting_mat.BindPipeline(command_buffer);
 

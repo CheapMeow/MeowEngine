@@ -102,13 +102,18 @@ namespace Meow
         m_deferred_lighting_mat.PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
     }
 
-    void DeferredLightingPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredLightingPass::BeforeRender(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
 #ifdef MEOW_EDITOR
         command_buffer.resetQueryPool(*m_query_pool, 0, 1);
 #endif
+    }
+
+    void DeferredLightingPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
 
         m_deferred_lighting_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 

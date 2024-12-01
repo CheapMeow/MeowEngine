@@ -111,6 +111,8 @@ namespace Meow
                                                 &render_target_info,                     /* pColorAttachments */
                                                 &depth_attachment_info);                 /* pDepthAttachment */
 
+            m_forward_light_pass.BeforeRender(command_buffer);
+
             command_buffer.beginRenderingKHR(rendering_info);
 
             m_forward_light_pass.Draw(command_buffer);
