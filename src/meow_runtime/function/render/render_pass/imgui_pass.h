@@ -14,7 +14,9 @@ namespace Meow
     class ImGuiPass : public RenderPass
     {
     public:
-        ImGuiPass(std::nullptr_t);
+        ImGuiPass(std::nullptr_t)
+            : RenderPass(nullptr)
+        {}
 
         ImGuiPass(ImGuiPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
@@ -33,7 +35,11 @@ namespace Meow
             return *this;
         }
 
-        ImGuiPass();
+        ImGuiPass()
+            : RenderPass()
+        {
+            m_pass_name = "ImGui Pass";
+        }
 
         void DrawImGui();
 
@@ -48,14 +54,9 @@ namespace Meow
                                           VkImageLayout offscreen_image_layout);
 
     private:
-        void InitImGui();
-
         int                      m_cur_render_pass   = 0;
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;
-
-        const uint32_t           k_max_frames_in_flight  = 2;
-        vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
         VkDescriptorSet m_offscreen_image_desc;
 

@@ -25,17 +25,19 @@ namespace Meow
         void CreateSwapChian();
         void CreateDescriptorAllocator();
         void CreatePerFrameData();
+        void InitImGui();
         void CreateRenderPass();
         void RecreateSwapChain();
 
         SwapChainData             m_swapchain_data = nullptr;
         std::vector<PerFrameData> m_per_frame_data;
-        bool                      m_framebuffer_resized  = false;
-        bool                      m_iconified            = false;
-        const uint64_t            k_fence_timeout        = 100000000;
-        const uint32_t            k_max_frames_in_flight = 2;
-        uint32_t                  m_current_frame_index  = 0;
-        uint32_t                  m_current_image_index  = 0;
+        bool                      m_framebuffer_resized   = false;
+        bool                      m_iconified             = false;
+        const uint64_t            k_fence_timeout         = 100000000;
+        const uint32_t            k_max_frames_in_flight  = 2;
+        uint32_t                  m_current_frame_index   = 0;
+        uint32_t                  m_current_image_index   = 0;
+        vk::raii::DescriptorPool  m_imgui_descriptor_pool = nullptr;
 
         ForwardPath  m_forward_path    = nullptr;
         DeferredPath m_deferred_path   = nullptr;

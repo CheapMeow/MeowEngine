@@ -22,6 +22,7 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreatePerFrameData();
+        InitImGui();
         CreateRenderPass();
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
@@ -203,6 +204,17 @@ namespace Meow
         Window::Tick(dt);
     }
 
+    void RuntimeWindow::RefreshAttachments()
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+
+        vk::Format color_format =
+            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+
+        m_forward_path.RefreshAttachments(color_format, m_surface_data.extent);
+        m_deferred_path.RefreshAttachments(color_format, m_surface_data.extent);
+    }
+
     void RuntimeWindow::CreateSurface()
     {
         const vk::raii::Instance& vulkan_instance = g_runtime_context.render_system->GetInstance();
@@ -257,6 +269,97 @@ namespace Meow
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
             m_per_frame_data[i].in_flight_fence = vk::raii::Fence(logical_device, vk::FenceCreateInfo());
         }
+    }
+
+    void RuntimeWindow::InitImGui()
+    {
+        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::CommandPool&    onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const vk::raii::Queue& graphics_queue  = g_runtime_context.render_system->GetGraphicsQueue();
+        GLFWwindow*            glfw_window     = g_runtime_context.window_system->GetCurrentFocusGLFWWindow();
+
+        std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
+                                                          {vk::DescriptorType::eCombinedImageSampler, 1000},
+                                                          {vk::DescriptorType::eSampledImage, 1000},
+                                                          {vk::DescriptorType::eStorageImage, 1000},
+                                                          {vk::DescriptorType::eUniformTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageTexelBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBuffer, 1000},
+                                                          {vk::DescriptorType::eStorageBuffer, 1000},
+                                                          {vk::DescriptorType::eUniformBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eStorageBufferDynamic, 1000},
+                                                          {vk::DescriptorType::eInputAttachment, 1000}};
+        vk::DescriptorPoolCreateInfo        descriptor_pool_create_info(
+            vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1000, pool_sizes);
+        m_imgui_descriptor_pool = vk::raii::DescriptorPool(logical_device, descriptor_pool_create_info);
+
+        // Setup Dear ImGui context
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        (void)io;
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
+        // io.ConfigViewportsNoAutoMerge = true;
+        // io.ConfigViewportsNoTaskBarIcon = true;
+
+        // Setup Dear ImGui style
+        ImGui::StyleColorsDark();
+        // ImGui::StyleColorsLight();
+
+        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular
+        // ones.
+        ImGuiStyle& style = ImGui::GetStyle();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            style.WindowRounding              = 0.0f;
+            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+        }
+
+        // Setup Platform/Renderer backends
+
+        // Because in ImGui docking branch, each viewport has its own `render pass`, but they doesn't have their
+        // own `pipeline`. They use the `pipeline` created from the `render pass` pass in `ImGui_ImplVulkan_Init`. So
+        // the `render pass` pass in `ImGui_ImplVulkan_Init` should be compatiable with the `render pass` used in other
+        // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
+        // with those in viewports
+
+        vk::Format                      color_attachment_formats[1] = {vk::Format::eR8G8B8A8Unorm};
+        vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
+            {},                       /* viewMask */
+            1,                        /* colorAttachmentCount */
+            color_attachment_formats, /* colorAttachmentFormats_ */
+            {}                        /* depthAttachmentFormat_ */
+        );
+
+        ImGui_ImplGlfw_InitForVulkan(glfw_window, true);
+        ImGui_ImplVulkan_InitInfo init_info   = {};
+        init_info.Instance                    = *vulkan_instance;
+        init_info.PhysicalDevice              = *physical_device;
+        init_info.Device                      = *logical_device;
+        init_info.QueueFamily                 = graphics_queue_family_index;
+        init_info.Queue                       = *graphics_queue;
+        init_info.DescriptorPool              = *m_imgui_descriptor_pool;
+        init_info.Subpass                     = 0;
+        init_info.MinImageCount               = k_max_frames_in_flight;
+        init_info.ImageCount                  = k_max_frames_in_flight;
+        init_info.MSAASamples                 = VK_SAMPLE_COUNT_1_BIT;
+        init_info.RenderPass                  = nullptr;
+        init_info.UseDynamicRendering         = true;
+        init_info.PipelineRenderingCreateInfo = pipeline_rendering_create_info;
+
+        ImGui_ImplVulkan_Init(&init_info);
+
+        OneTimeSubmit(logical_device,
+                      onetime_submit_command_pool,
+                      graphics_queue,
+                      [](vk::raii::CommandBuffer& command_buffer) { ImGui_ImplVulkan_CreateFontsTexture(); });
     }
 
     void RuntimeWindow::CreateRenderPass()
@@ -319,16 +422,5 @@ namespace Meow
             gameobject_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
         camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
-    }
-
-    void RuntimeWindow::RefreshAttachments()
-    {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-
-        m_forward_path.RefreshAttachments(color_format, m_surface_data.extent);
-        m_deferred_path.RefreshAttachments(color_format, m_surface_data.extent);
     }
 } // namespace Meow
