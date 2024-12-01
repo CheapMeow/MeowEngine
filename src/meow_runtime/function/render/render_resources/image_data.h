@@ -58,38 +58,34 @@ namespace Meow
                            vk::ImageLayout                new_image_layout,
                            vk::ImageSubresourceRange      image_subresource_range);
 
-        static std::shared_ptr<ImageData>
-        CreateTexture(const std::string&     file_path,
-                      vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                      vk::ImageUsageFlags    usage_flags          = {},
-                      vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                      vk::FormatFeatureFlags format_feature_flags = {},
-                      bool                   anisotropy_enable    = false,
-                      bool                   force_staging        = true);
+        static ImageData CreateTexture(const std::string&     file_path,
+                                       vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                                       vk::ImageUsageFlags    usage_flags          = {},
+                                       vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                                       vk::FormatFeatureFlags format_feature_flags = {},
+                                       bool                   anisotropy_enable    = false,
+                                       bool                   force_staging        = true);
 
-        static std::shared_ptr<ImageData>
-        CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                         const vk::Extent2D&    extent               = {256, 256},
-                         vk::ImageUsageFlags    usage_flags          = {},
-                         vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                         vk::FormatFeatureFlags format_feature_flags = {},
-                         bool                   anisotropy_enable    = false);
+        static ImageData CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                                          const vk::Extent2D&    extent               = {256, 256},
+                                          vk::ImageUsageFlags    usage_flags          = {},
+                                          vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                                          vk::FormatFeatureFlags format_feature_flags = {},
+                                          bool                   anisotropy_enable    = false);
 
-        static std::shared_ptr<ImageData>
-        CreateRenderTarget(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                           const vk::Extent2D&    extent               = {256, 256},
-                           vk::ImageUsageFlags    usage_flags          = {},
-                           vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                           vk::FormatFeatureFlags format_feature_flags = {},
-                           bool                   anisotropy_enable    = false);
+        static ImageData CreateRenderTarget(vk::Format             format      = vk::Format::eR8G8B8A8Unorm,
+                                            const vk::Extent2D&    extent      = {256, 256},
+                                            vk::ImageUsageFlags    usage_flags = {},
+                                            vk::ImageAspectFlags   aspect_mask = vk::ImageAspectFlagBits::eColor,
+                                            vk::FormatFeatureFlags format_feature_flags = {},
+                                            bool                   anisotropy_enable    = false);
 
-        static std::shared_ptr<ImageData>
-        CreateCubemap(const std::vector<std::string>& file_paths,
-                      vk::Format                      format               = vk::Format::eR32G32B32A32Sfloat,
-                      vk::ImageUsageFlags             usage_flags          = {},
-                      vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                      vk::FormatFeatureFlags          format_feature_flags = {},
-                      bool                            anisotropy_enable    = false,
-                      bool                            force_staging        = true);
+        static ImageData CreateCubemap(const std::vector<std::string>& file_paths,
+                                       vk::Format                      format      = vk::Format::eR32G32B32A32Sfloat,
+                                       vk::ImageUsageFlags             usage_flags = {},
+                                       vk::ImageAspectFlags            aspect_mask = vk::ImageAspectFlagBits::eColor,
+                                       vk::FormatFeatureFlags          format_feature_flags = {},
+                                       bool                            anisotropy_enable    = false,
+                                       bool                            force_staging        = true);
     };
 } // namespace Meow

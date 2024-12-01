@@ -2,12 +2,12 @@
 
 namespace Meow
 {
-    SwapChainData::SwapChainData(vk::raii::PhysicalDevice const& physical_device,
-                                 vk::raii::Device const&         device,
-                                 vk::raii::SurfaceKHR const&     surface,
-                                 vk::Extent2D const&             extent,
+    SwapChainData::SwapChainData(const vk::raii::PhysicalDevice& physical_device,
+                                 const vk::raii::Device&         logical_device,
+                                 const vk::raii::SurfaceKHR&     surface,
+                                 const vk::Extent2D&             extent,
                                  vk::ImageUsageFlags             usage,
-                                 vk::raii::SwapchainKHR const*   p_old_swapchain,
+                                 const vk::raii::SwapchainKHR*   p_old_swapchain,
                                  uint32_t                        graphics_queue_family_index,
                                  uint32_t                        present_queue_family_index)
     {
@@ -68,17 +68,19 @@ namespace Meow
             swap_chain_create_info.queueFamilyIndexCount = 2;
             swap_chain_create_info.pQueueFamilyIndices   = queueFamilyIndices;
         }
-        swap_chain = vk::raii::SwapchainKHR(device, swap_chain_create_info);
+        swap_chain = vk::raii::SwapchainKHR(logical_device, swap_chain_create_info);
 
-        images = swap_chain.getImages();
+        auto vk_images = swap_chain.getImages();
 
-        image_views.reserve(images.size());
         vk::ImageViewCreateInfo image_view_create_info(
             {}, {}, vk::ImageViewType::e2D, color_format, {}, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-        for (auto image : images)
+        for (std::size_t i = 0; i < vk_images.size(); ++i)
         {
-            image_view_create_info.image = image;
-            image_views.emplace_back(device, image_view_create_info);
+            images.emplace_back(nullptr);
+            images[i].image              = vk::raii::Image(logical_device, vk_images[i]);
+            image_view_create_info.image = vk_images[i];
+            images[i].image_view         = vk::raii::ImageView(logical_device, image_view_create_info);
+            images[i].aspect_mask        = vk::ImageAspectFlagBits::eColor;
         }
     }
 } // namespace Meow

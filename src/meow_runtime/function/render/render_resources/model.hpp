@@ -38,34 +38,13 @@ namespace Meow
 
         Model(std::nullptr_t) {};
 
-        Model(Model&& rhs) noexcept
-        {
-            std::swap(root_node, rhs.root_node);
-            std::swap(linear_nodes, rhs.linear_nodes);
-            std::swap(meshes, rhs.meshes);
-            std::swap(nodes_map, rhs.nodes_map);
-            std::swap(bones, rhs.bones);
-            std::swap(bones_map, rhs.bones_map);
-            std::swap(attributes, rhs.attributes);
-            std::swap(animations, rhs.animations);
-            animIndex = rhs.animIndex;
-            loadSkin  = rhs.loadSkin;
-        }
+        Model(Model&& rhs) noexcept { swap(*this, rhs); }
 
         Model& operator=(Model&& rhs) noexcept
         {
             if (this != &rhs)
             {
-                std::swap(root_node, rhs.root_node);
-                std::swap(linear_nodes, rhs.linear_nodes);
-                std::swap(meshes, rhs.meshes);
-                std::swap(nodes_map, rhs.nodes_map);
-                std::swap(bones, rhs.bones);
-                std::swap(bones_map, rhs.bones_map);
-                std::swap(attributes, rhs.attributes);
-                std::swap(animations, rhs.animations);
-                animIndex = rhs.animIndex;
-                loadSkin  = rhs.loadSkin;
+                swap(*this, rhs);
             }
             return *this;
         }
@@ -129,6 +108,8 @@ namespace Meow
         ModelAnimation& GetAnimation(size_t index = -1);
 
         void GotoAnimation(float time);
+
+        friend void swap(Model& lhs, Model& rhs);
 
     protected:
         void FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info);

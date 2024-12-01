@@ -3,6 +3,9 @@
 #include "core/base/non_copyable.h"
 #include "function/render/render_resources/uniform_buffer.h"
 #include "shader.h"
+#ifdef MEOW_DEBUG
+#    include "material_stat.h"
+#endif
 
 #include <memory>
 #include <unordered_map>
@@ -29,12 +32,7 @@ namespace Meow
             return *this;
         }
 
-        void CreatePipeline2(vk::FrontFace front_face = vk::FrontFace::eClockwise, bool depth_buffered = false);
-
-        void CreatePipeline(const vk::raii::Device&     logical_device,
-                            const vk::raii::RenderPass& render_pass,
-                            vk::FrontFace               front_face,
-                            bool                        depth_buffered);
+        void CreatePipeline(vk::FrontFace front_face = vk::FrontFace::eClockwise, bool depth_buffered = false);
 
         std::shared_ptr<Shader> GetShader() { return shader_ptr; }
 
@@ -62,8 +60,17 @@ namespace Meow
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                          uint32_t                       first_set,
                                          uint32_t                       set_count,
-                                         uint32_t                       draw_call  = 0,
                                          bool                           is_dynamic = false);
+
+#ifdef MEOW_DEBUG
+        MaterialStat GetStat()
+        {
+            return {m_draw_call,
+                    shader_ptr->vertex_attribute_metas,
+                    shader_ptr->buffer_meta_map,
+                    shader_ptr->image_meta_map};
+        }
+#endif
 
         friend void swap(Material& lhs, Material& rhs);
 
@@ -78,8 +85,9 @@ namespace Meow
 
         // stored for binding descriptor set
 
-        bool                                                            m_actived   = false;
-        int32_t                                                         m_obj_count = 0;
+        bool                                                            m_actived                     = false;
+        uint32_t                                                        m_dynamic_uniform_update_call = 0;
+        uint32_t                                                        m_draw_call                   = 0;
         std::vector<std::vector<uint32_t>>                              m_per_obj_dynamic_offsets;
         vk::raii::DescriptorSets                                        m_descriptor_sets = nullptr;
         std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;

@@ -173,50 +173,50 @@ namespace Meow
 
     void Model::FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info)
     {
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
-            texture_info.diffuse = texture_path.C_Str();
+        // if (ai_material->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE))
+        // {
+        //     aiString texture_path;
+        //     ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
+        //     texture_info.diffuse = texture_path.C_Str();
 
-            auto path        = root_path / texture_info.diffuse;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
+        //     auto path        = root_path / texture_info.diffuse;
+        //     auto texture_ptr = ImageData::CreateTexture(path.string());
+        //     if (texture_ptr)
+        //     {
+        //         g_runtime_context.resource_system->Register(texture_ptr);
+        //         texture_info.diffuse_texture = texture_ptr;
+        //     }
+        // }
 
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
-            texture_info.normal = texture_path.C_Str();
+        // if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
+        // {
+        //     aiString texture_path;
+        //     ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
+        //     texture_info.normal = texture_path.C_Str();
 
-            auto path        = root_path / texture_info.normal;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
+        //     auto path        = root_path / texture_info.normal;
+        //     auto texture_ptr = ImageData::CreateTexture(path.string());
+        //     if (texture_ptr)
+        //     {
+        //         g_runtime_context.resource_system->Register(texture_ptr);
+        //         texture_info.diffuse_texture = texture_ptr;
+        //     }
+        // }
 
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
-            texture_info.specular = texture_path.C_Str();
+        // if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
+        // {
+        //     aiString texture_path;
+        //     ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
+        //     texture_info.specular = texture_path.C_Str();
 
-            auto path        = root_path / texture_info.specular;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
+        //     auto path        = root_path / texture_info.specular;
+        //     auto texture_ptr = ImageData::CreateTexture(path.string());
+        //     if (texture_ptr)
+        //     {
+        //         g_runtime_context.resource_system->Register(texture_ptr);
+        //         texture_info.diffuse_texture = texture_ptr;
+        //     }
+        // }
     }
 
     ModelNode* Model::LoadNode(const aiNode* aiNode, const aiScene* ai_scene)
@@ -715,5 +715,26 @@ namespace Meow
             delete bones[i];
         }
         bones.clear();
+    }
+
+    void swap(Model& lhs, Model& rhs)
+    {
+        using std::swap;
+
+        swap(lhs.root_path, rhs.root_path);
+        swap(lhs.root_node, rhs.root_node);
+        swap(lhs.linear_nodes, rhs.linear_nodes);
+        swap(lhs.meshes, rhs.meshes);
+
+        swap(lhs.nodes_map, rhs.nodes_map);
+
+        swap(lhs.bones, rhs.bones);
+        swap(lhs.bones_map, rhs.bones_map);
+
+        swap(lhs.attributes, rhs.attributes);
+        swap(lhs.animations, rhs.animations);
+        swap(lhs.animIndex, rhs.animIndex);
+
+        swap(lhs.loadSkin, rhs.loadSkin);
     }
 } // namespace Meow
