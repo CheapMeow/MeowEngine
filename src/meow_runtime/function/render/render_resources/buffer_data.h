@@ -22,11 +22,9 @@ namespace Meow
                    vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
                                                             vk::MemoryPropertyFlagBits::eHostCoherent)
             : buffer(logical_device, vk::BufferCreateInfo({}, size, usage))
-#if defined(MEOW_DEBUG)
             , device_size(size)
             , usage_flags(usage)
             , property_flags(property_flags)
-#endif
         {
             device_memory = AllocateDeviceMemory(
                 logical_device, physical_device.getMemoryProperties(), buffer.getMemoryRequirements(), property_flags);
