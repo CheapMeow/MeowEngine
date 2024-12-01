@@ -117,6 +117,6 @@ namespace Meow
         FUNCTION_TIMER();
 
         m_forward_mat.BindPipeline(command_buffer);
-        ForwardPass::DrawOnly(command_buffer);
+        ForwardPass::MeshLighting(command_buffer);
     }
 } // namespace Meow

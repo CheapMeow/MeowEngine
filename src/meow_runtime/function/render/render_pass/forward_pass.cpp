@@ -269,7 +269,7 @@ namespace Meow
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void ForwardPass::DrawOnly(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPass::MeshLighting(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 

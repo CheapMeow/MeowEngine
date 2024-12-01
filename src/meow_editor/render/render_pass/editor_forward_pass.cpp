@@ -136,7 +136,7 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 0, {});
 
-        ForwardPass::DrawOnly(command_buffer);
+        ForwardPass::MeshLighting(command_buffer);
 
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
