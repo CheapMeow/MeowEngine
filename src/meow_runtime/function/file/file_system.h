@@ -64,7 +64,9 @@ namespace Meow
          * @param data_ptr Pointer to receive data loaded.
          * @return uint32_t Data size.
          */
-        uint32_t ReadImageFileToPtr(std::string const& file_path, uint8_t* data_ptr);
+        uint32_t ReadImageRGBA(std::string const& file_path, uint8_t* data_ptr);
+
+        uint32_t ReadImageFloat(std::string const& file_path, uint8_t* data_ptr);
 
     private:
         std::filesystem::path m_root_path;

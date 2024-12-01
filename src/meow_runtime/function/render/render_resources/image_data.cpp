@@ -221,7 +221,7 @@ namespace Meow
                              0, image_data_ptr->staging_buffer_data.buffer.getMemoryRequirements().size) :
                          image_data_ptr->device_memory.mapMemory(0, image_data_ptr->image.getMemoryRequirements().size);
 
-        if (g_runtime_context.file_system->ReadImageFileToPtr(file_path, static_cast<uint8_t*>(data)) == 0)
+        if (g_runtime_context.file_system->ReadImageRGBA(file_path, static_cast<uint8_t*>(data)) == 0)
             return nullptr;
 
         image_data_ptr->need_staging ? image_data_ptr->staging_buffer_data.device_memory.unmapMemory() :
@@ -541,7 +541,7 @@ namespace Meow
         // cubemap have 6 images
         for (std::size_t i = 0; i < 6; ++i)
         {
-            if (g_runtime_context.file_system->ReadImageFileToPtr(
+            if (g_runtime_context.file_system->ReadImageFloat(
                     file_paths[i], static_cast<uint8_t*>(data) + image_data_ptr->size * i) == 0)
                 return nullptr;
         }

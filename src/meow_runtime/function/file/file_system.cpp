@@ -64,12 +64,13 @@ namespace Meow
         return {(uint32_t)texture_width, (uint32_t)texture_height};
     }
 
-    uint32_t FileSystem::ReadImageFileToPtr(std::string const& file_path, uint8_t* data_ptr)
+    uint32_t FileSystem::ReadImageRGBA(std::string const& file_path, uint8_t* data_ptr)
     {
         FUNCTION_TIMER();
 
         if (!Exists(file_path))
         {
+            MEOW_ERROR("Image at {} not found!", file_path);
             return 0;
         }
 
@@ -89,6 +90,36 @@ namespace Meow
         }
 
         memcpy(data_ptr, pixels, data_size);
+
+        return data_size;
+    }
+
+    uint32_t FileSystem::ReadImageFloat(std::string const& file_path, uint8_t* data_ptr)
+    {
+        FUNCTION_TIMER();
+
+        if (!Exists(file_path))
+        {
+            MEOW_ERROR("Image at {} not found!", file_path);
+            return 0;
+        }
+
+        int texture_width, texture_height, texture_channels;
+
+        auto absolute_file_path = m_root_path / file_path;
+        absolute_file_path      = absolute_file_path.lexically_normal();
+
+        float* pixels = stbi_loadf(
+            absolute_file_path.string().c_str(), &texture_width, &texture_height, &texture_channels, STBI_rgb_alpha);
+        uint32_t data_size = texture_width * texture_height * 4;
+
+        if (!pixels)
+        {
+            MEOW_WARN("Failed to load texture file: {}", file_path);
+            return 0;
+        }
+
+        memcpy(data_ptr, (uint8_t*)pixels, data_size);
 
         return data_size;
     }
