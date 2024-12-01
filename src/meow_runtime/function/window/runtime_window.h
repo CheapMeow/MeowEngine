@@ -37,8 +37,8 @@ namespace Meow
         uint32_t                  m_current_frame_index  = 0;
         uint32_t                  m_current_image_index  = 0;
 
-        ForwardPath  m_forward_path;
-        DeferredPath m_deferred_path;
+        ForwardPath  m_forward_path    = nullptr;
+        DeferredPath m_deferred_path   = nullptr;
         int          m_cur_render_path = 0;
     };
 } // namespace Meow

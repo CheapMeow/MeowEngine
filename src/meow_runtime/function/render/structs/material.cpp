@@ -179,7 +179,7 @@ namespace Meow
         std::vector<vk::Format> color_attachment_formats;
         for (int i = 0; i < color_attachment_count; ++i)
             color_attachment_formats.push_back(vk::Format::eR8G8B8A8Unorm);
-        vk::PipelineRenderingCreateInfoKHR rendering_create_info_KHR(
+        vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
             {},                       /* viewMask */
             color_attachment_formats, /* colorAttachmentFormats_ */
             vk::Format::eD16Unorm     /* depthAttachmentFormat_ */
@@ -203,7 +203,7 @@ namespace Meow
             {},                                         /* subpass */
             {},                                         /* basePipelineHandle */
             {},                                         /* basePipelineIndex */
-            &rendering_create_info_KHR);                /* pNext */
+            &pipeline_rendering_create_info);           /* pNext */
 
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }

@@ -48,7 +48,7 @@ namespace Meow
         ImageData  m_depth_attachment = nullptr;
 
 #ifdef MEOW_EDITOR
-        ImGuiPass m_imgui_pass;
+        ImGuiPass m_imgui_pass = nullptr;
 
         ImageData m_offscreen_render_target = nullptr;
 #endif

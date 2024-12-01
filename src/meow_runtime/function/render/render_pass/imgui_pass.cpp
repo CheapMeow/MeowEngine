@@ -84,20 +84,29 @@ namespace Meow
         // viewports. There is only one way to do that: use seperate render pass while make this render pass compatiable
         // with those in viewports
 
+        vk::Format                      color_attachment_formats[1] = {vk::Format::eR8G8B8A8Unorm};
+        vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
+            {},                       /* viewMask */
+            1,                        /* colorAttachmentCount */
+            color_attachment_formats, /* colorAttachmentFormats_ */
+            {}                        /* depthAttachmentFormat_ */
+        );
+
         ImGui_ImplGlfw_InitForVulkan(glfw_window, true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance                  = *vulkan_instance;
-        init_info.PhysicalDevice            = *physical_device;
-        init_info.Device                    = *logical_device;
-        init_info.QueueFamily               = graphics_queue_family_index;
-        init_info.Queue                     = *graphics_queue;
-        init_info.DescriptorPool            = *m_imgui_descriptor_pool;
-        init_info.Subpass                   = 0;
-        init_info.MinImageCount             = k_max_frames_in_flight;
-        init_info.ImageCount                = k_max_frames_in_flight;
-        init_info.MSAASamples               = VK_SAMPLE_COUNT_1_BIT;
-        init_info.RenderPass                = nullptr;
-        init_info.UseDynamicRendering       = true;
+        ImGui_ImplVulkan_InitInfo init_info   = {};
+        init_info.Instance                    = *vulkan_instance;
+        init_info.PhysicalDevice              = *physical_device;
+        init_info.Device                      = *logical_device;
+        init_info.QueueFamily                 = graphics_queue_family_index;
+        init_info.Queue                       = *graphics_queue;
+        init_info.DescriptorPool              = *m_imgui_descriptor_pool;
+        init_info.Subpass                     = 0;
+        init_info.MinImageCount               = k_max_frames_in_flight;
+        init_info.ImageCount                  = k_max_frames_in_flight;
+        init_info.MSAASamples                 = VK_SAMPLE_COUNT_1_BIT;
+        init_info.RenderPass                  = nullptr;
+        init_info.UseDynamicRendering         = true;
+        init_info.PipelineRenderingCreateInfo = pipeline_rendering_create_info;
 
         ImGui_ImplVulkan_Init(&init_info);
 

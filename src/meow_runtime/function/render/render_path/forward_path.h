@@ -48,6 +48,6 @@ namespace Meow
         friend void swap(ForwardPath& lhs, ForwardPath& rhs);
 
     private:
-        ForwardLightingPass m_forward_light_pass;
+        ForwardLightingPass m_forward_light_pass = nullptr;
     };
 } // namespace Meow

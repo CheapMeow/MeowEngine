@@ -263,6 +263,9 @@ namespace Meow
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
 
+        m_forward_path  = std::move(ForwardPath());
+        m_deferred_path = std::move(DeferredPath());
+
         vk::Format color_format =
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
         assert(color_format != vk::Format::eUndefined);

@@ -50,8 +50,8 @@ namespace Meow
         friend void swap(DeferredPath& lhs, DeferredPath& rhs);
 
     private:
-        GbufferPass          m_gbuffer_pass;
-        DeferredLightingPass m_deferred_light_pass;
+        GbufferPass          m_gbuffer_pass        = nullptr;
+        DeferredLightingPass m_deferred_light_pass = nullptr;
 
         ImageData m_color_attachment    = nullptr;
         ImageData m_normal_attachment   = nullptr;
