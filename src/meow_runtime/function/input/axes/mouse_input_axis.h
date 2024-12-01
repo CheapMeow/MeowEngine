@@ -17,7 +17,7 @@ namespace Meow
         ~MouseInputAxis();
 
         MouseInputAxis(MouseInputAxis&& rhs) noexcept
-            : InputAxis()
+            : InputAxis(std::move(rhs))
         {
             swap(*this, rhs);
         }
@@ -26,6 +26,8 @@ namespace Meow
         {
             if (this != &rhs)
             {
+                InputAxis::operator=(std::move(rhs));
+
                 swap(*this, rhs);
             }
             return *this;

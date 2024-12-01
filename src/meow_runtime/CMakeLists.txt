@@ -2,10 +2,10 @@ set(RUNTIME_HEADER_FILES
     pch.h
     runtime.h
     core/base/alignment.h
-    core/base/macro.h
-    core/base/non_copyable.h
     core/base/bitmask.hpp
     core/base/log.hpp
+    core/base/macro.h
+    core/base/non_copyable.h
     core/math/assimp_glm_helper.h
     core/math/bounding_box.h
     core/math/frustum.h
@@ -39,56 +39,40 @@ set(RUNTIME_HEADER_FILES
     function/level/level.h
     function/level/level_system.h
     function/object/game_object.h
-    function/profile/profile_system.h
     function/render/render_system.h
-    function/render/imgui_widgets/builtin_statistics_widget.h
-    function/render/imgui_widgets/components_widget.h
-    function/render/imgui_widgets/flame_graph_widget.h
-    function/render/imgui_widgets/game_objects_widget.h
-    function/render/imgui_widgets/pipeline_statistics_widget.h
-    function/render/imgui_widgets/spinner_widget.h
-    function/render/render_pass/deferred_lighting_pass.h
-    function/render/render_pass/forward_lighting_pass.h
-    function/render/render_pass/gbuffer_pass.h
-    function/render/render_pass/imgui_pass.h
+    function/render/render_pass/deferred_pass.h
+    function/render/render_pass/forward_pass.h
     function/render/render_pass/render_pass.h
-    function/render/render_path/deferred_path.h
-    function/render/render_path/forward_path.h
-    function/render/render_path/render_path.h
     function/render/render_resources/buffer_data.h
+    function/render/structs/descriptor_allocator_growable.h
     function/render/render_resources/image_data.h
     function/render/render_resources/index_buffer.h
+    function/render/structs/material.h
+    function/render/render_resources/model.hpp
     function/render/render_resources/model_anim.h
     function/render/render_resources/model_bone.h
     function/render/render_resources/model_mesh.h
     function/render/render_resources/model_node.h
-    function/render/render_resources/render_resource_base.h
-    function/render/render_resources/uniform_buffer.h
-    function/render/render_resources/vertex_attribute.h
-    function/render/render_resources/vertex_buffer.h
-    function/render/render_resources/model.hpp
-    function/render/structs/descriptor_allocator_growable.h
-    function/render/structs/material.h
-    function/render/structs/material_stat.h
     function/render/structs/per_frame_data.h
     function/render/structs/per_scene_data.h
     function/render/structs/pipeline_info.h
+    function/render/render_resources/uniform_buffer.h
     function/render/structs/shader.h
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
+    function/render/render_resources/vertex_attribute.h
+    function/render/render_resources/vertex_buffer.h
     function/render/utils/model_utils.h
-    function/render/utils/vulkan_utils.hpp
+    function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
     function/resource/resource_system.hpp
     function/time/time_system.h
-    function/window/runtime_window.h
     function/window/window.h
     function/window/window_system.h
     generated/register_all.h
     generated/vertex_attribute_bit.gen.h
     test/geometries.hpp)
 set(RUNTIME_SOURCE_FILES
-    main.cpp
     runtime.cpp
     core/math/frustum.cpp
     core/math/plane.cpp
@@ -103,44 +87,31 @@ set(RUNTIME_SOURCE_FILES
     function/level/level.cpp
     function/level/level_system.cpp
     function/object/game_object.cpp
-    function/profile/profile_system.cpp
     function/render/render_system.cpp
-    function/render/imgui_widgets/builtin_statistics_widget.cpp
-    function/render/imgui_widgets/components_widget.cpp
-    function/render/imgui_widgets/flame_graph_widget.cpp
-    function/render/imgui_widgets/game_objects_widget.cpp
-    function/render/imgui_widgets/pipeline_statistics_widget.cpp
-    function/render/imgui_widgets/spinner_widget.cpp
-    function/render/render_pass/deferred_lighting_pass.cpp
-    function/render/render_pass/forward_lighting_pass.cpp
-    function/render/render_pass/gbuffer_pass.cpp
-    function/render/render_pass/imgui_pass.cpp
+    function/render/render_pass/deferred_pass.cpp
+    function/render/render_pass/forward_pass.cpp
     function/render/render_pass/render_pass.cpp
-    function/render/render_path/deferred_path.cpp
-    function/render/render_path/forward_path.cpp
-    function/render/render_path/render_path.cpp
+    function/render/structs/descriptor_allocator_growable.cpp
     function/render/render_resources/image_data.cpp
+    function/render/structs/material.cpp
     function/render/render_resources/model.cpp
     function/render/render_resources/model_mesh.cpp
     function/render/render_resources/model_node.cpp
     function/render/render_resources/uniform_buffer.cpp
-    function/render/render_resources/vertex_attribute.cpp
-    function/render/structs/descriptor_allocator_growable.cpp
-    function/render/structs/material.cpp
     function/render/structs/shader.cpp
     function/render/structs/surface_data.cpp
     function/render/structs/swapchain_data.cpp
+    function/render/render_resources/vertex_attribute.cpp
     function/render/utils/model_utils.cpp
-    function/render/utils/vulkan_utils.cpp
+    function/render/utils/vulkan_initialize_utils.cpp
     function/time/time_system.cpp
-    function/window/runtime_window.cpp
     function/window/window.cpp
     function/window/window_system.cpp
     generated/register_all.cpp)
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 
-add_executable(${RUNTIME_NAME} ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
+add_library(${RUNTIME_NAME} STATIC ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
 add_dependencies(${RUNTIME_NAME} ${GENERATED_FILE_TARGET_NAME})
 
 set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
@@ -151,6 +122,10 @@ target_compile_definitions(${RUNTIME_NAME} PRIVATE
 )
 target_compile_definitions(${RUNTIME_NAME} PUBLIC
   ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
+  $<$<CONFIG:Debug>:MEOW_DEBUG>
+  $<$<CONFIG:Release>:MEOW_RELEASE>
+  $<$<CONFIG:Debug>:VKB_DEBUG>
+  $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
   VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
                             # according to cmake build platform
   GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise

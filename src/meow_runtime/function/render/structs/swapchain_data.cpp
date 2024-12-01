@@ -2,12 +2,12 @@
 
 namespace Meow
 {
-    SwapChainData::SwapChainData(const vk::raii::PhysicalDevice& physical_device,
-                                 const vk::raii::Device&         logical_device,
-                                 const vk::raii::SurfaceKHR&     surface,
-                                 const vk::Extent2D&             extent,
+    SwapChainData::SwapChainData(vk::raii::PhysicalDevice const& physical_device,
+                                 vk::raii::Device const&         device,
+                                 vk::raii::SurfaceKHR const&     surface,
+                                 vk::Extent2D const&             extent,
                                  vk::ImageUsageFlags             usage,
-                                 const vk::raii::SwapchainKHR*   p_old_swapchain,
+                                 vk::raii::SwapchainKHR const*   p_old_swapchain,
                                  uint32_t                        graphics_queue_family_index,
                                  uint32_t                        present_queue_family_index)
     {
@@ -68,7 +68,7 @@ namespace Meow
             swap_chain_create_info.queueFamilyIndexCount = 2;
             swap_chain_create_info.pQueueFamilyIndices   = queueFamilyIndices;
         }
-        swap_chain = vk::raii::SwapchainKHR(logical_device, swap_chain_create_info);
+        swap_chain = vk::raii::SwapchainKHR(device, swap_chain_create_info);
 
         images = swap_chain.getImages();
 
@@ -78,7 +78,7 @@ namespace Meow
         for (auto image : images)
         {
             image_view_create_info.image = image;
-            image_views.emplace_back(logical_device, image_view_create_info);
+            image_views.emplace_back(device, image_view_create_info);
         }
     }
 } // namespace Meow

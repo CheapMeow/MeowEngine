@@ -1,7 +1,7 @@
 #pragma once
 
 #include "buffer_data.h"
-#include "function/render/utils/vulkan_utils.hpp"
+#include "function/render/utils/vulkan_initialize_utils.hpp"
 #include "render_resource_base.h"
 
 namespace Meow
@@ -37,34 +37,59 @@ namespace Meow
 
         ImageData(std::nullptr_t) {}
 
-        static ImageData CreateTexture(const std::string&     file_path,
-                                       vk::Format             format               = vk::Format::eB8G8R8A8Unorm,
-                                       vk::ImageUsageFlags    usage_flags          = {},
-                                       vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                                       vk::FormatFeatureFlags format_feature_flags = {},
-                                       bool                   anisotropy_enable    = false,
-                                       bool                   force_staging        = true);
+        /**
+         * @brief Set the Image Layout.
+         *
+         * If an image is not initialized in any specific layout, so we need to do a layout transition.
+         *
+         * Such as you need the driver puts the texture into Linear layout,
+         * which is the best for copying data from a buffer into a texture.
+         *
+         * To perform layout transitions, we need to use pipeline barriers. Pipeline barriers can control how the GPU
+         * overlaps commands before and after the barrier, but if you do pipeline barriers with image barriers, the
+         * driver can also transform the image to the correct formats and layouts.
+         *
+         * @param command_buffer Usually use command buffer in upload context
+         * @param old_image_layout Old image layout
+         * @param new_image_layout New image layout
+         */
+        void TransitLayout(const vk::raii::CommandBuffer& command_buffer,
+                           vk::ImageLayout                old_image_layout,
+                           vk::ImageLayout                new_image_layout,
+                           vk::ImageSubresourceRange      image_subresource_range);
 
-        static ImageData CreateAttachment(vk::Format             format               = vk::Format::eB8G8R8A8Unorm,
-                                          const vk::Extent2D&    extent               = {256, 256},
-                                          vk::ImageUsageFlags    usage_flags          = {},
-                                          vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                                          vk::FormatFeatureFlags format_feature_flags = {},
-                                          bool                   anisotropy_enable    = false);
+        static std::shared_ptr<ImageData>
+        CreateTexture(const std::string&     file_path,
+                      vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                      vk::ImageUsageFlags    usage_flags          = {},
+                      vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                      vk::FormatFeatureFlags format_feature_flags = {},
+                      bool                   anisotropy_enable    = false,
+                      bool                   force_staging        = true);
 
-        static ImageData CreateRenderTarget(vk::Format             format      = vk::Format::eB8G8R8A8Unorm,
-                                            const vk::Extent2D&    extent      = {256, 256},
-                                            vk::ImageUsageFlags    usage_flags = {},
-                                            vk::ImageAspectFlags   aspect_mask = vk::ImageAspectFlagBits::eColor,
-                                            vk::FormatFeatureFlags format_feature_flags = {},
-                                            bool                   anisotropy_enable    = false);
+        static std::shared_ptr<ImageData>
+        CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                         const vk::Extent2D&    extent               = {256, 256},
+                         vk::ImageUsageFlags    usage_flags          = {},
+                         vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                         vk::FormatFeatureFlags format_feature_flags = {},
+                         bool                   anisotropy_enable    = false);
 
-        static ImageData CreateCubemap(const std::vector<std::string>& file_paths,
-                                       vk::Format                      format      = vk::Format::eR32G32B32A32Sfloat,
-                                       vk::ImageUsageFlags             usage_flags = {},
-                                       vk::ImageAspectFlags            aspect_mask = vk::ImageAspectFlagBits::eColor,
-                                       vk::FormatFeatureFlags          format_feature_flags = {},
-                                       bool                            anisotropy_enable    = false,
-                                       bool                            force_staging        = true);
+        static std::shared_ptr<ImageData>
+        CreateRenderTarget(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
+                           const vk::Extent2D&    extent               = {256, 256},
+                           vk::ImageUsageFlags    usage_flags          = {},
+                           vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                           vk::FormatFeatureFlags format_feature_flags = {},
+                           bool                   anisotropy_enable    = false);
+
+        static std::shared_ptr<ImageData>
+        CreateCubemap(const std::vector<std::string>& file_paths,
+                      vk::Format                      format               = vk::Format::eR32G32B32A32Sfloat,
+                      vk::ImageUsageFlags             usage_flags          = {},
+                      vk::ImageAspectFlags            aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                      vk::FormatFeatureFlags          format_feature_flags = {},
+                      bool                            anisotropy_enable    = false,
+                      bool                            force_staging        = true);
     };
 } // namespace Meow

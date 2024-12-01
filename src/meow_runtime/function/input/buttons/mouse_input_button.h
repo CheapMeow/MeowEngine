@@ -15,7 +15,7 @@ namespace Meow
         ~MouseInputButton();
 
         MouseInputButton(MouseInputButton&& rhs) noexcept
-            : InputButton()
+            : InputButton(std::move(rhs))
         {
             swap(*this, rhs);
         }
@@ -24,6 +24,8 @@ namespace Meow
         {
             if (this != &rhs)
             {
+                InputButton::operator=(std::move(rhs));
+
                 swap(*this, rhs);
             }
             return *this;

@@ -11,7 +11,6 @@ namespace Meow
     std::vector<const char*> k_required_device_extensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-        // VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME,
     };
 
     void RenderSystem::CreateVulkanInstance()
@@ -34,7 +33,7 @@ namespace Meow
         std::vector<vk::LayerProperties> supported_validation_layers =
             m_vulkan_context.enumerateInstanceLayerProperties();
         std::vector<const char*> required_validation_layers {};
-#ifdef MEOW_DEBUG
+#ifdef VKB_VALIDATION_LAYERS
         // Determine the optimal validation layers to enable that are necessary for useful debugging
         std::vector<const char*> optimal_validation_layers = GetOptimalValidationLayers(supported_validation_layers);
         required_validation_layers.insert(
@@ -60,7 +59,7 @@ namespace Meow
         vk::ApplicationInfo    app("Meow Engine Vulkan Renderer", {}, "Meow Engine", {}, api_version);
         vk::InstanceCreateInfo instance_info({}, &app, required_validation_layers, required_instance_extensions);
 
-#ifdef MEOW_DEBUG
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         // VkDebugUtilsMessengerEXT only covers stuff from its creation to its destruction.
         // vkCreateInstance and vkDestroyInstance are covered by the special pNext variant
         // because at that point the VkDebugUtilsMessengerEXT object cannot even exist yet\anymore
@@ -130,16 +129,11 @@ namespace Meow
         vk::PhysicalDeviceFeatures physical_device_feature;
         physical_device_feature.pipelineStatisticsQuery = vk::True;
 
-        vk::PhysicalDeviceDynamicRenderingFeatures dynamic_rendering_feature(true);
-        // vk::PhysicalDeviceDynamicRenderingLocalReadFeaturesKHR dynamic_rendering_local_read_features(true);
-        // dynamic_rendering_feature.pNext = &dynamic_rendering_local_read_features;
-
         vk::DeviceCreateInfo device_info({},                           /* flags */
                                          queue_info,                   /* queueCreateInfoCount */
-                                         {},                           /* pEnabledLayerNames */
-                                         k_required_device_extensions, /* pEnabledExtensionNames */
-                                         &physical_device_feature,     /* pEnabledFeatures */
-                                         &dynamic_rendering_feature);  /* pNext */
+                                         {},                           /* ppEnabledLayerNames */
+                                         k_required_device_extensions, /* ppEnabledExtensionNames */
+                                         &physical_device_feature);    /* pEnabledFeatures */
         m_logical_device = vk::raii::Device(m_physical_device, device_info);
 
 #if defined(VK_USE_PLATFORM_DISPLAY_KHR)

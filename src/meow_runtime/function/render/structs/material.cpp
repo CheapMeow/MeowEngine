@@ -41,11 +41,12 @@ namespace Meow
         }
     }
 
-    void Material::CreatePipeline(vk::FrontFace front_face, bool depth_buffered)
+    void Material::CreatePipeline(const vk::raii::Device&     logical_device,
+                                  const vk::raii::RenderPass& render_pass,
+                                  vk::FrontFace               front_face,
+                                  bool                        depth_buffered)
     {
         FUNCTION_TIMER();
-
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         std::vector<vk::PipelineShaderStageCreateInfo> pipeline_shader_stage_create_infos;
         if (shader_ptr->is_vert_shader_valid)
@@ -157,6 +158,7 @@ namespace Meow
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
         for (int i = 0; i < color_attachment_count; ++i)
+        {
             pipeline_color_blend_attachment_states.emplace_back(false,                  /* blendEnable */
                                                                 vk::BlendFactor::eOne,  /* srcColorBlendFactor */
                                                                 vk::BlendFactor::eZero, /* dstColorBlendFactor */
@@ -165,6 +167,7 @@ namespace Meow
                                                                 vk::BlendFactor::eZero, /* dstAlphaBlendFactor */
                                                                 vk::BlendOp::eAdd,      /* alphaBlendOp */
                                                                 color_component_flags); /* colorWriteMask */
+        }
         vk::PipelineColorBlendStateCreateInfo pipeline_color_blend_state_create_info(
             vk::PipelineColorBlendStateCreateFlags(), /* flags */
             false,                                    /* logicOpEnable */
@@ -175,15 +178,6 @@ namespace Meow
         std::array<vk::DynamicState, 2>    dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         vk::PipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(vk::PipelineDynamicStateCreateFlags(),
                                                                               dynamic_states);
-
-        std::vector<vk::Format> color_attachment_formats;
-        for (int i = 0; i < color_attachment_count; ++i)
-            color_attachment_formats.push_back(vk::Format::eB8G8R8A8Unorm);
-        vk::PipelineRenderingCreateInfo pipeline_rendering_create_info(
-            {},                       /* viewMask */
-            color_attachment_formats, /* colorAttachmentFormats_ */
-            vk::Format::eD16Unorm     /* depthAttachmentFormat_ */
-        );
 
         vk::raii::PipelineCache        pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
         vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info(
@@ -199,11 +193,8 @@ namespace Meow
             &pipeline_color_blend_state_create_info,    /* pColorBlendState */
             &pipeline_dynamic_state_create_info,        /* pDynamicState */
             *shader_ptr->pipeline_layout,               /* layout */
-            nullptr,                                    /* renderPass */
-            {},                                         /* subpass */
-            {},                                         /* basePipelineHandle */
-            {},                                         /* basePipelineIndex */
-            &pipeline_rendering_create_info);           /* pNext */
+            *render_pass,                               /* renderPass */
+            subpass);                                   /* subpass */
 
         graphics_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
@@ -313,8 +304,7 @@ namespace Meow
 
         // clear per obj data
 
-        m_dynamic_uniform_update_call = 0;
-        m_draw_call                   = 0;
+        m_obj_count = 0;
         m_per_obj_dynamic_offsets.clear();
         m_dynamic_uniform_buffer->Reset();
     }
@@ -341,10 +331,10 @@ namespace Meow
         // check if all dynamic offset is set
 
         // if there are objects
-        if (m_per_obj_dynamic_offsets.size() == m_dynamic_uniform_update_call + 1)
+        if (m_per_obj_dynamic_offsets.size() == m_obj_count + 1)
         {
             // check current object
-            for (auto offset : m_per_obj_dynamic_offsets[m_dynamic_uniform_update_call])
+            for (auto offset : m_per_obj_dynamic_offsets[m_obj_count])
             {
                 if (offset == std::numeric_limits<uint32_t>::max())
                 {
@@ -353,7 +343,7 @@ namespace Meow
             }
         }
 
-        ++m_dynamic_uniform_update_call;
+        ++m_obj_count;
     }
 
     void Material::PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size)
@@ -373,16 +363,16 @@ namespace Meow
             MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
 
-        if (m_per_obj_dynamic_offsets[m_dynamic_uniform_update_call].size() <= it->second.dynamic_seq)
+        if (m_per_obj_dynamic_offsets[m_obj_count].size() <= it->second.dynamic_seq)
         {
             MEOW_ERROR("per_obj_dynamic_offsets[obj_count] size {} <= dynamic sequence {} from uniform buffer meta.",
-                       m_per_obj_dynamic_offsets[m_dynamic_uniform_update_call].size(),
+                       m_per_obj_dynamic_offsets[m_obj_count].size(),
                        it->second.dynamic_seq);
             return;
         }
 #endif
 
-        m_per_obj_dynamic_offsets[m_dynamic_uniform_update_call][it->second.dynamic_seq] =
+        m_per_obj_dynamic_offsets[m_obj_count][it->second.dynamic_seq] =
             static_cast<uint32_t>(m_dynamic_uniform_buffer->Populate(data, it->second.size));
     }
 
@@ -410,11 +400,12 @@ namespace Meow
     void Material::BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                                uint32_t                       first_set,
                                                uint32_t                       set_count,
+                                               uint32_t                       draw_call,
                                                bool                           is_dynamic)
     {
         if (is_dynamic)
         {
-            if (m_draw_call >= m_per_obj_dynamic_offsets.size())
+            if (draw_call >= m_per_obj_dynamic_offsets.size())
             {
                 return;
             }
@@ -428,15 +419,13 @@ namespace Meow
 
         std::vector<uint32_t> dynamic_offsets {};
         if (is_dynamic)
-            dynamic_offsets = m_per_obj_dynamic_offsets[m_draw_call];
+            dynamic_offsets = m_per_obj_dynamic_offsets[draw_call];
 
         command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
                                           *shader_ptr->pipeline_layout,
                                           first_set,
                                           descriptor_sets_to_bind,
                                           dynamic_offsets);
-        if (is_dynamic)
-            ++m_draw_call;
     }
 
     void swap(Material& lhs, Material& rhs)
@@ -449,8 +438,7 @@ namespace Meow
 
         std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
         std::swap(lhs.m_actived, rhs.m_actived);
-        std::swap(lhs.m_dynamic_uniform_update_call, rhs.m_dynamic_uniform_update_call);
-        std::swap(lhs.m_draw_call, rhs.m_draw_call);
+        std::swap(lhs.m_obj_count, rhs.m_obj_count);
         std::swap(lhs.m_per_obj_dynamic_offsets, rhs.m_per_obj_dynamic_offsets);
         std::swap(lhs.m_descriptor_sets, rhs.m_descriptor_sets);
         std::swap(lhs.m_uniform_buffers, rhs.m_uniform_buffers);

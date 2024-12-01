@@ -16,7 +16,7 @@ namespace Meow
     public:
         bool Init();
         bool Start();
-        void Tick();
+        void Tick(float dt);
         void ShutDown();
 
         static MeowRuntime& Get()

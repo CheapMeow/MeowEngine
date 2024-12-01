@@ -35,8 +35,6 @@ namespace Meow
         const vk::raii::Queue&          GetPresentQueue() const { return m_present_queue; }
         const vk::raii::CommandPool&    GetOneTimeSubmitCommandPool() const { return m_onetime_submit_command_pool; }
         DescriptorAllocatorGrowable&    GetDescriptorAllocator() { return m_descriptor_allocator; }
-        std::vector<VertexAttributeBit> GetVertexAttributes() { return m_attributes; }
-        void SetVertexAttributes(std::vector<VertexAttributeBit>& attributes) { m_attributes = attributes; }
 
     private:
         void CreateVulkanInstance();
@@ -45,16 +43,15 @@ namespace Meow
         void CreateCommandPool();
         void CreateDescriptorAllocator();
 
-        vk::raii::Context               m_vulkan_context;
-        vk::raii::Instance              m_vulkan_instance             = nullptr;
-        vk::raii::PhysicalDevice        m_physical_device             = nullptr;
-        vk::raii::Device                m_logical_device              = nullptr;
-        uint32_t                        m_graphics_queue_family_index = 0;
-        uint32_t                        m_present_queue_family_index  = 0;
-        vk::raii::Queue                 m_graphics_queue              = nullptr;
-        vk::raii::Queue                 m_present_queue               = nullptr;
-        vk::raii::CommandPool           m_onetime_submit_command_pool = nullptr;
-        DescriptorAllocatorGrowable     m_descriptor_allocator        = nullptr;
-        std::vector<VertexAttributeBit> m_attributes;
+        vk::raii::Context           m_vulkan_context;
+        vk::raii::Instance          m_vulkan_instance             = nullptr;
+        vk::raii::PhysicalDevice    m_physical_device             = nullptr;
+        vk::raii::Device            m_logical_device              = nullptr;
+        uint32_t                    m_graphics_queue_family_index = 0;
+        uint32_t                    m_present_queue_family_index  = 0;
+        vk::raii::Queue             m_graphics_queue              = nullptr;
+        vk::raii::Queue             m_present_queue               = nullptr;
+        vk::raii::CommandPool       m_onetime_submit_command_pool = nullptr;
+        DescriptorAllocatorGrowable m_descriptor_allocator        = nullptr;
     };
 } // namespace Meow

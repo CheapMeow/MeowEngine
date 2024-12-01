@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/render/utils/vulkan_utils.hpp"
+#include "function/render/utils/vulkan_initialize_utils.hpp"
 
 namespace Meow
 {
@@ -12,7 +12,7 @@ namespace Meow
         std::vector<vk::raii::ImageView> image_views;
 
         SwapChainData(vk::raii::PhysicalDevice const& physical_device,
-                      vk::raii::Device const&         logical_device,
+                      vk::raii::Device const&         device,
                       vk::raii::SurfaceKHR const&     surface,
                       vk::Extent2D const&             extent,
                       vk::ImageUsageFlags             usage,
