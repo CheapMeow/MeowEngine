@@ -117,6 +117,9 @@ namespace Meow
         FUNCTION_TIMER();
 
         m_forward_mat.BindPipeline(command_buffer);
-        ForwardPass::MeshLighting(command_buffer);
+        MeshLighting(command_buffer);
+
+        m_skybox_mat.BindPipeline(command_buffer);
+        RenderSkybox(command_buffer);
     }
 } // namespace Meow

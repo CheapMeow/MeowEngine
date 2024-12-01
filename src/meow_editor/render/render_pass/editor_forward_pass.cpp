@@ -136,10 +136,13 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 0, {});
 
-        ForwardPass::MeshLighting(command_buffer);
+        MeshLighting(command_buffer);
 
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
+
+        m_skybox_mat.BindPipeline(command_buffer);
+        RenderSkybox(command_buffer);
     }
 
     void EditorForwardPass::AfterPresent()

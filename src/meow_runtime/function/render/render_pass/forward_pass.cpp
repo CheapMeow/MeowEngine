@@ -82,12 +82,12 @@ namespace Meow
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
-                "builtin/textures/cubemap/output_skybox_posx.hdr",
-                "builtin/textures/cubemap/output_skybox_negx.hdr",
-                "builtin/textures/cubemap/output_skybox_posy.hdr",
-                "builtin/textures/cubemap/output_skybox_negy.hdr",
-                "builtin/textures/cubemap/output_skybox_posz.hdr",
-                "builtin/textures/cubemap/output_skybox_negz.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_X+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_X-.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Y+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Y-.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Z+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Z-.hdr",
             });
             if (texture_ptr)
             {
@@ -316,11 +316,11 @@ namespace Meow
 
         m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
-        // for (uint32_t i = 0; i < 6; ++i)
-        // {
-        //     m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, i, true);
-        //     m_sky
-        // }
+        for (uint32_t i = 0; i < 6; ++i)
+        {
+            m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, i, true);
+            m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
+        }
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)
@@ -329,6 +329,7 @@ namespace Meow
 
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
         swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
+        swap(lhs.m_skybox_model, rhs.m_skybox_model);
 
         swap(lhs.draw_call, rhs.draw_call);
     }
