@@ -16,11 +16,11 @@ namespace Meow
     ForwardLightingPass::ForwardLightingPass()
         : RenderPass()
     {
-        m_pass_name = "Deferred lighting Pass";
-
         CreateMaterial();
 
 #ifdef MEOW_EDITOR
+        m_pass_name = "Deferred lighting Pass";
+
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         VkQueryPoolCreateInfo m_query_pool_create_info = {.sType      = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,

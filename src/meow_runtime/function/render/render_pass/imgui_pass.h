@@ -36,7 +36,9 @@ namespace Meow
         ImGuiPass()
             : RenderPass()
         {
+#ifdef MEOW_EDITOR
             m_pass_name = "ImGui Pass";
+#endif
         }
 
         void DrawImGui();
