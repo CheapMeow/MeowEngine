@@ -393,11 +393,7 @@ namespace Meow
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         logical_device.waitIdle();
-
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
+        
         m_per_frame_data.clear();
         m_swapchain_data = nullptr;
         m_surface_data   = nullptr;
@@ -405,7 +401,6 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreatePerFrameData();
-        InitImGui();
         RefreshRenderPass();
 
         // update aspect ratio
