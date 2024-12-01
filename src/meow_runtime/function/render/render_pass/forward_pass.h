@@ -1,6 +1,7 @@
 #pragma once
 
 #include "function/render/render_pass/render_pass.h"
+#include "function/render/render_resources/model.hpp"
 #include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 
@@ -49,11 +50,14 @@ namespace Meow
 
         void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
 
+        void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
+
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material m_forward_mat = nullptr;
-        Material m_skybox_mat  = nullptr;
+        Material m_forward_mat  = nullptr;
+        Material m_skybox_mat   = nullptr;
+        Model    m_skybox_model = nullptr;
 
         int draw_call = 0;
     };

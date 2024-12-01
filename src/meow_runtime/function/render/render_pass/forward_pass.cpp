@@ -8,6 +8,7 @@
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_context.h"
 #include "function/render/structs/per_scene_data.h"
+#include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -94,6 +95,10 @@ namespace Meow
                 m_skybox_mat.BindImageToDescriptorSet("environmentMap", *texture_ptr);
             }
         }
+
+        auto cube_vertices = GenerateCubeVertices();
+        m_skybox_model =
+            std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader_ptr->per_vertex_attributes));
     }
 
     void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -303,6 +308,19 @@ namespace Meow
                 ++draw_call;
             }
         }
+    }
+
+    void ForwardPass::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+
+        // for (uint32_t i = 0; i < 6; ++i)
+        // {
+        //     m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, i, true);
+        //     m_sky
+        // }
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)
