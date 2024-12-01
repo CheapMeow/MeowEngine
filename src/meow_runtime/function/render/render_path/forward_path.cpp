@@ -4,8 +4,6 @@
 
 namespace Meow
 {
-    ForwardPath::ForwardPath() {}
-
     void ForwardPath::RefreshAttachments(vk::Format color_format, const vk::Extent2D& extent)
     {
         const vk::raii::Device&      logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -32,7 +30,7 @@ namespace Meow
                       [&](vk::raii::CommandBuffer const& command_buffer) {
                           m_depth_attachment.TransitLayout(command_buffer,
                                                            vk::ImageLayout::eUndefined,
-                                                           vk::ImageLayout::eDepthAttachmentOptimal,
+                                                           vk::ImageLayout::eDepthStencilAttachmentOptimal,
                                                            {m_depth_attachment.aspect_mask, 0, 1, 0, 1});
                       });
 

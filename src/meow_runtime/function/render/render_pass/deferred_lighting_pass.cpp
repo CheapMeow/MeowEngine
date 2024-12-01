@@ -38,8 +38,10 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        auto quad_shader_ptr = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
+        auto quad_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                        logical_device,
+                                                        "builtin/shaders/deferred_lighting.vert.spv",
+                                                        "builtin/shaders/deferred_lighting.frag.spv");
 
         m_deferred_lighting_mat         = Material(quad_shader_ptr);
         m_deferred_lighting_mat.subpass = 1;

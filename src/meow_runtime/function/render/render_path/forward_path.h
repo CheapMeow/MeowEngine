@@ -32,7 +32,11 @@ namespace Meow
             return *this;
         }
 
-        ForwardPath();
+        ForwardPath()
+            : RenderPath()
+        {
+            m_forward_light_pass = std::move(ForwardLightingPass());
+        }
 
         ~ForwardPath() override {};
 

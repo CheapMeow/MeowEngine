@@ -23,7 +23,12 @@ namespace Meow
             return *this;
         }
 
-        RenderPath() {}
+        RenderPath()
+        {
+#ifdef MEOW_EDITOR
+            m_imgui_pass = std::move(ImGuiPass());
+#endif
+        }
 
         virtual ~RenderPath() override {};
 

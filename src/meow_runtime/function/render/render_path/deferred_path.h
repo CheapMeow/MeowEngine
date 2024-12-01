@@ -34,7 +34,12 @@ namespace Meow
             return *this;
         }
 
-        DeferredPath();
+        DeferredPath()
+            : RenderPath()
+        {
+            m_gbuffer_pass        = std::move(GbufferPass());
+            m_deferred_light_pass = std::move(DeferredLightingPass());
+        }
 
         ~DeferredPath() override {};
 
