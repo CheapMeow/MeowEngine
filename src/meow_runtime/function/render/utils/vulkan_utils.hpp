@@ -106,8 +106,8 @@ namespace Meow
                        vk::raii::Queue const&       queue,
                        Func const&                  func)
     {
-        vk::raii::CommandBuffer command_buffer =
-            std::move(vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
+        vk::raii::CommandBuffer command_buffer = std::move(
+            vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
         command_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
         func(command_buffer);
         command_buffer.end();
@@ -128,4 +128,10 @@ namespace Meow
      * @brief vk::raii::Queue::presentKHR without exceptions
      */
     vk::Result QueuePresentWrapper(const vk::raii::Queue& queue, const vk::PresentInfoKHR& present_info);
+
+    void TransitLayout(const vk::raii::CommandBuffer& command_buffer,
+                       vk::Image                      image,
+                       vk::ImageLayout                old_image_layout,
+                       vk::ImageLayout                new_image_layout,
+                       vk::ImageSubresourceRange      image_subresource_range);
 } // namespace Meow

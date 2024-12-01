@@ -77,7 +77,7 @@ set(RUNTIME_HEADER_FILES
     function/render/structs/surface_data.h
     function/render/structs/swapchain_data.h
     function/render/utils/model_utils.h
-    function/render/utils/vulkan_initialize_utils.hpp
+    function/render/utils/vulkan_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
     function/resource/resource_system.hpp
     function/time/time_system.h
@@ -131,7 +131,7 @@ set(RUNTIME_SOURCE_FILES
     function/render/structs/surface_data.cpp
     function/render/structs/swapchain_data.cpp
     function/render/utils/model_utils.cpp
-    function/render/utils/vulkan_initialize_utils.cpp
+    function/render/utils/vulkan_utils.cpp
     function/time/time_system.cpp
     function/window/runtime_window.cpp
     function/window/window.cpp

@@ -4,125 +4,6 @@
 
 namespace Meow
 {
-    void ImageData::TransitLayout(const vk::raii::CommandBuffer& command_buffer,
-                                  vk::ImageLayout                old_image_layout,
-                                  vk::ImageLayout                new_image_layout,
-                                  vk::ImageSubresourceRange      image_subresource_range)
-    {
-        vk::AccessFlags source_access_mask;
-        switch (old_image_layout)
-        {
-            case vk::ImageLayout::eTransferDstOptimal:
-                source_access_mask = vk::AccessFlagBits::eTransferWrite;
-                break;
-            case vk::ImageLayout::ePreinitialized:
-                source_access_mask = vk::AccessFlagBits::eHostWrite;
-                break;
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                source_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
-                break;
-            case vk::ImageLayout::eGeneral: // source_access_mask is empty
-            case vk::ImageLayout::eUndefined:
-                break;
-            default:
-                assert(false);
-                break;
-        }
-
-        vk::PipelineStageFlags source_stage;
-        switch (old_image_layout)
-        {
-            case vk::ImageLayout::eGeneral:
-            case vk::ImageLayout::ePreinitialized:
-                source_stage = vk::PipelineStageFlagBits::eHost;
-                break;
-            case vk::ImageLayout::eTransferDstOptimal:
-                source_stage = vk::PipelineStageFlagBits::eTransfer;
-                break;
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                source_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-                break;
-            case vk::ImageLayout::eUndefined:
-                source_stage = vk::PipelineStageFlagBits::eTopOfPipe;
-                break;
-            default:
-                assert(false);
-                break;
-        }
-
-        vk::AccessFlags destination_access_mask;
-        switch (new_image_layout)
-        {
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                destination_access_mask = vk::AccessFlagBits::eColorAttachmentWrite;
-                break;
-            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-                destination_access_mask =
-                    vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-                break;
-            case vk::ImageLayout::eGeneral: // empty destination_access_mask
-            case vk::ImageLayout::ePresentSrcKHR:
-                break;
-            case vk::ImageLayout::eShaderReadOnlyOptimal:
-                destination_access_mask = vk::AccessFlagBits::eShaderRead;
-                break;
-            case vk::ImageLayout::eTransferSrcOptimal:
-                destination_access_mask = vk::AccessFlagBits::eTransferRead;
-                break;
-            case vk::ImageLayout::eTransferDstOptimal:
-                destination_access_mask = vk::AccessFlagBits::eTransferWrite;
-                break;
-            default:
-                assert(false);
-                break;
-        }
-
-        vk::PipelineStageFlags destination_stage;
-        switch (new_image_layout)
-        {
-            case vk::ImageLayout::eColorAttachmentOptimal:
-                destination_stage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-                break;
-            case vk::ImageLayout::eDepthStencilAttachmentOptimal:
-                destination_stage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-                break;
-            case vk::ImageLayout::eGeneral:
-                destination_stage = vk::PipelineStageFlagBits::eHost;
-                break;
-            case vk::ImageLayout::ePresentSrcKHR:
-                destination_stage = vk::PipelineStageFlagBits::eBottomOfPipe;
-                break;
-            case vk::ImageLayout::eShaderReadOnlyOptimal:
-                destination_stage = vk::PipelineStageFlagBits::eFragmentShader;
-                break;
-            case vk::ImageLayout::eTransferDstOptimal:
-            case vk::ImageLayout::eTransferSrcOptimal:
-                destination_stage = vk::PipelineStageFlagBits::eTransfer;
-                break;
-            default:
-                assert(false);
-                break;
-        }
-
-        vk::ImageMemoryBarrier image_memory_barrier(source_access_mask,       /* srcAccessMask */
-                                                    destination_access_mask,  /* dstAccessMask */
-                                                    old_image_layout,         /* oldLayout */
-                                                    new_image_layout,         /* newLayout */
-                                                    VK_QUEUE_FAMILY_IGNORED,  /* srcQueueFamilyIndex */
-                                                    VK_QUEUE_FAMILY_IGNORED,  /* dstQueueFamilyIndex */
-                                                    *image,                   /* image */
-                                                    image_subresource_range); /* subresourceRange */
-
-        command_buffer.pipelineBarrier(source_stage,          /* srcStageMask */
-                                       destination_stage,     /* dstStageMask */
-                                       {},                    /* dependencyFlags */
-                                       nullptr,               /* pMemoryBarriers */
-                                       nullptr,               /* pBufferMemoryBarriers */
-                                       image_memory_barrier); /* pImageMemoryBarriers */
-
-        layout = new_image_layout;
-    }
-
     ImageData ImageData::CreateTexture(const std::string&     file_path,
                                        vk::Format             format,
                                        vk::ImageUsageFlags    usage_flags,
@@ -242,10 +123,11 @@ namespace Meow
                           if (image_data.need_staging)
                           {
                               // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eUndefined,
-                                                       vk::ImageLayout::eTransferDstOptimal,
-                                                       {aspect_mask, 0, 1, 0, 1});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eUndefined,
+                                            vk::ImageLayout::eTransferDstOptimal,
+                                            {aspect_mask, 0, 1, 0, 1});
                               vk::BufferImageCopy copy_region(0,
                                                               image_data.extent.width,
                                                               image_data.extent.height,
@@ -257,18 +139,20 @@ namespace Meow
                                                                vk::ImageLayout::eTransferDstOptimal,
                                                                copy_region);
                               // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eTransferDstOptimal,
-                                                       vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                       {aspect_mask, 0, 1, 0, 1});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eTransferDstOptimal,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                            {aspect_mask, 0, 1, 0, 1});
                           }
                           else
                           {
                               // If we can use the linear tiled image as a texture, just do it
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::ePreinitialized,
-                                                       vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                       {aspect_mask, 0, 1, 0, 1});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::ePreinitialized,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                            {aspect_mask, 0, 1, 0, 1});
                           }
                       });
 
@@ -335,15 +219,17 @@ namespace Meow
                       graphics_queue,
                       [&](const vk::raii::CommandBuffer& command_buffer) {
                           if (aspect_mask & vk::ImageAspectFlagBits::eColor)
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eUndefined,
-                                                       vk::ImageLayout::eColorAttachmentOptimal,
-                                                       {aspect_mask, 0, 1, 0, 1});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eUndefined,
+                                            vk::ImageLayout::eColorAttachmentOptimal,
+                                            {aspect_mask, 0, 1, 0, 1});
                           else if (aspect_mask & vk::ImageAspectFlagBits::eDepth)
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eUndefined,
-                                                       vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                                                       {aspect_mask, 0, 1, 0, 1});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eUndefined,
+                                            vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                                            {aspect_mask, 0, 1, 0, 1});
                       });
 
         return image_data;
@@ -425,10 +311,11 @@ namespace Meow
                       onetime_submit_command_pool,
                       graphics_queue,
                       [&](const vk::raii::CommandBuffer& command_buffer) {
-                          image_data.TransitLayout(command_buffer,
-                                                   vk::ImageLayout::eUndefined,
-                                                   vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                   {aspect_mask, 0, 1, 0, 1});
+                          TransitLayout(command_buffer,
+                                        *image_data.image,
+                                        vk::ImageLayout::eUndefined,
+                                        vk::ImageLayout::eShaderReadOnlyOptimal,
+                                        {aspect_mask, 0, 1, 0, 1});
                       });
 
         return image_data;
@@ -564,10 +451,11 @@ namespace Meow
                           if (image_data.need_staging)
                           {
                               // Since we're going to blit to the texture image, set its layout to eTransferDstOptimal
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eUndefined,
-                                                       vk::ImageLayout::eTransferDstOptimal,
-                                                       {aspect_mask, 0, 1, 0, 6});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eUndefined,
+                                            vk::ImageLayout::eTransferDstOptimal,
+                                            {aspect_mask, 0, 1, 0, 6});
                               std::vector<vk::BufferImageCopy> copy_regions;
                               // cubemap have 6 images
                               for (std::size_t i = 0; i < 6; ++i)
@@ -582,18 +470,20 @@ namespace Meow
                                                                vk::ImageLayout::eTransferDstOptimal,
                                                                copy_regions);
                               // Set the layout for the texture image from eTransferDstOptimal to eShaderReadOnlyOptimal
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::eTransferDstOptimal,
-                                                       vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                       {aspect_mask, 0, 1, 0, 6});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::eTransferDstOptimal,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                            {aspect_mask, 0, 1, 0, 6});
                           }
                           else
                           {
                               // If we can use the linear tiled image as a texture, just do it
-                              image_data.TransitLayout(command_buffer,
-                                                       vk::ImageLayout::ePreinitialized,
-                                                       vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                       {aspect_mask, 0, 1, 0, 6});
+                              TransitLayout(command_buffer,
+                                            *image_data.image,
+                                            vk::ImageLayout::ePreinitialized,
+                                            vk::ImageLayout::eShaderReadOnlyOptimal,
+                                            {aspect_mask, 0, 1, 0, 6});
                           }
                       });
 

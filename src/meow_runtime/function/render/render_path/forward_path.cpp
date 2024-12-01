@@ -28,10 +28,11 @@ namespace Meow
                       onetime_submit_command_pool,
                       graphics_queue,
                       [&](vk::raii::CommandBuffer const& command_buffer) {
-                          m_depth_attachment.TransitLayout(command_buffer,
-                                                           vk::ImageLayout::eUndefined,
-                                                           vk::ImageLayout::eDepthStencilAttachmentOptimal,
-                                                           {m_depth_attachment.aspect_mask, 0, 1, 0, 1});
+                          TransitLayout(command_buffer,
+                                        *m_depth_attachment.image,
+                                        vk::ImageLayout::eUndefined,
+                                        vk::ImageLayout::eDepthStencilAttachmentOptimal,
+                                        {m_depth_attachment.aspect_mask, 0, 1, 0, 1});
                       });
 
 #ifdef MEOW_EDITOR
@@ -52,26 +53,30 @@ namespace Meow
 
     void ForwardPath::UpdateUniformBuffer() { m_forward_light_pass.UpdateUniformBuffer(); }
 
-    void
-    ForwardPath::Draw(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, ImageData& swapchain_image)
+    void ForwardPath::Draw(const vk::raii::CommandBuffer& command_buffer,
+                           vk::Extent2D                   extent,
+                           const vk::Image&               swapchain_image,
+                           const vk::raii::ImageView&     swapchain_image_view)
     {
         FUNCTION_TIMER();
 
         {
-#ifdef MEOW_EDITOR
-            ImageData& render_target = m_offscreen_render_target;
-#else
-            ImageData& render_target = swapchain_image;
-
-            swapchain_image.TransitLayout(command_buffer,
-                                          vk::ImageLayout::eUndefined,
-                                          vk::ImageLayout::eColorAttachmentOptimal,
-                                          {render_target.aspect_mask, 0, 1, 0, 1});
+#ifndef MEOW_EDITOR
+            TransitLayout(command_buffer,
+                          swapchain_image,
+                          vk::ImageLayout::eUndefined,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 #endif
 
             vk::RenderingAttachmentInfoKHR render_target_info(
-                *render_target.image_view,                    /* imageView */
-                render_target.layout,                         /* imageLayout */
+#ifdef MEOW_EDITOR
+                *m_offscreen_render_target.image_view,    /* imageView */
+                vk::ImageLayout::eColorAttachmentOptimal, /* imageLayout */
+#else
+                *swapchain_image_view,                    /* imageView */
+                vk::ImageLayout::eColorAttachmentOptimal, /* imageLayout */
+#endif
                 vk::ResolveModeFlagBits::eNone,               /* resolveMode */
                 {},                                           /* resolveImageView */
                 {},                                           /* resolveImageLayout */
@@ -79,14 +84,15 @@ namespace Meow
                 vk::AttachmentStoreOp::eStore,                /* storeOp */
                 vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f)); /* clearValue */
 
-            vk::RenderingAttachmentInfoKHR depth_attachment_info(*m_depth_attachment.image_view, /* imageView */
-                                                                 m_depth_attachment.layout,      /* imageLayout */
-                                                                 vk::ResolveModeFlagBits::eNone, /* resolveMode */
-                                                                 {},                             /* resolveImageView */
-                                                                 {},                            /* resolveImageLayout */
-                                                                 vk::AttachmentLoadOp::eClear,  /* loadOp */
-                                                                 vk::AttachmentStoreOp::eStore, /* storeOp */
-                                                                 vk::ClearDepthStencilValue(1.0f, 0)); /* clearValue */
+            vk::RenderingAttachmentInfoKHR depth_attachment_info(
+                *m_depth_attachment.image_view,                  /* imageView */
+                vk::ImageLayout::eDepthStencilAttachmentOptimal, /* imageLayout */
+                vk::ResolveModeFlagBits::eNone,                  /* resolveMode */
+                {},                                              /* resolveImageView */
+                {},                                              /* resolveImageLayout */
+                vk::AttachmentLoadOp::eClear,                    /* loadOp */
+                vk::AttachmentStoreOp::eStore,                   /* storeOp */
+                vk::ClearDepthStencilValue(1.0f, 0));            /* clearValue */
 
             vk::RenderingInfoKHR rendering_info({},                                 /* flags */
                                                 vk::Rect2D(vk::Offset2D(), extent), /* renderArea */
@@ -103,30 +109,33 @@ namespace Meow
             command_buffer.endRenderingKHR();
 
 #ifndef MEOW_EDITOR
-            swapchain_image.TransitLayout(command_buffer,
-                                          vk::ImageLayout::eColorAttachmentOptimal,
-                                          vk::ImageLayout::ePresentSrcKHR,
-                                          {render_target.aspect_mask, 0, 1, 0, 1});
+            TransitLayout(command_buffer,
+                          swapchain_image,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          vk::ImageLayout::ePresentSrcKHR,
+                          {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 #endif
         }
 
 #ifdef MEOW_EDITOR
         {
-            m_offscreen_render_target.TransitLayout(command_buffer,
-                                                    vk::ImageLayout::eColorAttachmentOptimal,
-                                                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                                                    {swapchain_image.aspect_mask, 0, 1, 0, 1});
+            TransitLayout(command_buffer,
+                          *m_offscreen_render_target.image,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          vk::ImageLayout::eShaderReadOnlyOptimal,
+                          {m_offscreen_render_target.aspect_mask, 0, 1, 0, 1});
 
-            swapchain_image.TransitLayout(command_buffer,
-                                          vk::ImageLayout::eUndefined,
-                                          vk::ImageLayout::eColorAttachmentOptimal,
-                                          {swapchain_image.aspect_mask, 0, 1, 0, 1});
+            TransitLayout(command_buffer,
+                          swapchain_image,
+                          vk::ImageLayout::eUndefined,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
             m_imgui_pass.DrawImGui();
 
             vk::RenderingAttachmentInfoKHR render_target_info(
-                *swapchain_image.image_view,                  /* imageView */
-                swapchain_image.layout,                       /* imageLayout */
+                *swapchain_image_view,                        /* imageView */
+                vk::ImageLayout::eColorAttachmentOptimal,     /* imageLayout */
                 vk::ResolveModeFlagBits::eNone,               /* resolveMode */
                 {},                                           /* resolveImageView */
                 {},                                           /* resolveImageLayout */
@@ -146,10 +155,11 @@ namespace Meow
             m_imgui_pass.Draw(command_buffer);
             command_buffer.endRenderingKHR();
 
-            swapchain_image.TransitLayout(command_buffer,
-                                          vk::ImageLayout::eColorAttachmentOptimal,
-                                          vk::ImageLayout::ePresentSrcKHR,
-                                          {swapchain_image.aspect_mask, 0, 1, 0, 1});
+            TransitLayout(command_buffer,
+                          swapchain_image,
+                          vk::ImageLayout::eColorAttachmentOptimal,
+                          vk::ImageLayout::ePresentSrcKHR,
+                          {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
         }
 #endif
     }

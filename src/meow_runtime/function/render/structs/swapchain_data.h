@@ -1,15 +1,15 @@
 #pragma once
 
-#include "function/render/render_resources/image_data.h"
-#include "function/render/utils/vulkan_initialize_utils.hpp"
+#include "function/render/utils/vulkan_utils.hpp"
 
 namespace Meow
 {
     struct SwapChainData
     {
-        vk::Format             color_format;
-        vk::raii::SwapchainKHR swap_chain = nullptr;
-        std::vector<ImageData> images;
+        vk::Format                       color_format;
+        vk::raii::SwapchainKHR           swap_chain = nullptr;
+        std::vector<vk::Image>           images;
+        std::vector<vk::raii::ImageView> image_views;
 
         SwapChainData(vk::raii::PhysicalDevice const& physical_device,
                       vk::raii::Device const&         logical_device,

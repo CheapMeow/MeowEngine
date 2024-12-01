@@ -6,7 +6,7 @@
 #include "function/global/runtime_context.h"
 #include "function/level/level.h"
 #include "function/render/utils/model_utils.h"
-#include "function/render/utils/vulkan_initialize_utils.hpp"
+#include "function/render/utils/vulkan_utils.hpp"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
@@ -164,9 +164,15 @@ namespace Meow
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
         if (m_cur_render_path == 0)
-            m_forward_path.Draw(cmd_buffer, m_surface_data.extent, m_swapchain_data.images[m_current_image_index]);
+            m_forward_path.Draw(cmd_buffer,
+                                m_surface_data.extent,
+                                m_swapchain_data.images[m_current_image_index],
+                                m_swapchain_data.image_views[m_current_image_index]);
         else if (m_cur_render_path == 1)
-            m_deferred_path.Draw(cmd_buffer, m_surface_data.extent, m_swapchain_data.images[m_current_image_index]);
+            m_deferred_path.Draw(cmd_buffer,
+                                 m_surface_data.extent,
+                                 m_swapchain_data.images[m_current_image_index],
+                                 m_swapchain_data.image_views[m_current_image_index]);
 
         cmd_buffer.end();
 

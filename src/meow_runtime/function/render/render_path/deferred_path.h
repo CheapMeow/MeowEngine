@@ -45,8 +45,10 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
-        void
-        Draw(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, ImageData& swapchain_image) override;
+        void Draw(const vk::raii::CommandBuffer& command_buffer,
+                  vk::Extent2D                   extent,
+                  const vk::Image&               swapchain_image,
+                  const vk::raii::ImageView&     swapchain_image_view) override;
 
         void AfterPresent();
 

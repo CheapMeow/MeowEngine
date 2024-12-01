@@ -70,17 +70,15 @@ namespace Meow
         }
         swap_chain = vk::raii::SwapchainKHR(logical_device, swap_chain_create_info);
 
-        auto vk_images = swap_chain.getImages();
+        images = swap_chain.getImages();
 
+        image_views.reserve(images.size());
         vk::ImageViewCreateInfo image_view_create_info(
             {}, {}, vk::ImageViewType::e2D, color_format, {}, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-        for (std::size_t i = 0; i < vk_images.size(); ++i)
+        for (auto image : images)
         {
-            images.emplace_back(nullptr);
-            images[i].image              = vk::raii::Image(logical_device, vk_images[i]);
-            image_view_create_info.image = vk_images[i];
-            images[i].image_view         = vk::raii::ImageView(logical_device, image_view_create_info);
-            images[i].aspect_mask        = vk::ImageAspectFlagBits::eColor;
+            image_view_create_info.image = image;
+            image_views.emplace_back(logical_device, image_view_create_info);
         }
     }
 } // namespace Meow
