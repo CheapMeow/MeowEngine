@@ -23,24 +23,21 @@ namespace Meow
 
         m_color_attachment = ImageData::CreateAttachment(color_format,
                                                          temp_extent,
-                                                         vk::ImageUsageFlagBits::eColorAttachment |
-                                                             vk::ImageUsageFlagBits::eInputAttachment,
+                                                         vk::ImageUsageFlagBits::eColorAttachment,
                                                          vk::ImageAspectFlagBits::eColor,
                                                          {},
                                                          false);
 
         m_normal_attachment = ImageData::CreateAttachment(vk::Format::eB8G8R8A8Unorm,
                                                           temp_extent,
-                                                          vk::ImageUsageFlagBits::eColorAttachment |
-                                                              vk::ImageUsageFlagBits::eInputAttachment,
+                                                          vk::ImageUsageFlagBits::eColorAttachment,
                                                           vk::ImageAspectFlagBits::eColor,
                                                           {},
                                                           false);
 
         m_position_attachment = ImageData::CreateAttachment(vk::Format::eR16G16B16A16Sfloat,
                                                             temp_extent,
-                                                            vk::ImageUsageFlagBits::eColorAttachment |
-                                                                vk::ImageUsageFlagBits::eInputAttachment,
+                                                            vk::ImageUsageFlagBits::eColorAttachment,
                                                             vk::ImageAspectFlagBits::eColor,
                                                             {},
                                                             false);
@@ -87,8 +84,7 @@ namespace Meow
 #ifdef MEOW_EDITOR
         m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
                                                                   temp_extent,
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
+                                                                  vk::ImageUsageFlagBits::eColorAttachment,
                                                                   vk::ImageAspectFlagBits::eColor,
                                                                   {},
                                                                   false);

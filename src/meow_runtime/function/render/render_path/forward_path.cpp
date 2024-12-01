@@ -40,8 +40,7 @@ namespace Meow
 #ifdef MEOW_EDITOR
         m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
                                                                   temp_extent,
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
+                                                                  vk::ImageUsageFlagBits::eColorAttachment,
                                                                   vk::ImageAspectFlagBits::eColor,
                                                                   {},
                                                                   false);
