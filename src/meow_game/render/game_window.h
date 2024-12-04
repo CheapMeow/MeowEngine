@@ -8,7 +8,6 @@
 #include "render/render_pass/game_deferred_pass.h"
 #include "render/render_pass/game_forward_pass.h"
 
-
 namespace Meow
 {
     class GameWindow : public Window
@@ -29,7 +28,7 @@ namespace Meow
 
         SwapChainData m_swapchain_data = nullptr;
 
-        std::vector<PerFrameData>   m_per_frame_data;
+        std::vector<PerFrameData> m_per_frame_data;
 
         GameDeferredPass m_deferred_pass   = nullptr;
         GameForwardPass  m_forward_pass    = nullptr;

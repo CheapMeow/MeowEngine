@@ -24,12 +24,15 @@ namespace Meow
         CreateSwapChian();
         CreatePerFrameData();
         CreateRenderPass();
+
+#ifdef MEOW_EDITOR
         InitImGui();
 
         is_offscreen_valid = true;
         m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                   *m_offscreen_render_target->image_view,
                                                   static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+#endif
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
@@ -116,12 +119,15 @@ namespace Meow
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
         logical_device.waitIdle();
 
+#ifdef MEOW_EDITOR
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
+#endif
+
         m_per_frame_data.clear();
         m_forward_pass   = nullptr;
         m_deferred_pass  = nullptr;
@@ -170,17 +176,21 @@ namespace Meow
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
+#ifdef MEOW_EDITOR
         // TODO: temp
 
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
         m_render_pass_ptr->Start(cmd_buffer, temp_extent, 0);
+#endif
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
 
+#ifdef MEOW_EDITOR
         m_imgui_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_imgui_pass.Draw(cmd_buffer);
         m_imgui_pass.End(cmd_buffer);
+#endif
 
         cmd_buffer.end();
 
@@ -211,8 +221,10 @@ namespace Meow
         m_current_frame_index = (m_current_frame_index + 1) % k_max_frames_in_flight;
 
         m_render_pass_ptr->AfterPresent();
-        m_imgui_pass.AfterPresent();
 
+#ifdef MEOW_EDITOR
+        m_imgui_pass.AfterPresent();
+#endif
         Window::Tick(dt);
     }
 
@@ -288,9 +300,13 @@ namespace Meow
     {
         m_deferred_pass = EditorDeferredPass(m_surface_data);
         m_forward_pass  = EditorForwardPass(m_surface_data);
-        m_imgui_pass    = ImGuiPass(m_surface_data);
+#ifdef MEOW_EDITOR
+        m_imgui_pass = ImGuiPass(m_surface_data);
+#endif
+
         RefreshRenderPass();
 
+#ifdef MEOW_EDITOR
         m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
             // switch render pass
             if (cur_render_pass == 0)
@@ -300,10 +316,12 @@ namespace Meow
 
             g_editor_context.profile_system->ClearProfile();
         });
+#endif
 
         m_render_pass_ptr = &m_forward_pass;
     }
 
+#ifdef MEOW_EDITOR
     void EditorWindow::InitImGui()
     {
         const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
@@ -383,6 +401,7 @@ namespace Meow
                       graphics_queue,
                       [](vk::raii::CommandBuffer& command_buffer) { ImGui_ImplVulkan_CreateFontsTexture(); });
     }
+#endif
 
     void EditorWindow::RecreateSwapChain()
     {
@@ -393,7 +412,7 @@ namespace Meow
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
         logical_device.waitIdle();
-        
+
         m_per_frame_data.clear();
         m_swapchain_data = nullptr;
         m_surface_data   = nullptr;
@@ -427,7 +446,7 @@ namespace Meow
         }
 
         // TODO: temp
-
+#ifdef MEOW_EDITOR
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
         m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
@@ -438,5 +457,6 @@ namespace Meow
             m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                       *m_offscreen_render_target->image_view,
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+#endif
     }
 } // namespace Meow
