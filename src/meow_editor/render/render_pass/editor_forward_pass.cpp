@@ -13,8 +13,10 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+#ifdef MEOW_EDITOR
         m_pass_names[0] = "Mesh Lighting Subpass";
         m_pass_names[1] = "Skybox Subpass";
+#endif
 
         // Create a set to store all information of attachments
 
@@ -23,6 +25,7 @@ namespace Meow
         assert(color_format != vk::Format::eUndefined);
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
+#ifdef MEOW_EDITOR
             // offscreen attachment
             {
                 vk::AttachmentDescriptionFlags(),        /* flags */
@@ -35,6 +38,7 @@ namespace Meow
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* initialLayout */
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
+#endif
             // depth attachment
             {
                 vk::AttachmentDescriptionFlags(),                /* flags */
@@ -104,8 +108,7 @@ namespace Meow
 
         CreateMaterial();
 
-        // Debug
-
+#ifdef MEOW_EDITOR
         VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
                                                         .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
                                                         .queryCount         = 2,
@@ -120,14 +123,17 @@ namespace Meow
         m_render_stat[1].vertex_attribute_metas = m_skybox_mat.shader_ptr->vertex_attribute_metas;
         m_render_stat[1].buffer_meta_map        = m_skybox_mat.shader_ptr->buffer_meta_map;
         m_render_stat[1].image_meta_map         = m_skybox_mat.shader_ptr->image_meta_map;
+#endif
     }
 
     void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
                                   vk::Extent2D                   extent,
                                   uint32_t                       current_image_index)
     {
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
             command_buffer.resetQueryPool(*query_pool, 0, 2);
+#endif
 
         ForwardPass::Start(command_buffer, extent, current_image_index);
     }
@@ -138,29 +144,38 @@ namespace Meow
 
         m_forward_mat.BindPipeline(command_buffer);
 
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 0, {});
+#endif
 
         MeshLighting(command_buffer);
 
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
+#endif
 
         m_skybox_mat.BindPipeline(command_buffer);
 
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
             command_buffer.beginQuery(*query_pool, 1, {});
+#endif
 
         RenderSkybox(command_buffer);
 
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 1);
+#endif
     }
 
     void EditorForwardPass::AfterPresent()
     {
         FUNCTION_TIMER();
 
+#ifdef MEOW_EDITOR
         if (m_query_enabled)
         {
             for (int i = 1; i >= 0; i--)
@@ -177,14 +192,17 @@ namespace Meow
             m_render_stat[i].draw_call = draw_call[i];
             g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
         }
+#endif
     }
 
     void swap(EditorForwardPass& lhs, EditorForwardPass& rhs)
     {
         using std::swap;
 
+#ifdef MEOW_EDITOR
         swap(lhs.m_query_enabled, rhs.m_query_enabled);
         swap(lhs.query_pool, rhs.query_pool);
         swap(lhs.m_render_stat, rhs.m_render_stat);
+#endif
     }
 } // namespace Meow
