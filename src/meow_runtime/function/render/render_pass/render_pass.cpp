@@ -34,8 +34,6 @@ namespace Meow
         swap(lhs.clear_values, rhs.clear_values);
         swap(lhs.input_vertex_attributes, rhs.input_vertex_attributes);
 
-        swap(lhs.m_pass_name, rhs.m_pass_name);
-
         swap(lhs.m_depth_format, rhs.m_depth_format);
         swap(lhs.m_sample_count, rhs.m_sample_count);
         swap(lhs.m_depth_attachment, rhs.m_depth_attachment);

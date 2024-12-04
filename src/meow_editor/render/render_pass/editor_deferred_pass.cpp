@@ -13,10 +13,8 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        m_pass_name = "Deferred Pass";
-
-        m_pass_names[0] = m_pass_name + " - Obj2Attachment Subpass";
-        m_pass_names[1] = m_pass_name + " - Quad Subpass";
+        m_pass_names[0] = "GBuffer Subpass";
+        m_pass_names[1] = "Mesh Lighting Subpass";
 
         // Create a set to store all information of attachments
 

@@ -59,6 +59,7 @@ namespace Meow
         Material m_skybox_mat   = nullptr;
         Model    m_skybox_model = nullptr;
 
-        int draw_call = 0;
+        std::string m_pass_names[2];
+        int         draw_call[2] = {0, 0};
     };
 } // namespace Meow

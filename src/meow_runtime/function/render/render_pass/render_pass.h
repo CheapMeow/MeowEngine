@@ -51,8 +51,6 @@ namespace Meow
         std::vector<vk::ClearValue>        clear_values;
         std::vector<VertexAttributeBit>    input_vertex_attributes;
 
-        std::string m_pass_name = "Default Pass";
-
     protected:
         vk::Format                 m_depth_format     = vk::Format::eD16Unorm;
         vk::SampleCountFlagBits    m_sample_count     = vk::SampleCountFlagBits::e1;

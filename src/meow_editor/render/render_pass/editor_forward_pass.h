@@ -47,6 +47,6 @@ namespace Meow
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
 
-        BuiltinRenderStat m_render_stat;
+        BuiltinRenderStat m_render_stat[2];
     };
 } // namespace Meow

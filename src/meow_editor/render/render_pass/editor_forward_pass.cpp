@@ -13,7 +13,8 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        m_pass_name = "Forward Pass";
+        m_pass_names[0] = "Mesh Lighting Subpass";
+        m_pass_names[1] = "Skybox Subpass";
 
         // Create a set to store all information of attachments
 
@@ -107,14 +108,18 @@ namespace Meow
 
         VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
                                                         .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 1,
+                                                        .queryCount         = 2,
                                                         .pipelineStatistics = (1 << 11) - 1};
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
-        m_render_stat.vertex_attribute_metas = m_forward_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat.buffer_meta_map        = m_forward_mat.shader_ptr->buffer_meta_map;
-        m_render_stat.image_meta_map         = m_forward_mat.shader_ptr->image_meta_map;
+        m_render_stat[0].vertex_attribute_metas = m_forward_mat.shader_ptr->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_forward_mat.shader_ptr->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_forward_mat.shader_ptr->image_meta_map;
+
+        m_render_stat[1].vertex_attribute_metas = m_skybox_mat.shader_ptr->vertex_attribute_metas;
+        m_render_stat[1].buffer_meta_map        = m_skybox_mat.shader_ptr->buffer_meta_map;
+        m_render_stat[1].image_meta_map         = m_skybox_mat.shader_ptr->image_meta_map;
     }
 
     void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -122,7 +127,7 @@ namespace Meow
                                   uint32_t                       current_image_index)
     {
         if (m_query_enabled)
-            command_buffer.resetQueryPool(*query_pool, 0, 1);
+            command_buffer.resetQueryPool(*query_pool, 0, 2);
 
         ForwardPass::Start(command_buffer, extent, current_image_index);
     }
@@ -142,7 +147,14 @@ namespace Meow
             command_buffer.endQuery(*query_pool, 0);
 
         m_skybox_mat.BindPipeline(command_buffer);
+
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 1, {});
+
         RenderSkybox(command_buffer);
+
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 1);
     }
 
     void EditorForwardPass::AfterPresent()
@@ -151,14 +163,20 @@ namespace Meow
 
         if (m_query_enabled)
         {
-            std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                query_pool.getResults<uint32_t>(0, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
+            for (int i = 1; i >= 0; i--)
+            {
+                std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
 
-            g_editor_context.profile_system->UploadPipelineStat(m_pass_name, query_results.second);
+                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+            }
         }
 
-        m_render_stat.draw_call = draw_call;
-        g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_name, m_render_stat);
+        for (int i = 1; i >= 0; i--)
+        {
+            m_render_stat[i].draw_call = draw_call[i];
+            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+        }
     }
 
     void swap(EditorForwardPass& lhs, EditorForwardPass& rhs)

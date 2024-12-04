@@ -269,7 +269,10 @@ namespace Meow
     void
     ForwardPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
-        draw_call = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            draw_call[i] = 0;
+        }
 
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
@@ -302,10 +305,10 @@ namespace Meow
 
             for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
             {
-                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call, true);
+                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
                 model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
-                ++draw_call;
+                ++draw_call[0];
             }
         }
     }
@@ -320,6 +323,7 @@ namespace Meow
         {
             m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, i, true);
             m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
+            ++draw_call[1];
         }
     }
 
@@ -331,6 +335,7 @@ namespace Meow
         swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);
 
+        swap(lhs.m_pass_names, rhs.m_pass_names);
         swap(lhs.draw_call, rhs.draw_call);
     }
 } // namespace Meow

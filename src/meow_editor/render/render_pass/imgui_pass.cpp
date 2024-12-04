@@ -24,8 +24,6 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        m_pass_name = "ImGui Pass";
-
         vk::Format color_format =
             PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
         assert(color_format != vk::Format::eUndefined);
