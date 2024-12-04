@@ -38,6 +38,18 @@ namespace Meow
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* initialLayout */
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
+#else
+            {
+                vk::AttachmentDescriptionFlags(), /* flags */
+                color_format,                     /* format */
+                m_sample_count,                   /* samples */
+                vk::AttachmentLoadOp::eClear,     /* loadOp */
+                vk::AttachmentStoreOp::eStore,    /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,      /* initialLayout */
+                vk::ImageLayout::ePresentSrcKHR,  /* finalLayout */
+            },
 #endif
             // depth attachment
             {

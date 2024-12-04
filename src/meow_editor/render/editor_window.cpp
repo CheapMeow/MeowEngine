@@ -182,6 +182,8 @@ namespace Meow
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
         m_render_pass_ptr->Start(cmd_buffer, temp_extent, 0);
+#else
+        m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
 #endif
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
@@ -259,7 +261,7 @@ namespace Meow
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
 
         // TODO: temp
-
+#ifdef MEOW_EDITOR
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
         m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
@@ -269,6 +271,7 @@ namespace Meow
                                                                   vk::ImageAspectFlagBits::eColor,
                                                                   {},
                                                                   false);
+#endif
     }
 
     void EditorWindow::CreatePerFrameData()
@@ -457,6 +460,9 @@ namespace Meow
             m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                       *m_offscreen_render_target->image_view,
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+#else
+        m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 #endif
     }
 } // namespace Meow

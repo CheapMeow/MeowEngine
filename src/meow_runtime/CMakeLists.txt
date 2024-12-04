@@ -122,10 +122,8 @@ target_compile_definitions(${RUNTIME_NAME} PRIVATE
 )
 target_compile_definitions(${RUNTIME_NAME} PUBLIC
   ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
-  $<$<CONFIG:Debug>:MEOW_DEBUG>
-  $<$<CONFIG:Release>:MEOW_RELEASE>
-  $<$<CONFIG:Debug>:VKB_DEBUG>
-  $<$<CONFIG:Debug>:VKB_VALIDATION_LAYERS>
+  $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_DEBUG>
+  $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_VALIDATION_LAYERS>
   VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
                             # according to cmake build platform
   GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
