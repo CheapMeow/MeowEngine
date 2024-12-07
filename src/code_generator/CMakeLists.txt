@@ -1,15 +1,15 @@
 set(CODE_GENERATOR_HEADER_FILES
-    src/parser/parser.h
-    src/utils/code_gen_utils.h
-    src/parse_result/class_parse_result.h
-    src/parse_result/field_parse_result.h
-    src/parse_result/method_parse_result.h
-    src/generator/code_generator.h)
+    parser/parser.h
+    utils/code_gen_utils.h
+    parse_result/class_parse_result.h
+    parse_result/field_parse_result.h
+    parse_result/method_parse_result.h
+    generator/code_generator.h)
 set(CODE_GENERATOR_SOURCE_FILES
-    src/main.cpp
-    src/parser/parser.cpp
-    src/utils/code_gen_utils.cpp
-    src/generator/code_generator.cpp)
+    main.cpp
+    parser/parser.cpp
+    utils/code_gen_utils.cpp
+    generator/code_generator.cpp)
 
 set(HEADER_FILES_DEPEND
 )

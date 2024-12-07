@@ -48,3 +48,5 @@ build-release/
 
 # Log file
 .log
+
+.xmake/
