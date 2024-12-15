@@ -3,6 +3,7 @@
 #include "utils/code_gen_utils.h"
 
 #include <filesystem>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <unordered_set>
@@ -46,31 +47,41 @@ int main(int argc, char* argv[])
         }
     }
 
+    bool has_error = false;
+
+    if (include_paths.size() == 0)
+    {
+        std::cerr << "[CodeGenerator] include_paths is empty!" << std::endl;
+    }
+
     if (!fs::exists(src_path))
     {
-        std::cerr << "[CodeGenerator] src_path does not exist!" << std::endl;
-        exit(-1);
+        std::cerr << "[CodeGenerator] src_path " << std::quoted(src_path) << " does not exist!" << std::endl;
+        has_error = true;
     }
     else if (!fs::is_directory(src_path))
     {
-        std::cerr << "[CodeGenerator] src_path is not a directory!" << std::endl;
-        exit(-1);
+        std::cerr << "[CodeGenerator] src_path " << std::quoted(src_path) << " is not a directory!" << std::endl;
+        has_error = true;
     }
 
     if (!fs::exists(output_path))
     {
-        std::cerr << "[CodeGenerator] output_path does not exist!" << std::endl;
-        exit(-1);
+        std::cerr << "[CodeGenerator] output_path " << std::quoted(output_path) << " does not exist!" << std::endl;
+        has_error = true;
     }
     else if (!fs::is_directory(output_path))
     {
-        std::cerr << "[CodeGenerator] output_path is not a directory!" << std::endl;
-        exit(-1);
+        std::cerr << "[CodeGenerator] output_path " << std::quoted(output_path) << " is not a directory!" << std::endl;
+        has_error = true;
     }
+
+    if (has_error)
+        exit(-1);
 
     std::cout << "[CodeGenerator] src_path is" << std::endl << src_path << std::endl;
     std::cout << "[CodeGenerator] output_path is" << std::endl << output_path << std::endl;
-    std::cout << "[CodeGenerator] include_path is" << std::endl;
+    std::cout << "[CodeGenerator] include_path size = " << include_paths.size() << std::endl;
     for (int i = 0; i < include_paths.size(); i++)
     {
         std::cout << include_paths[i] << std::endl;
