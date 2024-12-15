@@ -5,7 +5,7 @@
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/vertex_attribute.h"
 
-#include <spirv_glsl.hpp>
+#include <spirv_cross/spirv_glsl.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
 #include <cstdint>
