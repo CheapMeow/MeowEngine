@@ -9,9 +9,10 @@ editor_dir = os.projectdir() .. "/src/meow_editor"
 
 rule("EditorDebug", function()
     after_load(function(target)
-        if is_mode("debug") then
+        if is_mode("EditorDebug") then
             if not target:get("symbols") then
                 target:set("symbols", "debug")
+                target:set("strip", "debug")
             end
             if not target:get("optimize") then
                 target:set("optimize", "none")
