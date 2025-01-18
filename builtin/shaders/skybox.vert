@@ -2,7 +2,7 @@
 
 layout (location = 0) in vec3 inPosition;
 
-layout (set = 1, binding = 0) uniform PerSceneDataDynamic
+layout (set = 1, binding = 0) uniform PerSceneData
 {
 	mat4 viewMatrix;
 	mat4 projectionMatrix;
@@ -19,4 +19,5 @@ void main()
 {
 	outPosition = inPosition;
 	gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * vec4(inPosition, 1.0);
+	gl_Position = gl_Position.xyww;
 }
