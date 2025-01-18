@@ -78,7 +78,7 @@ namespace Meow
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
         m_skybox_mat = Material(skybox_shader_ptr);
-        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
+        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eCounterClockwise, true);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -245,25 +245,8 @@ namespace Meow
 
         // skybox
 
-        static glm::mat4 capture_views[] = {
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-            glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
-
-        m_skybox_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        per_scene_data.projection = Math::perspective_vk(
-            glm::radians(90.0f), static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]), 0.1f, 10.0f);
-        for (uint32_t i = 0; i < 6; ++i)
-        {
-            m_skybox_mat.BeginPopulatingDynamicUniformBufferPerObject();
-            per_scene_data.view = capture_views[i];
-            m_skybox_mat.PopulateDynamicUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
-            m_skybox_mat.EndPopulatingDynamicUniformBufferPerObject();
-        }
-        m_skybox_mat.EndPopulatingDynamicUniformBufferPerFrame();
+        per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
+        m_skybox_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
     }
 
     void
@@ -317,14 +300,10 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
 
-        for (uint32_t i = 0; i < 6; ++i)
-        {
-            m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, i, true);
-            m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
-            ++draw_call[1];
-        }
+        m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
+        ++draw_call[1];
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)
