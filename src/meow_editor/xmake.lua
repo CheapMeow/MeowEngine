@@ -1,7 +1,0 @@
-target("meow_editor", function()
-    set_kind("binary")
-    add_files(editor_dir .. "/**.cpp")
-    add_includedirs(editor_dir)
-    add_includedirs(src_dir)
-    add_deps("meow_runtime")
-end)
