@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(MeowEngine LANGUAGES NONE)
-set(CMAKE_CONFIGURATION_TYPES "EditorDebug;EditorRelease;GameDebug;GameRelease" CACHE STRING "Available build types")
+
+list(APPEND CMAKE_CONFIGURATION_TYPES "EditorDebug;EditorRelease;GameDebug;GameRelease")
+set(CMAKE_CONFIGURATION_TYPES "EditorDebug;EditorRelease;GameDebug;GameRelease" CACHE STRING "Append user-defined configuration to list of configurations to make it usable in Visual Studio" FORCE)
+
 enable_language(CXX)
 
 # Stop in source builds
