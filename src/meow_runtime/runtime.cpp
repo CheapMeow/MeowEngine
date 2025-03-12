@@ -27,7 +27,8 @@ namespace Meow
         g_runtime_context.level_system    = std::make_shared<LevelSystem>();
 
         JSEngine js_engine;
-        js_engine.test();
+        // js_engine.test_cpp_call_js();
+        js_engine.test_js_call_cpp();
 
         return true;
     }

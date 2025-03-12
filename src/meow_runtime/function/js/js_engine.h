@@ -19,7 +19,8 @@ namespace Meow
             JS_FreeRuntime(rt);
         }
 
-        void test();
+        void test_cpp_call_js();
+        void test_js_call_cpp();
 
     private:
         JSRuntime* rt;
