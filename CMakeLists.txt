@@ -4,7 +4,7 @@ project(MeowEngine LANGUAGES NONE)
 
 if(CMAKE_CONFIGURATION_TYPES)
   list(APPEND CMAKE_CONFIGURATION_TYPES "EditorDebug;EditorRelease;GameDebug;GameRelease")
-  set(CMAKE_CONFIGURATION_TYPES "EditorDebug;EditorRelease;GameDebug;GameRelease" CACHE STRING "Append user-defined configuration to list of configurations to make it usable in Visual Studio" FORCE)
+  set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Append user-defined configuration to list of configurations to make it usable in Visual Studio" FORCE)
 endif()
 
 enable_language(CXX)
@@ -24,10 +24,11 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL "GameDebug")
     if(MSVC)
         # MSVC Debug flags
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Od /Z7")  # /Od disables optimizations, /Z7 enables debug info
+        message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Od /Z7")  # /Od disables optimizations, /Z7 enables debug info
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # Clang/GCC Debug flags
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
     endif()
 endif()
 
@@ -35,10 +36,10 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "EditorRelease" OR CMAKE_BUILD_TYPE STREQUAL "GameRelease")
     if(MSVC)
         # MSVC Release flags
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2")
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # Clang/GCC Release flags
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
     endif()
 endif()
   
