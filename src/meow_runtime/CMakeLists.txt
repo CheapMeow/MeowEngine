@@ -36,6 +36,7 @@ set(RUNTIME_HEADER_FILES
     function/input/axes/mouse_input_axis.h
     function/input/buttons/keyboard_input_button.h
     function/input/buttons/mouse_input_button.h
+    function/js/js_engine.h
     function/level/level.h
     function/level/level_system.h
     function/object/game_object.h
@@ -84,6 +85,7 @@ set(RUNTIME_SOURCE_FILES
     function/input/axes/mouse_input_axis.cpp
     function/input/buttons/keyboard_input_button.cpp
     function/input/buttons/mouse_input_button.cpp
+    function/js/js_engine.cpp
     function/level/level.cpp
     function/level/level_system.cpp
     function/object/game_object.cpp

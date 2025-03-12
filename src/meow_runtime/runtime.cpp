@@ -7,6 +7,8 @@
 #include "function/global/runtime_context.h"
 #include "generated/register_all.h"
 
+#include "function/js/js_engine.h"
+
 #include <iostream>
 
 namespace Meow
@@ -23,6 +25,9 @@ namespace Meow
         g_runtime_context.render_system   = std::make_shared<RenderSystem>();
         g_runtime_context.input_system    = std::make_shared<InputSystem>();
         g_runtime_context.level_system    = std::make_shared<LevelSystem>();
+
+        JSEngine js_engine;
+        js_engine.test();
 
         return true;
     }
