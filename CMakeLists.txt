@@ -20,6 +20,10 @@ if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL "GameDeb
     add_definitions(-DMEOW_DEBUG)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "EditorRelease" OR CMAKE_BUILD_TYPE STREQUAL "GameRelease")
+    add_definitions(-DNDEBUG)
+endif()
+
 # Add debugging flags for MSVC, Clang, and GCC
 if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL "GameDebug")
     if(MSVC)
