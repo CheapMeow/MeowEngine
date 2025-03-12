@@ -99,6 +99,11 @@ namespace Meow
                     std::vector<DataType> const&    data,
                     size_t                          stride) const
         {
+            if (!(usage_flags & vk::BufferUsageFlagBits::eTransferDst))
+            {
+                auto mask = static_cast<vk::BufferUsageFlags::MaskType>(usage_flags);
+                std::cout << "mask = " << mask << std::endl;
+            }
             assert(usage_flags & vk::BufferUsageFlagBits::eTransferDst);
             assert(property_flags & vk::MemoryPropertyFlagBits::eDeviceLocal);
 
