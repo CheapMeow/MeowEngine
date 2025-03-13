@@ -28,7 +28,7 @@ namespace Meow
 
         JSEngine js_engine;
         // js_engine.test_cpp_call_js();
-        js_engine.test_js_call_cpp();
+        // js_engine.test_js_call_cpp();
 
         return true;
     }

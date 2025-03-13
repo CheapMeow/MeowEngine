@@ -76,42 +76,44 @@ namespace Meow
             camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
         }
 
-        {
-            std::size_t row_number    = 7;
-            std::size_t column_number = 7;
-            float       spacing       = 2.5;
-            auto [sphere_vertices, sphere_indices] =
-                GenerateSphereVerticesAndIndices(64, 64, 1.0f, m_render_pass_ptr->input_vertex_attributes);
-            for (std::size_t row = 0; row < row_number; ++row)
-            {
-                for (std::size_t col = 0; col < column_number; ++col)
-                {
-                    UUID                        uuid           = level_ptr->CreateObject();
-                    std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
+        //         {
+        //             std::size_t row_number    = 7;
+        //             std::size_t column_number = 7;
+        //             float       spacing       = 2.5;
+        //             auto [sphere_vertices, sphere_indices] =
+        //                 GenerateSphereVerticesAndIndices(64, 64, 1.0f, m_render_pass_ptr->input_vertex_attributes);
+        //             for (std::size_t row = 0; row < row_number; ++row)
+        //             {
+        //                 for (std::size_t col = 0; col < column_number; ++col)
+        //                 {
+        //                     UUID                        uuid           = level_ptr->CreateObject();
+        //                     std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
 
-#ifdef MEOW_DEBUG
-                    if (!gameobject_ptr)
-                        MEOW_ERROR("GameObject is invalid!");
-#endif
-                    gameobject_ptr->SetName("Sphere");
-                    auto transform_ptr = TryAddComponent(
-                        gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-                    transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
-                                                        (float)row * spacing - (float)row_number / 2.0f * spacing,
-                                                        0.0f);
+        // #ifdef MEOW_DEBUG
+        //                     if (!gameobject_ptr)
+        //                         MEOW_ERROR("GameObject is invalid!");
+        // #endif
+        //                     gameobject_ptr->SetName("Sphere");
+        //                     auto transform_ptr = TryAddComponent(
+        //                         gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+        //                     transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f *
+        //                     spacing,
+        //                                                         (float)row * spacing - (float)row_number / 2.0f *
+        //                                                         spacing, 0.0f);
 
-                    auto model_comp_ptr =
-                        TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());
-                    auto model_shared_ptr = std::make_shared<Model>(
-                        sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
-                    if (model_shared_ptr)
-                    {
-                        g_runtime_context.resource_system->Register(model_shared_ptr);
-                        model_comp_ptr->model_ptr = model_shared_ptr;
-                    }
-                }
-            }
-        }
+        //                     auto model_comp_ptr =
+        //                         TryAddComponent(gameobject_ptr, "ModelComponent",
+        //                         std::make_shared<ModelComponent>());
+        //                     auto model_shared_ptr = std::make_shared<Model>(
+        //                         sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+        //                     if (model_shared_ptr)
+        //                     {
+        //                         g_runtime_context.resource_system->Register(model_shared_ptr);
+        //                         model_comp_ptr->model_ptr = model_shared_ptr;
+        //                     }
+        //                 }
+        //             }
+        //         }
     }
 
     EditorWindow::~EditorWindow()
