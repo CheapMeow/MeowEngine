@@ -1,10 +1,38 @@
 cmake_minimum_required(VERSION 3.24)
 
+# should ahead of project
+
+set(CMAKE_CXX_FLAGS_EDITORDEBUG
+    "/Zi /Ob0 /Od /RTC1"
+    CACHE STRING "")
+set(CMAKE_CXX_FLAGS_GAMEDEBUG
+    "/Zi /Ob0 /Od /RTC1"
+    CACHE STRING "")
+set(CMAKE_CXX_FLAGS_EDITORRELEASE
+    "/O2 /Ob2 /DNDEBUG"
+    CACHE STRING "")
+set(CMAKE_CXX_FLAGS_GAMERELEASE
+    "/O2 /Ob2 /DNDEBUG"
+    CACHE STRING "")
+
+set(CMAKE_EXE_LINKER_FLAGS_EDITORDEBUG
+    "/debug /INCREMENTAL"
+    CACHE STRING "")
+set(CMAKE_EXE_LINKER_FLAGS_GAMEDEBUG
+    "/debug /INCREMENTAL"
+    CACHE STRING "")
+set(CMAKE_EXE_LINKER_FLAGS_EDITORRELEASE
+    "/INCREMENTAL:NO"
+    CACHE STRING "")
+set(CMAKE_EXE_LINKER_FLAGS_GAMERELEASE
+    "/INCREMENTAL:NO"
+    CACHE STRING "")
+
 project(MeowEngine LANGUAGES NONE)
 
 if(CMAKE_CONFIGURATION_TYPES)
   list(APPEND CMAKE_CONFIGURATION_TYPES
-       "EditorDebug;EditorRelease;GameDebug;GameRelease")
+       "EDITORDEBUG;EDITORRELEASE;GAMEDEBUG;GAMERELEASE")
   set(CMAKE_CONFIGURATION_TYPES
       "${CMAKE_CONFIGURATION_TYPES}"
       CACHE
@@ -18,34 +46,27 @@ enable_language(CXX)
 # Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-set(CMAKE_CXX_FLAGS_EditorRelease
-    "/O2 /Ob2 /DNDEBUG"
-    CACHE STRING "")
-set(CMAKE_CXX_FLAGS_GameRelease
-    "/O2 /Ob2 /DNDEBUG"
-    CACHE STRING "")
-
-if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL
-                                              "EditorRelease")
+if(CMAKE_BUILD_TYPE STREQUAL "EDITORDEBUG" OR CMAKE_BUILD_TYPE STREQUAL
+                                              "EDITORRELEASE")
   add_definitions(-DMEOW_EDITOR)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL
-                                              "GameDebug")
+if(CMAKE_BUILD_TYPE STREQUAL "EDITORDEBUG" OR CMAKE_BUILD_TYPE STREQUAL
+                                              "GAMEDEBUG")
   add_definitions(-DMEOW_DEBUG)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "EditorRelease" OR CMAKE_BUILD_TYPE STREQUAL
-                                                "GameRelease")
+if(CMAKE_BUILD_TYPE STREQUAL "EDITORRELEASE" OR CMAKE_BUILD_TYPE STREQUAL
+                                                "GAMERELEASE")
   add_definitions(-DNDEBUG)
 endif()
 
 # Add debugging flags for MSVC, Clang, and GCC Add optimization flags for
 # Release builds add_compile_options(
-# $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:EditorDebug,GameDebug>:/Od /Z7>>
-# $<$<CXX_COMPILER_ID:GNU,Clang>:$<$<CONFIG:EditorDebug,GameDebug>:-O0 -g>>
-# $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:EditorRelease,GameRelease>:/O2>>
-# $<$<CXX_COMPILER_ID:GNU,Clang>:$<$<CONFIG:EditorRelease,GameRelease>:-O3>> )
+# $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:EDITORDEBUG,GAMEDEBUG>:/Od /Z7>>
+# $<$<CXX_COMPILER_ID:GNU,Clang>:$<$<CONFIG:EDITORDEBUG,GAMEDEBUG>:-O0 -g>>
+# $<$<CXX_COMPILER_ID:MSVC>:$<$<CONFIG:EDITORRELEASE,GAMERELEASE>:/O2>>
+# $<$<CXX_COMPILER_ID:GNU,Clang>:$<$<CONFIG:EDITORRELEASE,GAMERELEASE>:-O3>> )
 
 # Add the cmake folder so the FindXXX module is found
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
