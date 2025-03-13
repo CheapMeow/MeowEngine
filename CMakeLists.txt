@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 3.24)
 # should ahead of project
 
 set(CMAKE_CXX_FLAGS_EDITORDEBUG
-    "/Zi /Ob0 /Od /RTC1"
+    "/Zi /Ob0 /Od /RTC1 /DMEOW_EDITOR /DMEOW_DEBUG"
     CACHE STRING "")
 set(CMAKE_CXX_FLAGS_GAMEDEBUG
-    "/Zi /Ob0 /Od /RTC1"
+    "/Zi /Ob0 /Od /RTC1 /DMEOW_DEBUG"
     CACHE STRING "")
 set(CMAKE_CXX_FLAGS_EDITORRELEASE
-    "/O2 /Ob2 /DNDEBUG"
+    "/O2 /Ob2 /DNDEBUG /DMEOW_EDITOR"
     CACHE STRING "")
 set(CMAKE_CXX_FLAGS_GAMERELEASE
     "/O2 /Ob2 /DNDEBUG"
@@ -45,21 +45,6 @@ enable_language(CXX)
 
 # Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-if(CMAKE_BUILD_TYPE STREQUAL "EDITORDEBUG" OR CMAKE_BUILD_TYPE STREQUAL
-                                              "EDITORRELEASE")
-  add_definitions(-DMEOW_EDITOR)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "EDITORDEBUG" OR CMAKE_BUILD_TYPE STREQUAL
-                                              "GAMEDEBUG")
-  add_definitions(-DMEOW_DEBUG)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "EDITORRELEASE" OR CMAKE_BUILD_TYPE STREQUAL
-                                                "GAMERELEASE")
-  add_definitions(-DNDEBUG)
-endif()
 
 # Add debugging flags for MSVC, Clang, and GCC Add optimization flags for
 # Release builds add_compile_options(
