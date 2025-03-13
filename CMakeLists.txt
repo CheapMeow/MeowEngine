@@ -1,12 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
 
-set(CMAKE_CXX_FLAGS_EditorRelease
-    "/O2 /Ob2 /DNDEBUG"
-    CACHE STRING "")
-set(CMAKE_CXX_FLAGS_GameRelease
-    "/O2 /Ob2 /DNDEBUG"
-    CACHE STRING "")
-
 project(MeowEngine LANGUAGES NONE)
 
 if(CMAKE_CONFIGURATION_TYPES)
@@ -24,6 +17,13 @@ enable_language(CXX)
 
 # Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+set(CMAKE_CXX_FLAGS_EditorRelease
+    "/O2 /Ob2 /DNDEBUG"
+    CACHE STRING "")
+set(CMAKE_CXX_FLAGS_GameRelease
+    "/O2 /Ob2 /DNDEBUG"
+    CACHE STRING "")
 
 if(CMAKE_BUILD_TYPE STREQUAL "EditorDebug" OR CMAKE_BUILD_TYPE STREQUAL
                                               "EditorRelease")
