@@ -29,8 +29,9 @@ set(EDITOR_SOURCE_FILES
     profile/profile_system.cpp
     global/editor_context.cpp)
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
-                                                      
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${EDITOR_HEADER_FILES}
+                                                      ${EDITOR_SOURCE_FILES})
+
 add_executable(${EDITOR_NAME} ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 add_dependencies(${EDITOR_NAME} ${GENERATED_FILE_TARGET_NAME})
 

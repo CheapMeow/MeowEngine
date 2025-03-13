@@ -111,28 +111,30 @@ set(RUNTIME_SOURCE_FILES
     function/window/window_system.cpp
     generated/register_all.cpp)
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
+source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES}
+                                                      ${RUNTIME_SOURCE_FILES})
 
-add_library(${RUNTIME_NAME} STATIC ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES})
+add_library(${RUNTIME_NAME} STATIC ${RUNTIME_HEADER_FILES}
+                                   ${RUNTIME_SOURCE_FILES})
 add_dependencies(${RUNTIME_NAME} ${GENERATED_FILE_TARGET_NAME})
 
 set_target_properties(${RUNTIME_NAME} PROPERTIES CXX_STANDARD 20)
 set_target_properties(${RUNTIME_NAME} PROPERTIES FOLDER "Engine")
 
-target_compile_definitions(${RUNTIME_NAME} PRIVATE
-  LIBRARY_EXPORTS
-)
-target_compile_definitions(${RUNTIME_NAME} PUBLIC
-  ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
-  $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_DEBUG>
-  $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_VALIDATION_LAYERS>
-  VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
-                            # according to cmake build platform
-  GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
-  IMGUI_DEFINE_MATH_OPERATORS
-  # _DISABLE_STRING_ANNOTATION # for ASAN
-  # _DISABLE_VECTOR_ANNOTATION # for ASAN
-  NOMINMAX # for std::numeric_limits<double>::min() and max()
+target_compile_definitions(${RUNTIME_NAME} PRIVATE LIBRARY_EXPORTS)
+target_compile_definitions(
+  ${RUNTIME_NAME}
+  PUBLIC
+    ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}"
+    $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_DEBUG>
+    $<$<OR:$<CONFIG:EditorDebug>,$<CONFIG:GameDebug>>:VKB_VALIDATION_LAYERS>
+    VK_USE_PLATFORM_WIN32_KHR # TODO: Config vulkan platform preprocesser
+                              # according to cmake build platform
+    GLM_ENABLE_EXPERIMENTAL # for GLM: GLM_GTX_component_wise
+    IMGUI_DEFINE_MATH_OPERATORS
+    # _DISABLE_STRING_ANNOTATION # for ASAN _DISABLE_VECTOR_ANNOTATION # for
+    # ASAN
+    NOMINMAX # for std::numeric_limits<double>::min() and max()
 )
 
 # being a cross-platform target, we enforce standards conformance on MSVC
