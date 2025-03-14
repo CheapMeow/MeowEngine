@@ -82,12 +82,12 @@ namespace Meow
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
-                "builtin/textures/cubemap/skybox_test_X+.hdr",
-                "builtin/textures/cubemap/skybox_test_X-.hdr",
-                "builtin/textures/cubemap/skybox_test_Y+.hdr",
-                "builtin/textures/cubemap/skybox_test_Y-.hdr",
-                "builtin/textures/cubemap/skybox_test_Z+.hdr",
-                "builtin/textures/cubemap/skybox_test_Z-.hdr",
+                "builtin/textures/cubemap/skybox_specular_X+.hdr",
+                "builtin/textures/cubemap/skybox_specular_X-.hdr",
+                "builtin/textures/cubemap/skybox_specular_Z+.hdr",
+                "builtin/textures/cubemap/skybox_specular_Z-.hdr",
+                "builtin/textures/cubemap/skybox_specular_Y+.hdr",
+                "builtin/textures/cubemap/skybox_specular_Y-.hdr",
             });
             if (texture_ptr)
             {
