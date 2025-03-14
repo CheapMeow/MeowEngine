@@ -41,6 +41,7 @@ namespace Meow
         void CreatePhysicalDevice();
         void CreateLogicalDevice();
         void CreateCommandPool();
+        void CreateDescriptorAllocator();
 
         vk::raii::Context           m_vulkan_context;
         vk::raii::Instance          m_vulkan_instance             = nullptr;
