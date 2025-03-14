@@ -72,6 +72,22 @@ namespace Meow
             }
         }
 
+        {
+            auto texture_ptr = ImageData::CreateCubemap({
+                "builtin/textures/cubemap/skybox_irradiance_X+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_X-.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Z+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Z-.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Y+.hdr",
+                "builtin/textures/cubemap/skybox_irradiance_Y-.hdr",
+            });
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                m_forward_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
+            }
+        }
+
         // skybox
 
         auto skybox_shader_ptr = std::make_shared<Shader>(
