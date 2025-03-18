@@ -56,3 +56,8 @@
 glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.spv
 ```
 
+## TODO
+
+1.切换渲染管线的时候，重新根据新渲染管线要求的顶点属性来加载物体
+
+不知道别人是怎么做的？直接把这个物体身上所有可能的属性全部加载进来？
