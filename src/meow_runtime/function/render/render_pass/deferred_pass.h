@@ -1,8 +1,8 @@
 #pragma once
 
 #include "function/render/render_pass/render_pass.h"
+#include "function/render/render_resources/material.h"
 #include "function/render/render_resources/model.hpp"
-#include "function/render/structs/material.h"
 #include "function/render/structs/shader.h"
 
 namespace Meow
@@ -74,6 +74,8 @@ namespace Meow
         void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
 
         void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
+
+        UUID GetObj2AttachmentMatID() { return m_obj2attachment_mat.uuid; }
 
         friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 

@@ -14,7 +14,15 @@ namespace Meow
 
         const std::unordered_map<UUID, std::shared_ptr<GameObject>>& GetAllGameObjects() const { return m_gameobjects; }
 
-        const std::unordered_map<UUID, std::weak_ptr<GameObject>>& GetAllVisibles() const { return m_visibles; }
+        const std::vector<std::weak_ptr<GameObject>>* GetVisiblesPerMaterial(UUID material_id) const
+        {
+            if (m_visibles_per_material.find(material_id) == m_visibles_per_material.end())
+            {
+                return nullptr;
+            }
+
+            return &m_visibles_per_material.at(material_id);
+        }
 
         std::weak_ptr<GameObject> GetGameObjectByID(UUID go_id) const;
 
@@ -27,8 +35,8 @@ namespace Meow
     private:
         void FrustumCulling();
 
-        std::unordered_map<UUID, std::shared_ptr<GameObject>> m_gameobjects;
-        std::unordered_map<UUID, std::weak_ptr<GameObject>>   m_visibles;
+        std::unordered_map<UUID, std::shared_ptr<GameObject>>            m_gameobjects;
+        std::unordered_map<UUID, std::vector<std::weak_ptr<GameObject>>> m_visibles_per_material;
 
         UUID m_main_camera_id;
     };

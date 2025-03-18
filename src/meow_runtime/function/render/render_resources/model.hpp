@@ -1,11 +1,11 @@
 #pragma once
 
 #include "core/math/bounding_box.h"
+#include "function/resource/resource_base.h"
 #include "model_anim.h"
 #include "model_bone.h"
 #include "model_mesh.h"
 #include "model_node.h"
-#include "render_resource_base.h"
 #include "vertex_attribute.h"
 
 #include <assimp/scene.h>
@@ -15,7 +15,7 @@
 
 namespace Meow
 {
-    struct Model : public RenderResourceBase
+    struct Model : public ResourceBase
     {
         using NodesMap = std::unordered_map<std::string, ModelNode*>;
         using BonesMap = std::unordered_map<std::string, ModelBone*>;

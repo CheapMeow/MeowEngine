@@ -58,10 +58,6 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 ## TODO
 
-### 切换渲染管线的时候，重新根据新渲染管线要求的顶点属性来加载物体。
-
-不知道别人是怎么做的？直接把这个物体身上所有可能的属性全部加载进来？
-
 ### 如何合理管理资源绑定的复杂性？
 
 因为资源绑定以 descriptor set 为单位。
@@ -95,3 +91,11 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 2.subpass 序号，以创建 `VkGraphicsPipelineCreateInfo`
 
 不知道是否还需要别的信息，但是总之材质和 pass 也是耦合的，无法完全独立于 pass 创建
+
+### 切换渲染管线
+
+需要重新根据新渲染管线要求的顶点属性来加载物体
+
+不知道别人是怎么做的？直接把这个物体身上所有可能的属性全部加载进来？
+
+并且材质也是依赖于 pass 的，所以也不能直接迁移

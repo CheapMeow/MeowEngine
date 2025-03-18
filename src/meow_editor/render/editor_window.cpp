@@ -89,6 +89,8 @@ namespace Meow
                     UUID                        uuid           = level_ptr->CreateObject();
                     std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
 
+                    opaque_objects.push_back(gameobject_ptr);
+
 #ifdef MEOW_DEBUG
                     if (!gameobject_ptr)
                         MEOW_ERROR("GameObject is invalid!");
@@ -104,6 +106,10 @@ namespace Meow
                         TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());
                     auto model_shared_ptr = std::make_shared<Model>(
                         sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+
+                    // TODO: hard code render pass cast
+                    model_comp_ptr->material_id = m_forward_pass.GetForwardMatID();
+
                     if (model_shared_ptr)
                     {
                         g_runtime_context.resource_system->Register(model_shared_ptr);
@@ -318,6 +324,20 @@ namespace Meow
                 m_render_pass_ptr = &m_forward_pass;
 
             g_editor_context.profile_system->ClearProfile();
+
+            for (int i = 0; i < opaque_objects.size(); i++)
+            {
+                auto opaque_object_ptr = opaque_objects[i].lock();
+                if (opaque_object_ptr)
+                {
+                    auto model_comp_ptr = opaque_object_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+
+                    if (cur_render_pass == 1)
+                        model_comp_ptr->material_id = m_forward_pass.GetForwardMatID();
+                    else if (cur_render_pass == 0)
+                        model_comp_ptr->material_id = m_deferred_pass.GetObj2AttachmentMatID();
+                }
+            }
         });
 #endif
 

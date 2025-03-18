@@ -5,7 +5,7 @@
 
 namespace Meow
 {
-    struct RenderResourceBase : public NonCopyable
+    struct ResourceBase : public NonCopyable
     {
         UUID uuid;
     };

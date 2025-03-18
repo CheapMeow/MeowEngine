@@ -2,8 +2,9 @@
 
 #include "core/base/non_copyable.h"
 #include "function/render/render_resources/uniform_buffer.h"
+#include "function/render/structs/shader.h"
 #include "function/render/utils/shading_model_type.h"
-#include "shader.h"
+#include "function/resource/resource_base.h"
 
 #include <memory>
 #include <unordered_map>
@@ -11,7 +12,7 @@
 
 namespace Meow
 {
-    class Material : NonCopyable
+    class Material : public ResourceBase
     {
     public:
         Material(std::nullptr_t) {}

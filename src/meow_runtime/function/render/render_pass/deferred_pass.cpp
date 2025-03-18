@@ -68,8 +68,8 @@ namespace Meow
         auto skybox_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
-        m_skybox_mat       = Material(skybox_shader_ptr);
-        m_quad_mat.subpass = 2;
+        m_skybox_mat         = Material(skybox_shader_ptr);
+        m_skybox_mat.subpass = 2;
         m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eCounterClockwise, true);
 
         {
@@ -217,37 +217,41 @@ namespace Meow
         // Update mesh uniform
 
         m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
-        for (const auto& kv : all_gameobjects_map)
+        const auto* visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        if (visibles_forward_ptr)
         {
-            std::shared_ptr<GameObject>           model_go_ptr = kv.second.lock();
-            std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
-                model_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-            std::shared_ptr<ModelComponent> model_comp_ptr =
-                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+            const auto& visibles_forward = *visibles_forward_ptr;
+            for (const auto& visible : visibles_forward)
+            {
+                std::shared_ptr<GameObject>           gameobject_ptr = visible.lock();
+                std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
+                    gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                std::shared_ptr<ModelComponent> model_comp_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
 
-            if (!transfrom_comp_ptr2 || !model_comp_ptr)
-                continue;
+                if (!transfrom_comp_ptr2 || !model_comp_ptr)
+                    continue;
 
 #ifdef MEOW_DEBUG
-            if (!model_go_ptr)
-                MEOW_ERROR("shared ptr is invalid!");
-            if (!transfrom_comp_ptr2)
-                MEOW_ERROR("shared ptr is invalid!");
-            if (!model_comp_ptr)
-                MEOW_ERROR("shared ptr is invalid!");
+                if (!gameobject_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!transfrom_comp_ptr2)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!model_comp_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            auto model = transfrom_comp_ptr2->GetTransform();
+                auto model = transfrom_comp_ptr2->GetTransform();
 
-            for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
-            {
-                m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerObject();
+                for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+                {
+                    m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                    m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerObject();
+                }
             }
+            m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerFrame();
         }
-        m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerFrame();
 
         // update light
 
@@ -285,29 +289,33 @@ namespace Meow
 
         m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
-        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
-        for (const auto& kv : all_gameobjects_map)
+        std::shared_ptr<Level> level_ptr            = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        if (visibles_forward_ptr)
         {
-            std::shared_ptr<GameObject> model_go_ptr = kv.second.lock();
-            if (!model_go_ptr)
-                continue;
-
-            std::shared_ptr<ModelComponent> model_comp_ptr =
-                model_go_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-            if (!model_comp_ptr)
-                continue;
-
-            auto model_res_ptr = model_comp_ptr->model_ptr.lock();
-            if (!model_res_ptr)
-                continue;
-
-            for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+            const auto& visibles_forward = *visibles_forward_ptr;
+            for (const auto& visible : visibles_forward)
             {
-                m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
-                model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
+                if (!gameobject_ptr)
+                    continue;
 
-                ++draw_call[0];
+                std::shared_ptr<ModelComponent> model_comp_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+                if (!model_comp_ptr)
+                    continue;
+
+                auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+                if (!model_res_ptr)
+                    continue;
+
+                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                {
+                    m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
+                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+
+                    ++draw_call[0];
+                }
             }
         }
     }

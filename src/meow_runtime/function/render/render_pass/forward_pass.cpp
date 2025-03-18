@@ -227,37 +227,43 @@ namespace Meow
         // Update mesh uniform
 
         m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto& all_gameobjects_map = level_ptr->GetAllVisibles();
-        for (const auto& kv : all_gameobjects_map)
+        const auto* visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_forward_mat.uuid);
+        if (visibles_forward_ptr)
         {
-            std::shared_ptr<GameObject>           gameobject_ptr = kv.second.lock();
-            std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
-                gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-            std::shared_ptr<ModelComponent> model_ptr =
-                gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+            const auto& visibles_forward = *visibles_forward_ptr;
+            for (const auto& visible : visibles_forward)
+            {
+                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
+                if (!gameobject_ptr)
+                    continue;
+                std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
+                    gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                std::shared_ptr<ModelComponent> model_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
 
-            if (!transfrom_comp_ptr2 || !model_ptr)
-                continue;
+                if (!transfrom_comp_ptr2 || !model_ptr)
+                    continue;
 
 #ifdef MEOW_DEBUG
-            if (!gameobject_ptr)
-                MEOW_ERROR("shared ptr is invalid!");
-            if (!transfrom_comp_ptr2)
-                MEOW_ERROR("shared ptr is invalid!");
-            if (!model_ptr)
-                MEOW_ERROR("shared ptr is invalid!");
+                if (!gameobject_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!transfrom_comp_ptr2)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!model_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-            auto model = transfrom_comp_ptr2->GetTransform();
+                auto model = transfrom_comp_ptr2->GetTransform();
 
-            for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
-            {
-                m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                m_forward_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
+                for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
+                {
+                    m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                    m_forward_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
+                }
             }
+            m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
         }
-        m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
 
         // skybox
 
@@ -283,31 +289,35 @@ namespace Meow
         m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
         m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
-        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto&            all_gameobjects_map = level_ptr->GetAllVisibles();
-        for (const auto& kv : all_gameobjects_map)
+        std::shared_ptr<Level> level_ptr            = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_forward_mat.uuid);
+        if (visibles_forward_ptr)
         {
-            std::shared_ptr<GameObject> gameobject_ptr = kv.second.lock();
-            if (!gameobject_ptr)
-                continue;
-
-            std::shared_ptr<ModelComponent> model_ptr =
-                gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-            if (!model_ptr)
-                continue;
-
-            auto model_res_ptr = model_ptr->model_ptr.lock();
-            if (!model_res_ptr)
-                continue;
-
-            m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1);
-
-            for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+            const auto& visibles_forward = *visibles_forward_ptr;
+            for (const auto& visible : visibles_forward)
             {
-                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
-                model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
+                if (!gameobject_ptr)
+                    continue;
 
-                ++draw_call[0];
+                std::shared_ptr<ModelComponent> model_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+                if (!model_ptr)
+                    continue;
+
+                auto model_res_ptr = model_ptr->model_ptr.lock();
+                if (!model_res_ptr)
+                    continue;
+
+                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1);
+
+                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                {
+                    m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
+                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+
+                    ++draw_call[0];
+                }
             }
         }
     }

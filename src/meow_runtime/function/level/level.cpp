@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "function/components/model/model_component.h"
 #include "function/global/runtime_context.h"
 
 namespace Meow
@@ -54,7 +55,7 @@ namespace Meow
 
     void Level::FrustumCulling()
     {
-        m_visibles.clear();
+        m_visibles_per_material.clear();
 
         std::shared_ptr<GameObject> camera_go_ptr = GetGameObjectByID(m_main_camera_id).lock();
 
@@ -64,17 +65,27 @@ namespace Meow
         std::shared_ptr<Camera3DComponent> camera_comp_ptr =
             camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        if (camera_comp_ptr)
+        if (!camera_comp_ptr)
         {
-            for (const auto& pair : m_gameobjects)
-            {
-                // if (camera_comp_ptr->FrustumCulling(pair.second))
-                // {
-                //     m_visibles[pair.first] = pair.second;
-                // }
+            return;
+        }
 
-                m_visibles[pair.first] = pair.second;
+        for (const auto& pair : m_gameobjects)
+        {
+            // if (camera_comp_ptr->FrustumCulling(pair.second))
+            // {
+            //     m_visibles[pair.first] = pair.second;
+            // }
+
+            std::shared_ptr<ModelComponent> model_comp_ptr =
+                pair.second->TryGetComponent<ModelComponent>("ModelComponent");
+
+            if (!model_comp_ptr)
+            {
+                continue;
             }
+
+            m_visibles_per_material[model_comp_ptr->material_id].push_back(pair.second);
         }
     }
 } // namespace Meow

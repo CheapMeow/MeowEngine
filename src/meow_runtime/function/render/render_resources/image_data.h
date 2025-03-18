@@ -2,11 +2,11 @@
 
 #include "buffer_data.h"
 #include "function/render/utils/vulkan_initialize_utils.hpp"
-#include "render_resource_base.h"
+#include "function/resource/resource_base.h"
 
 namespace Meow
 {
-    struct ImageData : public RenderResourceBase
+    struct ImageData : public ResourceBase
     {
     public:
         vk::Format   format;

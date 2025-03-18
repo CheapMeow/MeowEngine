@@ -12,5 +12,6 @@ namespace Meow
     public:
         UUID                 uuid;
         std::weak_ptr<Model> model_ptr;
+        UUID                 material_id;
     };
 } // namespace Meow

@@ -3,9 +3,9 @@
 #include "core/uuid/uuid.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/model.hpp"
-#include "function/render/render_resources/render_resource_base.h"
 #include "function/render/structs/shader.h"
 #include "function/system.h"
+#include "resource_base.h"
 
 #include <unordered_map>
 
@@ -57,7 +57,7 @@ namespace Meow
         }
 
     private:
-        std::unordered_map<UUID, std::shared_ptr<RenderResourceBase>> m_resources;
+        std::unordered_map<UUID, std::shared_ptr<ResourceBase>> m_resources;
     };
 
 } // namespace Meow

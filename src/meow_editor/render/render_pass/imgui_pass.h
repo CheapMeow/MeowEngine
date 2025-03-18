@@ -2,7 +2,7 @@
 
 #include "meow_runtime/core/signal/signal.hpp"
 #include "meow_runtime/function/render/render_pass/render_pass.h"
-#include "meow_runtime/function/render/structs/material.h"
+#include "meow_runtime/function/render/render_resources/material.h"
 #include "meow_runtime/function/render/structs/shader.h"
 #include "render/imgui_widgets/builtin_statistics_widget.h"
 #include "render/imgui_widgets/components_widget.h"
@@ -53,7 +53,7 @@ namespace Meow
                                           VkImageLayout offscreen_image_layout);
 
     private:
-        int                      m_cur_render_pass   = 0;
+        int                      m_cur_render_pass   = 1;
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;
 
