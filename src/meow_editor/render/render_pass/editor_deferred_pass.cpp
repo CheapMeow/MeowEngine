@@ -145,6 +145,16 @@ namespace Meow
                 {},                               /* pDepthStencilAttachment */
                 nullptr,                          /* pPreserveAttachments */
             },
+            // skybox rendering pass
+            {
+                vk::SubpassDescriptionFlags(),    /* flags */
+                vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                {},                               /* pInputAttachments */
+                swapchain_attachment_reference,   /* pColorAttachments */
+                {},                               /* pResolveAttachments */
+                &depth_attachment_reference,      /* pDepthStencilAttachment */
+                nullptr,                          /* pPreserveAttachments */
+            },
         };
 
         // Create subpass dependency
@@ -170,14 +180,24 @@ namespace Meow
                 vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
-            // quad rendering pass -> externel
+            // quad rendering pass -> skybox rendering pass
             {
                 1,                                                 /* srcSubpass */
-                VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                2,                                                 /* dstSubpass */
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
                 vk::PipelineStageFlagBits::eFragmentShader,        /* dstStageMask */
                 vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
                 vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
+            },
+            // skybox rendering pass -> externel
+            {
+                2,                                                 /* srcSubpass */
+                VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                vk::AccessFlagBits::eMemoryRead,                   /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
         };
@@ -267,6 +287,12 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 1);
 #endif
+
+        command_buffer.nextSubpass(vk::SubpassContents::eInline);
+
+        m_skybox_mat.BindPipeline(command_buffer);
+
+        RenderSkybox(command_buffer);
     }
 
     void EditorDeferredPass::AfterPresent()

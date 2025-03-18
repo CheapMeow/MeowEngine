@@ -73,6 +73,8 @@ namespace Meow
 
         void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
 
+        void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
+
         friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 
     protected:
@@ -80,8 +82,9 @@ namespace Meow
 
         Material m_obj2attachment_mat = nullptr;
         Material m_quad_mat           = nullptr;
-
-        Model m_quad_model = nullptr;
+        Model    m_quad_model         = nullptr;
+        Material m_skybox_mat         = nullptr;
+        Model    m_skybox_model       = nullptr;
 
         std::shared_ptr<ImageData> m_color_attachment    = nullptr;
         std::shared_ptr<ImageData> m_normal_attachment   = nullptr;

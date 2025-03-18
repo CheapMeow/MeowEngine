@@ -9,6 +9,7 @@
 #include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
 #include "function/render/structs/per_scene_data.h"
+#include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -61,6 +62,35 @@ namespace Meow
             m_LightInfos.direction[i] = normalize(m_LightInfos.direction[i]);
             m_LightInfos.speed[i]     = 1.0f + glm::linearRand<float>(1.0f, 2.0f);
         }
+
+        // skybox
+
+        auto skybox_shader_ptr = std::make_shared<Shader>(
+            physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
+
+        m_skybox_mat       = Material(skybox_shader_ptr);
+        m_quad_mat.subpass = 2;
+        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eCounterClockwise, true);
+
+        {
+            auto texture_ptr = ImageData::CreateCubemap({
+                "builtin/textures/cubemap/skybox_specular_X+.hdr",
+                "builtin/textures/cubemap/skybox_specular_X-.hdr",
+                "builtin/textures/cubemap/skybox_specular_Z+.hdr",
+                "builtin/textures/cubemap/skybox_specular_Z-.hdr",
+                "builtin/textures/cubemap/skybox_specular_Y+.hdr",
+                "builtin/textures/cubemap/skybox_specular_Y-.hdr",
+            });
+            if (texture_ptr)
+            {
+                g_runtime_context.resource_system->Register(texture_ptr);
+                m_skybox_mat.BindImageToDescriptorSet("environmentMap", *texture_ptr);
+            }
+        }
+
+        auto cube_vertices = GenerateCubeVertices();
+        m_skybox_model =
+            std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader_ptr->per_vertex_attributes));
     }
 
     void DeferredPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -230,6 +260,11 @@ namespace Meow
         }
 
         m_quad_mat.PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
+
+        // skybox
+
+        per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
+        m_skybox_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
     }
 
     void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -290,6 +325,15 @@ namespace Meow
         }
     }
 
+    void DeferredPass::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
+
+        m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
+    }
+
     void swap(DeferredPass& lhs, DeferredPass& rhs)
     {
         using std::swap;
@@ -298,8 +342,9 @@ namespace Meow
 
         swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
         swap(lhs.m_quad_mat, rhs.m_quad_mat);
-
         swap(lhs.m_quad_model, rhs.m_quad_model);
+        swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
+        swap(lhs.m_skybox_model, rhs.m_skybox_model);
 
         swap(lhs.m_color_attachment, rhs.m_color_attachment);
         swap(lhs.m_normal_attachment, rhs.m_normal_attachment);

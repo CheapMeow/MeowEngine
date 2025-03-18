@@ -350,6 +350,12 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        if (!shader_ptr)
+        {
+            MEOW_ERROR("shader_ptr is null");
+            return;
+        }
+
         auto it = shader_ptr->buffer_meta_map.find(name);
 #ifdef MEOW_DEBUG
         if (it == shader_ptr->buffer_meta_map.end())
@@ -378,6 +384,11 @@ namespace Meow
 
     void Material::PopulateUniformBuffer(const std::string& name, void* data, uint32_t size)
     {
+        if (!shader_ptr)
+        {
+            MEOW_ERROR("shader_ptr is null");
+            return;
+        }
 
         auto it = shader_ptr->buffer_meta_map.find(name);
 #ifdef MEOW_DEBUG
