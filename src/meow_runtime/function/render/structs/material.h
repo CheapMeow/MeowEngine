@@ -2,6 +2,7 @@
 
 #include "core/base/non_copyable.h"
 #include "function/render/render_resources/uniform_buffer.h"
+#include "function/render/utils/shading_model_type.h"
 #include "shader.h"
 
 #include <memory>
@@ -32,7 +33,7 @@ namespace Meow
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
                             vk::FrontFace               front_face,
-                            bool                        depth_buffered);
+                            bool                        depth_buffered = true);
 
         std::shared_ptr<Shader> GetShader() { return shader_ptr; }
 
@@ -68,6 +69,8 @@ namespace Meow
         std::shared_ptr<Shader> shader_ptr             = nullptr;
         int                     color_attachment_count = 1;
         int                     subpass                = 0;
+
+        ShadingModelType shading_model_type = ShadingModelType::Opaque;
 
     private:
         void CreateUniformBuffer();

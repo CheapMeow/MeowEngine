@@ -144,10 +144,11 @@ namespace Meow
                                             vk::StencilOp::eKeep,    /* depthFailOp */
                                             vk::CompareOp::eAlways); /* compareOp */
 
+        bool depth_write_enable = shading_model_type == ShadingModelType::Translucent ? false : true;
         vk::PipelineDepthStencilStateCreateInfo pipeline_depth_stencil_state_create_info(
             vk::PipelineDepthStencilStateCreateFlags(), /* flags */
             depth_buffered,                             /* depthTestEnable */
-            depth_buffered,                             /* depthWriteEnable */
+            depth_write_enable,                         /* depthWriteEnable */
             vk::CompareOp::eLessOrEqual,                /* depthCompareOp */
             false,                                      /* depthBoundsTestEnable */
             depth_buffered,                             /* stencilTestEnable */

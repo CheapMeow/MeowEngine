@@ -66,6 +66,7 @@ set(RUNTIME_HEADER_FILES
     function/render/utils/model_utils.h
     function/render/utils/vulkan_initialize_utils.hpp
     function/render/utils/vulkan_shader_utils.hpp
+    function/render/utils/shading_model_type.h
     function/resource/resource_system.hpp
     function/time/time_system.h
     function/window/window.h
