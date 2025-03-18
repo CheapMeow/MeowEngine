@@ -1,36 +1,6 @@
 # MeowEngine
 
-## 编译
-
-### 编译器
-
-msvc 在类型检查，模板类型推导方面可能更严格
-
-### 第三方库
-
-`ExternalProject_Add` 在 install 上出现问题。自行复制 dll 来模仿 install，会出现 dll 缺失的问题。`vcpkg` 可能在查找路径上出现问题。最终还是 `submodule` 最稳定
-
-需要用户安装的第三方库为
-
-VulkanSDK
-
-LLVM
-
-### 环境变量
-
-需要用户配置的环境变量为
-
-`VK_SDK_PATH` `VULKAN_SDK`
-
-`LLVM_DIR`
-
-### 编译着色器
-
-```shell
-glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.spv
-```
-
-## 特性
+## 框架介绍
 
 ### Cpp 静态反射
 
@@ -56,11 +26,33 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 使用 `SPIRV-Cross` 获取
 
-## 开发指南
+### Render Pass
 
-### 坐标系
+`Render Pass` 的基类负责创建资源，如 `Model`, `Shader`, `Material`, `Render Target` 等
 
-`glm` 使用右手系
+`Render Pass` 的派生类负责管理本 `Render Pass` 对资源的依赖、格式转换；各个 subpass 之间的资源依赖、格式转换；最终创建 `VkRenderPass`。然后负责在 `Render Pass` 绘制时，对每一个 `Material` 绑定，绘制。
 
-“使用某个手性”这个表述的意义在于，手性不同，进行向量叉乘时，叉乘得到的向量的值相同，但方向不同
+## 构建
+
+### 环境
+
+使用 msvc 编译
+
+需要用户在外部安装的第三方库为
+
+1.VulkanSDK
+
+2.LLVM
+
+为了找到这些外部安装的库，需要用户配置的环境变量为
+
+1.`VK_SDK_PATH` `VULKAN_SDK`
+
+2.`LLVM_DIR`
+
+### 编译着色器
+
+```shell
+glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.spv
+```
 
