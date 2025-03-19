@@ -1,5 +1,14 @@
 # MeowEngine
 
+## 特性
+
+### 渲染
+
+1. 前向渲染/延迟渲染
+2. PBR+IBL Pass
+3. 天空盒 Pass
+4. 半透明 Pass
+
 ## 框架介绍
 
 ### Cpp 静态反射
