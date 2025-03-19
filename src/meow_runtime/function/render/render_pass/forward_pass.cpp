@@ -32,11 +32,18 @@ namespace Meow
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
 
+        UUID albedo_image_id(0);
+        UUID normal_image_id(0);
+        UUID metallic_image_id(0);
+        UUID roughness_image_id(0);
+        UUID ao_image_id(0);
+        UUID irradiance_image_id(0);
+
         {
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/albedo.png");
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                albedo_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
             }
         }
@@ -45,7 +52,7 @@ namespace Meow
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/normal.png");
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                normal_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
             }
         }
@@ -54,7 +61,7 @@ namespace Meow
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/metallic.png");
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                metallic_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
             }
         }
@@ -63,7 +70,7 @@ namespace Meow
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/roughness.png");
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                roughness_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
             }
         }
@@ -72,7 +79,7 @@ namespace Meow
             auto texture_ptr = ImageData::CreateTexture("builtin/textures/pbr_sphere/ao.png");
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                ao_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
             }
         }
@@ -88,7 +95,7 @@ namespace Meow
             });
             if (texture_ptr)
             {
-                g_runtime_context.resource_system->Register(texture_ptr);
+                irradiance_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_forward_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
             }
         }
@@ -133,6 +140,54 @@ namespace Meow
         material_factory.SetTranslucent(true, 1);
         material_factory.CreatePipeline(
             logical_device, render_pass, translucent_shader_ptr.get(), &m_translucent_mat, 0);
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(albedo_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(normal_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(metallic_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(roughness_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(ao_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
+            }
+        }
+
+        {
+            auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(irradiance_image_id);
+            if (texture_ptr)
+            {
+                m_forward_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
+            }
+        }
     }
 
     void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -311,7 +366,7 @@ namespace Meow
 
             for (int obj_index = 0; obj_index < visibles_size; obj_index++)
             {
-                const auto& visible = visibles_translucent[obj_index];
+                const auto&                 visible        = visibles_translucent[obj_index];
                 std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
                 if (!gameobject_ptr)
                     continue;
@@ -339,7 +394,8 @@ namespace Meow
                 for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
                 {
                     m_translucent_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                    m_translucent_mat.PopulateDynamicUniformBuffer("objData", &translucent_obj_data, sizeof(translucent_obj_data));
+                    m_translucent_mat.PopulateDynamicUniformBuffer(
+                        "objData", &translucent_obj_data, sizeof(translucent_obj_data));
                     m_translucent_mat.EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
@@ -415,6 +471,7 @@ namespace Meow
         swap(lhs.m_forward_mat, rhs.m_forward_mat);
         swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);
+        swap(lhs.m_translucent_mat, rhs.m_translucent_mat);
 
         swap(lhs.m_pass_names, rhs.m_pass_names);
         swap(lhs.draw_call, rhs.draw_call);
