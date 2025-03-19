@@ -2,8 +2,9 @@
 
 #include "core/base/non_copyable.h"
 #include "function/render/render_resources/image_data.h"
+#include "function/render/render_resources/surface_data.h"
 #include "function/render/render_resources/vertex_attribute.h"
-#include "function/render/structs/surface_data.h"
+
 
 #include <vulkan/vulkan_raii.hpp>
 

@@ -22,7 +22,7 @@ namespace Meow
         static void DrawVertexAttributesStat(const BuiltinRenderStat& stat);
         static void DrawBufferStat(const BuiltinRenderStat& stat);
         static void DrawImageStat(const BuiltinRenderStat& stat);
-        
+
         static constexpr int    k_gredint_count     = 20;
         static constexpr double k_gredint_partition = 1.0 / 20.0;
 

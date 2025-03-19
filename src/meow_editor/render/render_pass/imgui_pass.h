@@ -3,7 +3,7 @@
 #include "meow_runtime/core/signal/signal.hpp"
 #include "meow_runtime/function/render/render_pass/render_pass.h"
 #include "meow_runtime/function/render/render_resources/material.h"
-#include "meow_runtime/function/render/structs/shader.h"
+#include "meow_runtime/function/render/render_resources/shader.h"
 #include "render/imgui_widgets/builtin_statistics_widget.h"
 #include "render/imgui_widgets/components_widget.h"
 #include "render/imgui_widgets/flame_graph_widget.h"

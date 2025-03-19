@@ -155,12 +155,13 @@ namespace Meow
             stencil_op_state,                           /* front */
             stencil_op_state);                          /* back */
 
+        bool                    color_blend_enable = shading_model_type == ShadingModelType::Translucent ? true : false;
         vk::ColorComponentFlags color_component_flags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
         std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
         for (int i = 0; i < color_attachment_count; ++i)
         {
-            pipeline_color_blend_attachment_states.emplace_back(false,                  /* blendEnable */
+            pipeline_color_blend_attachment_states.emplace_back(color_blend_enable,     /* blendEnable */
                                                                 vk::BlendFactor::eOne,  /* srcColorBlendFactor */
                                                                 vk::BlendFactor::eZero, /* dstColorBlendFactor */
                                                                 vk::BlendOp::eAdd,      /* colorBlendOp */

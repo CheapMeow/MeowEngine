@@ -3,7 +3,7 @@
 #include "core/uuid/uuid.h"
 #include "function/render/render_resources/image_data.h"
 #include "function/render/render_resources/model.hpp"
-#include "function/render/structs/shader.h"
+#include "function/render/render_resources/shader.h"
 #include "function/system.h"
 #include "resource_base.h"
 

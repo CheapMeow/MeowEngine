@@ -1,8 +1,8 @@
 #pragma once
 
 #include "meow_runtime/core/base/bitmask.hpp"
+#include "meow_runtime/function/render/render_resources/shader.h"
 #include "meow_runtime/function/render/render_resources/vertex_attribute.h"
-#include "meow_runtime/function/render/structs/shader.h"
 
 namespace Meow
 {

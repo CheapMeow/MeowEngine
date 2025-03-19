@@ -1,9 +1,9 @@
 #pragma once
 
 #include "meow_runtime/function/object/game_object.h"
-#include "meow_runtime/function/render/structs/per_frame_data.h"
-#include "meow_runtime/function/render/structs/surface_data.h"
-#include "meow_runtime/function/render/structs/swapchain_data.h"
+#include "meow_runtime/function/render/render_resources/per_frame_data.h"
+#include "meow_runtime/function/render/render_resources/surface_data.h"
+#include "meow_runtime/function/render/render_resources/swapchain_data.h"
 #include "meow_runtime/function/window/window.h"
 #include "render/render_pass/editor_deferred_pass.h"
 #include "render/render_pass/editor_forward_pass.h"
