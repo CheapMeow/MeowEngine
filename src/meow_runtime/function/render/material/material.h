@@ -4,7 +4,6 @@
 #include "function/render/buffer_data/uniform_buffer.h"
 #include "function/resource/resource_base.h"
 #include "shader.h"
-#include "shading_model_type.h"
 
 #include <memory>
 #include <unordered_map>
@@ -15,6 +14,8 @@ namespace Meow
     class Material : public ResourceBase
     {
     public:
+        friend class MaterialFactory;
+
         Material(std::nullptr_t) {}
 
         Material(std::shared_ptr<Shader> shader_ptr);
@@ -30,11 +31,6 @@ namespace Meow
 
             return *this;
         }
-
-        void CreatePipeline(const vk::raii::Device&     logical_device,
-                            const vk::raii::RenderPass& render_pass,
-                            vk::FrontFace               front_face,
-                            bool                        depth_buffered = true);
 
         std::shared_ptr<Shader> GetShader() { return shader_ptr; }
 
@@ -67,11 +63,7 @@ namespace Meow
 
         friend void swap(Material& lhs, Material& rhs);
 
-        std::shared_ptr<Shader> shader_ptr             = nullptr;
-        int                     color_attachment_count = 1;
-        int                     subpass                = 0;
-
-        ShadingModelType shading_model_type = ShadingModelType::Opaque;
+        std::shared_ptr<Shader> shader_ptr = nullptr;
 
     private:
         void CreateUniformBuffer();

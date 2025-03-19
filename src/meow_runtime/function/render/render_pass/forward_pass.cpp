@@ -8,6 +8,7 @@
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_context.h"
 #include "function/render/buffer_data/per_scene_data.h"
+#include "function/render/material/material_factory.h"
 #include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,11 +20,15 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        MaterialFactory material_factory;
+
         auto mesh_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
 
         m_forward_mat = Material(mesh_shader_ptr);
-        m_forward_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
+        material_factory.Init(mesh_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetOpaque(true, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, mesh_shader_ptr.get(), &m_forward_mat, 0);
 
         input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
 
@@ -94,7 +99,9 @@ namespace Meow
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
         m_skybox_mat = Material(skybox_shader_ptr);
-        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eCounterClockwise, true);
+        material_factory.Init(skybox_shader_ptr.get(), vk::FrontFace::eCounterClockwise);
+        material_factory.SetOpaque(true, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader_ptr.get(), &m_skybox_mat, 0);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({

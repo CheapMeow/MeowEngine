@@ -9,6 +9,7 @@
 #include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
 #include "function/render/buffer_data/per_scene_data.h"
+#include "function/render/material/material_factory.h"
 #include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -21,19 +22,23 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        MaterialFactory material_factory;
+
         auto obj_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
 
-        m_obj2attachment_mat                        = Material(obj_shader_ptr);
-        m_obj2attachment_mat.color_attachment_count = 3;
-        m_obj2attachment_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, true);
+        m_obj2attachment_mat = Material(obj_shader_ptr);
+        material_factory.Init(obj_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetOpaque(true, 3);
+        material_factory.CreatePipeline(logical_device, render_pass, obj_shader_ptr.get(), &m_obj2attachment_mat, 0);
 
         auto quad_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
 
-        m_quad_mat         = Material(quad_shader_ptr);
-        m_quad_mat.subpass = 1;
-        m_quad_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eClockwise, false);
+        m_quad_mat = Material(quad_shader_ptr);
+        material_factory.Init(quad_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetOpaque(false, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, quad_shader_ptr.get(), &m_quad_mat, 1);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
@@ -68,9 +73,10 @@ namespace Meow
         auto skybox_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
-        m_skybox_mat         = Material(skybox_shader_ptr);
-        m_skybox_mat.subpass = 2;
-        m_skybox_mat.CreatePipeline(logical_device, render_pass, vk::FrontFace::eCounterClockwise, true);
+        m_skybox_mat = Material(skybox_shader_ptr);
+        material_factory.Init(skybox_shader_ptr.get(), vk::FrontFace::eCounterClockwise);
+        material_factory.SetOpaque(true, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader_ptr.get(), &m_skybox_mat, 2);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
