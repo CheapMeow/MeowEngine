@@ -1,9 +1,8 @@
 #pragma once
 
 #include "core/math/bounding_box.h"
-#include "image_data.h"
-#include "index_buffer.h"
-#include "vertex_buffer.h"
+#include "function/render/buffer_data/index_buffer.h"
+#include "function/render/buffer_data/vertex_buffer.h"
 
 #include <memory>
 #include <string>
@@ -12,17 +11,6 @@
 namespace Meow
 {
     struct ModelNode;
-
-    struct TextureInfo
-    {
-        std::string diffuse;
-        std::string normal;
-        std::string specular;
-
-        std::shared_ptr<ImageData> diffuse_texture;
-        std::shared_ptr<ImageData> normal_texture;
-        std::shared_ptr<ImageData> specular_texture;
-    };
 
     struct ModelMesh
     {
@@ -42,10 +30,8 @@ namespace Meow
         std::vector<size_t> bones;
         bool                isSkin = false;
 
-        TextureInfo texture_info;
-
         void RefreshBuffer();
-        
+
         void BindOnly(const vk::raii::CommandBuffer& cmd_buffer);
 
         void DrawOnly(const vk::raii::CommandBuffer& cmd_buffer);

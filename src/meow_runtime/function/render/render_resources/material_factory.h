@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/render/utils/shading_model_type.h"
+#include "function/render/render_resources/shading_model_type.h"
 
 #include <vulkan/vulkan_raii.hpp>
 

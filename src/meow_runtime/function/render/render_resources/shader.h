@@ -2,7 +2,7 @@
 
 #include "pch.h"
 
-#include "function/render/render_resources/image_data.h"
+#include "function/render/buffer_data/image_data.h"
 #include "function/render/render_resources/vertex_attribute.h"
 
 #include <spirv_cross/spirv_glsl.hpp>

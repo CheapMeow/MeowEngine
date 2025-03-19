@@ -171,54 +171,6 @@ namespace Meow
         }
     }
 
-    void Model::FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info)
-    {
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_DIFFUSE, 0, &texture_path);
-            texture_info.diffuse = texture_path.C_Str();
-
-            auto path        = root_path / texture_info.diffuse;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
-
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_NORMALS))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_NORMALS, 0, &texture_path);
-            texture_info.normal = texture_path.C_Str();
-
-            auto path        = root_path / texture_info.normal;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
-
-        if (ai_material->GetTextureCount(aiTextureType::aiTextureType_SPECULAR))
-        {
-            aiString texture_path;
-            ai_material->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &texture_path);
-            texture_info.specular = texture_path.C_Str();
-
-            auto path        = root_path / texture_info.specular;
-            auto texture_ptr = ImageData::CreateTexture(path.string());
-            if (texture_ptr)
-            {
-                g_runtime_context.resource_system->Register(texture_ptr);
-                texture_info.diffuse_texture = texture_ptr;
-            }
-        }
-    }
-
     ModelNode* Model::LoadNode(const aiNode* aiNode, const aiScene* ai_scene)
     {
         auto model_node  = new ModelNode();
@@ -285,7 +237,8 @@ namespace Meow
         aiMaterial* material = ai_scene->mMaterials[ai_mesh->mMaterialIndex];
         if (material)
         {
-            FillMaterialTextures(material, mesh->texture_info);
+            // TODO: load texture to resource system
+            // FillMaterialTextures(material, mesh->texture_info);
         }
 
         // load bones

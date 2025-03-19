@@ -131,8 +131,6 @@ namespace Meow
         void GotoAnimation(float time);
 
     protected:
-        void FillMaterialTextures(aiMaterial* ai_material, TextureInfo& texture_info);
-
         ModelNode* LoadNode(const aiNode* node, const aiScene* scene);
 
         ModelMesh* LoadMesh(const aiMesh* mesh, const aiScene* scene);

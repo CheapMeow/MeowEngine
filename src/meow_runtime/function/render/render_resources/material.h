@@ -1,10 +1,10 @@
 #pragma once
 
 #include "core/base/non_copyable.h"
-#include "function/render/utils/shading_model_type.h"
+#include "function/render/buffer_data/uniform_buffer.h"
+#include "function/render/render_resources/shading_model_type.h"
 #include "function/resource/resource_base.h"
 #include "shader.h"
-#include "uniform_buffer.h"
 
 #include <memory>
 #include <unordered_map>

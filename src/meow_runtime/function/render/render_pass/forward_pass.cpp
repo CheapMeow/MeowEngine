@@ -7,7 +7,7 @@
 #include "function/components/model/model_component.h"
 #include "function/components/transform/transform_3d_component.hpp"
 #include "function/global/runtime_context.h"
-#include "function/render/render_resources/per_scene_data.h"
+#include "function/render/buffer_data/per_scene_data.h"
 #include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>

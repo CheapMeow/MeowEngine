@@ -3,7 +3,7 @@
 #include "core/base/non_copyable.h"
 #include "core/signal/signal.hpp"
 #include "function/input/input_enum.h"
-#include "function/render/render_resources/surface_data.h"
+#include "function/render/buffer_data/surface_data.h"
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
