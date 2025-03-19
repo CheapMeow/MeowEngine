@@ -468,10 +468,40 @@ namespace Meow
         m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_translucent_ptr = level_ptr->GetVisiblesPerMaterial(m_translucent_mat.uuid);
+
+        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
+        std::shared_ptr<Transform3DComponent> camera_transform_ptr =
+            camera_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+        if (!camera_transform_ptr)
+            return;
+
+        glm::vec3 camera_pos     = camera_transform_ptr->position;
+        glm::vec3 camera_forward = camera_transform_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+
+        auto* visibles_translucent_ptr = level_ptr->GetVisiblesPerMaterial(m_translucent_mat.uuid);
         if (visibles_translucent_ptr)
         {
-            const auto& visibles_translucent = *visibles_translucent_ptr;
+            auto& visibles_translucent = *visibles_translucent_ptr; // std::vector<std::weak_ptr<Meow::GameObject>>
+
+            std::sort(visibles_translucent.begin(),
+                      visibles_translucent.end(),
+                      [&](const std::weak_ptr<GameObject>& a, const std::weak_ptr<GameObject>& b) {
+                          auto a_ptr = a.lock();
+                          auto b_ptr = b.lock();
+                          if (!a_ptr || !b_ptr)
+                              return false;
+
+                          auto a_transform = a_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                          auto b_transform = b_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                          if (!a_transform || !b_transform)
+                              return false;
+
+                          float dist_a = glm::dot(a_transform->position - camera_pos, camera_forward);
+                          float dist_b = glm::dot(b_transform->position - camera_pos, camera_forward);
+
+                          return dist_a > dist_b;
+                      });
+
             for (const auto& visible : visibles_translucent)
             {
                 std::shared_ptr<GameObject> gameobject_ptr = visible.lock();

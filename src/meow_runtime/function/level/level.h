@@ -12,9 +12,9 @@ namespace Meow
     public:
         void Tick(float dt);
 
-        const std::unordered_map<UUID, std::shared_ptr<GameObject>>& GetAllGameObjects() const { return m_gameobjects; }
+        std::unordered_map<UUID, std::shared_ptr<GameObject>>& GetAllGameObjects() { return m_gameobjects; }
 
-        const std::vector<std::weak_ptr<GameObject>>* GetVisiblesPerMaterial(UUID material_id) const
+        std::vector<std::weak_ptr<GameObject>>* GetVisiblesPerMaterial(UUID material_id)
         {
             if (m_visibles_per_material.find(material_id) == m_visibles_per_material.end())
             {
