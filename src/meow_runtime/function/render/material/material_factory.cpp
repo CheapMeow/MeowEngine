@@ -1,7 +1,5 @@
 #include "material_factory.h"
 
-#include <array>
-
 namespace Meow
 {
     void MaterialFactory::Init(const Shader* shader_ptr, vk::FrontFace front_face)
@@ -66,23 +64,23 @@ namespace Meow
 
         uint32_t vertex_stride = VertexAttributesToSize(shader_ptr->per_vertex_attributes);
 
-        std::vector<vk::VertexInputAttributeDescription> vertex_input_attribute_descriptions;
-        vk::VertexInputBindingDescription                vertex_input_binding_description(0, vertex_stride);
+        std::vector<vk::VertexInputAttributeDescription>().swap(context.vertex_input_attribute_descriptions);
+        context.vertex_input_binding_description = vk::VertexInputBindingDescription(0, vertex_stride);
 
         if (0 < vertex_stride)
         {
             uint32_t curr_offset = 0;
-            vertex_input_attribute_descriptions.reserve(shader_ptr->per_vertex_attributes.size());
+            context.vertex_input_attribute_descriptions.reserve(shader_ptr->per_vertex_attributes.size());
             for (uint32_t i = 0; i < shader_ptr->per_vertex_attributes.size(); i++)
             {
-                vertex_input_attribute_descriptions.emplace_back(
+                context.vertex_input_attribute_descriptions.emplace_back(
                     i, 0, VertexAttributeToVkFormat(shader_ptr->per_vertex_attributes[i]), curr_offset);
                 curr_offset += VertexAttributeToSize(shader_ptr->per_vertex_attributes[i]);
             }
             context.pipeline_vertex_input_state_create_info.setVertexBindingDescriptions(
-                vertex_input_binding_description);
+                context.vertex_input_binding_description);
             context.pipeline_vertex_input_state_create_info.setVertexAttributeDescriptions(
-                vertex_input_attribute_descriptions);
+                context.vertex_input_attribute_descriptions);
         }
 
         context.pipeline_input_assembly_state_create_info = vk::PipelineInputAssemblyStateCreateInfo(
@@ -107,9 +105,9 @@ namespace Meow
         context.pipeline_multisample_state_create_info =
             vk::PipelineMultisampleStateCreateInfo({}, vk::SampleCountFlagBits::e1);
 
-        std::array<vk::DynamicState, 2> dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+        context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =
-            vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), dynamic_states);
+            vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), context.dynamic_states);
     }
 
     void MaterialFactory::SetOpaque(bool depth_buffered, int color_attachment_count)
