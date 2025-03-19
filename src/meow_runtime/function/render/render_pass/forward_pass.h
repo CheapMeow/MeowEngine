@@ -1,9 +1,9 @@
 #pragma once
 
+#include "function/render/material/material.h"
+#include "function/render/material/shader.h"
 #include "function/render/render_pass/render_pass.h"
-#include "function/render/render_resources/material.h"
 #include "function/render/render_resources/model.hpp"
-#include "function/render/render_resources/shader.h"
 
 namespace Meow
 {
