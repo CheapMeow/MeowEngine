@@ -122,7 +122,7 @@ namespace Meow
                                                     depth_buffered,                             /* depthTestEnable */
                                                     true,                                       /* depthWriteEnable */
                                                     vk::CompareOp::eLessOrEqual,                /* depthCompareOp */
-                                                    true,              /* depthBoundsTestEnable */
+                                                    false,             /* depthBoundsTestEnable */
                                                     depth_buffered,    /* stencilTestEnable */
                                                     stencil_op_state,  /* front */
                                                     stencil_op_state); /* back */
