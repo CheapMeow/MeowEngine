@@ -1,5 +1,6 @@
 #pragma once
 
+#include "material.h"
 #include "shading_model_type.h"
 
 #include <vulkan/vulkan_raii.hpp>
@@ -24,13 +25,13 @@ namespace Meow
     class MaterialFactory
     {
     public:
-        void Init(const class Shader* shader_ptr, vk::FrontFace front_face = vk::FrontFace::eClockwise);
+        void Init(const Shader* shader_ptr, vk::FrontFace front_face = vk::FrontFace::eClockwise);
         void SetOpaque(bool depth_buffered = true, int color_attachment_count = 1);
         void SetTranslucent(bool depth_buffered = true, int color_attachment_count = 1);
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
-                            const class Shader*         shader_ptr,
-                            class Material*             material_ptr,
+                            const Shader*               shader_ptr,
+                            Material*                   material_ptr,
                             int                         subpass = 0) const;
 
     private:

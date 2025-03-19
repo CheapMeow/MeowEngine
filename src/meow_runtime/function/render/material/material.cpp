@@ -286,9 +286,6 @@ namespace Meow
         using std::swap;
 
         std::swap(lhs.shader_ptr, rhs.shader_ptr);
-        std::swap(lhs.color_attachment_count, rhs.color_attachment_count);
-        std::swap(lhs.subpass, rhs.subpass);
-
         std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
         std::swap(lhs.m_actived, rhs.m_actived);
         std::swap(lhs.m_obj_count, rhs.m_obj_count);

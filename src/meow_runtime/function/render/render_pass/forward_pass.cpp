@@ -122,6 +122,17 @@ namespace Meow
         auto cube_vertices = GenerateCubeVertices();
         m_skybox_model =
             std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader_ptr->per_vertex_attributes));
+
+        auto translucent_shader_ptr = std::make_shared<Shader>(physical_device,
+                                                               logical_device,
+                                                               "builtin/shaders/pbr_translucent.vert.spv",
+                                                               "builtin/shaders/pbr_translucent.frag.spv");
+
+        m_translucent_mat = Material(translucent_shader_ptr);
+        material_factory.Init(translucent_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetTranslucent(true, 1);
+        material_factory.CreatePipeline(
+            logical_device, render_pass, translucent_shader_ptr.get(), &m_translucent_mat, 0);
     }
 
     void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -276,6 +287,64 @@ namespace Meow
 
         per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
         m_skybox_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+
+        // translucent
+
+        struct TranslucentObjectData
+        {
+            glm::mat4 model;
+            float     alpha;
+            float     padding1;
+            float     padding2;
+            float     padding3;
+        };
+
+        m_translucent_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_translucent_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
+        m_translucent_mat.BeginPopulatingDynamicUniformBufferPerFrame();
+        const auto* visibles_translucent_ptr = level_ptr->GetVisiblesPerMaterial(m_translucent_mat.uuid);
+        if (visibles_translucent_ptr)
+        {
+            const auto& visibles_translucent = *visibles_translucent_ptr;
+
+            int visibles_size = visibles_translucent.size();
+
+            for (int obj_index = 0; obj_index < visibles_size; obj_index++)
+            {
+                const auto& visible = visibles_translucent[obj_index];
+                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
+                if (!gameobject_ptr)
+                    continue;
+                std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
+                    gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                std::shared_ptr<ModelComponent> model_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+
+                if (!transfrom_comp_ptr2 || !model_ptr)
+                    continue;
+
+#ifdef MEOW_DEBUG
+                if (!gameobject_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!transfrom_comp_ptr2)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!model_ptr)
+                    MEOW_ERROR("shared ptr is invalid!");
+#endif
+
+                TranslucentObjectData translucent_obj_data;
+
+                translucent_obj_data.model = transfrom_comp_ptr2->GetTransform();
+                translucent_obj_data.alpha = (float)obj_index / visibles_size;
+                for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
+                {
+                    m_translucent_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                    m_translucent_mat.PopulateDynamicUniformBuffer("objData", &translucent_obj_data, sizeof(translucent_obj_data));
+                    m_translucent_mat.EndPopulatingDynamicUniformBufferPerObject();
+                }
+            }
+            m_translucent_mat.EndPopulatingDynamicUniformBufferPerFrame();
+        }
     }
 
     void

@@ -95,7 +95,7 @@ namespace Meow
                     if (!gameobject_ptr)
                         MEOW_ERROR("GameObject is invalid!");
 #endif
-                    gameobject_ptr->SetName("Sphere");
+                    gameobject_ptr->SetName("Sphere " + std::to_string(row * column_number + col));
                     auto transform_ptr = TryAddComponent(
                         gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
                     transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
@@ -109,6 +109,49 @@ namespace Meow
 
                     // TODO: hard code render pass cast
                     model_comp_ptr->material_id = m_forward_pass.GetForwardMatID();
+
+                    if (model_shared_ptr)
+                    {
+                        g_runtime_context.resource_system->Register(model_shared_ptr);
+                        model_comp_ptr->model_ptr = model_shared_ptr;
+                    }
+                }
+            }
+        }
+
+        {
+            std::size_t row_number    = 7;
+            std::size_t column_number = 7;
+            float       spacing       = 2.5;
+            auto [sphere_vertices, sphere_indices] =
+                GenerateSphereVerticesAndIndices(64, 64, 1.0f, m_render_pass_ptr->input_vertex_attributes);
+            for (std::size_t row = 0; row < row_number; ++row)
+            {
+                for (std::size_t col = 0; col < column_number; ++col)
+                {
+                    UUID                        uuid           = level_ptr->CreateObject();
+                    std::shared_ptr<GameObject> gameobject_ptr = level_ptr->GetGameObjectByID(uuid).lock();
+
+                    translucent_objects.push_back(gameobject_ptr);
+
+#ifdef MEOW_DEBUG
+                    if (!gameobject_ptr)
+                        MEOW_ERROR("GameObject is invalid!");
+#endif
+                    gameobject_ptr->SetName("Sphere Translucent" + std::to_string(row * column_number + col));
+                    auto transform_ptr = TryAddComponent(
+                        gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+                    transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
+                                                        (float)row * spacing - (float)row_number / 2.0f * spacing,
+                                                        -10.0f);
+
+                    auto model_comp_ptr =
+                        TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());
+                    auto model_shared_ptr = std::make_shared<Model>(
+                        sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+
+                    // TODO: hard code render pass cast
+                    model_comp_ptr->material_id = m_forward_pass.GetTranslucentMatID();
 
                     if (model_shared_ptr)
                     {

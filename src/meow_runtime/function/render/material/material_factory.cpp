@@ -1,7 +1,5 @@
 #include "material_factory.h"
 
-#include "material.h"
-
 #include <array>
 
 namespace Meow
