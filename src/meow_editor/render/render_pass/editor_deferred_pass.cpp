@@ -281,7 +281,7 @@ namespace Meow
             command_buffer.beginQuery(*query_pool, 1, {});
 #endif
 
-        MeshLighting(command_buffer);
+        RenderOpaqueMeshes(command_buffer);
 
 #ifdef MEOW_EDITOR
         if (m_query_enabled)

@@ -48,9 +48,11 @@ namespace Meow
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
-        void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
+        void RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer);
 
         void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
+
+        void RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer);
 
         UUID GetForwardMatID() { return m_forward_mat.uuid; }
         UUID GetTranslucentMatID() { return m_translucent_mat.uuid; }

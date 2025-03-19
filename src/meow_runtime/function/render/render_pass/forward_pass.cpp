@@ -349,9 +349,6 @@ namespace Meow
         {
             glm::mat4 model;
             float     alpha;
-            float     padding1;
-            float     padding2;
-            float     padding3;
         };
 
         m_translucent_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
@@ -414,11 +411,11 @@ namespace Meow
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void ForwardPass::MeshLighting(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPass::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
-        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
         m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
         std::shared_ptr<Level> level_ptr            = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
@@ -441,8 +438,6 @@ namespace Meow
                 if (!model_res_ptr)
                     continue;
 
-                m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1);
-
                 for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
                 {
                     m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
@@ -464,6 +459,7 @@ namespace Meow
         ++draw_call[1];
     }
 
+    void ForwardPass::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer) {}
     void swap(ForwardPass& lhs, ForwardPass& rhs)
     {
         using std::swap;

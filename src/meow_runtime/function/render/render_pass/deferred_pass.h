@@ -71,7 +71,7 @@ namespace Meow
 
         void RenderGBuffer(const vk::raii::CommandBuffer& command_buffer);
 
-        void MeshLighting(const vk::raii::CommandBuffer& command_buffer);
+        void RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer);
 
         void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
 

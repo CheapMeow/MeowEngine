@@ -326,7 +326,7 @@ namespace Meow
         }
     }
 
-    void DeferredPass::MeshLighting(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPass::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
