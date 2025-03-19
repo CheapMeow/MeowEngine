@@ -25,12 +25,12 @@ namespace Meow
         auto mesh_shader_ptr = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
 
-        m_forward_mat = Material(mesh_shader_ptr);
+        m_opaque_mat = Material(mesh_shader_ptr);
         material_factory.Init(mesh_shader_ptr.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 1);
-        material_factory.CreatePipeline(logical_device, render_pass, mesh_shader_ptr.get(), &m_forward_mat, 0);
+        material_factory.CreatePipeline(logical_device, render_pass, mesh_shader_ptr.get(), &m_opaque_mat, 0);
 
-        input_vertex_attributes = m_forward_mat.shader_ptr->per_vertex_attributes;
+        input_vertex_attributes = m_opaque_mat.shader_ptr->per_vertex_attributes;
 
         UUID albedo_image_id(0);
         UUID normal_image_id(0);
@@ -44,7 +44,7 @@ namespace Meow
             if (texture_ptr)
             {
                 albedo_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
             }
         }
 
@@ -53,7 +53,7 @@ namespace Meow
             if (texture_ptr)
             {
                 normal_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Meow
             if (texture_ptr)
             {
                 metallic_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
             }
         }
 
@@ -71,7 +71,7 @@ namespace Meow
             if (texture_ptr)
             {
                 roughness_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
             }
         }
 
@@ -80,7 +80,7 @@ namespace Meow
             if (texture_ptr)
             {
                 ao_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
             }
         }
 
@@ -96,7 +96,7 @@ namespace Meow
             if (texture_ptr)
             {
                 irradiance_image_id = g_runtime_context.resource_system->Register(texture_ptr);
-                m_forward_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
+                m_opaque_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
             }
         }
 
@@ -145,7 +145,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(albedo_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("albedoMap", *texture_ptr);
             }
         }
 
@@ -153,7 +153,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(normal_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("normalMap", *texture_ptr);
             }
         }
 
@@ -161,7 +161,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(metallic_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("metallicMap", *texture_ptr);
             }
         }
 
@@ -169,7 +169,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(roughness_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("roughnessMap", *texture_ptr);
             }
         }
 
@@ -177,7 +177,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(ao_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("aoMap", *texture_ptr);
             }
         }
 
@@ -185,7 +185,7 @@ namespace Meow
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(irradiance_image_id);
             if (texture_ptr)
             {
-                m_forward_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
+                m_translucent_mat.BindImageToDescriptorSet("irradianceMap", *texture_ptr);
             }
         }
     }
@@ -273,7 +273,7 @@ namespace Meow
                                  camera_comp_ptr->near_plane,
                                  camera_comp_ptr->far_plane);
 
-        m_forward_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_opaque_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
         struct LightData
         {
@@ -295,16 +295,16 @@ namespace Meow
         LightData lights;
         lights.camPos = transfrom_comp_ptr->position;
 
-        m_forward_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
+        m_opaque_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
 
         // Update mesh uniform
 
-        m_forward_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_forward_mat.uuid);
-        if (visibles_forward_ptr)
+        m_opaque_mat.BeginPopulatingDynamicUniformBufferPerFrame();
+        const auto* visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_opaque_mat.uuid);
+        if (visibles_opaque_ptr)
         {
-            const auto& visibles_forward = *visibles_forward_ptr;
-            for (const auto& visible : visibles_forward)
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
             {
                 std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
                 if (!gameobject_ptr)
@@ -330,12 +330,12 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_ptr->model_ptr.lock()->meshes.size(); ++i)
                 {
-                    m_forward_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                    m_forward_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                    m_forward_mat.EndPopulatingDynamicUniformBufferPerObject();
+                    m_opaque_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                    m_opaque_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_opaque_mat.EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
-            m_forward_mat.EndPopulatingDynamicUniformBufferPerFrame();
+            m_opaque_mat.EndPopulatingDynamicUniformBufferPerFrame();
         }
 
         // skybox
@@ -351,6 +351,7 @@ namespace Meow
             float     alpha;
         };
 
+        per_scene_data.view = view;
         m_translucent_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
         m_translucent_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
         m_translucent_mat.BeginPopulatingDynamicUniformBufferPerFrame();
@@ -403,7 +404,7 @@ namespace Meow
     void
     ForwardPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 3; i++)
         {
             draw_call[i] = 0;
         }
@@ -415,15 +416,15 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
-        m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
+        m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
+        m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
-        std::shared_ptr<Level> level_ptr            = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_forward_mat.uuid);
-        if (visibles_forward_ptr)
+        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_opaque_mat.uuid);
+        if (visibles_opaque_ptr)
         {
-            const auto& visibles_forward = *visibles_forward_ptr;
-            for (const auto& visible : visibles_forward)
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
             {
                 std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
                 if (!gameobject_ptr)
@@ -440,7 +441,7 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
                 {
-                    m_forward_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
+                    m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
                     model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
                     ++draw_call[0];
@@ -459,12 +460,49 @@ namespace Meow
         ++draw_call[1];
     }
 
-    void ForwardPass::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer) {}
+    void ForwardPass::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
+        m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
+
+        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_translucent_ptr = level_ptr->GetVisiblesPerMaterial(m_translucent_mat.uuid);
+        if (visibles_translucent_ptr)
+        {
+            const auto& visibles_translucent = *visibles_translucent_ptr;
+            for (const auto& visible : visibles_translucent)
+            {
+                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
+                if (!gameobject_ptr)
+                    continue;
+
+                std::shared_ptr<ModelComponent> model_ptr =
+                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+                if (!model_ptr)
+                    continue;
+
+                auto model_res_ptr = model_ptr->model_ptr.lock();
+                if (!model_res_ptr)
+                    continue;
+
+                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                {
+                    m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[2], true);
+                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+
+                    ++draw_call[2];
+                }
+            }
+        }
+    }
+
     void swap(ForwardPass& lhs, ForwardPass& rhs)
     {
         using std::swap;
 
-        swap(lhs.m_forward_mat, rhs.m_forward_mat);
+        swap(lhs.m_opaque_mat, rhs.m_opaque_mat);
         swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);
         swap(lhs.m_translucent_mat, rhs.m_translucent_mat);

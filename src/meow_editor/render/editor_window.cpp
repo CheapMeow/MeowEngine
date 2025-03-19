@@ -143,7 +143,7 @@ namespace Meow
                         gameobject_ptr, "Transform3DComponent", std::make_shared<Transform3DComponent>());
                     transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
                                                         (float)row * spacing - (float)row_number / 2.0f * spacing,
-                                                        -10.0f);
+                                                        -5.0f);
 
                     auto model_comp_ptr =
                         TryAddComponent(gameobject_ptr, "ModelComponent", std::make_shared<ModelComponent>());

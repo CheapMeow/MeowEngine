@@ -128,9 +128,9 @@ namespace Meow
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
-        m_render_stat[0].vertex_attribute_metas = m_forward_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat[0].buffer_meta_map        = m_forward_mat.shader_ptr->buffer_meta_map;
-        m_render_stat[0].image_meta_map         = m_forward_mat.shader_ptr->image_meta_map;
+        m_render_stat[0].vertex_attribute_metas = m_opaque_mat.shader_ptr->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_opaque_mat.shader_ptr->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_opaque_mat.shader_ptr->image_meta_map;
 
         m_render_stat[1].vertex_attribute_metas = m_skybox_mat.shader_ptr->vertex_attribute_metas;
         m_render_stat[1].buffer_meta_map        = m_skybox_mat.shader_ptr->buffer_meta_map;
@@ -154,7 +154,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_forward_mat.BindPipeline(command_buffer);
+        m_opaque_mat.BindPipeline(command_buffer);
 
 #ifdef MEOW_EDITOR
         if (m_query_enabled)
@@ -181,6 +181,9 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 1);
 #endif
+
+        m_translucent_mat.BindPipeline(command_buffer);
+        RenderTranslucentMeshes(command_buffer);
     }
 
     void EditorForwardPass::AfterPresent()

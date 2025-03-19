@@ -54,18 +54,18 @@ namespace Meow
 
         void RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer);
 
-        UUID GetForwardMatID() { return m_forward_mat.uuid; }
+        UUID GetForwardMatID() { return m_opaque_mat.uuid; }
         UUID GetTranslucentMatID() { return m_translucent_mat.uuid; }
 
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material m_forward_mat     = nullptr;
+        Material m_opaque_mat      = nullptr;
         Material m_skybox_mat      = nullptr;
         Model    m_skybox_model    = nullptr;
         Material m_translucent_mat = nullptr;
 
         std::string m_pass_names[2];
-        int         draw_call[2] = {0, 0};
+        int         draw_call[3] = {0, 0, 0};
     };
 } // namespace Meow

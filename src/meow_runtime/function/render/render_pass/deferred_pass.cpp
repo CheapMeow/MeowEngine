@@ -223,11 +223,11 @@ namespace Meow
         // Update mesh uniform
 
         m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
-        if (visibles_forward_ptr)
+        const auto* visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        if (visibles_opaque_ptr)
         {
-            const auto& visibles_forward = *visibles_forward_ptr;
-            for (const auto& visible : visibles_forward)
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
             {
                 std::shared_ptr<GameObject>           gameobject_ptr = visible.lock();
                 std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
@@ -295,12 +295,12 @@ namespace Meow
 
         m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
-        std::shared_ptr<Level> level_ptr            = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_forward_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
-        if (visibles_forward_ptr)
+        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        if (visibles_opaque_ptr)
         {
-            const auto& visibles_forward = *visibles_forward_ptr;
-            for (const auto& visible : visibles_forward)
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
             {
                 std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
                 if (!gameobject_ptr)
