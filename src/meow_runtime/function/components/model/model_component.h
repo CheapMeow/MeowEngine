@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function/object/game_object.h"
-#include "function/render/render_resources/model.hpp"
+#include "function/render/model/model.hpp"
 
 #include <vector>
 

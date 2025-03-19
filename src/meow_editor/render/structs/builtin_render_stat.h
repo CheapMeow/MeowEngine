@@ -2,7 +2,7 @@
 
 #include "meow_runtime/core/base/bitmask.hpp"
 #include "meow_runtime/function/render/material/shader.h"
-#include "meow_runtime/function/render/render_resources/vertex_attribute.h"
+#include "meow_runtime/function/render/model/vertex_attribute.h"
 
 namespace Meow
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "function/render/render_resources/model.hpp"
+#include "function/render/model/model.hpp"
 
 #include <tuple>
 #include <vector>

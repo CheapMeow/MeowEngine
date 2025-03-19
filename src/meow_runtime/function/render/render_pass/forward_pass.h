@@ -2,8 +2,8 @@
 
 #include "function/render/material/material.h"
 #include "function/render/material/shader.h"
+#include "function/render/model/model.hpp"
 #include "function/render/render_pass/render_pass.h"
-#include "function/render/render_resources/model.hpp"
 
 namespace Meow
 {
