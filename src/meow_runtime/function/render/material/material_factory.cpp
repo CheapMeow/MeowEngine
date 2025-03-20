@@ -129,24 +129,25 @@ namespace Meow
 
         vk::ColorComponentFlags color_component_flags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-        std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
+        std::vector<vk::PipelineColorBlendAttachmentState>().swap(context.pipeline_color_blend_attachment_states);
         for (int i = 0; i < color_attachment_count; ++i)
         {
-            pipeline_color_blend_attachment_states.emplace_back(false,                  /* blendEnable */
-                                                                vk::BlendFactor::eOne,  /* srcColorBlendFactor */
-                                                                vk::BlendFactor::eZero, /* dstColorBlendFactor */
-                                                                vk::BlendOp::eAdd,      /* colorBlendOp */
-                                                                vk::BlendFactor::eOne,  /* srcAlphaBlendFactor */
-                                                                vk::BlendFactor::eZero, /* dstAlphaBlendFactor */
-                                                                vk::BlendOp::eAdd,      /* alphaBlendOp */
-                                                                color_component_flags); /* colorWriteMask */
+            context.pipeline_color_blend_attachment_states.emplace_back(
+                false,                  /* blendEnable */
+                vk::BlendFactor::eOne,  /* srcColorBlendFactor */
+                vk::BlendFactor::eZero, /* dstColorBlendFactor */
+                vk::BlendOp::eAdd,      /* colorBlendOp */
+                vk::BlendFactor::eOne,  /* srcAlphaBlendFactor */
+                vk::BlendFactor::eZero, /* dstAlphaBlendFactor */
+                vk::BlendOp::eAdd,      /* alphaBlendOp */
+                color_component_flags); /* colorWriteMask */
         }
         context.pipeline_color_blend_state_create_info =
-            vk::PipelineColorBlendStateCreateInfo(vk::PipelineColorBlendStateCreateFlags(), /* flags */
-                                                  false,                                    /* logicOpEnable */
-                                                  vk::LogicOp::eNoOp,                       /* logicOp */
-                                                  pipeline_color_blend_attachment_states,   /* pAttachments */
-                                                  {{1.0f, 1.0f, 1.0f, 1.0f}});              /* blendConstants */
+            vk::PipelineColorBlendStateCreateInfo(vk::PipelineColorBlendStateCreateFlags(),       /* flags */
+                                                  false,                                          /* logicOpEnable */
+                                                  vk::LogicOp::eNoOp,                             /* logicOp */
+                                                  context.pipeline_color_blend_attachment_states, /* pAttachments */
+                                                  {{1.0f, 1.0f, 1.0f, 1.0f}});                    /* blendConstants */
     }
 
     void MaterialFactory::SetTranslucent(bool depth_buffered, int color_attachment_count)
@@ -168,10 +169,10 @@ namespace Meow
 
         vk::ColorComponentFlags color_component_flags(vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
                                                       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-        std::vector<vk::PipelineColorBlendAttachmentState> pipeline_color_blend_attachment_states;
+        std::vector<vk::PipelineColorBlendAttachmentState>().swap(context.pipeline_color_blend_attachment_states);
         for (int i = 0; i < color_attachment_count; ++i)
         {
-            pipeline_color_blend_attachment_states.emplace_back(
+            context.pipeline_color_blend_attachment_states.emplace_back(
                 true,                               /* blendEnable */
                 vk::BlendFactor::eSrcAlpha,         /* srcColorBlendFactor */
                 vk::BlendFactor::eOneMinusSrcAlpha, /* dstColorBlendFactor */
@@ -182,10 +183,10 @@ namespace Meow
                 color_component_flags);             /* colorWriteMask */
         }
         context.pipeline_color_blend_state_create_info =
-            vk::PipelineColorBlendStateCreateInfo(vk::PipelineColorBlendStateCreateFlags(), /* flags */
-                                                  false,                                    /* logicOpEnable */
-                                                  vk::LogicOp::eNoOp,                       /* logicOp */
-                                                  pipeline_color_blend_attachment_states,   /* pAttachments */
+            vk::PipelineColorBlendStateCreateInfo(vk::PipelineColorBlendStateCreateFlags(),       /* flags */
+                                                  false,                                          /* logicOpEnable */
+                                                  vk::LogicOp::eNoOp,                             /* logicOp */
+                                                  context.pipeline_color_blend_attachment_states, /* pAttachments */
                                                   {{1.0f, 1.0f, 1.0f, 1.0f}});
     }
 
