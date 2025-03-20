@@ -7,7 +7,7 @@
 #include "meow_runtime/function/global/runtime_context.h"
 #include "meow_runtime/function/level/level.h"
 #include "meow_runtime/function/render/utils/model_utils.h"
-#include "meow_runtime/function/render/utils/vulkan_initialize_utils.hpp"
+#include "meow_runtime/function/render/utils/vulkan_initialization_utils.hpp"
 
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>

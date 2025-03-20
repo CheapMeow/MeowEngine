@@ -1,4 +1,4 @@
-#include "vulkan_initialize_utils.hpp"
+#include "vulkan_initialization_utils.hpp"
 
 #include <cassert>
 #include <iomanip>
