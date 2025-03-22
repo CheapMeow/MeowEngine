@@ -10,13 +10,13 @@
 [submodule "src/3rdparty/assimp"]
 	path = src/3rdparty/assimp
 	url = https://github.com/assimp/assimp
-[submodule "src/3rdparty/imgui"]
-	path = src/3rdparty/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = docking
 [submodule "src/3rdparty/stb"]
 	path = src/3rdparty/stb
 	url = https://github.com/nothings/stb.git
 [submodule "src/3rdparty/SPIRV-Cross"]
 	path = src/3rdparty/SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "src/3rdparty/imgui"]
+	path = src/3rdparty/imgui
+	url = https://github.com/CheapMeow/imgui.git
+	branch = my_docking

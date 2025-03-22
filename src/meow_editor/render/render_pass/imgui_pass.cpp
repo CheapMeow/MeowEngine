@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <volk.h>
 
 namespace Meow
 {
@@ -173,7 +174,28 @@ namespace Meow
                 }
                 ImVec2 image_size = {width, height};
                 ImGui::SetCursorPos((ImGui::GetWindowSize() - image_size) * 0.5f);
+                ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                draw_list->AddCallback(
+                    [](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
+                        vk::raii::CommandBuffer* command_buffer_ptr =
+                            static_cast<vk::raii::CommandBuffer*>(cmd->UserCallbackData);
+                        if (command_buffer_ptr)
+                        {
+                            ImGui_ImplVulkan_SwitchToNoColorBlendPipeline(**command_buffer_ptr);
+                        }
+                    },
+                    reinterpret_cast<void*>(const_cast<vk::raii::CommandBuffer*>(&command_buffer)));
                 ImGui::Image((ImTextureID)m_offscreen_image_desc, image_size);
+                draw_list->AddCallback(
+                    [](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
+                        vk::raii::CommandBuffer* command_buffer_ptr =
+                            static_cast<vk::raii::CommandBuffer*>(cmd->UserCallbackData);
+                        if (command_buffer_ptr)
+                        {
+                            ImGui_ImplVulkan_SwitchToDefaultPipeline(**command_buffer_ptr);
+                        }
+                    },
+                    reinterpret_cast<void*>(const_cast<vk::raii::CommandBuffer*>(&command_buffer)));
             }
         }
         ImGui::End();
