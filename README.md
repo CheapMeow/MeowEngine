@@ -108,3 +108,13 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 不知道别人是怎么做的？直接把这个物体身上所有可能的属性全部加载进来？
 
 并且材质也是依赖于 pass 的，所以也不能直接迁移
+
+### 如何显示 GPU 和主存之间的带宽
+
+例如 MSAA 需要在 GPU 中创建 4x Depth 和 4x Color，如果之后的 Pass 不需要 Depth，那么仅仅把 Color 写回到主存就可以呈现了
+
+但是我们可以利用硬件的 resolve，使得 4x Color 在写回主存的时候直接 resolve，那么写入的数据量只是 1x Color
+
+如果不启动硬件 resolve，那么光照 Pass 渲染完 4x Color 还要写回主存，主存再把 4x Color 写回 GPU 单独做 resolve 就使得带宽增加了四倍
+
+于是需要有一个东西来判断当前带宽，来观察是否配置正确，使得 MSAA 利用了硬件 resolve
