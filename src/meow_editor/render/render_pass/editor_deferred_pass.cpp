@@ -20,11 +20,14 @@ namespace Meow
 
         // Create a set to store all information of attachments
 
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
-        assert(color_format != vk::Format::eUndefined);
+        // TODO: multiple window
+        // RenderPass should be independent from window surface data
+        // But attachment should be created with certain color format
+        // So when then scene is crossing two windows,
+        // we should spilt rendering into two parts
+        // and we should have two different set of attachments?
 
-        m_color_format = color_format;
+        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
 // swap chain attachment

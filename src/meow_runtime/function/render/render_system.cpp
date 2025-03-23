@@ -102,6 +102,28 @@ namespace Meow
         }
 
         m_physical_device = vk::raii::PhysicalDevice(ranked_devices.rbegin()->second);
+
+        m_msaa_samples = GetMaxUsableSampleCount(m_physical_device);
+
+        std::vector<vk::ExtensionProperties> device_extensions = m_physical_device.enumerateDeviceExtensionProperties();
+        std::vector<const char*>             depth_extension   = {VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME};
+
+        m_depth_writeback_resolve_supported = ValidateExtensions(depth_extension, device_extensions);
+        if (m_depth_writeback_resolve_supported)
+        {
+            m_supported_depth_resolve_mode_list = PrepareDepthResolveModeList(m_vulkan_context, m_physical_device);
+
+            if (m_supported_depth_resolve_mode_list.size() > 0 &&
+                m_supported_depth_resolve_mode_list[0] != vk::ResolveModeFlagBits::eNone)
+            {
+                m_current_depth_resolve_mode = m_supported_depth_resolve_mode_list[0];
+            }
+        }
+        else
+        {
+            m_supported_depth_resolve_mode_list = {vk::ResolveModeFlagBits::eNone};
+            m_current_depth_resolve_mode        = vk::ResolveModeFlagBits::eNone;
+        }
     }
 
     void RenderSystem::CreateLogicalDevice()

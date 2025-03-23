@@ -115,7 +115,9 @@ namespace Meow
 
         // Create attachment
 
-        m_color_attachment = ImageData::CreateAttachment(m_color_format,
+        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
+
+        m_color_attachment = ImageData::CreateAttachment(color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,
@@ -351,8 +353,6 @@ namespace Meow
     void swap(DeferredPass& lhs, DeferredPass& rhs)
     {
         using std::swap;
-
-        swap(lhs.m_color_format, rhs.m_color_format);
 
         swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
         swap(lhs.m_quad_mat, rhs.m_quad_mat);

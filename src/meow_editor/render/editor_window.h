@@ -20,7 +20,6 @@ namespace Meow
         void Tick(float dt) override;
 
     private:
-        void CreateSurface();
         void CreateSwapChian();
         void CreatePerFrameData();
         void CreateRenderPass();

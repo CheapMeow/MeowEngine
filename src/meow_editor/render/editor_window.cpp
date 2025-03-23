@@ -279,15 +279,6 @@ namespace Meow
         Window::Tick(dt);
     }
 
-    void EditorWindow::CreateSurface()
-    {
-        const vk::raii::Instance& vulkan_instance = g_runtime_context.render_system->GetInstance();
-
-        auto         size = GetSize();
-        vk::Extent2D extent(size.x, size.y);
-        m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
-    }
-
     void EditorWindow::CreateSwapChian()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
@@ -295,9 +286,6 @@ namespace Meow
         const vk::raii::CommandPool&    onetime_submit_command_pool =
             g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
 
         m_swapchain_data =
             SwapChainData(physical_device,
@@ -313,7 +301,7 @@ namespace Meow
 #ifdef MEOW_EDITOR
         vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
 
-        m_offscreen_render_target = ImageData::CreateRenderTarget(color_format,
+        m_offscreen_render_target = ImageData::CreateRenderTarget(m_color_format,
                                                                   temp_extent,
                                                                   vk::ImageUsageFlagBits::eColorAttachment |
                                                                       vk::ImageUsageFlagBits::eInputAttachment,

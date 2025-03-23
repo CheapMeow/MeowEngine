@@ -80,8 +80,6 @@ namespace Meow
         friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 
     protected:
-        vk::Format m_color_format;
-
         Material m_obj2attachment_mat = nullptr;
         Material m_quad_mat           = nullptr;
         Model    m_quad_model         = nullptr;

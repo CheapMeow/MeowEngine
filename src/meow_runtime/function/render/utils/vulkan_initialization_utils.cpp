@@ -318,6 +318,88 @@ namespace Meow
         return score;
     }
 
+    vk::SampleCountFlagBits GetMaxUsableSampleCount(const vk::raii::PhysicalDevice& physical_device)
+    {
+        vk::PhysicalDeviceProperties physical_device_properties = physical_device.getProperties();
+
+        vk::SampleCountFlags counts = physical_device_properties.limits.framebufferColorSampleCounts &
+                                      physical_device_properties.limits.framebufferDepthSampleCounts;
+        if (counts & vk::SampleCountFlagBits::e64)
+        {
+            return vk::SampleCountFlagBits::e64;
+        }
+        if (counts & vk::SampleCountFlagBits::e32)
+        {
+            return vk::SampleCountFlagBits::e32;
+        }
+        if (counts & vk::SampleCountFlagBits::e16)
+        {
+            return vk::SampleCountFlagBits::e16;
+        }
+        if (counts & vk::SampleCountFlagBits::e8)
+        {
+            return vk::SampleCountFlagBits::e8;
+        }
+        if (counts & vk::SampleCountFlagBits::e4)
+        {
+            return vk::SampleCountFlagBits::e4;
+        }
+        if (counts & vk::SampleCountFlagBits::e2)
+        {
+            return vk::SampleCountFlagBits::e2;
+        }
+
+        return vk::SampleCountFlagBits::e1;
+    }
+
+    std::vector<vk::ResolveModeFlagBits> PrepareDepthResolveModeList(const vk::raii::Context&       vulkan_context,
+                                                                     const vk::raii::PhysicalDevice physical_device)
+    {
+        std::vector<vk::ResolveModeFlagBits> supported_depth_resolve_mode_list;
+
+        std::vector<vk::ExtensionProperties> available_instance_extensions =
+            vulkan_context.enumerateInstanceExtensionProperties();
+        std::vector<const char*> required_instance_extensions = GetRequiredInstanceExtensions({
+            VK_KHR_SURFACE_EXTENSION_NAME,
+        });
+
+        bool PhysicalDeviceProperties2Supported =
+            ValidateExtensions(required_instance_extensions, available_instance_extensions);
+
+        if (!PhysicalDeviceProperties2Supported)
+        {
+            return {vk::ResolveModeFlagBits::eNone};
+        }
+
+        auto properties2 =
+            physical_device
+                .getProperties2<vk::PhysicalDeviceProperties2, vk::PhysicalDeviceDepthStencilResolveProperties>();
+        const vk::PhysicalDeviceDepthStencilResolveProperties& depth_resolve_properties =
+            properties2.get<vk::PhysicalDeviceDepthStencilResolveProperties>();
+
+        if (depth_resolve_properties.supportedDepthResolveModes & vk::ResolveModeFlagBits::eNone)
+        {
+            return {vk::ResolveModeFlagBits::eNone};
+        }
+
+        std::vector<vk::ResolveModeFlagBits> modes = {
+            vk::ResolveModeFlagBits::eSampleZero,
+            vk::ResolveModeFlagBits::eMin,
+            vk::ResolveModeFlagBits::eMax,
+            vk::ResolveModeFlagBits::eAverage,
+        };
+
+        for (const auto& mode : modes)
+        {
+            if (depth_resolve_properties.supportedDepthResolveModes & mode)
+            {
+                supported_depth_resolve_mode_list.push_back(mode);
+            }
+        }
+
+        return supported_depth_resolve_mode_list;
+    }
+
     uint32_t FindGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queue_family_properties)
     {
         // get the first index into queueFamiliyProperties which supports graphics

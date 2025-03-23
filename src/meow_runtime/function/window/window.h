@@ -24,8 +24,6 @@ namespace Meow
 
         virtual void Tick(float dt);
 
-        virtual const SurfaceData& GetSurfaceData() { return m_surface_data; }
-
         /**
          * Gets the size of the window in pixels.
          * @param checkFullscreen If in fullscreen and true size will be the screens size.
@@ -312,6 +310,12 @@ namespace Meow
          */
         Signal<glm::vec2>& OnMouseScroll() { return m_on_mouse_scroll_signal; }
 
+        // --------------------------Render--------------------------
+
+        void               CreateSurface();
+        const SurfaceData& GetSurfaceData() { return m_surface_data; }
+        const vk::Format   GetColorFormat() { return m_color_format; }
+
     protected:
         friend void CallbackWindowPosition(GLFWwindow* glfwWindow, int32_t xpos, int32_t ypos);
         friend void CallbackWindowSize(GLFWwindow* glfwWindow, int32_t width, int32_t height);
@@ -375,6 +379,9 @@ namespace Meow
         Signal<glm::vec2>                             m_on_mouse_position_signal;
         Signal<glm::vec2>                             m_on_mouse_scroll_signal;
 
+        // --------------------------Render--------------------------
+
         SurfaceData m_surface_data = nullptr;
+        vk::Format  m_color_format;
     };
 } // namespace Meow

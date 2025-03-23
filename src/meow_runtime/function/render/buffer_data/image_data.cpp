@@ -269,12 +269,13 @@ namespace Meow
         return image_data_ptr;
     }
 
-    std::shared_ptr<ImageData> ImageData::CreateAttachment(vk::Format             format,
-                                                           const vk::Extent2D&    extent,
-                                                           vk::ImageUsageFlags    usage_flags,
-                                                           vk::ImageAspectFlags   aspect_mask,
-                                                           vk::FormatFeatureFlags format_feature_flags,
-                                                           bool                   anisotropy_enable)
+    std::shared_ptr<ImageData> ImageData::CreateAttachment(vk::Format              format,
+                                                           const vk::Extent2D&     extent,
+                                                           vk::ImageUsageFlags     usage_flags,
+                                                           vk::ImageAspectFlags    aspect_mask,
+                                                           vk::FormatFeatureFlags  format_feature_flags,
+                                                           bool                    anisotropy_enable,
+                                                           vk::SampleCountFlagBits sample_count)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -305,7 +306,7 @@ namespace Meow
                                               vk::Extent3D(extent, 1),
                                               1,
                                               1,
-                                              vk::SampleCountFlagBits::e1,
+                                              sample_count,
                                               image_tiling,
                                               usage_flags | vk::ImageUsageFlagBits::eSampled,
                                               vk::SharingMode::eExclusive,

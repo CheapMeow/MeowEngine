@@ -52,6 +52,11 @@ namespace Meow
     uint32_t ScorePhysicalDevice(const vk::raii::PhysicalDevice& device,
                                  const std::vector<const char*>& required_device_extensions);
 
+    vk::SampleCountFlagBits GetMaxUsableSampleCount(const vk::raii::PhysicalDevice& physical_device);
+
+    std::vector<vk::ResolveModeFlagBits> PrepareDepthResolveModeList(const vk::raii::Context&       vulkan_context,
+                                                                     const vk::raii::PhysicalDevice physical_device);
+
     uint32_t FindGraphicsQueueFamilyIndex(std::vector<vk::QueueFamilyProperties> const& queue_family_properties);
 
     std::pair<uint32_t, uint32_t>
@@ -106,8 +111,8 @@ namespace Meow
                        vk::raii::Queue const&       queue,
                        Func const&                  func)
     {
-        vk::raii::CommandBuffer command_buffer =
-            std::move(vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
+        vk::raii::CommandBuffer command_buffer = std::move(
+            vk::raii::CommandBuffers(logical_device, {*command_pool, vk::CommandBufferLevel::ePrimary, 1}).front());
         command_buffer.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
         func(command_buffer);
         command_buffer.end();

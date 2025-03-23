@@ -67,14 +67,38 @@ namespace Meow
                       bool                   anisotropy_enable    = false,
                       bool                   force_staging        = true);
 
+        /**
+         * @brief Attachment doesn't need a sampler, because fragment shader read it from framebuffer directly.
+         *
+         * @param format Texel format
+         * @param extent Size of the texture: width, height
+         * @param usage_flags
+         * @param aspect_mask
+         * @param format_feature_flags
+         * @param anisotropy_enable
+         * @param sample_count
+         * @return std::shared_ptr<ImageData>
+         */
         static std::shared_ptr<ImageData>
-        CreateAttachment(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
-                         const vk::Extent2D&    extent               = {256, 256},
-                         vk::ImageUsageFlags    usage_flags          = {},
-                         vk::ImageAspectFlags   aspect_mask          = vk::ImageAspectFlagBits::eColor,
-                         vk::FormatFeatureFlags format_feature_flags = {},
-                         bool                   anisotropy_enable    = false);
+        CreateAttachment(vk::Format              format               = vk::Format::eR8G8B8A8Unorm,
+                         const vk::Extent2D&     extent               = {256, 256},
+                         vk::ImageUsageFlags     usage_flags          = {},
+                         vk::ImageAspectFlags    aspect_mask          = vk::ImageAspectFlagBits::eColor,
+                         vk::FormatFeatureFlags  format_feature_flags = {},
+                         bool                    anisotropy_enable    = false,
+                         vk::SampleCountFlagBits sample_count         = vk::SampleCountFlagBits::e1);
 
+        /**
+         * @brief Render Target needs a sampler to support randomly reading.
+         *
+         * @param format Texel format
+         * @param extent Size of the texture: width, height
+         * @param usage_flags
+         * @param aspect_mask
+         * @param format_feature_flags
+         * @param anisotropy_enable
+         * @return std::shared_ptr<ImageData>
+         */
         static std::shared_ptr<ImageData>
         CreateRenderTarget(vk::Format             format               = vk::Format::eR8G8B8A8Unorm,
                            const vk::Extent2D&    extent               = {256, 256},

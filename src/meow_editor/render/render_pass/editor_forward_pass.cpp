@@ -20,9 +20,7 @@ namespace Meow
 
         // Create a set to store all information of attachments
 
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
-        assert(color_format != vk::Format::eUndefined);
+        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
 #ifdef MEOW_EDITOR

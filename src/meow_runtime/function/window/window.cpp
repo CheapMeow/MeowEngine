@@ -1,5 +1,7 @@
 #include "window.h"
+
 #include "core/math/math.h"
+#include "function/global/runtime_context.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -325,5 +327,19 @@ namespace Meow
     {
         m_mouse_last_scroll = mouseScroll;
         m_mouse_scroll      = mouseScroll;
+    }
+
+    void Window::CreateSurface()
+    {
+        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+
+        auto         size = GetSize();
+        vk::Extent2D extent(size.x, size.y);
+        m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
+
+        vk::Format m_color_format =
+            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        ASSERT(m_color_format != vk::Format::eUndefined);
     }
 } // namespace Meow

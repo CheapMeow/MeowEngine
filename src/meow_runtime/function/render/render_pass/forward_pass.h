@@ -65,6 +65,9 @@ namespace Meow
         Model    m_skybox_model    = nullptr;
         Material m_translucent_mat = nullptr;
 
+        std::shared_ptr<ImageData> m_color_msaa_attachment = nullptr;
+        std::shared_ptr<ImageData> m_depth_msaa_attachment = nullptr;
+
         std::string m_pass_names[2];
         int         draw_call[3] = {0, 0, 0};
     };
