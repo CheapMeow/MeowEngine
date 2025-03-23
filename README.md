@@ -67,7 +67,7 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 ## TODO
 
-### 如何合理管理资源绑定的复杂性？
+### 合理管理资源绑定
 
 因为资源绑定以 descriptor set 为单位。
 
@@ -91,7 +91,7 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 但是 `vkCmdBindDescriptorSets` 的开销是否真的很大，需要来特意做优化？不知道……
 
-### 如何管理材质创建的复杂性
+### 将材质创建与 RenderPass 解耦
 
 目前材质创建需要知道
 
@@ -101,13 +101,15 @@ glslangValidator -V .\builtin\shaders\quad.frag -o .\builtin\shaders\quad.frag.s
 
 不知道是否还需要别的信息，但是总之材质和 pass 也是耦合的，无法完全独立于 pass 创建
 
-### 切换渲染管线
+### 切换渲染管线时的资源管理
 
 需要重新根据新渲染管线要求的顶点属性来加载物体
 
 不知道别人是怎么做的？直接把这个物体身上所有可能的属性全部加载进来？
 
 并且材质也是依赖于 pass 的，所以也不能直接迁移
+
+Image 的 Layout 转换，一般是在初始化的时候需要显式转换，在 subpass 之间的依赖关系中写出 subpass 切换时进行的隐式的转换。如果用 Dynamic Rendering 才需要在 subpass 之间做显式转换。不知道有没有别的需要显式控制的场景。
 
 ### 如何显示 GPU 和主存之间的带宽
 
