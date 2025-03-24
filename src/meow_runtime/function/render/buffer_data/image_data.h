@@ -90,6 +90,7 @@ namespace Meow
 
         /**
          * @brief Render Target needs a sampler to support randomly reading.
+         * vk::ImageUsageFlagBits::eSampled will be added to usage flag.
          *
          * @param format Texel format
          * @param extent Size of the texture: width, height

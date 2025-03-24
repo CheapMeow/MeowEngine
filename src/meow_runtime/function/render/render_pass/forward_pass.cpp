@@ -27,7 +27,9 @@ namespace Meow
 
         m_opaque_mat = Material(mesh_shader_ptr);
         material_factory.Init(mesh_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetOpaque(true, 1);
+        material_factory.SetDebugName("Forward Opaque Material");
         material_factory.CreatePipeline(logical_device, render_pass, mesh_shader_ptr.get(), &m_opaque_mat, 0);
 
         input_vertex_attributes = m_opaque_mat.shader_ptr->per_vertex_attributes;
@@ -107,7 +109,9 @@ namespace Meow
 
         m_skybox_mat = Material(skybox_shader_ptr);
         material_factory.Init(skybox_shader_ptr.get(), vk::FrontFace::eCounterClockwise);
+        material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetOpaque(true, 1);
+        material_factory.SetDebugName("Forward Skybox Material");
         material_factory.CreatePipeline(logical_device, render_pass, skybox_shader_ptr.get(), &m_skybox_mat, 0);
 
         {
@@ -137,7 +141,9 @@ namespace Meow
 
         m_translucent_mat = Material(translucent_shader_ptr);
         material_factory.Init(translucent_shader_ptr.get(), vk::FrontFace::eClockwise);
+        material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetTranslucent(true, 1);
+        material_factory.SetDebugName("Forward Translucent Material");
         material_factory.CreatePipeline(
             logical_device, render_pass, translucent_shader_ptr.get(), &m_translucent_mat, 0);
 
@@ -203,10 +209,12 @@ namespace Meow
 
         // Create attachment
 
-        vk::SampleCountFlagBits sample_count        = g_runtime_context.render_system->GetMSAASamples();
-        bool                    msaa_enabled        = sample_count != vk::SampleCountFlagBits::e1;
-        vk::ImageUsageFlags     depth_msaa_usage    = vk::ImageUsageFlagBits::eDepthStencilAttachment;
-        vk::ImageUsageFlags     depth_resolve_usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+        vk::SampleCountFlagBits sample_count =
+            m_msaa_enabled ? g_runtime_context.render_system->GetMSAASamples() : vk::SampleCountFlagBits::e1;
+        m_msaa_enabled = (sample_count != vk::SampleCountFlagBits::e1);
+
+        vk::ImageUsageFlags depth_msaa_usage    = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+        vk::ImageUsageFlags depth_resolve_usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
         // if (g_runtime_context.render_system->GetPostProcessRunning())
         // {
@@ -235,30 +243,77 @@ namespace Meow
         m_depth_attachment = ImageData::CreateAttachment(
             m_depth_format, extent, depth_msaa_usage, vk::ImageAspectFlagBits::eDepth, {}, false, sample_count);
 
-        vk::ImageUsageFlags color_msaa_usage =
-            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment;
-        m_color_msaa_attachment = ImageData::CreateAttachment(
-            m_color_format, extent, color_msaa_usage, vk::ImageAspectFlagBits::eColor, {}, false, sample_count);
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        {
+            vk::DebugUtilsObjectNameInfoEXT name_info = {
+                vk::ObjectType::eImage,
+                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *m_depth_attachment->image),
+                "Depth Attachment"};
+            logical_device.setDebugUtilsObjectNameEXT(name_info);
+        }
+#endif
+
+        m_color_msaa_attachment = nullptr;
+        if (m_msaa_enabled)
+        {
+            vk::ImageUsageFlags color_msaa_usage =
+                vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment;
+            m_color_msaa_attachment = ImageData::CreateAttachment(
+                m_color_format, extent, color_msaa_usage, vk::ImageAspectFlagBits::eColor, {}, false, sample_count);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+            {
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eImage,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *m_color_msaa_attachment->image),
+                    "Color MSAA Attachment"};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+#endif
+        }
 
         // Provide attachment information to frame buffer
 
-        vk::ImageView attachments[3];
-        attachments[0] = *m_color_msaa_attachment->image_view;
-        attachments[1] = *m_depth_attachment->image_view;
-
-        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
-                                                          *render_pass,                 /* renderPass */
-                                                          3,                            /* attachmentCount */
-                                                          attachments,                  /* pAttachments */
-                                                          extent.width,                 /* width */
-                                                          extent.height,                /* height */
-                                                          1);                           /* layers */
-
-        framebuffers.reserve(output_image_views.size());
-        for (const auto& imageView : output_image_views)
+        if (m_msaa_enabled)
         {
-            attachments[2] = imageView;
-            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+            vk::ImageView attachments[3];
+            attachments[0] = *m_color_msaa_attachment->image_view;
+            attachments[1] = *m_depth_attachment->image_view;
+
+            vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                              *render_pass,                 /* renderPass */
+                                                              3,                            /* attachmentCount */
+                                                              attachments,                  /* pAttachments */
+                                                              extent.width,                 /* width */
+                                                              extent.height,                /* height */
+                                                              1);                           /* layers */
+
+            framebuffers.reserve(output_image_views.size());
+            for (const auto& imageView : output_image_views)
+            {
+                attachments[2] = imageView;
+                framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+            }
+        }
+        else
+        {
+            vk::ImageView attachments[2];
+            attachments[1] = *m_depth_attachment->image_view;
+
+            vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                              *render_pass,                 /* renderPass */
+                                                              2,                            /* attachmentCount */
+                                                              attachments,                  /* pAttachments */
+                                                              extent.width,                 /* width */
+                                                              extent.height,                /* height */
+                                                              1);                           /* layers */
+
+            framebuffers.reserve(output_image_views.size());
+            for (const auto& imageView : output_image_views)
+            {
+                attachments[0] = imageView;
+                framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+            }
         }
     }
 
@@ -557,6 +612,16 @@ namespace Meow
                 }
             }
         }
+    }
+
+    void ForwardPass::SetMSAAEnabled(bool enabled)
+    {
+        if (m_msaa_enabled == enabled)
+        {
+            return;
+        }
+
+        m_msaa_enabled = enabled;
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)

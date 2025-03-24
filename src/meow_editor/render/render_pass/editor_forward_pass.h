@@ -46,6 +46,8 @@ namespace Meow
         friend void swap(EditorForwardPass& lhs, EditorForwardPass& rhs);
 
     private:
+        void CreateRenderPass();
+
 #ifdef MEOW_EDITOR
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;

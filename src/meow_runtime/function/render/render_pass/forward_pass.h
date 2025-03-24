@@ -4,6 +4,7 @@
 #include "function/render/material/shader.h"
 #include "function/render/model/model.hpp"
 #include "function/render/render_pass/render_pass.h"
+#include "function/render/utils/vulkan_debug_utils.h"
 
 namespace Meow
 {
@@ -58,6 +59,8 @@ namespace Meow
 
         void RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer);
 
+        void SetMSAAEnabled(bool enabled);
+
         UUID GetForwardMatID() { return m_opaque_mat.uuid; }
         UUID GetTranslucentMatID() { return m_translucent_mat.uuid; }
 
@@ -69,6 +72,7 @@ namespace Meow
         Model    m_skybox_model    = nullptr;
         Material m_translucent_mat = nullptr;
 
+        bool                       m_msaa_enabled          = true;
         std::shared_ptr<ImageData> m_color_msaa_attachment = nullptr;
 
         std::string m_pass_names[2];

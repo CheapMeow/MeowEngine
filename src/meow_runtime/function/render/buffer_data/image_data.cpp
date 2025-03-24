@@ -308,7 +308,7 @@ namespace Meow
                                               1,
                                               sample_count,
                                               image_tiling,
-                                              usage_flags | vk::ImageUsageFlagBits::eSampled,
+                                              usage_flags,
                                               vk::SharingMode::eExclusive,
                                               {},
                                               initial_layout);

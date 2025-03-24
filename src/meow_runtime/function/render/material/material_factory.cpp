@@ -1,6 +1,7 @@
 #include "material_factory.h"
 
 #include "function/global/runtime_context.h"
+#include "function/render/utils/vulkan_debug_utils.h"
 
 namespace Meow
 {
@@ -104,13 +105,36 @@ namespace Meow
                                                      0.0f,
                                                      1.0f);
 
-        // TODO: get sample count from render pass
-        vk::SampleCountFlagBits sample_count           = g_runtime_context.render_system->GetMSAASamples();
-        context.pipeline_multisample_state_create_info = vk::PipelineMultisampleStateCreateInfo({}, sample_count);
+        m_msaa_enabled = false;
+        context.pipeline_multisample_state_create_info =
+            vk::PipelineMultisampleStateCreateInfo({}, vk::SampleCountFlagBits::e1);
 
         context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =
             vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), context.dynamic_states);
+
+        SetDebugName("");
+    }
+
+    void MaterialFactory::SetMSAA(bool enabled)
+    {
+        if (m_msaa_enabled == enabled)
+        {
+            return;
+        }
+
+        m_msaa_enabled = enabled;
+
+        if (m_msaa_enabled)
+        {
+            vk::SampleCountFlagBits sample_count           = g_runtime_context.render_system->GetMSAASamples();
+            context.pipeline_multisample_state_create_info = vk::PipelineMultisampleStateCreateInfo({}, sample_count);
+        }
+        else
+        {
+            context.pipeline_multisample_state_create_info =
+                vk::PipelineMultisampleStateCreateInfo({}, vk::SampleCountFlagBits::e1);
+        }
     }
 
     void MaterialFactory::SetOpaque(bool depth_buffered, int color_attachment_count)
@@ -230,5 +254,13 @@ namespace Meow
 
         material_ptr->graphics_pipeline =
             vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        vk::DebugUtilsObjectNameInfoEXT name_info = {
+            vk::ObjectType::ePipeline,
+            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *material_ptr->graphics_pipeline),
+            m_debug_name.c_str()};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
     }
 } // namespace Meow
