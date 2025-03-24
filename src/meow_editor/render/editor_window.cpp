@@ -344,9 +344,23 @@ namespace Meow
         m_imgui_pass = ImGuiPass(m_surface_data);
 #endif
 
-        RefreshRenderPass();
+        RefreshFrameBuffers();
 
 #ifdef MEOW_EDITOR
+        m_imgui_pass.OnMSAAEnabledChanged().connect([&](bool enabled) {
+            const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+            logical_device.waitIdle();
+
+            m_forward_pass.SetMSAAEnabled(enabled);
+            m_forward_pass.CreateRenderPass();
+            m_forward_pass.CreateMaterial();
+
+            vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
+
+            m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+            m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+        });
+
         m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
             // switch render pass
             if (cur_render_pass == 0)
@@ -474,7 +488,7 @@ namespace Meow
         CreateSurface();
         CreateSwapChian();
         CreatePerFrameData();
-        RefreshRenderPass();
+        RefreshFrameBuffers();
 
         // update aspect ratio
 
@@ -490,7 +504,7 @@ namespace Meow
         camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
     }
 
-    void EditorWindow::RefreshRenderPass()
+    void EditorWindow::RefreshFrameBuffers()
     {
         std::vector<vk::ImageView> swapchain_image_views;
         swapchain_image_views.resize(m_swapchain_data.image_views.size());

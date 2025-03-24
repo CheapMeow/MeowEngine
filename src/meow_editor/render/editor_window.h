@@ -27,7 +27,7 @@ namespace Meow
         void InitImGui();
 #endif
         void RecreateSwapChain();
-        void RefreshRenderPass();
+        void RefreshFrameBuffers();
 
         SwapChainData m_swapchain_data = nullptr;
 

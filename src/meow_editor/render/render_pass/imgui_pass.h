@@ -44,7 +44,8 @@ namespace Meow
 
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
-        Signal<int>& OnPassChanged() { return m_on_pass_changed; }
+        Signal<bool>& OnMSAAEnabledChanged() { return m_on_msaa_enabled_changed; }
+        Signal<int>&  OnPassChanged() { return m_on_pass_changed; }
 
         friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
@@ -53,6 +54,9 @@ namespace Meow
                                           VkImageLayout offscreen_image_layout);
 
     private:
+        bool         m_msaa_enabled = true;
+        Signal<bool> m_on_msaa_enabled_changed;
+
         int                      m_cur_render_pass   = 1;
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;

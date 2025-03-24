@@ -34,78 +34,6 @@ namespace Meow
 #endif
     }
 
-    void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                  vk::Extent2D                   extent,
-                                  uint32_t                       current_image_index)
-    {
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-            command_buffer.resetQueryPool(*query_pool, 0, 2);
-#endif
-
-        ForwardPass::Start(command_buffer, extent, current_image_index);
-    }
-
-    void EditorForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
-    {
-        FUNCTION_TIMER();
-
-        m_opaque_mat.BindPipeline(command_buffer);
-
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 0, {});
-#endif
-
-        RenderOpaqueMeshes(command_buffer);
-
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 0);
-#endif
-
-        m_skybox_mat.BindPipeline(command_buffer);
-
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 1, {});
-#endif
-
-        RenderSkybox(command_buffer);
-
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 1);
-#endif
-
-        m_translucent_mat.BindPipeline(command_buffer);
-        RenderTranslucentMeshes(command_buffer);
-    }
-
-    void EditorForwardPass::AfterPresent()
-    {
-        FUNCTION_TIMER();
-
-#ifdef MEOW_EDITOR
-        if (m_query_enabled)
-        {
-            for (int i = 1; i >= 0; i--)
-            {
-                std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
-
-                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
-            }
-        }
-
-        for (int i = 1; i >= 0; i--)
-        {
-            m_render_stat[i].draw_call = draw_call[i];
-            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
-        }
-#endif
-    }
-
     void EditorForwardPass::CreateRenderPass()
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -295,6 +223,79 @@ namespace Meow
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
+
+    void EditorForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
+                                  vk::Extent2D                   extent,
+                                  uint32_t                       current_image_index)
+    {
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+            command_buffer.resetQueryPool(*query_pool, 0, 2);
+#endif
+
+        ForwardPass::Start(command_buffer, extent, current_image_index);
+    }
+
+    void EditorForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_opaque_mat.BindPipeline(command_buffer);
+
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 0, {});
+#endif
+
+        RenderOpaqueMeshes(command_buffer);
+
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 0);
+#endif
+
+        m_skybox_mat.BindPipeline(command_buffer);
+
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 1, {});
+#endif
+
+        RenderSkybox(command_buffer);
+
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 1);
+#endif
+
+        m_translucent_mat.BindPipeline(command_buffer);
+        RenderTranslucentMeshes(command_buffer);
+    }
+
+    void EditorForwardPass::AfterPresent()
+    {
+        FUNCTION_TIMER();
+
+#ifdef MEOW_EDITOR
+        if (m_query_enabled)
+        {
+            for (int i = 1; i >= 0; i--)
+            {
+                std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
+
+                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+            }
+        }
+
+        for (int i = 1; i >= 0; i--)
+        {
+            m_render_stat[i].draw_call = draw_call[i];
+            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+        }
+#endif
+    }
+
     void swap(EditorForwardPass& lhs, EditorForwardPass& rhs)
     {
         using std::swap;

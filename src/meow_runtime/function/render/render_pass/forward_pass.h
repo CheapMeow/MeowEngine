@@ -42,7 +42,8 @@ namespace Meow
 
         ~ForwardPass() override = default;
 
-        void CreateMaterial();
+        virtual void CreateRenderPass() {}
+        void         CreateMaterial();
 
         void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;

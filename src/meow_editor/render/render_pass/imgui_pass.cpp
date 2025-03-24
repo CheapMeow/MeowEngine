@@ -195,10 +195,16 @@ namespace Meow
         }
         ImGui::End();
 
-        ImGui::Begin("Switch RenderPass");
+        ImGui::Begin("Render Settings");
         if (ImGui::Combo(
                 "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
+        {
             m_on_pass_changed(m_cur_render_pass);
+        }
+        if (ImGui::Checkbox("MSAA Enabled", &m_msaa_enabled))
+        {
+            m_on_msaa_enabled_changed(m_msaa_enabled);
+        }
         ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::End();
 

@@ -35,6 +35,8 @@ namespace Meow
 
         ~EditorForwardPass() override = default;
 
+        void CreateRenderPass() override;
+
         void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
@@ -46,8 +48,6 @@ namespace Meow
         friend void swap(EditorForwardPass& lhs, EditorForwardPass& rhs);
 
     private:
-        void CreateRenderPass();
-
 #ifdef MEOW_EDITOR
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
