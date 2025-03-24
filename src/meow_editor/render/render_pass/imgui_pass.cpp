@@ -20,20 +20,15 @@ namespace Meow
     {}
 
     ImGuiPass::ImGuiPass(SurfaceData& surface_data)
-        : RenderPass()
+        : RenderPass(surface_data)
     {
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
-        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-
-        vk::Format color_format =
-            PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
-        assert(color_format != vk::Format::eUndefined);
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
 
         // swap chain attachment
         vk::AttachmentDescription attachment_description(vk::AttachmentDescriptionFlags(), /* flags */
-                                                         color_format,                     /* format */
+                                                         m_color_format,                   /* format */
                                                          vk::SampleCountFlagBits::e1,      /* samples */
                                                          vk::AttachmentLoadOp::eClear,     /* loadOp */
                                                          vk::AttachmentStoreOp::eStore,    /* storeOp */

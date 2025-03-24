@@ -203,68 +203,52 @@ namespace Meow
 
         // Create attachment
 
-        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
-
         vk::SampleCountFlagBits sample_count        = g_runtime_context.render_system->GetMSAASamples();
         bool                    msaa_enabled        = sample_count != vk::SampleCountFlagBits::e1;
-        vk::ImageUsageFlags     depth_usage         = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+        vk::ImageUsageFlags     depth_msaa_usage    = vk::ImageUsageFlagBits::eDepthStencilAttachment;
         vk::ImageUsageFlags     depth_resolve_usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
-        if (g_runtime_context.render_system->GetPostProcessRunning())
-        {
-            // Depth needs to be read by the postprocessing subpass
-            if (msaa_enabled && g_runtime_context.render_system->GetDepthWritebackResolveSupported() &&
-                g_runtime_context.render_system->GetResolveDepthOnWriteback())
-            {
-                // Depth is resolved
-                depth_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
-                depth_resolve_usage |= vk::ImageUsageFlagBits::eSampled;
-            }
-            else
-            {
-                // Postprocessing reads multisampled depth
-                depth_usage |= vk::ImageUsageFlagBits::eSampled;
-                depth_resolve_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
-            }
-        }
-        else
-        {
-            // Depth attachments are transient
-            depth_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
-            depth_resolve_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
-        }
+        // if (g_runtime_context.render_system->GetPostProcessRunning())
+        // {
+        //     // Depth needs to be read by the postprocessing subpass
+        //     if (msaa_enabled && g_runtime_context.render_system->GetDepthWritebackResolveSupported() &&
+        //         g_runtime_context.render_system->GetResolveDepthOnWriteback())
+        //     {
+        //         // Depth is resolved
+        //         depth_msaa_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
+        //         depth_resolve_usage |= vk::ImageUsageFlagBits::eSampled;
+        //     }
+        //     else
+        //     {
+        //         // Postprocessing reads multisampled depth
+        //         depth_msaa_usage |= vk::ImageUsageFlagBits::eSampled;
+        //         depth_resolve_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
+        //     }
+        // }
+        // else
+        // {
+        //     // Depth attachments are transient
+        //     depth_msaa_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
+        //     depth_resolve_usage |= vk::ImageUsageFlagBits::eTransientAttachment;
+        // }
 
-        if (msaa_enabled)
-        {
-            m_depth_msaa_attachment = ImageData::CreateAttachment(
-                m_depth_format, extent, depth_usage, vk::ImageAspectFlagBits::eDepth, {}, false, sample_count);
-        }
-        m_depth_attachment = ImageData::CreateAttachment(m_depth_format,
-                                                         extent,
-                                                         depth_usage,
-                                                         vk::ImageAspectFlagBits::eDepth,
-                                                         {},
-                                                         false,
-                                                         vk::SampleCountFlagBits::e1);
-        if (msaa_enabled)
-        {
-            m_color_msaa_attachment = ImageData::CreateAttachment(color_format,
-                                                                  extent,
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
-                                                                  vk::ImageAspectFlagBits::eColor,
-                                                                  {},
-                                                                  false);
-        }
+        m_depth_attachment = ImageData::CreateAttachment(
+            m_depth_format, extent, depth_msaa_usage, vk::ImageAspectFlagBits::eDepth, {}, false, sample_count);
+
+        vk::ImageUsageFlags color_msaa_usage =
+            vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransientAttachment;
+        m_color_msaa_attachment = ImageData::CreateAttachment(
+            m_color_format, extent, color_msaa_usage, vk::ImageAspectFlagBits::eColor, {}, false, sample_count);
 
         // Provide attachment information to frame buffer
 
-        vk::ImageView attachments[2];
+        vk::ImageView attachments[3];
+        attachments[0] = *m_color_msaa_attachment->image_view;
         attachments[1] = *m_depth_attachment->image_view;
 
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
-                                                          2,                            /* attachmentCount */
+                                                          3,                            /* attachmentCount */
                                                           attachments,                  /* pAttachments */
                                                           extent.width,                 /* width */
                                                           extent.height,                /* height */
@@ -273,7 +257,7 @@ namespace Meow
         framebuffers.reserve(output_image_views.size());
         for (const auto& imageView : output_image_views)
         {
-            attachments[0] = imageView;
+            attachments[2] = imageView;
             framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
     }

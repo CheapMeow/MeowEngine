@@ -115,9 +115,7 @@ namespace Meow
 
         // Create attachment
 
-        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
-
-        m_color_attachment = ImageData::CreateAttachment(color_format,
+        m_color_attachment = ImageData::CreateAttachment(m_color_format,
                                                          extent,
                                                          vk::ImageUsageFlagBits::eColorAttachment |
                                                              vk::ImageUsageFlagBits::eInputAttachment,

@@ -1,5 +1,7 @@
 #include "material_factory.h"
 
+#include "function/global/runtime_context.h"
+
 namespace Meow
 {
     void MaterialFactory::Init(const Shader* shader_ptr, vk::FrontFace front_face)
@@ -102,8 +104,9 @@ namespace Meow
                                                      0.0f,
                                                      1.0f);
 
-        context.pipeline_multisample_state_create_info =
-            vk::PipelineMultisampleStateCreateInfo({}, vk::SampleCountFlagBits::e1);
+        // TODO: get sample count from render pass
+        vk::SampleCountFlagBits sample_count           = g_runtime_context.render_system->GetMSAASamples();
+        context.pipeline_multisample_state_create_info = vk::PipelineMultisampleStateCreateInfo({}, sample_count);
 
         context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =

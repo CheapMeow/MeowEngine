@@ -18,6 +18,10 @@ namespace Meow
             : RenderPass()
         {}
 
+        ForwardPass(SurfaceData& surface_data)
+            : RenderPass(surface_data)
+        {}
+
         ForwardPass(ForwardPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
         {
@@ -66,7 +70,6 @@ namespace Meow
         Material m_translucent_mat = nullptr;
 
         std::shared_ptr<ImageData> m_color_msaa_attachment = nullptr;
-        std::shared_ptr<ImageData> m_depth_msaa_attachment = nullptr;
 
         std::string m_pass_names[2];
         int         draw_call[3] = {0, 0, 0};

@@ -6,6 +6,13 @@
 
 namespace Meow
 {
+    RenderPass::RenderPass(SurfaceData& surface_data)
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        m_color_format = PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
+        ASSERT(m_color_format != vk::Format::eUndefined);
+    }
+
     void
     RenderPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
@@ -34,8 +41,8 @@ namespace Meow
         swap(lhs.clear_values, rhs.clear_values);
         swap(lhs.input_vertex_attributes, rhs.input_vertex_attributes);
 
+        swap(lhs.m_color_format, rhs.m_color_format);
         swap(lhs.m_depth_format, rhs.m_depth_format);
-        swap(lhs.m_sample_count, rhs.m_sample_count);
         swap(lhs.m_depth_attachment, rhs.m_depth_attachment);
     }
 } // namespace Meow

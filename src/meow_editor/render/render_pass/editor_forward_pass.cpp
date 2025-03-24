@@ -8,7 +8,7 @@
 namespace Meow
 {
     EditorForwardPass::EditorForwardPass(SurfaceData& surface_data)
-        : ForwardPass()
+        : ForwardPass(surface_data)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -20,15 +20,39 @@ namespace Meow
 
         // Create a set to store all information of attachments
 
-        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
+        vk::SampleCountFlagBits sample_count = g_runtime_context.render_system->GetMSAASamples();
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
+            // color msaa attachment
+            {
+                vk::AttachmentDescriptionFlags(),         /* flags */
+                m_color_format,                           /* format */
+                sample_count,                             /* samples */
+                vk::AttachmentLoadOp::eClear,             /* loadOp */
+                vk::AttachmentStoreOp::eStore,            /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,              /* initialLayout */
+                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+            },
+            // depth msaa attachment
+            {
+                vk::AttachmentDescriptionFlags(),                /* flags */
+                m_depth_format,                                  /* format */
+                sample_count,                                    /* samples */
+                vk::AttachmentLoadOp::eClear,                    /* loadOp */
+                vk::AttachmentStoreOp::eDontCare,                /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,                 /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,                /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,                     /* initialLayout */
+                vk::ImageLayout::eDepthStencilAttachmentOptimal, /* finalLayout */
+            },
 #ifdef MEOW_EDITOR
             // offscreen attachment
             {
                 vk::AttachmentDescriptionFlags(),        /* flags */
-                color_format,                            /* format */
-                m_sample_count,                          /* samples */
+                m_color_format,                          /* format */
+                sample_count,                            /* samples */
                 vk::AttachmentLoadOp::eClear,            /* loadOp */
                 vk::AttachmentStoreOp::eStore,           /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
@@ -37,10 +61,11 @@ namespace Meow
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
 #else
+            // swapchain image
             {
                 vk::AttachmentDescriptionFlags(), /* flags */
-                color_format,                     /* format */
-                m_sample_count,                   /* samples */
+                m_color_format,                   /* format */
+                sample_count,                     /* samples */
                 vk::AttachmentLoadOp::eClear,     /* loadOp */
                 vk::AttachmentStoreOp::eStore,    /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
@@ -49,22 +74,11 @@ namespace Meow
                 vk::ImageLayout::ePresentSrcKHR,  /* finalLayout */
             },
 #endif
-            // depth attachment
-            {
-                vk::AttachmentDescriptionFlags(),                /* flags */
-                m_depth_format,                                  /* format */
-                m_sample_count,                                  /* samples */
-                vk::AttachmentLoadOp::eClear,                    /* loadOp */
-                vk::AttachmentStoreOp::eStore,                   /* storeOp */
-                vk::AttachmentLoadOp::eClear,                    /* stencilLoadOp */
-                vk::AttachmentStoreOp::eStore,                   /* stencilStoreOp */
-                vk::ImageLayout::eUndefined,                     /* initialLayout */
-                vk::ImageLayout::eDepthStencilAttachmentOptimal, /* finalLayout */
-            },
         };
 
-        vk::AttachmentReference swapchain_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+        vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
         vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        vk::AttachmentReference resolve_attachment_reference(2, vk::ImageLayout::eColorAttachmentOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
             // forward pass
@@ -72,8 +86,8 @@ namespace Meow
                 vk::SubpassDescriptionFlags(),    /* flags */
                 vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
                 {},                               /* pInputAttachments */
-                swapchain_attachment_reference,   /* pColorAttachments */
-                {},                               /* pResolveAttachments */
+                color_attachment_reference,       /* pColorAttachments */
+                resolve_attachment_reference,     /* pResolveAttachments */
                 &depth_attachment_reference,      /* pDepthStencilAttachment */
                 nullptr,                          /* pPreserveAttachments */
             },
@@ -112,9 +126,10 @@ namespace Meow
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
-        clear_values.resize(2);
+        clear_values.resize(3);
         clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
         clear_values[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+        clear_values[2].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
 
         CreateMaterial();
 

@@ -16,6 +16,8 @@ namespace Meow
 
         RenderPass() {}
 
+        RenderPass(SurfaceData& surface_data);
+
         RenderPass(RenderPass&& rhs) noexcept { swap(*this, rhs); }
 
         RenderPass& operator=(RenderPass&& rhs) noexcept
@@ -52,8 +54,8 @@ namespace Meow
         std::vector<VertexAttributeBit>    input_vertex_attributes;
 
     protected:
+        vk::Format                 m_color_format;
         vk::Format                 m_depth_format     = vk::Format::eD16Unorm;
-        vk::SampleCountFlagBits    m_sample_count     = vk::SampleCountFlagBits::e1;
         std::shared_ptr<ImageData> m_depth_attachment = nullptr;
     };
 } // namespace Meow

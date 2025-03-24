@@ -8,7 +8,7 @@
 namespace Meow
 {
     EditorDeferredPass::EditorDeferredPass(SurfaceData& surface_data)
-        : DeferredPass()
+        : DeferredPass(surface_data)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -27,15 +27,15 @@ namespace Meow
         // we should spilt rendering into two parts
         // and we should have two different set of attachments?
 
-        const vk::Format color_format = g_runtime_context.window_system->GetCurrentFocusWindow()->GetColorFormat();
+        vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
 // swap chain attachment
 #ifdef MEOW_EDITOR
             {
                 vk::AttachmentDescriptionFlags(),        /* flags */
-                color_format,                            /* format */
-                m_sample_count,                          /* samples */
+                m_color_format,                          /* format */
+                sample_count,                            /* samples */
                 vk::AttachmentLoadOp::eClear,            /* loadOp */
                 vk::AttachmentStoreOp::eStore,           /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
@@ -46,8 +46,8 @@ namespace Meow
 #else
             {
                 vk::AttachmentDescriptionFlags(), /* flags */
-                color_format,                     /* format */
-                m_sample_count,                   /* samples */
+                m_color_format,                   /* format */
+                sample_count,                     /* samples */
                 vk::AttachmentLoadOp::eClear,     /* loadOp */
                 vk::AttachmentStoreOp::eStore,    /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
@@ -59,8 +59,8 @@ namespace Meow
             // color attachment
             {
                 vk::AttachmentDescriptionFlags(),         /* flags */
-                color_format,                             /* format */
-                m_sample_count,                           /* samples */
+                m_color_format,                           /* format */
+                sample_count,                             /* samples */
                 vk::AttachmentLoadOp::eClear,             /* loadOp */
                 vk::AttachmentStoreOp::eStore,            /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
@@ -72,7 +72,7 @@ namespace Meow
             {
                 vk::AttachmentDescriptionFlags(),         /* flags */
                 vk::Format::eR8G8B8A8Unorm,               /* format */
-                m_sample_count,                           /* samples */
+                sample_count,                             /* samples */
                 vk::AttachmentLoadOp::eClear,             /* loadOp */
                 vk::AttachmentStoreOp::eStore,            /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
@@ -84,7 +84,7 @@ namespace Meow
             {
                 vk::AttachmentDescriptionFlags(),         /* flags */
                 vk::Format::eR16G16B16A16Sfloat,          /* format */
-                m_sample_count,                           /* samples */
+                sample_count,                             /* samples */
                 vk::AttachmentLoadOp::eClear,             /* loadOp */
                 vk::AttachmentStoreOp::eStore,            /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
@@ -96,7 +96,7 @@ namespace Meow
             {
                 vk::AttachmentDescriptionFlags(),                /* flags */
                 m_depth_format,                                  /* format */
-                m_sample_count,                                  /* samples */
+                sample_count,                                    /* samples */
                 vk::AttachmentLoadOp::eClear,                    /* loadOp */
                 vk::AttachmentStoreOp::eStore,                   /* storeOp */
                 vk::AttachmentLoadOp::eClear,                    /* stencilLoadOp */

@@ -39,6 +39,10 @@ namespace Meow
             : RenderPass()
         {}
 
+        DeferredPass(SurfaceData& surface_data)
+            : RenderPass(surface_data)
+        {}
+
         DeferredPass(DeferredPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
         {
