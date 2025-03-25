@@ -188,6 +188,9 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
+        m_wait_until_next_tick_signal();
+        m_wait_until_next_tick_signal.clear();
+
         if (m_iconified)
             return;
 
@@ -226,11 +229,7 @@ namespace Meow
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
 #ifdef MEOW_EDITOR
-        // TODO: temp
-
-        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
-
-        m_render_pass_ptr->Start(cmd_buffer, temp_extent, 0);
+        m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, 0);
 #else
         m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
 #endif
@@ -299,10 +298,8 @@ namespace Meow
 
         // TODO: temp
 #ifdef MEOW_EDITOR
-        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
-
         m_offscreen_render_target = ImageData::CreateRenderTarget(m_color_format,
-                                                                  temp_extent,
+                                                                  m_surface_data.extent,
                                                                   vk::ImageUsageFlagBits::eColorAttachment |
                                                                       vk::ImageUsageFlagBits::eInputAttachment,
                                                                   vk::ImageAspectFlagBits::eColor,
@@ -348,17 +345,17 @@ namespace Meow
 
 #ifdef MEOW_EDITOR
         m_imgui_pass.OnMSAAEnabledChanged().connect([&](bool enabled) {
-            const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-            logical_device.waitIdle();
+            m_wait_until_next_tick_signal.connect([&]() {
+                const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+                logical_device.waitIdle();
 
-            m_forward_pass.SetMSAAEnabled(enabled);
-            m_forward_pass.CreateRenderPass();
-            m_forward_pass.CreateMaterial();
+                m_forward_pass.SetMSAAEnabled(enabled);
+                m_forward_pass.CreateRenderPass();
+                m_forward_pass.CreateMaterial();
 
-            vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
-
-            m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
-            m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+                m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+                m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+            });
         });
 
         m_imgui_pass.OnPassChanged().connect([&](int cur_render_pass) {
@@ -515,10 +512,8 @@ namespace Meow
 
         // TODO: temp
 #ifdef MEOW_EDITOR
-        vk::Extent2D temp_extent = {m_surface_data.extent.width / 2, m_surface_data.extent.height / 2};
-
-        m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
-        m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, temp_extent);
+        m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 
         if (is_offscreen_valid)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/signal/signal.hpp"
 #include "meow_runtime/function/object/game_object.h"
 #include "meow_runtime/function/render/buffer_data/per_frame_data.h"
 #include "meow_runtime/function/render/buffer_data/surface_data.h"
@@ -60,5 +61,7 @@ namespace Meow
         // TODO: hard code render pass switching
         std::vector<std::weak_ptr<GameObject>> opaque_objects;
         std::vector<std::weak_ptr<GameObject>> translucent_objects;
+
+        Signal<> m_wait_until_next_tick_signal;
     };
 } // namespace Meow

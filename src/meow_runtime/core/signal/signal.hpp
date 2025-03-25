@@ -36,6 +36,11 @@ public:
         }
     }
 
+    void clear()
+    {
+        m_slots.clear();
+    }
+
 private:
     SlotID                     m_sequence = 0;
     std::map<SlotID, SlotType> m_slots;
