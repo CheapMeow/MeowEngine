@@ -108,10 +108,8 @@ namespace Meow
 
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
-#ifdef MEOW_DEBUG
         if (!level_ptr)
             MEOW_ERROR("shared ptr is invalid!");
-#endif
 
         static bool               p_open          = true;
         static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;

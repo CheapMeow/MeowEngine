@@ -9,8 +9,8 @@
 #include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
 #include "function/render/buffer_data/per_scene_data.h"
+#include "function/render/geometry/geometry_factory.h"
 #include "function/render/material/material_factory.h"
-#include "function/render/utils/model_utils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -94,7 +94,9 @@ namespace Meow
             }
         }
 
-        auto cube_vertices = GenerateCubeVertices();
+        GeometryFactory geometry_factory;
+        geometry_factory.SetCube();
+        auto cube_vertices = geometry_factory.GetVertices(skybox_shader_ptr->per_vertex_attributes);
         m_skybox_model =
             std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader_ptr->per_vertex_attributes));
     }
@@ -184,10 +186,8 @@ namespace Meow
 
         std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
-#ifdef MEOW_DEBUG
         if (!level_ptr)
             MEOW_ERROR("shared ptr is invalid!");
-#endif
 
         std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
         std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
