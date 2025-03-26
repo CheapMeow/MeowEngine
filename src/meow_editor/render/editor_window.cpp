@@ -376,7 +376,7 @@ namespace Meow
 
 #ifdef MEOW_EDITOR
         m_imgui_pass.OnMSAAEnabledChanged().connect([&](bool enabled) {
-            m_wait_until_next_tick_signal.connect([&]() {
+            m_wait_until_next_tick_signal.connect([&, enabled]() {
                 const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
                 logical_device.waitIdle();
 
