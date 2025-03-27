@@ -8,12 +8,12 @@
 
 namespace Meow
 {
-    Material::Material(std::shared_ptr<Shader> shader_ptr)
+    Material::Material(std::shared_ptr<Shader> shader)
     {
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
 
-        this->shader_ptr  = shader_ptr;
-        m_descriptor_sets = descriptor_allocator.Allocate(shader_ptr->descriptor_set_layouts);
+        this->shader      = shader;
+        m_descriptor_sets = descriptor_allocator.Allocate(shader->descriptor_set_layouts);
 
         CreateUniformBuffer();
     }
@@ -23,7 +23,7 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
+        for (auto it = shader->buffer_meta_map.begin(); it != shader->buffer_meta_map.end(); ++it)
         {
             if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
             {
@@ -57,7 +57,7 @@ namespace Meow
 
         BufferMeta* meta = nullptr;
         // If it is dynamic uniform buffer, then the buffer passed into can not use whole size
-        for (auto it = shader_ptr->buffer_meta_map.begin(); it != shader_ptr->buffer_meta_map.end(); ++it)
+        for (auto it = shader->buffer_meta_map.begin(); it != shader->buffer_meta_map.end(); ++it)
         {
             if (it->first == name)
             {
@@ -91,14 +91,14 @@ namespace Meow
         }
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *m_descriptor_sets[meta->set],                                            // dstSet
-            meta->binding,                                                            // dstBinding
-            0,                                                                        // dstArrayElement
-            1,                                                                        // descriptorCount
-            shader_ptr->set_layout_metas.GetDescriptorType(meta->set, meta->binding), // descriptorType
-            nullptr,                                                                  // pImageInfo
-            &descriptor_buffer_info,                                                  // pBufferInfo
-            raii_buffer_view ? &buffer_view : nullptr                                 // pTexelBufferView
+            *m_descriptor_sets[meta->set],                                        // dstSet
+            meta->binding,                                                        // dstBinding
+            0,                                                                    // dstArrayElement
+            1,                                                                    // descriptorCount
+            shader->set_layout_metas.GetDescriptorType(meta->set, meta->binding), // descriptorType
+            nullptr,                                                              // pImageInfo
+            &descriptor_buffer_info,                                              // pBufferInfo
+            raii_buffer_view ? &buffer_view : nullptr                             // pTexelBufferView
         );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
@@ -108,8 +108,8 @@ namespace Meow
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
-        auto it = shader_ptr->set_layout_metas.binding_meta_map.find(name);
-        if (it == shader_ptr->set_layout_metas.binding_meta_map.end())
+        auto it = shader->set_layout_metas.binding_meta_map.find(name);
+        if (it == shader->set_layout_metas.binding_meta_map.end())
         {
             MEOW_ERROR("Writing buffer failed, {} not found!", name);
             return;
@@ -121,14 +121,14 @@ namespace Meow
             *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *m_descriptor_sets[bindInfo.set],                                               // dstSet
-            bindInfo.binding,                                                               // dstBinding
-            0,                                                                              // dstArrayElement
-            1,                                                                              // descriptorCount
-            shader_ptr->set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
-            &descriptor_image_info,                                                         // pImageInfo
-            nullptr,                                                                        // pBufferInfo
-            nullptr                                                                         // pTexelBufferView
+            *m_descriptor_sets[bindInfo.set],                                           // dstSet
+            bindInfo.binding,                                                           // dstBinding
+            0,                                                                          // dstArrayElement
+            1,                                                                          // descriptorCount
+            shader->set_layout_metas.GetDescriptorType(bindInfo.set, bindInfo.binding), // descriptorType
+            &descriptor_image_info,                                                     // pImageInfo
+            nullptr,                                                                    // pBufferInfo
+            nullptr                                                                     // pTexelBufferView
         );
 
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
@@ -163,7 +163,7 @@ namespace Meow
         FUNCTION_TIMER();
 
         m_per_obj_dynamic_offsets.push_back(
-            std::vector<uint32_t>(shader_ptr->dynamic_uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
+            std::vector<uint32_t>(shader->dynamic_uniform_buffer_count, std::numeric_limits<uint32_t>::max()));
     }
 
     void Material::EndPopulatingDynamicUniformBufferPerObject()
@@ -192,15 +192,15 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        if (!shader_ptr)
+        if (!shader)
         {
-            MEOW_ERROR("shader_ptr is null");
+            MEOW_ERROR("shader is null");
             return;
         }
 
-        auto it = shader_ptr->buffer_meta_map.find(name);
+        auto it = shader->buffer_meta_map.find(name);
 #ifdef MEOW_DEBUG
-        if (it == shader_ptr->buffer_meta_map.end())
+        if (it == shader->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
             return;
@@ -226,15 +226,15 @@ namespace Meow
 
     void Material::PopulateUniformBuffer(const std::string& name, void* data, uint32_t size)
     {
-        if (!shader_ptr)
+        if (!shader)
         {
-            MEOW_ERROR("shader_ptr is null");
+            MEOW_ERROR("shader is null");
             return;
         }
 
-        auto it = shader_ptr->buffer_meta_map.find(name);
+        auto it = shader->buffer_meta_map.find(name);
 #ifdef MEOW_DEBUG
-        if (it == shader_ptr->buffer_meta_map.end())
+        if (it == shader->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
             return;
@@ -275,7 +275,7 @@ namespace Meow
             dynamic_offsets = m_per_obj_dynamic_offsets[draw_call];
 
         command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *shader_ptr->pipeline_layout,
+                                          *shader->pipeline_layout,
                                           first_set,
                                           descriptor_sets_to_bind,
                                           dynamic_offsets);
@@ -285,7 +285,7 @@ namespace Meow
     {
         using std::swap;
 
-        std::swap(lhs.shader_ptr, rhs.shader_ptr);
+        std::swap(lhs.shader, rhs.shader);
         std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
         std::swap(lhs.m_actived, rhs.m_actived);
         std::swap(lhs.m_obj_count, rhs.m_obj_count);

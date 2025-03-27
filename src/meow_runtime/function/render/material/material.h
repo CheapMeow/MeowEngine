@@ -18,7 +18,7 @@ namespace Meow
 
         Material(std::nullptr_t) {}
 
-        Material(std::shared_ptr<Shader> shader_ptr);
+        Material(std::shared_ptr<Shader> shader);
 
         Material(Material&& rhs) noexcept { swap(*this, rhs); }
 
@@ -32,7 +32,7 @@ namespace Meow
             return *this;
         }
 
-        std::shared_ptr<Shader> GetShader() { return shader_ptr; }
+        std::shared_ptr<Shader> GetShader() { return shader; }
 
         void BindPipeline(const vk::raii::CommandBuffer& command_buffer);
 
@@ -63,7 +63,7 @@ namespace Meow
 
         friend void swap(Material& lhs, Material& rhs);
 
-        std::shared_ptr<Shader> shader_ptr = nullptr;
+        std::shared_ptr<Shader> shader = nullptr;
 
     private:
         void CreateUniformBuffer();

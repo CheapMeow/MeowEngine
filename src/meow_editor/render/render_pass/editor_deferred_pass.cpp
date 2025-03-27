@@ -230,13 +230,13 @@ namespace Meow
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
-        m_render_stat[0].vertex_attribute_metas = m_obj2attachment_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat[0].buffer_meta_map        = m_obj2attachment_mat.shader_ptr->buffer_meta_map;
-        m_render_stat[0].image_meta_map         = m_obj2attachment_mat.shader_ptr->image_meta_map;
+        m_render_stat[0].vertex_attribute_metas = m_obj2attachment_mat.shader->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_obj2attachment_mat.shader->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_obj2attachment_mat.shader->image_meta_map;
 
-        m_render_stat[1].vertex_attribute_metas = m_quad_mat.shader_ptr->vertex_attribute_metas;
-        m_render_stat[1].buffer_meta_map        = m_quad_mat.shader_ptr->buffer_meta_map;
-        m_render_stat[1].image_meta_map         = m_quad_mat.shader_ptr->image_meta_map;
+        m_render_stat[1].vertex_attribute_metas = m_quad_mat.shader->vertex_attribute_metas;
+        m_render_stat[1].buffer_meta_map        = m_quad_mat.shader->buffer_meta_map;
+        m_render_stat[1].image_meta_map         = m_quad_mat.shader->image_meta_map;
 #endif
     }
 

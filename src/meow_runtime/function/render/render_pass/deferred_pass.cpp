@@ -24,21 +24,21 @@ namespace Meow
 
         MaterialFactory material_factory;
 
-        auto obj_shader_ptr = std::make_shared<Shader>(
+        auto obj_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
 
-        m_obj2attachment_mat = Material(obj_shader_ptr);
-        material_factory.Init(obj_shader_ptr.get(), vk::FrontFace::eClockwise);
+        m_obj2attachment_mat = Material(obj_shader);
+        material_factory.Init(obj_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 3);
-        material_factory.CreatePipeline(logical_device, render_pass, obj_shader_ptr.get(), &m_obj2attachment_mat, 0);
+        material_factory.CreatePipeline(logical_device, render_pass, obj_shader.get(), &m_obj2attachment_mat, 0);
 
-        auto quad_shader_ptr = std::make_shared<Shader>(
+        auto quad_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
 
-        m_quad_mat = Material(quad_shader_ptr);
-        material_factory.Init(quad_shader_ptr.get(), vk::FrontFace::eClockwise);
+        m_quad_mat = Material(quad_shader);
+        material_factory.Init(quad_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
-        material_factory.CreatePipeline(logical_device, render_pass, quad_shader_ptr.get(), &m_quad_mat, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, quad_shader.get(), &m_quad_mat, 1);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
@@ -46,9 +46,9 @@ namespace Meow
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
         m_quad_model =
-            std::move(Model(std::move(vertices), std::move(indices), m_quad_mat.shader_ptr->per_vertex_attributes));
+            std::move(Model(std::move(vertices), std::move(indices), m_quad_mat.shader->per_vertex_attributes));
 
-        input_vertex_attributes = m_obj2attachment_mat.shader_ptr->per_vertex_attributes;
+        input_vertex_attributes = m_obj2attachment_mat.shader->per_vertex_attributes;
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
@@ -70,13 +70,13 @@ namespace Meow
 
         // skybox
 
-        auto skybox_shader_ptr = std::make_shared<Shader>(
+        auto skybox_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
-        m_skybox_mat = Material(skybox_shader_ptr);
-        material_factory.Init(skybox_shader_ptr.get(), vk::FrontFace::eCounterClockwise);
+        m_skybox_mat = Material(skybox_shader);
+        material_factory.Init(skybox_shader.get(), vk::FrontFace::eCounterClockwise);
         material_factory.SetOpaque(true, 1);
-        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader_ptr.get(), &m_skybox_mat, 2);
+        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader.get(), &m_skybox_mat, 2);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -96,9 +96,9 @@ namespace Meow
 
         GeometryFactory geometry_factory;
         geometry_factory.SetCube();
-        auto cube_vertices = geometry_factory.GetVertices(skybox_shader_ptr->per_vertex_attributes);
+        auto cube_vertices = geometry_factory.GetVertices(skybox_shader->per_vertex_attributes);
         m_skybox_model =
-            std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader_ptr->per_vertex_attributes));
+            std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader->per_vertex_attributes));
     }
 
     void DeferredPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -195,14 +195,12 @@ namespace Meow
         std::shared_ptr<Camera3DComponent> camera_comp_ptr =
             camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-#ifdef MEOW_DEBUG
         if (!camera_go_ptr)
             MEOW_ERROR("shared ptr is invalid!");
         if (!transfrom_comp_ptr)
             MEOW_ERROR("shared ptr is invalid!");
         if (!camera_comp_ptr)
             MEOW_ERROR("shared ptr is invalid!");
-#endif
 
         glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
 
