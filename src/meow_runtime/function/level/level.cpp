@@ -57,35 +57,35 @@ namespace Meow
     {
         m_visibles_per_material.clear();
 
-        std::shared_ptr<GameObject> camera_go_ptr = GetGameObjectByID(m_main_camera_id).lock();
+        std::shared_ptr<GameObject> main_camera = GetGameObjectByID(m_main_camera_id).lock();
 
-        if (!camera_go_ptr)
+        if (!main_camera)
             return;
 
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+        std::shared_ptr<Camera3DComponent> main_camera_component =
+            main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        if (!camera_comp_ptr)
+        if (!main_camera_component)
         {
             return;
         }
 
         for (const auto& pair : m_gameobjects)
         {
-            // if (camera_comp_ptr->FrustumCulling(pair.second))
+            // if (main_camera_component->FrustumCulling(pair.second))
             // {
             //     m_visibles[pair.first] = pair.second;
             // }
 
-            std::shared_ptr<ModelComponent> model_comp_ptr =
+            std::shared_ptr<ModelComponent> current_gameobject_model_component =
                 pair.second->TryGetComponent<ModelComponent>("ModelComponent");
 
-            if (!model_comp_ptr)
+            if (!current_gameobject_model_component)
             {
                 continue;
             }
 
-            m_visibles_per_material[model_comp_ptr->material_id].push_back(pair.second);
+            m_visibles_per_material[current_gameobject_model_component->material_id].push_back(pair.second);
         }
     }
 } // namespace Meow

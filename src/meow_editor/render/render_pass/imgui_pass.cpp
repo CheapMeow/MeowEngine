@@ -106,9 +106,9 @@ namespace Meow
 
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
-        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
-        if (!level_ptr)
+        if (!level)
             MEOW_ERROR("shared ptr is invalid!");
 
         static bool               p_open          = true;
@@ -142,18 +142,18 @@ namespace Meow
 
         ImGui::End();
 
-        const auto& all_gameobjects_map = level_ptr->GetAllGameObjects();
+        const auto& all_gameobjects_map = level->GetAllGameObjects();
 
         ImGui::Begin("Scene");
-        const auto camera_id = level_ptr->GetMainCameraID();
+        const auto camera_id = level->GetMainCameraID();
         auto       it        = all_gameobjects_map.find(camera_id);
         if (it != all_gameobjects_map.end())
         {
-            const auto camera_go_ptr   = it->second;
-            const auto camera_comp_ptr = camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
-            if (camera_comp_ptr)
+            const auto main_camera           = it->second;
+            const auto main_camera_component = main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+            if (main_camera_component)
             {
-                auto   aspect_ratio = camera_comp_ptr->aspect_ratio; // width / height
+                auto   aspect_ratio = main_camera_component->aspect_ratio; // width / height
                 ImVec2 region_size  = ImGui::GetContentRegionAvail();
                 float  width        = static_cast<float>(region_size.x);
                 float  height       = static_cast<float>(region_size.y);
@@ -210,11 +210,11 @@ namespace Meow
         m_gameobjects_widget.Draw(all_gameobjects_map);
         ImGui::End();
 
-        auto gameobject_ptr_iter = all_gameobjects_map.find(m_gameobjects_widget.GetSelectedID());
-        if (gameobject_ptr_iter != all_gameobjects_map.end())
+        auto current_gameobject_iter = all_gameobjects_map.find(m_gameobjects_widget.GetSelectedID());
+        if (current_gameobject_iter != all_gameobjects_map.end())
         {
             ImGui::Begin("Component");
-            m_components_widget.CreateGameObjectUI(gameobject_ptr_iter->second);
+            m_components_widget.CreateGameObjectUI(current_gameobject_iter->second);
             ImGui::End();
         }
 

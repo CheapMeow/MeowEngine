@@ -41,7 +41,7 @@ namespace Meow
         if (!model_shared_ptr)
             return false;
 
-        auto bounding = model_shared_ptr->model_ptr.lock()->GetBounding();
+        auto bounding = model_shared_ptr->model.lock()->GetBounding();
         bounding.min  = bounding.min * transform_shared_ptr->scale + transform_shared_ptr->position;
         bounding.max  = bounding.max * transform_shared_ptr->scale + transform_shared_ptr->position;
 

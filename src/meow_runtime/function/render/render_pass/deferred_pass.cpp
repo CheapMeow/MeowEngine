@@ -184,70 +184,71 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        std::shared_ptr<Level> level_ptr = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
-        if (!level_ptr)
+        if (!level)
             MEOW_ERROR("shared ptr is invalid!");
 
-        std::shared_ptr<GameObject> camera_go_ptr = level_ptr->GetGameObjectByID(level_ptr->GetMainCameraID()).lock();
-        std::shared_ptr<Transform3DComponent> transfrom_comp_ptr =
-            camera_go_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-        std::shared_ptr<Camera3DComponent> camera_comp_ptr =
-            camera_go_ptr->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+        std::shared_ptr<GameObject>           main_camera = level->GetGameObjectByID(level->GetMainCameraID()).lock();
+        std::shared_ptr<Transform3DComponent> main_camera_transfrom_component =
+            main_camera->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+        std::shared_ptr<Camera3DComponent> main_camera_component =
+            main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        if (!camera_go_ptr)
+        if (!main_camera)
             MEOW_ERROR("shared ptr is invalid!");
-        if (!transfrom_comp_ptr)
+        if (!main_camera_transfrom_component)
             MEOW_ERROR("shared ptr is invalid!");
-        if (!camera_comp_ptr)
+        if (!main_camera_component)
             MEOW_ERROR("shared ptr is invalid!");
 
         glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
 
-        glm::vec3 forward = transfrom_comp_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
-        glm::mat4 view =
-            lookAt(transfrom_comp_ptr->position, transfrom_comp_ptr->position + forward, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 forward = main_camera_transfrom_component->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::mat4 view    = lookAt(main_camera_transfrom_component->position,
+                                main_camera_transfrom_component->position + forward,
+                                glm::vec3(0.0f, 1.0f, 0.0f));
 
         PerSceneData per_scene_data;
         per_scene_data.view = view;
         per_scene_data.projection =
-            Math::perspective_vk(camera_comp_ptr->field_of_view,
+            Math::perspective_vk(main_camera_component->field_of_view,
                                  static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
-                                 camera_comp_ptr->near_plane,
-                                 camera_comp_ptr->far_plane);
+                                 main_camera_component->near_plane,
+                                 main_camera_component->far_plane);
 
         m_obj2attachment_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
         // Update mesh uniform
 
         m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
             for (const auto& visible : visibles_opaque)
             {
-                std::shared_ptr<GameObject>           gameobject_ptr = visible.lock();
-                std::shared_ptr<Transform3DComponent> transfrom_comp_ptr2 =
-                    gameobject_ptr->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-                std::shared_ptr<ModelComponent> model_comp_ptr =
-                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
+                std::shared_ptr<GameObject>           current_gameobject = visible.lock();
+                std::shared_ptr<Transform3DComponent> current_gameobject_transfrom_component =
+                    current_gameobject->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                std::shared_ptr<ModelComponent> current_gameobject_model_component =
+                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
 
-                if (!transfrom_comp_ptr2 || !model_comp_ptr)
+                if (!current_gameobject_transfrom_component || !current_gameobject_model_component)
                     continue;
 
 #ifdef MEOW_DEBUG
-                if (!gameobject_ptr)
+                if (!current_gameobject)
                     MEOW_ERROR("shared ptr is invalid!");
-                if (!transfrom_comp_ptr2)
+                if (!current_gameobject_transfrom_component)
                     MEOW_ERROR("shared ptr is invalid!");
-                if (!model_comp_ptr)
+                if (!current_gameobject_model_component)
                     MEOW_ERROR("shared ptr is invalid!");
 #endif
 
-                auto model = transfrom_comp_ptr2->GetTransform();
+                auto model = current_gameobject_transfrom_component->GetTransform();
 
-                for (uint32_t i = 0; i < model_comp_ptr->model_ptr.lock()->meshes.size(); ++i)
+                for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
                     m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
@@ -293,23 +294,23 @@ namespace Meow
 
         m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
-        std::shared_ptr<Level> level_ptr           = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_opaque_ptr = level_ptr->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
             for (const auto& visible : visibles_opaque)
             {
-                std::shared_ptr<GameObject> gameobject_ptr = visible.lock();
-                if (!gameobject_ptr)
+                std::shared_ptr<GameObject> current_gameobject = visible.lock();
+                if (!current_gameobject)
                     continue;
 
-                std::shared_ptr<ModelComponent> model_comp_ptr =
-                    gameobject_ptr->TryGetComponent<ModelComponent>("ModelComponent");
-                if (!model_comp_ptr)
+                std::shared_ptr<ModelComponent> current_gameobject_model_component =
+                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
+                if (!current_gameobject_model_component)
                     continue;
 
-                auto model_res_ptr = model_comp_ptr->model_ptr.lock();
+                auto model_res_ptr = current_gameobject_model_component->model.lock();
                 if (!model_res_ptr)
                     continue;
 
