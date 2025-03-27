@@ -193,6 +193,41 @@ namespace Meow
                 current_gameobject_model_component->model = model_shared_ptr;
             }
         }
+
+        geometry_factory.SetPlane();
+
+        {
+            std::vector<float> plane_vertices =
+                geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
+            std::vector<uint32_t> plane_indices = geometry_factory.GetIndices();
+
+            UUID                        uuid               = level->CreateObject();
+            std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
+
+            opaque_objects.push_back(current_gameobject);
+
+            if (!current_gameobject)
+                MEOW_ERROR("GameObject is invalid!");
+
+            current_gameobject->SetName("Plane");
+            auto transform_ptr =
+                TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+            transform_ptr->position = glm::vec3(0.0f, 0.0f, 10.0f);
+
+            auto current_gameobject_model_component =
+                TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
+            auto model_shared_ptr =
+                std::make_shared<Model>(plane_vertices, plane_indices, m_render_pass_ptr->input_vertex_attributes);
+
+            // TODO: hard code render pass cast
+            current_gameobject_model_component->material_id = m_forward_pass.GetForwardMatID();
+
+            if (model_shared_ptr)
+            {
+                g_runtime_context.resource_system->Register(model_shared_ptr);
+                current_gameobject_model_component->model = model_shared_ptr;
+            }
+        }
     }
 
     EditorWindow::~EditorWindow()

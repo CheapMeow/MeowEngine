@@ -11,6 +11,7 @@ namespace Meow
     class GeometryFactory
     {
     public:
+        void SetPlane();
         void SetCube();
         void SetSphere(uint32_t sector_count, uint32_t stack_count);
         void SetAttribute(VertexAttributeBit attribute_bit, const std::vector<float>& data);
@@ -27,7 +28,7 @@ namespace Meow
         std::vector<uint32_t> GetIndices() { return indices; }
 
         void clear();
-        
+
     private:
         uint32_t                                                   vertices_number = 0;
         std::vector<float>                                         position;

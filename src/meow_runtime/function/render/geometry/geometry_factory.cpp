@@ -10,6 +10,51 @@
 
 namespace Meow
 {
+    void GeometryFactory::SetPlane()
+    {
+        clear();
+
+        // clang-format off
+        position = {
+            -1.0f,  0.0f, -1.0f, // top-left
+            1.0f,  0.0f,  1.0f, // bottom-right
+            1.0f,  0.0f, -1.0f, // top-right     
+            1.0f,  0.0f,  1.0f, // bottom-right
+            -1.0f,  0.0f, -1.0f, // top-left
+            -1.0f,  0.0f,  1.0f  // bottom-left  
+        };
+        // clang-format on
+        indices = {};
+
+        // clang-format off
+        std::vector<float> uv = {
+            0.0f, 1.0f, // top-left
+            1.0f, 0.0f, // bottom-right
+            1.0f, 1.0f, // top-right
+            1.0f, 0.0f, // bottom-right
+            0.0f, 1.0f, // top-left
+            0.0f, 0.0f  // bottom-left
+        };
+        // clang-format on
+
+        // clang-format off
+        std::vector<float> normal = {
+            0.0f,  1.0f,  0.0f,
+            0.0f,  1.0f,  0.0f,
+            0.0f,  1.0f,  0.0f,
+            0.0f,  1.0f,  0.0f,
+            0.0f,  1.0f,  0.0f,
+            0.0f,  1.0f,  0.0f
+        };
+        // clang-format on
+
+        vertices_number = position.size() / 3;
+
+        SetAttribute(VertexAttributeBit::Position, position);
+        SetAttribute(VertexAttributeBit::UV0, uv);
+        SetAttribute(VertexAttributeBit::Normal, normal);
+    }
+
     void GeometryFactory::SetCube()
     {
         clear();
@@ -167,9 +212,6 @@ namespace Meow
 
         vertices_number = position.size() / 3;
 
-        attributes_map.clear();
-        vertices_buffer.clear();
-        last_attribute_bits.clear();
         SetAttribute(VertexAttributeBit::Position, position);
         SetAttribute(VertexAttributeBit::UV0, uv);
         SetAttribute(VertexAttributeBit::Normal, normal);
