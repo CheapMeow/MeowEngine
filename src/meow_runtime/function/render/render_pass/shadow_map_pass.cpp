@@ -1,0 +1,222 @@
+#include "shadow_map_pass.h"
+
+#include "pch.h"
+
+#include "core/math/math.h"
+#include "function/components/camera/camera_3d_component.hpp"
+#include "function/components/light/directional_light_component.h"
+#include "function/components/model/model_component.h"
+#include "function/components/transform/transform_3d_component.hpp"
+#include "function/global/runtime_context.h"
+#include "function/render/buffer_data/per_scene_data.h"
+#include "function/render/geometry/geometry_factory.h"
+#include "function/render/material/material_factory.h"
+
+#include <glm/gtc/matrix_transform.hpp>
+
+namespace Meow
+{
+    void ShadowMapPass::CreateMaterial()
+    {
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
+        MaterialFactory material_factory;
+
+        auto shadow_map_shader = std::make_shared<Shader>(physical_device,
+                                                          logical_device,
+                                                          "builtin/shaders/shadow_map.vert.spv",
+                                                          "builtin/shaders/shadow_map.frag.spv");
+
+        m_shadow_map_mat = Material(shadow_map_shader);
+        material_factory.Init(shadow_map_shader.get(), vk::FrontFace::eClockwise);
+        material_factory.SetOpaque(true, 0);
+        material_factory.SetDebugName("Forward Shadow Map Material");
+        material_factory.CreatePipeline(logical_device, render_pass, shadow_map_shader.get(), &m_shadow_map_mat, 0);
+
+        m_shadow_map = ImageData::CreateRenderTarget(m_depth_format,
+                                                     {2048, 2048},
+                                                     vk::ImageUsageFlagBits::eDepthStencilAttachment |
+                                                         vk::ImageUsageFlagBits::eInputAttachment,
+                                                     vk::ImageAspectFlagBits::eDepth,
+                                                     {},
+                                                     false);
+    }
+
+    void ShadowMapPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
+                                            const vk::Extent2D&               extent)
+    {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        // clear
+
+        framebuffers.clear();
+
+        // Create attachment
+
+        // Provide attachment information to frame buffer
+
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          2,                            /* attachmentCount */
+                                                          &(*m_shadow_map->image_view), /* pAttachments */
+                                                          extent.width,                 /* width */
+                                                          extent.height,                /* height */
+                                                          1);                           /* layers */
+
+        framebuffers.reserve(output_image_views.size());
+        for (const auto& imageView : output_image_views)
+        {
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+        }
+    }
+
+    void ShadowMapPass::UpdateUniformBuffer()
+    {
+        FUNCTION_TIMER();
+
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+
+        if (!level)
+            MEOW_ERROR("shared ptr is invalid!");
+
+        std::shared_ptr<GameObject>           main_camera = level->GetGameObjectByID(level->GetMainCameraID()).lock();
+        std::shared_ptr<Transform3DComponent> main_camera_transfrom_component =
+            main_camera->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+        std::shared_ptr<Camera3DComponent> main_camera_component =
+            main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+
+        if (!main_camera)
+            MEOW_ERROR("shared ptr is invalid!");
+        if (!main_camera_transfrom_component)
+            MEOW_ERROR("shared ptr is invalid!");
+        if (!main_camera_component)
+            MEOW_ERROR("shared ptr is invalid!");
+
+        glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
+
+        glm::vec3 forward = main_camera_transfrom_component->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::mat4 view    = lookAt(main_camera_transfrom_component->position,
+                                main_camera_transfrom_component->position + forward,
+                                glm::vec3(0.0f, 1.0f, 0.0f));
+
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_shadow_map_mat.uuid);
+
+        // Shadow map
+
+        const auto& all_gameobjects_map = level->GetAllGameObjects();
+        for (auto& kv : all_gameobjects_map)
+        {
+            std::shared_ptr<DirectionalLightComponent> directional_light_comp_ptr =
+                kv.second->TryGetComponent<DirectionalLightComponent>("DirectionalLightComponent");
+            if (directional_light_comp_ptr)
+            {
+                // TODO: PerLightData
+                PerSceneData per_light_data;
+                per_light_data.view =
+                    lookAt(glm::vec3(0.0f), directional_light_comp_ptr->direction, glm::vec3(0.0f, 1.0f, 0.0f));
+                per_light_data.projection =
+                    Math::perspective_vk(directional_light_comp_ptr->field_of_view,
+                                         static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
+                                         directional_light_comp_ptr->near_plane,
+                                         directional_light_comp_ptr->far_plane);
+                m_shadow_map_mat.PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
+                break;
+            }
+        }
+
+        m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerFrame();
+        if (visibles_opaque_ptr)
+        {
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
+            {
+                std::shared_ptr<GameObject> current_gameobject = visible.lock();
+                if (!current_gameobject)
+                    continue;
+                std::shared_ptr<Transform3DComponent> current_gameobject_transfrom_component =
+                    current_gameobject->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+                std::shared_ptr<ModelComponent> current_gameobject_model_component =
+                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
+
+                if (!current_gameobject_transfrom_component || !current_gameobject_model_component)
+                    continue;
+
+                if (!current_gameobject)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!current_gameobject_transfrom_component)
+                    MEOW_ERROR("shared ptr is invalid!");
+                if (!current_gameobject_model_component)
+                    MEOW_ERROR("shared ptr is invalid!");
+
+                auto model = current_gameobject_transfrom_component->GetTransform();
+
+                for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
+                {
+                    m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerObject();
+                    m_shadow_map_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerObject();
+                }
+            }
+            m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerFrame();
+        }
+    }
+
+    void ShadowMapPass::Start(const vk::raii::CommandBuffer& command_buffer,
+                              vk::Extent2D                   extent,
+                              uint32_t                       current_image_index)
+    {
+        draw_call = 0;
+
+        RenderPass::Start(command_buffer, extent, current_image_index);
+    }
+
+    void ShadowMapPass::RenderShadowMap(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+
+        // std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        // const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid);
+        // if (visibles_opaque_ptr)
+        // {
+        //     const auto& visibles_opaque = *visibles_opaque_ptr;
+        //     for (const auto& visible : visibles_opaque)
+        //     {
+        //         std::shared_ptr<GameObject> current_gameobject = visible.lock();
+        //         if (!current_gameobject)
+        //             continue;
+
+        //         std::shared_ptr<ModelComponent> current_gameobject_model_component =
+        //             current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
+        //         if (!current_gameobject_model_component)
+        //             continue;
+
+        //         auto model_res_ptr = current_gameobject_model_component->model.lock();
+        //         if (!model_res_ptr)
+        //             continue;
+
+        //         for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+        //         {
+        //             m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call, true);
+        //             model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+
+        //             ++draw_call;
+        //         }
+        //     }
+        // }
+    }
+
+    void swap(ShadowMapPass& lhs, ShadowMapPass& rhs)
+    {
+        using std::swap;
+
+        swap(lhs.m_shadow_map_mat, rhs.m_shadow_map_mat);
+        swap(lhs.m_shadow_map, rhs.m_shadow_map);
+
+        swap(lhs.draw_call, rhs.draw_call);
+    }
+} // namespace Meow

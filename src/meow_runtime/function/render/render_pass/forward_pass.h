@@ -54,8 +54,6 @@ namespace Meow
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
-        void RenderShadowMap(const vk::raii::CommandBuffer& command_buffer);
-
         void RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer);
 
         void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
@@ -70,9 +68,6 @@ namespace Meow
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material                   m_shadow_map_mat = nullptr;
-        std::shared_ptr<ImageData> m_shadow_map     = nullptr;
-
         Material m_opaque_mat = nullptr;
 
         Material m_skybox_mat   = nullptr;
@@ -83,7 +78,9 @@ namespace Meow
         bool                       m_msaa_enabled          = true;
         std::shared_ptr<ImageData> m_color_msaa_attachment = nullptr;
 
+        std::shared_ptr<ImageData> m_depth_attachment = nullptr;
+
         std::string m_pass_names[2];
-        int         draw_call[5] = {0, 0, 0, 0, 0};
+        int         draw_call[3] = {0, 0, 0};
     };
 } // namespace Meow

@@ -23,25 +23,6 @@ namespace Meow
 
         MaterialFactory material_factory;
 
-        auto shadow_map_shader = std::make_shared<Shader>(physical_device,
-                                                          logical_device,
-                                                          "builtin/shaders/shadow_map.vert.spv",
-                                                          "builtin/shaders/shadow_map.frag.spv");
-
-        m_shadow_map_mat = Material(shadow_map_shader);
-        material_factory.Init(shadow_map_shader.get(), vk::FrontFace::eClockwise);
-        material_factory.SetOpaque(true, 0);
-        material_factory.SetDebugName("Forward Shadow Map Material");
-        material_factory.CreatePipeline(logical_device, render_pass, shadow_map_shader.get(), &m_shadow_map_mat, 0);
-
-        m_shadow_map = ImageData::CreateRenderTarget(m_depth_format,
-                                                     {2048, 2048},
-                                                     vk::ImageUsageFlagBits::eDepthStencilAttachment |
-                                                         vk::ImageUsageFlagBits::eInputAttachment,
-                                                     vk::ImageAspectFlagBits::eDepth,
-                                                     {},
-                                                     false);
-
         auto opaque_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
 
@@ -369,66 +350,7 @@ namespace Meow
                                 main_camera_transfrom_component->position + forward,
                                 glm::vec3(0.0f, 1.0f, 0.0f));
 
-        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_shadow_map_mat.uuid);
-
-        // Shadow map
-
-        const auto& all_gameobjects_map = level->GetAllGameObjects();
-        for (auto& kv : all_gameobjects_map)
-        {
-            std::shared_ptr<DirectionalLightComponent> directional_light_comp_ptr =
-                kv.second->TryGetComponent<DirectionalLightComponent>("DirectionalLightComponent");
-            if (directional_light_comp_ptr)
-            {
-                // TODO: PerLightData
-                PerSceneData per_light_data;
-                per_light_data.view =
-                    lookAt(glm::vec3(0.0f), directional_light_comp_ptr->direction, glm::vec3(0.0f, 1.0f, 0.0f));
-                per_light_data.projection =
-                    Math::perspective_vk(directional_light_comp_ptr->field_of_view,
-                                         static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
-                                         directional_light_comp_ptr->near_plane,
-                                         directional_light_comp_ptr->far_plane);
-                m_shadow_map_mat.PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
-                break;
-            }
-        }
-
-        m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        if (visibles_opaque_ptr)
-        {
-            const auto& visibles_opaque = *visibles_opaque_ptr;
-            for (const auto& visible : visibles_opaque)
-            {
-                std::shared_ptr<GameObject> current_gameobject = visible.lock();
-                if (!current_gameobject)
-                    continue;
-                std::shared_ptr<Transform3DComponent> current_gameobject_transfrom_component =
-                    current_gameobject->TryGetComponent<Transform3DComponent>("Transform3DComponent");
-                std::shared_ptr<ModelComponent> current_gameobject_model_component =
-                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
-
-                if (!current_gameobject_transfrom_component || !current_gameobject_model_component)
-                    continue;
-
-                if (!current_gameobject)
-                    MEOW_ERROR("shared ptr is invalid!");
-                if (!current_gameobject_transfrom_component)
-                    MEOW_ERROR("shared ptr is invalid!");
-                if (!current_gameobject_model_component)
-                    MEOW_ERROR("shared ptr is invalid!");
-
-                auto model = current_gameobject_transfrom_component->GetTransform();
-
-                for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
-                {
-                    m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                    m_shadow_map_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                    m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerObject();
-                }
-            }
-            m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerFrame();
-        }
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid);
 
         // Opaque
 
@@ -574,43 +496,6 @@ namespace Meow
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void ForwardPass::RenderShadowMap(const vk::raii::CommandBuffer& command_buffer)
-    {
-        FUNCTION_TIMER();
-
-        m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
-
-        std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid);
-        if (visibles_opaque_ptr)
-        {
-            const auto& visibles_opaque = *visibles_opaque_ptr;
-            for (const auto& visible : visibles_opaque)
-            {
-                std::shared_ptr<GameObject> current_gameobject = visible.lock();
-                if (!current_gameobject)
-                    continue;
-
-                std::shared_ptr<ModelComponent> current_gameobject_model_component =
-                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
-                if (!current_gameobject_model_component)
-                    continue;
-
-                auto model_res_ptr = current_gameobject_model_component->model.lock();
-                if (!model_res_ptr)
-                    continue;
-
-                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
-                {
-                    m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
-                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
-
-                    ++draw_call[0];
-                }
-            }
-        }
-    }
-
     void ForwardPass::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
@@ -640,10 +525,10 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
                 {
-                    m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[1], true);
+                    m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
                     model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
-                    ++draw_call[1];
+                    ++draw_call[0];
                 }
             }
         }
@@ -656,7 +541,7 @@ namespace Meow
         m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
 
         m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
-        ++draw_call[2];
+        ++draw_call[1];
     }
 
     void ForwardPass::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer)
@@ -718,10 +603,10 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
                 {
-                    m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[3], true);
+                    m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[2], true);
                     model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
 
-                    ++draw_call[3];
+                    ++draw_call[2];
                 }
             }
         }
@@ -735,8 +620,6 @@ namespace Meow
         }
 
         m_msaa_enabled = enabled;
-
-        ++draw_call[4];
     }
 
     void swap(ForwardPass& lhs, ForwardPass& rhs)
@@ -747,6 +630,8 @@ namespace Meow
         swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);
         swap(lhs.m_translucent_mat, rhs.m_translucent_mat);
+
+        swap(lhs.m_depth_attachment, rhs.m_depth_attachment);
 
         swap(lhs.m_pass_names, rhs.m_pass_names);
         swap(lhs.draw_call, rhs.draw_call);

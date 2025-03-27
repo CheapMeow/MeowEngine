@@ -43,6 +43,5 @@ namespace Meow
 
         swap(lhs.m_color_format, rhs.m_color_format);
         swap(lhs.m_depth_format, rhs.m_depth_format);
-        swap(lhs.m_depth_attachment, rhs.m_depth_attachment);
     }
 } // namespace Meow

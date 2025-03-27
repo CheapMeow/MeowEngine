@@ -364,6 +364,8 @@ namespace Meow
         swap(lhs.m_LightDatas, rhs.m_LightDatas);
         swap(lhs.m_LightInfos, rhs.m_LightInfos);
 
+        swap(lhs.m_depth_attachment, rhs.m_depth_attachment);
+
         swap(lhs.m_pass_names, rhs.m_pass_names);
         swap(lhs.draw_call, rhs.draw_call);
     }

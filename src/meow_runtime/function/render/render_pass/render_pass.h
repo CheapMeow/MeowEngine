@@ -54,8 +54,7 @@ namespace Meow
         std::vector<VertexAttributeBit>    input_vertex_attributes;
 
     protected:
-        vk::Format                 m_color_format;
-        vk::Format                 m_depth_format     = vk::Format::eD16Unorm;
-        std::shared_ptr<ImageData> m_depth_attachment = nullptr;
+        vk::Format m_color_format;
+        vk::Format m_depth_format = vk::Format::eD16Unorm;
     };
 } // namespace Meow

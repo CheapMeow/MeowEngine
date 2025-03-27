@@ -97,6 +97,8 @@ namespace Meow
         LightDataBlock  m_LightDatas;
         LightSpawnBlock m_LightInfos;
 
+        std::shared_ptr<ImageData> m_depth_attachment = nullptr;
+
         std::string m_pass_names[2];
         int         draw_call[2] = {0, 0};
     };
