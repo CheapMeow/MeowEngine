@@ -4,6 +4,7 @@
 #include "function/render/buffer_data/uniform_buffer.h"
 #include "function/resource/resource_base.h"
 #include "shader.h"
+#include "shading_model_type.h"
 
 #include <memory>
 #include <unordered_map>
@@ -61,6 +62,8 @@ namespace Meow
                                          uint32_t                       draw_call  = 0,
                                          bool                           is_dynamic = false);
 
+        ShadingModelType GetShadingModelType() { return m_shading_model_type; }
+
         friend void swap(Material& lhs, Material& rhs);
 
         std::shared_ptr<Shader> shader = nullptr;
@@ -78,5 +81,7 @@ namespace Meow
         vk::raii::DescriptorSets                                        m_descriptor_sets = nullptr;
         std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;
         std::unique_ptr<UniformBuffer>                                  m_dynamic_uniform_buffer;
+
+        ShadingModelType m_shading_model_type;
     };
 } // namespace Meow

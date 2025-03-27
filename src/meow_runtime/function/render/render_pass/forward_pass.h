@@ -62,8 +62,8 @@ namespace Meow
 
         void SetMSAAEnabled(bool enabled);
 
-        UUID GetForwardMatID() { return m_opaque_mat.uuid; }
-        UUID GetTranslucentMatID() { return m_translucent_mat.uuid; }
+        UUID GetForwardMatID() { return m_opaque_mat.uuid(); }
+        UUID GetTranslucentMatID() { return m_translucent_mat.uuid(); }
 
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 

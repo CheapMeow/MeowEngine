@@ -222,7 +222,7 @@ namespace Meow
         // Update mesh uniform
 
         m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid());
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -295,7 +295,7 @@ namespace Meow
         m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
         std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid);
+        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid());
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -310,14 +310,14 @@ namespace Meow
                 if (!current_gameobject_model_component)
                     continue;
 
-                auto model_res_ptr = current_gameobject_model_component->model.lock();
-                if (!model_res_ptr)
+                auto model_resource = current_gameobject_model_component->model.lock();
+                if (!model_resource)
                     continue;
 
-                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
                 {
                     m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
-                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+                    model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
                     ++draw_call[0];
                 }

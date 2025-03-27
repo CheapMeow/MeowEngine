@@ -2,7 +2,9 @@
 
 #include "core/uuid/uuid.h"
 #include "function/render/buffer_data/image_data.h"
+#include "function/render/material/material.h"
 #include "function/render/material/shader.h"
+#include "function/render/material/shading_model_type.h"
 #include "function/render/model/model.hpp"
 #include "function/system.h"
 #include "resource_base.h"
@@ -40,10 +42,10 @@ namespace Meow
         void Tick(float dt) override {}
 
         template<typename ResourceType>
-        UUID Register(std::shared_ptr<ResourceType> res_ptr)
+        UUID Register(std::shared_ptr<ResourceType> resource)
         {
-            m_resources[res_ptr->uuid] = res_ptr;
-            return res_ptr->uuid;
+            m_resources[resource->uuid()] = resource;
+            return resource->uuid();
         }
 
         template<typename ResourceType>
@@ -56,8 +58,14 @@ namespace Meow
             return std::dynamic_pointer_cast<ResourceType>(it->second);
         }
 
+        std::vector<UUID>* GetMaterials(ShadingModelType shading_model_type);
+
     private:
         std::unordered_map<UUID, std::shared_ptr<ResourceBase>> m_resources;
+
+        std::unordered_map<ShadingModelType, std::vector<UUID>> materials_id_per_shading_model;
     };
 
+    template<>
+    UUID ResourceSystem::Register(std::shared_ptr<Material> resource);
 } // namespace Meow

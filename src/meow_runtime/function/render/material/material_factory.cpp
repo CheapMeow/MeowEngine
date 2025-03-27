@@ -139,6 +139,8 @@ namespace Meow
 
     void MaterialFactory::SetOpaque(bool depth_buffered, int color_attachment_count)
     {
+        m_shading_model_type = ShadingModelType::Opaque;
+
         vk::StencilOpState stencil_op_state(vk::StencilOp::eKeep,    /* failOp */
                                             vk::StencilOp::eKeep,    /* passOp */
                                             vk::StencilOp::eKeep,    /* depthFailOp */
@@ -179,6 +181,8 @@ namespace Meow
 
     void MaterialFactory::SetTranslucent(bool depth_buffered, int color_attachment_count)
     {
+        m_shading_model_type = ShadingModelType::Translucent;
+
         vk::StencilOpState stencil_op_state(vk::StencilOp::eKeep,    /* failOp */
                                             vk::StencilOp::eKeep,    /* passOp */
                                             vk::StencilOp::eKeep,    /* depthFailOp */
@@ -234,6 +238,8 @@ namespace Meow
             MEOW_ERROR("material_ptr is nullptr!");
             return;
         }
+
+        material_ptr->m_shading_model_type = m_shading_model_type;
 
         vk::raii::PipelineCache        pipeline_cache(logical_device, vk::PipelineCacheCreateInfo());
         vk::GraphicsPipelineCreateInfo graphics_pipeline_create_info(

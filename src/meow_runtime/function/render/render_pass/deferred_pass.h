@@ -79,7 +79,7 @@ namespace Meow
 
         void RenderSkybox(const vk::raii::CommandBuffer& command_buffer);
 
-        UUID GetObj2AttachmentMatID() { return m_obj2attachment_mat.uuid; }
+        UUID GetObj2AttachmentMatID() { return m_obj2attachment_mat.uuid(); }
 
         friend void swap(DeferredPass& lhs, DeferredPass& rhs);
 

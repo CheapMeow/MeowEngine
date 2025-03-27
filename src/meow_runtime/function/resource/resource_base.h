@@ -5,9 +5,13 @@
 
 namespace Meow
 {
-    struct ResourceBase : public NonCopyable
+    class ResourceBase : public NonCopyable
     {
-        UUID uuid;
+    public:
+        UUID uuid() { return m_uuid; }
+
+    private:
+        UUID m_uuid;
     };
 
 } // namespace Meow

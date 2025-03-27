@@ -350,7 +350,7 @@ namespace Meow
                                 main_camera_transfrom_component->position + forward,
                                 glm::vec3(0.0f, 1.0f, 0.0f));
 
-        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid);
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid());
 
         // Opaque
 
@@ -441,7 +441,7 @@ namespace Meow
         m_translucent_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
         m_translucent_mat.PopulateUniformBuffer("lights", &lights, sizeof(lights));
         m_translucent_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_translucent_ptr = level->GetVisiblesPerMaterial(m_translucent_mat.uuid);
+        const auto* visibles_translucent_ptr = level->GetVisiblesPerMaterial(m_translucent_mat.uuid());
         if (visibles_translucent_ptr)
         {
             const auto& visibles_translucent = *visibles_translucent_ptr;
@@ -504,7 +504,7 @@ namespace Meow
         m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 3, 1);
 
         std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid);
+        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid());
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -519,14 +519,14 @@ namespace Meow
                 if (!current_gameobject_model_component)
                     continue;
 
-                auto model_res_ptr = current_gameobject_model_component->model.lock();
-                if (!model_res_ptr)
+                auto model_resource = current_gameobject_model_component->model.lock();
+                if (!model_resource)
                     continue;
 
-                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
                 {
                     m_opaque_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[0], true);
-                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+                    model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
                     ++draw_call[0];
                 }
@@ -562,7 +562,7 @@ namespace Meow
         glm::vec3 camera_pos     = camera_transform_ptr->position;
         glm::vec3 camera_forward = camera_transform_ptr->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
 
-        auto* visibles_translucent_ptr = level->GetVisiblesPerMaterial(m_translucent_mat.uuid);
+        auto* visibles_translucent_ptr = level->GetVisiblesPerMaterial(m_translucent_mat.uuid());
         if (visibles_translucent_ptr)
         {
             auto& visibles_translucent = *visibles_translucent_ptr; // std::vector<std::weak_ptr<Meow::GameObject>>
@@ -597,14 +597,14 @@ namespace Meow
                 if (!current_gameobject_model_component)
                     continue;
 
-                auto model_res_ptr = current_gameobject_model_component->model.lock();
-                if (!model_res_ptr)
+                auto model_resource = current_gameobject_model_component->model.lock();
+                if (!model_resource)
                     continue;
 
-                for (uint32_t i = 0; i < model_res_ptr->meshes.size(); ++i)
+                for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
                 {
                     m_translucent_mat.BindDescriptorSetToPipeline(command_buffer, 2, 1, draw_call[2], true);
-                    model_res_ptr->meshes[i]->BindDrawCmd(command_buffer);
+                    model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
                     ++draw_call[2];
                 }

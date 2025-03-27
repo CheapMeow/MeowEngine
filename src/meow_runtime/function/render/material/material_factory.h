@@ -42,6 +42,8 @@ namespace Meow
                             int                         subpass = 0) const;
 
     private:
+        ShadingModelType m_shading_model_type = ShadingModelType::Opaque;
+
         PipelineCreateInfoContext context = {};
 
         bool        m_msaa_enabled = false;
