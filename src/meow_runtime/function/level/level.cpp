@@ -4,6 +4,7 @@
 
 #include "function/components/model/model_component.h"
 #include "function/global/runtime_context.h"
+#include "function/render/material/material.h"
 
 namespace Meow
 {
@@ -17,6 +18,16 @@ namespace Meow
         }
 
         FrustumCulling();
+    }
+
+    std::vector<std::weak_ptr<GameObject>>* Level::GetVisiblesPerShadingModel(ShadingModelType shading_model)
+    {
+        if (m_visibles_per_shading_model.find(shading_model) == m_visibles_per_shading_model.end())
+        {
+            return nullptr;
+        }
+
+        return &m_visibles_per_shading_model.at(shading_model);
     }
 
     std::weak_ptr<GameObject> Level::GetGameObjectByID(UUID go_id) const
@@ -55,7 +66,7 @@ namespace Meow
 
     void Level::FrustumCulling()
     {
-        m_visibles_per_material.clear();
+        m_visibles_per_shading_model.clear();
 
         std::shared_ptr<GameObject> main_camera = GetGameObjectByID(m_main_camera_id).lock();
 
@@ -85,7 +96,14 @@ namespace Meow
                 continue;
             }
 
-            m_visibles_per_material[current_gameobject_model_component->material_id].push_back(pair.second);
+            auto material = g_runtime_context.resource_system->GetResource<Material>(
+                current_gameobject_model_component->material_id);
+            if (!material)
+            {
+                continue;
+            }
+
+            m_visibles_per_shading_model[material->GetShadingModelType()].push_back(pair.second);
         }
     }
 } // namespace Meow

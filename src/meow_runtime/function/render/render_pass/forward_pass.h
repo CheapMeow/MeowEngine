@@ -62,18 +62,18 @@ namespace Meow
 
         void SetMSAAEnabled(bool enabled);
 
-        UUID GetForwardMatID() { return m_opaque_mat.uuid(); }
-        UUID GetTranslucentMatID() { return m_translucent_mat.uuid(); }
+        UUID GetForwardMatID() { return m_opaque_material->uuid(); }
+        UUID GetTranslucentMatID() { return m_translucent_material->uuid(); }
 
         friend void swap(ForwardPass& lhs, ForwardPass& rhs);
 
     protected:
-        Material m_opaque_mat = nullptr;
+        std::shared_ptr<Material> m_opaque_material = nullptr;
 
-        Material m_skybox_mat   = nullptr;
-        Model    m_skybox_model = nullptr;
+        std::shared_ptr<Material> m_skybox_material = nullptr;
+        Model                     m_skybox_model    = nullptr;
 
-        Material m_translucent_mat = nullptr;
+        std::shared_ptr<Material> m_translucent_material = nullptr;
 
         bool                       m_msaa_enabled          = true;
         std::shared_ptr<ImageData> m_color_msaa_attachment = nullptr;

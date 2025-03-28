@@ -27,18 +27,21 @@ namespace Meow
         auto obj_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
 
-        m_obj2attachment_mat = Material(obj_shader);
+        m_obj2attachment_material = std::make_shared<Material>(obj_shader);
+        g_runtime_context.resource_system->Register(m_obj2attachment_material);
         material_factory.Init(obj_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 3);
-        material_factory.CreatePipeline(logical_device, render_pass, obj_shader.get(), &m_obj2attachment_mat, 0);
+        material_factory.CreatePipeline(
+            logical_device, render_pass, obj_shader.get(), m_obj2attachment_material.get(), 0);
 
         auto quad_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
 
-        m_quad_mat = Material(quad_shader);
+        m_quad_material = std::make_shared<Material>(quad_shader);
+        g_runtime_context.resource_system->Register(m_quad_material);
         material_factory.Init(quad_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
-        material_factory.CreatePipeline(logical_device, render_pass, quad_shader.get(), &m_quad_mat, 1);
+        material_factory.CreatePipeline(logical_device, render_pass, quad_shader.get(), m_quad_material.get(), 1);
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
@@ -46,9 +49,9 @@ namespace Meow
         std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
 
         m_quad_model =
-            std::move(Model(std::move(vertices), std::move(indices), m_quad_mat.shader->per_vertex_attributes));
+            std::move(Model(std::move(vertices), std::move(indices), m_quad_material->shader->per_vertex_attributes));
 
-        input_vertex_attributes = m_obj2attachment_mat.shader->per_vertex_attributes;
+        input_vertex_attributes = m_obj2attachment_material->shader->per_vertex_attributes;
 
         for (int32_t i = 0; i < k_num_lights; ++i)
         {
@@ -73,10 +76,11 @@ namespace Meow
         auto skybox_shader = std::make_shared<Shader>(
             physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
 
-        m_skybox_mat = Material(skybox_shader);
+        m_skybox_material = std::make_shared<Material>(skybox_shader);
+        g_runtime_context.resource_system->Register(m_skybox_material);
         material_factory.Init(skybox_shader.get(), vk::FrontFace::eCounterClockwise);
         material_factory.SetOpaque(true, 1);
-        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader.get(), &m_skybox_mat, 2);
+        material_factory.CreatePipeline(logical_device, render_pass, skybox_shader.get(), m_skybox_material.get(), 2);
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -90,7 +94,7 @@ namespace Meow
             if (texture_ptr)
             {
                 g_runtime_context.resource_system->Register(texture_ptr);
-                m_skybox_mat.BindImageToDescriptorSet("environmentMap", *texture_ptr);
+                m_skybox_material->BindImageToDescriptorSet("environmentMap", *texture_ptr);
             }
         }
 
@@ -174,10 +178,10 @@ namespace Meow
 
         // Update descriptor set
 
-        m_quad_mat.BindImageToDescriptorSet("inputColor", *m_color_attachment);
-        m_quad_mat.BindImageToDescriptorSet("inputNormal", *m_normal_attachment);
-        m_quad_mat.BindImageToDescriptorSet("inputPosition", *m_position_attachment);
-        m_quad_mat.BindImageToDescriptorSet("inputDepth", *m_depth_attachment);
+        m_quad_material->BindImageToDescriptorSet("inputColor", *m_color_attachment);
+        m_quad_material->BindImageToDescriptorSet("inputNormal", *m_normal_attachment);
+        m_quad_material->BindImageToDescriptorSet("inputPosition", *m_position_attachment);
+        m_quad_material->BindImageToDescriptorSet("inputDepth", *m_depth_attachment);
     }
 
     void DeferredPass::UpdateUniformBuffer()
@@ -217,12 +221,12 @@ namespace Meow
                                  main_camera_component->near_plane,
                                  main_camera_component->far_plane);
 
-        m_obj2attachment_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_obj2attachment_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
 
         // Update mesh uniform
 
-        m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerFrame();
-        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid());
+        m_obj2attachment_material->BeginPopulatingDynamicUniformBufferPerFrame();
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerShadingModel(ShadingModelType::Opaque);
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -250,12 +254,12 @@ namespace Meow
 
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
-                    m_obj2attachment_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                    m_obj2attachment_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                    m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerObject();
+                    m_obj2attachment_material->BeginPopulatingDynamicUniformBufferPerObject();
+                    m_obj2attachment_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_obj2attachment_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
-            m_obj2attachment_mat.EndPopulatingDynamicUniformBufferPerFrame();
+            m_obj2attachment_material->EndPopulatingDynamicUniformBufferPerFrame();
         }
 
         // update light
@@ -268,12 +272,12 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_quad_mat.PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
+        m_quad_material->PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
 
         // skybox
 
         per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
-        m_skybox_mat.PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
     }
 
     void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -292,10 +296,10 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_obj2attachment_material->BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
         std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_obj2attachment_mat.uuid());
+        const auto*            visibles_opaque_ptr = level->GetVisiblesPerShadingModel(ShadingModelType::Opaque);
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -316,7 +320,7 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
                 {
-                    m_obj2attachment_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
+                    m_obj2attachment_material->BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
                     model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
                     ++draw_call[0];
@@ -329,7 +333,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_quad_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_quad_material->BindDescriptorSetToPipeline(command_buffer, 0, 1);
         for (int32_t i = 0; i < m_quad_model.meshes.size(); ++i)
         {
             m_quad_model.meshes[i]->BindDrawCmd(command_buffer);
@@ -342,7 +346,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_skybox_mat.BindDescriptorSetToPipeline(command_buffer, 0, 2);
+        m_skybox_material->BindDescriptorSetToPipeline(command_buffer, 0, 2);
 
         m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
     }
@@ -351,10 +355,10 @@ namespace Meow
     {
         using std::swap;
 
-        swap(lhs.m_obj2attachment_mat, rhs.m_obj2attachment_mat);
-        swap(lhs.m_quad_mat, rhs.m_quad_mat);
+        swap(lhs.m_obj2attachment_material, rhs.m_obj2attachment_material);
+        swap(lhs.m_quad_material, rhs.m_quad_material);
         swap(lhs.m_quad_model, rhs.m_quad_model);
-        swap(lhs.m_skybox_mat, rhs.m_skybox_mat);
+        swap(lhs.m_skybox_material, rhs.m_skybox_material);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);
 
         swap(lhs.m_color_attachment, rhs.m_color_attachment);

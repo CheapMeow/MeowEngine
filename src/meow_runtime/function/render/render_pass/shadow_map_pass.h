@@ -59,8 +59,8 @@ namespace Meow
         friend void swap(ShadowMapPass& lhs, ShadowMapPass& rhs);
 
     protected:
-        Material                   m_shadow_map_mat = nullptr;
-        std::shared_ptr<ImageData> m_shadow_map     = nullptr;
+        std::shared_ptr<Material>  m_shadow_map_material = nullptr;
+        std::shared_ptr<ImageData> m_shadow_map          = nullptr;
 
         int draw_call = 0;
     };

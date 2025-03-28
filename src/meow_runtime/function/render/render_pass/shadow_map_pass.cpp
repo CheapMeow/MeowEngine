@@ -28,11 +28,13 @@ namespace Meow
                                                           "builtin/shaders/shadow_map.vert.spv",
                                                           "builtin/shaders/shadow_map.frag.spv");
 
-        m_shadow_map_mat = Material(shadow_map_shader);
+        m_shadow_map_material = std::make_shared<Material>(shadow_map_shader);
+        g_runtime_context.resource_system->Register(m_shadow_map_material);
         material_factory.Init(shadow_map_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 0);
         material_factory.SetDebugName("Forward Shadow Map Material");
-        material_factory.CreatePipeline(logical_device, render_pass, shadow_map_shader.get(), &m_shadow_map_mat, 0);
+        material_factory.CreatePipeline(
+            logical_device, render_pass, shadow_map_shader.get(), m_shadow_map_material.get(), 0);
 
         m_shadow_map = ImageData::CreateRenderTarget(m_depth_format,
                                                      {2048, 2048},
@@ -102,7 +104,7 @@ namespace Meow
                                 main_camera_transfrom_component->position + forward,
                                 glm::vec3(0.0f, 1.0f, 0.0f));
 
-        const auto* visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_shadow_map_mat.uuid());
+        const auto* visibles_opaque_ptr = level->GetVisiblesPerShadingModel(ShadingModelType::Opaque);
 
         // Shadow map
 
@@ -122,12 +124,12 @@ namespace Meow
                                          static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
                                          directional_light_comp_ptr->near_plane,
                                          directional_light_comp_ptr->far_plane);
-                m_shadow_map_mat.PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
+                m_shadow_map_material->PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
                 break;
             }
         }
 
-        m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerFrame();
+        m_shadow_map_material->BeginPopulatingDynamicUniformBufferPerFrame();
         if (visibles_opaque_ptr)
         {
             const auto& visibles_opaque = *visibles_opaque_ptr;
@@ -155,12 +157,12 @@ namespace Meow
 
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
-                    m_shadow_map_mat.BeginPopulatingDynamicUniformBufferPerObject();
-                    m_shadow_map_mat.PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
-                    m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerObject();
+                    m_shadow_map_material->BeginPopulatingDynamicUniformBufferPerObject();
+                    m_shadow_map_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_shadow_map_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
-            m_shadow_map_mat.EndPopulatingDynamicUniformBufferPerFrame();
+            m_shadow_map_material->EndPopulatingDynamicUniformBufferPerFrame();
         }
     }
 
@@ -177,44 +179,44 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_shadow_map_material->BindDescriptorSetToPipeline(command_buffer, 0, 1);
 
-        // std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
-        // const auto*            visibles_opaque_ptr = level->GetVisiblesPerMaterial(m_opaque_mat.uuid());
-        // if (visibles_opaque_ptr)
-        // {
-        //     const auto& visibles_opaque = *visibles_opaque_ptr;
-        //     for (const auto& visible : visibles_opaque)
-        //     {
-        //         std::shared_ptr<GameObject> current_gameobject = visible.lock();
-        //         if (!current_gameobject)
-        //             continue;
+        std::shared_ptr<Level> level               = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+        const auto*            visibles_opaque_ptr = level->GetVisiblesPerShadingModel(ShadingModelType::Opaque);
+        if (visibles_opaque_ptr)
+        {
+            const auto& visibles_opaque = *visibles_opaque_ptr;
+            for (const auto& visible : visibles_opaque)
+            {
+                std::shared_ptr<GameObject> current_gameobject = visible.lock();
+                if (!current_gameobject)
+                    continue;
 
-        //         std::shared_ptr<ModelComponent> current_gameobject_model_component =
-        //             current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
-        //         if (!current_gameobject_model_component)
-        //             continue;
+                std::shared_ptr<ModelComponent> current_gameobject_model_component =
+                    current_gameobject->TryGetComponent<ModelComponent>("ModelComponent");
+                if (!current_gameobject_model_component)
+                    continue;
 
-        //         auto model_resource = current_gameobject_model_component->model.lock();
-        //         if (!model_resource)
-        //             continue;
+                auto model_resource = current_gameobject_model_component->model.lock();
+                if (!model_resource)
+                    continue;
 
-        //         for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
-        //         {
-        //             m_shadow_map_mat.BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call, true);
-        //             model_resource->meshes[i]->BindDrawCmd(command_buffer);
+                for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
+                {
+                    m_shadow_map_material->BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call, true);
+                    model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
-        //             ++draw_call;
-        //         }
-        //     }
-        // }
+                    ++draw_call;
+                }
+            }
+        }
     }
 
     void swap(ShadowMapPass& lhs, ShadowMapPass& rhs)
     {
         using std::swap;
 
-        swap(lhs.m_shadow_map_mat, rhs.m_shadow_map_mat);
+        swap(lhs.m_shadow_map_material, rhs.m_shadow_map_material);
         swap(lhs.m_shadow_map, rhs.m_shadow_map);
 
         swap(lhs.draw_call, rhs.draw_call);

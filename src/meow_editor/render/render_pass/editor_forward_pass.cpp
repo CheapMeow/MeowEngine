@@ -24,13 +24,13 @@ namespace Meow
 
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
-        m_render_stat[0].vertex_attribute_metas = m_opaque_mat.shader->vertex_attribute_metas;
-        m_render_stat[0].buffer_meta_map        = m_opaque_mat.shader->buffer_meta_map;
-        m_render_stat[0].image_meta_map         = m_opaque_mat.shader->image_meta_map;
+        m_render_stat[0].vertex_attribute_metas = m_opaque_material->shader->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_opaque_material->shader->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_opaque_material->shader->image_meta_map;
 
-        m_render_stat[1].vertex_attribute_metas = m_skybox_mat.shader->vertex_attribute_metas;
-        m_render_stat[1].buffer_meta_map        = m_skybox_mat.shader->buffer_meta_map;
-        m_render_stat[1].image_meta_map         = m_skybox_mat.shader->image_meta_map;
+        m_render_stat[1].vertex_attribute_metas = m_skybox_material->shader->vertex_attribute_metas;
+        m_render_stat[1].buffer_meta_map        = m_skybox_material->shader->buffer_meta_map;
+        m_render_stat[1].image_meta_map         = m_skybox_material->shader->image_meta_map;
 #endif
     }
 
@@ -240,7 +240,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_opaque_mat.BindPipeline(command_buffer);
+        m_opaque_material->BindPipeline(command_buffer);
 
 #ifdef MEOW_EDITOR
         if (m_query_enabled)
@@ -254,7 +254,7 @@ namespace Meow
             command_buffer.endQuery(*query_pool, 0);
 #endif
 
-        m_skybox_mat.BindPipeline(command_buffer);
+        m_skybox_material->BindPipeline(command_buffer);
 
 #ifdef MEOW_EDITOR
         if (m_query_enabled)
@@ -268,7 +268,7 @@ namespace Meow
             command_buffer.endQuery(*query_pool, 1);
 #endif
 
-        m_translucent_mat.BindPipeline(command_buffer);
+        m_translucent_material->BindPipeline(command_buffer);
         RenderTranslucentMeshes(command_buffer);
     }
 

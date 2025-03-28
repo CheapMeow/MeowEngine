@@ -2,6 +2,7 @@
 
 #include "function/components/camera/camera_3d_component.hpp"
 #include "function/object/game_object.h"
+#include "function/render/material/shading_model_type.h"
 
 #include <unordered_map>
 
@@ -14,17 +15,8 @@ namespace Meow
 
         std::unordered_map<UUID, std::shared_ptr<GameObject>>& GetAllGameObjects() { return m_gameobjects; }
 
-        std::vector<std::weak_ptr<GameObject>>* GetVisiblesPerMaterial(UUID material_id)
-        {
-            if (m_visibles_per_material.find(material_id) == m_visibles_per_material.end())
-            {
-                return nullptr;
-            }
-
-            return &m_visibles_per_material.at(material_id);
-        }
-
-        std::weak_ptr<GameObject> GetGameObjectByID(UUID go_id) const;
+        std::vector<std::weak_ptr<GameObject>>* GetVisiblesPerShadingModel(ShadingModelType shading_model);
+        std::weak_ptr<GameObject>               GetGameObjectByID(UUID go_id) const;
 
         UUID CreateObject();
         void DeleteGameObjectByID(UUID go_id) { m_gameobjects.erase(go_id); }
@@ -35,8 +27,8 @@ namespace Meow
     private:
         void FrustumCulling();
 
-        std::unordered_map<UUID, std::shared_ptr<GameObject>>            m_gameobjects;
-        std::unordered_map<UUID, std::vector<std::weak_ptr<GameObject>>> m_visibles_per_material;
+        std::unordered_map<UUID, std::shared_ptr<GameObject>>                        m_gameobjects;
+        std::unordered_map<ShadingModelType, std::vector<std::weak_ptr<GameObject>>> m_visibles_per_shading_model;
 
         UUID m_main_camera_id;
     };
