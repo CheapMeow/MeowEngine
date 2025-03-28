@@ -7,6 +7,8 @@ namespace Meow
     {
         m_resources[resource->uuid()] = resource;
 
+        std::cout << "12345" << std::endl;
+
         if (materials_id_per_shading_model.find(resource->GetShadingModelType()) ==
             materials_id_per_shading_model.end())
         {
@@ -19,7 +21,7 @@ namespace Meow
 
         return resource->uuid();
     }
-    
+
     std::vector<UUID>* ResourceSystem::GetMaterials(ShadingModelType shading_model_type)
     {
         if (materials_id_per_shading_model.find(shading_model_type) == materials_id_per_shading_model.end())
