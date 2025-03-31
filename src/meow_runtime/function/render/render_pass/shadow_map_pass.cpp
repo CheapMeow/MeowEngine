@@ -170,7 +170,7 @@ namespace Meow
                               vk::Extent2D                   extent,
                               uint32_t                       current_image_index)
     {
-        draw_call = 0;
+        draw_call[0] = 0;
 
         RenderPass::Start(command_buffer, extent, current_image_index);
     }
@@ -203,10 +203,10 @@ namespace Meow
 
                 for (uint32_t i = 0; i < model_resource->meshes.size(); ++i)
                 {
-                    m_shadow_map_material->BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call, true);
+                    m_shadow_map_material->BindDescriptorSetToPipeline(command_buffer, 1, 1, draw_call[0], true);
                     model_resource->meshes[i]->BindDrawCmd(command_buffer);
 
-                    ++draw_call;
+                    ++draw_call[0];
                 }
             }
         }

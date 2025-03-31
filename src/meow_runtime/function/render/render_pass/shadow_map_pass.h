@@ -62,6 +62,7 @@ namespace Meow
         std::shared_ptr<Material>  m_shadow_map_material = nullptr;
         std::shared_ptr<ImageData> m_shadow_map          = nullptr;
 
-        int draw_call = 0;
+        std::string m_pass_names[1];
+        int         draw_call[1] = {0};
     };
 } // namespace Meow
