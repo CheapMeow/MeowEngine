@@ -601,5 +601,7 @@ namespace Meow
         m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 #endif
+        m_forward_pass.BindShadowMap(m_shadow_map_pass.GetShadowMap());
+        m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
     }
 } // namespace Meow

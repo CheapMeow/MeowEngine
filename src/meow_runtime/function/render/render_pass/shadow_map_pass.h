@@ -56,6 +56,8 @@ namespace Meow
 
         void RenderShadowMap(const vk::raii::CommandBuffer& command_buffer);
 
+        std::shared_ptr<ImageData> GetShadowMap() { return m_shadow_map; }
+
         friend void swap(ShadowMapPass& lhs, ShadowMapPass& rhs);
 
     protected:

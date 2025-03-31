@@ -202,6 +202,37 @@ namespace Meow
         }
     }
 
+    void ForwardPass::PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map)
+    {
+        std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
+
+        const auto& all_gameobjects_map = level->GetAllGameObjects();
+        for (auto& kv : all_gameobjects_map)
+        {
+            std::shared_ptr<DirectionalLightComponent> directional_light_comp_ptr =
+                kv.second->TryGetComponent<DirectionalLightComponent>("DirectionalLightComponent");
+            if (directional_light_comp_ptr)
+            {
+                // TODO: PerLightData
+                PerSceneData per_light_data;
+                per_light_data.view =
+                    lookAt(glm::vec3(0.0f), directional_light_comp_ptr->direction, glm::vec3(0.0f, 1.0f, 0.0f));
+                per_light_data.projection =
+                    Math::perspective_vk(directional_light_comp_ptr->field_of_view,
+                                         (float)shadow_map->extent.width / shadow_map->extent.height,
+                                         directional_light_comp_ptr->near_plane,
+                                         directional_light_comp_ptr->far_plane);
+                m_opaque_material->PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
+                break;
+            }
+        }
+    }
+
+    void ForwardPass::BindShadowMap(std::shared_ptr<ImageData> shadow_map)
+    {
+        m_opaque_material->BindImageToDescriptorSet("shadowMap", *shadow_map);
+    }
+
     void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                           const vk::Extent2D&               extent)
     {

@@ -45,6 +45,9 @@ namespace Meow
         virtual void CreateRenderPass() {}
         void         CreateMaterial();
 
+        void PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map);
+        void BindShadowMap(std::shared_ptr<ImageData> shadow_map);
+
         void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
 

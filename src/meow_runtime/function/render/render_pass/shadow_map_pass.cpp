@@ -62,8 +62,8 @@ namespace Meow
                                                           *render_pass,                 /* renderPass */
                                                           1,                            /* attachmentCount */
                                                           &(*m_shadow_map->image_view), /* pAttachments */
-                                                          extent.width,                 /* width */
-                                                          extent.height,                /* height */
+                                                          m_shadow_map->extent.width,   /* width */
+                                                          m_shadow_map->extent.height,  /* height */
                                                           1);                           /* layers */
 
         framebuffers.reserve(output_image_views.size());
@@ -97,8 +97,6 @@ namespace Meow
         if (!main_camera_component)
             MEOW_ERROR("shared ptr is invalid!");
 
-        glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
-
         glm::vec3 forward = main_camera_transfrom_component->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
         glm::mat4 view    = lookAt(main_camera_transfrom_component->position,
                                 main_camera_transfrom_component->position + forward,
@@ -121,7 +119,7 @@ namespace Meow
                     lookAt(glm::vec3(0.0f), directional_light_comp_ptr->direction, glm::vec3(0.0f, 1.0f, 0.0f));
                 per_light_data.projection =
                     Math::perspective_vk(directional_light_comp_ptr->field_of_view,
-                                         static_cast<float>(window_size[0]) / static_cast<float>(window_size[1]),
+                                         (float)m_shadow_map->extent.width / m_shadow_map->extent.height,
                                          directional_light_comp_ptr->near_plane,
                                          directional_light_comp_ptr->far_plane);
                 m_shadow_map_material->PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
@@ -172,7 +170,7 @@ namespace Meow
     {
         draw_call[0] = 0;
 
-        RenderPass::Start(command_buffer, extent, current_image_index);
+        RenderPass::Start(command_buffer, m_shadow_map->extent, current_image_index);
     }
 
     void ShadowMapPass::RenderShadowMap(const vk::raii::CommandBuffer& command_buffer)

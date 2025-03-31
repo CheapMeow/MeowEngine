@@ -3,6 +3,7 @@
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV0;
+layout (location = 3) in vec3 inShadowCoord;
 
 layout (set = 1, binding = 0) uniform LightData 
 {
@@ -18,6 +19,7 @@ layout (set = 3, binding = 1) uniform sampler2D normalMap;
 layout (set = 3, binding = 2) uniform sampler2D metallicMap;
 layout (set = 3, binding = 3) uniform sampler2D roughnessMap;
 layout (set = 3, binding = 4) uniform sampler2D aoMap;
+layout (set = 3, binding = 5) uniform sampler2D shadowMap;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -146,6 +148,17 @@ void main()
     vec3 ambient = (kD * diffuse) * ao;
 
     vec3 color = ambient + Lo;
+
+    // shadow
+    float depth0  = inShadowCoord.z - 0.0001;
+    float depth1  = texture(shadowMap, inShadowCoord.xy).r;
+    float shadow  = 1.0;
+
+    if (depth0 >= depth1) {
+        shadow = 0.5;
+    }
+
+    color *= shadow;
 
     // HDR tonemapping
     color = color / (color + vec3(1.0));
