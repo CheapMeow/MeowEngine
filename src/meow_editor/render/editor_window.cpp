@@ -245,10 +245,11 @@ namespace Meow
 #endif
 
         m_per_frame_data.clear();
-        m_forward_pass   = nullptr;
-        m_deferred_pass  = nullptr;
-        m_swapchain_data = nullptr;
-        m_surface_data   = nullptr;
+        m_shadow_map_pass = nullptr;
+        m_forward_pass    = nullptr;
+        m_deferred_pass   = nullptr;
+        m_swapchain_data  = nullptr;
+        m_surface_data    = nullptr;
     }
 
     void EditorWindow::Tick(float dt)
@@ -294,6 +295,10 @@ namespace Meow
                                             0.0f,
                                             1.0f));
         cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
+
+        m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_shadow_map_pass.Draw(cmd_buffer);
+        m_shadow_map_pass.End(cmd_buffer);
 
 #ifdef MEOW_EDITOR
         m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, 0);
@@ -402,8 +407,9 @@ namespace Meow
 
     void EditorWindow::CreateRenderPass()
     {
-        m_deferred_pass = EditorDeferredPass(m_surface_data);
-        m_forward_pass  = EditorForwardPass(m_surface_data);
+        m_shadow_map_pass = EditorShadowMapPass(m_surface_data);
+        m_deferred_pass   = EditorDeferredPass(m_surface_data);
+        m_forward_pass    = EditorForwardPass(m_surface_data);
 #ifdef MEOW_EDITOR
         m_imgui_pass = ImGuiPass(m_surface_data);
 #endif
@@ -580,6 +586,7 @@ namespace Meow
 
         // TODO: temp
 #ifdef MEOW_EDITOR
+        m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
@@ -589,6 +596,7 @@ namespace Meow
                                                       *m_offscreen_render_target->image_view,
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
 #else
+        m_shadow_map_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 #endif

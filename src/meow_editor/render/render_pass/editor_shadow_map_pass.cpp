@@ -59,7 +59,7 @@ namespace Meow
             },
         };
 
-        vk::AttachmentReference depth_attachment_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+        vk::AttachmentReference depth_attachment_reference(0, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
             {
@@ -114,7 +114,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eRenderPass,
                                                      NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkRenderPass, *render_pass),
-                                                     "Forward RenderPass"};
+                                                     "Shadow Map RenderPass"};
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }

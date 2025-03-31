@@ -60,7 +60,7 @@ namespace Meow
 
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
-                                                          2,                            /* attachmentCount */
+                                                          1,                            /* attachmentCount */
                                                           &(*m_shadow_map->image_view), /* pAttachments */
                                                           extent.width,                 /* width */
                                                           extent.height,                /* height */

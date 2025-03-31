@@ -8,6 +8,7 @@
 #include "meow_runtime/function/window/window.h"
 #include "render/render_pass/editor_deferred_pass.h"
 #include "render/render_pass/editor_forward_pass.h"
+#include "render/render_pass/editor_shadow_map_pass.h"
 #include "render/render_pass/imgui_pass.h"
 
 namespace Meow
@@ -34,8 +35,9 @@ namespace Meow
 
         std::vector<PerFrameData> m_per_frame_data;
 
-        EditorDeferredPass m_deferred_pass = nullptr;
-        EditorForwardPass  m_forward_pass  = nullptr;
+        EditorShadowMapPass m_shadow_map_pass = nullptr;
+        EditorDeferredPass  m_deferred_pass   = nullptr;
+        EditorForwardPass   m_forward_pass    = nullptr;
 #ifdef MEOW_EDITOR
         ImGuiPass m_imgui_pass = nullptr;
 #endif
