@@ -271,6 +271,7 @@ namespace Meow
         auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
         auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
 
+        m_shadow_map_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
 
         // ------------------- render -------------------

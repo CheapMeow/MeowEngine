@@ -260,6 +260,7 @@ namespace Meow
         {
             if (draw_call >= m_per_obj_dynamic_offsets.size())
             {
+                MEOW_ERROR("Draw call exceed dynamic offset count!");
                 return;
             }
         }
