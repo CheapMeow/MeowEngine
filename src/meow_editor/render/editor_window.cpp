@@ -77,6 +77,10 @@ namespace Meow
             std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
             TryAddComponent(
                 current_gameobject, "DirectionalLightComponent", std::make_shared<DirectionalLightComponent>());
+            auto directional_light_transform =
+                TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+            directional_light_transform->position = glm::vec3(0.0f, 20.0f, 0.0f);
+            directional_light_transform->rotation = glm::quat(glm::vec3(50.0f, -30.0f, 0.0f));
         }
         GeometryFactory geometry_factory;
         geometry_factory.SetSphere(32, 32);

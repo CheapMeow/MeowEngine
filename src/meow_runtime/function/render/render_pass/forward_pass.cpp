@@ -213,10 +213,21 @@ namespace Meow
                 kv.second->TryGetComponent<DirectionalLightComponent>("DirectionalLightComponent");
             if (directional_light_comp_ptr)
             {
+                std::shared_ptr<Transform3DComponent> directional_light_transform =
+                    kv.second->TryGetComponent<Transform3DComponent>("Transform3DComponent");
+
+                if (!directional_light_transform)
+                {
+                    continue;
+                }
+
+                glm::vec3 forward = directional_light_transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+
                 // TODO: PerLightData
                 PerSceneData per_light_data;
-                per_light_data.view =
-                    lookAt(glm::vec3(0.0f), directional_light_comp_ptr->direction, glm::vec3(0.0f, 1.0f, 0.0f));
+                per_light_data.view = lookAt(directional_light_transform->position,
+                                             directional_light_transform->position + forward,
+                                             glm::vec3(0.0f, 1.0f, 0.0f));
                 per_light_data.projection =
                     Math::perspective_vk(directional_light_comp_ptr->field_of_view,
                                          (float)shadow_map->extent.width / shadow_map->extent.height,

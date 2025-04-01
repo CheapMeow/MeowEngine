@@ -25,7 +25,6 @@ namespace Meow
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
 
 		reflect::AddClass<DirectionalLightComponent>("DirectionalLightComponent")
-			.AddField("direction", "glm::vec3", &DirectionalLightComponent::direction)
 			.AddField("field_of_view", "float", &DirectionalLightComponent::field_of_view)
 			.AddField("near_plane", "float", &DirectionalLightComponent::near_plane)
 			.AddField("far_plane", "float", &DirectionalLightComponent::far_plane);

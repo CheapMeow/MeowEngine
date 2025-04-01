@@ -11,9 +11,6 @@ namespace Meow
     {
     public:
         [[reflectable_field()]]
-        glm::vec3 direction = glm::vec3(1.0f, 0.0f, 0.0f);
-
-        [[reflectable_field()]]
         float field_of_view = glm::radians(45.0f);
 
         [[reflectable_field()]]
