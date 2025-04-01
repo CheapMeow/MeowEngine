@@ -2,6 +2,7 @@
 
 #include "core/reflect/type_descriptor_builder.hpp"
 #include "function/components/camera/camera_3d_component.hpp"
+#include "function/components/light/directional_light_component.h"
 #include "function/components/model/model_component.h"
 
 namespace Meow
@@ -19,6 +20,12 @@ namespace Meow
 			.AddField("near_plane", "float", &Camera3DComponent::near_plane)
 			.AddField("far_plane", "float", &Camera3DComponent::far_plane)
 			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
+
+		reflect::AddClass<DirectionalLightComponent>("DirectionalLightComponent")
+			.AddField("direction", "glm::vec3", &DirectionalLightComponent::direction)
+			.AddField("field_of_view", "float", &DirectionalLightComponent::field_of_view)
+			.AddField("near_plane", "float", &DirectionalLightComponent::near_plane)
+			.AddField("far_plane", "float", &DirectionalLightComponent::far_plane);
 
 		reflect::AddClass<ModelComponent>("ModelComponent");
 	}

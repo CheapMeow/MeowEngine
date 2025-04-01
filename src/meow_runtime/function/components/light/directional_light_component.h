@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/reflect/macros.h"
 #include "function/object/game_object.h"
 
 #include <glm/glm.hpp>

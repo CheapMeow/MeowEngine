@@ -281,6 +281,7 @@ namespace Meow
 
         m_shadow_map_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
+        m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
 
         // ------------------- render -------------------
 

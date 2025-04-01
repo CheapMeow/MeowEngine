@@ -155,7 +155,7 @@ void main()
     float shadow  = 1.0;
 
     if (depth0 >= depth1) {
-        shadow = 0.5;
+        shadow = 0.0;
     }
 
     color *= shadow;
