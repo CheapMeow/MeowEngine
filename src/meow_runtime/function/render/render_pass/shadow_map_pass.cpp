@@ -171,6 +171,15 @@ namespace Meow
         draw_call[0] = 0;
 
         RenderPass::Start(command_buffer, m_shadow_map->extent, current_image_index);
+
+        command_buffer.setViewport(0,
+                                   vk::Viewport(0.0f,
+                                                static_cast<float>(m_shadow_map->extent.height),
+                                                static_cast<float>(m_shadow_map->extent.width),
+                                                -static_cast<float>(m_shadow_map->extent.height),
+                                                0.0f,
+                                                1.0f));
+        command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_shadow_map->extent));
     }
 
     void ShadowMapPass::RenderShadowMap(const vk::raii::CommandBuffer& command_buffer)

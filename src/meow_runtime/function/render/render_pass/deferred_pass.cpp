@@ -290,6 +290,15 @@ namespace Meow
         }
 
         RenderPass::Start(command_buffer, extent, current_image_index);
+
+        command_buffer.setViewport(0,
+                                   vk::Viewport(0.0f,
+                                                static_cast<float>(extent.height),
+                                                static_cast<float>(extent.width),
+                                                -static_cast<float>(extent.height),
+                                                0.0f,
+                                                1.0f));
+        command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
     void DeferredPass::RenderGBuffer(const vk::raii::CommandBuffer& command_buffer)

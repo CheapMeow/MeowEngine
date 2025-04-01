@@ -296,14 +296,6 @@ namespace Meow
         assert(m_current_image_index < m_swapchain_data.images.size());
 
         cmd_buffer.begin({});
-        cmd_buffer.setViewport(0,
-                               vk::Viewport(0.0f,
-                                            static_cast<float>(m_surface_data.extent.height),
-                                            static_cast<float>(m_surface_data.extent.width),
-                                            -static_cast<float>(m_surface_data.extent.height),
-                                            0.0f,
-                                            1.0f));
-        cmd_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_surface_data.extent));
 
         m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, 0);
         m_shadow_map_pass.Draw(cmd_buffer);
