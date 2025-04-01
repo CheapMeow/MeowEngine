@@ -14,5 +14,17 @@ namespace Meow
         UUID                 uuid;
         std::weak_ptr<Model> model;
         UUID                 material_id;
+
+        [[reflectable_method()]]
+        void foo1()
+        {
+            std::cout << "uuid = " << uuid << std::endl;
+        }
+
+        [[reflectable_method()]]
+        void foo2() override
+        {
+            std::cout << "derived class uuid = " << uuid << std::endl;
+        }
     };
 } // namespace Meow

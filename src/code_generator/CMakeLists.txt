@@ -6,7 +6,13 @@ set(CODE_GENERATOR_SOURCE_FILES
     main.cpp parser/parser.cpp utils/code_gen_utils.cpp
     generator/code_generator.cpp)
 
-set(HEADER_FILES_DEPEND)
+file(GLOB_RECURSE RUNTIME_HEADER_FILES "${RUNTIME_DIR}/*.h"
+     "${RUNTIME_DIR}/*.hpp")
+file(GLOB_RECURSE RUNTIME_SOURCE_FILES "${RUNTIME_DIR}/*.cpp")
+file(GLOB_RECURSE EDITOR_HEADER_FILES "${EDITOR_DIR}/*.h" "${EDITOR_DIR}/*.hpp")
+file(GLOB_RECURSE EDITOR_SOURCE_FILES "${EDITOR_DIR}/*.cpp")
+set(FILES_DEPEND ${RUNTIME_HEADER_FILES} ${RUNTIME_SOURCE_FILES}
+                 ${EDITOR_HEADER_FILES} ${EDITOR_SOURCE_FILES})
 
 source_group(
   TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${CODE_GENERATOR_HEADER_FILES}
@@ -50,7 +56,7 @@ add_custom_command(
   OUTPUT ${RUNTIME_DIR}/generated/register_all.cpp
   COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_DIRS} "-S${RUNTIME_DIR}"
           "-O${RUNTIME_DIR}/generated"
-  DEPENDS ${HEADER_FILES_DEPEND}
+  DEPENDS ${FILES_DEPEND}
   COMMENT "Generating register_all.cpp")
 add_custom_target(${GENERATED_FILE_TARGET_NAME}
                   DEPENDS ${RUNTIME_DIR}/generated/register_all.cpp)

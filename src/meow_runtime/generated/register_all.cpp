@@ -9,6 +9,9 @@ namespace Meow
 {
 	void RegisterAll()
 	{
+		reflect::AddClass<Component>("Component")
+			.AddMethod("foo2", &Component::foo2);
+
 		reflect::AddClass<Transform3DComponent>("Transform3DComponent")
 			.AddField("position", "glm::vec3", &Transform3DComponent::position)
 			.AddField("rotation", "glm::quat", &Transform3DComponent::rotation)
@@ -27,7 +30,9 @@ namespace Meow
 			.AddField("near_plane", "float", &DirectionalLightComponent::near_plane)
 			.AddField("far_plane", "float", &DirectionalLightComponent::far_plane);
 
-		reflect::AddClass<ModelComponent>("ModelComponent");
+		reflect::AddClass<ModelComponent>("ModelComponent")
+			.AddMethod("foo1", &ModelComponent::foo1)
+			.AddMethod("foo2", &ModelComponent::foo2);
 	}
 
 	VertexAttributeBit to_enum(const std::string& str)

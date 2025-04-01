@@ -2,20 +2,28 @@
 
 #include "pch.h"
 
+#include "core/reflect/macros.h"
 #include "core/reflect/reflect_pointer.hpp"
 #include "core/uuid/uuid.h"
+
 
 namespace Meow
 {
     class GameObject;
 
-    class Component
+    class [[reflectable_class()]] Component
     {
     public:
         std::weak_ptr<GameObject> m_parent_object;
 
         virtual void Start() {};
         virtual void Tick(float dt) {};
+
+        [[reflectable_method()]]
+        virtual void foo2()
+        {
+            std::cout << "Hi!" << std::endl;
+        }
     };
 
     class GameObject
