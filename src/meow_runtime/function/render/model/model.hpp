@@ -74,12 +74,13 @@ namespace Meow
         Model(VerticesType&& vertices, IndicesType&& indices, const std::vector<VertexAttributeBit>& attributes)
         {
             uint32_t stride  = VertexAttributesToSize(attributes);
+            uint32_t size_per_vertex = stride / 4;
             auto     mesh    = new ModelMesh();
             this->attributes = attributes;
 
             mesh->vertices     = std::forward<VerticesType>(vertices);
             mesh->indices      = std::forward<IndicesType>(indices);
-            mesh->vertex_count = mesh->vertices.size() / stride * 4;
+            mesh->vertex_count = mesh->vertices.size() / size_per_vertex;
 
             mesh->RefreshBuffer();
 

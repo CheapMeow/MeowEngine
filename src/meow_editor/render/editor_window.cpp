@@ -219,7 +219,8 @@ namespace Meow
             current_gameobject->SetName("Plane");
             auto transform_ptr =
                 TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-            transform_ptr->position = glm::vec3(0.0f, 0.0f, 10.0f);
+            transform_ptr->position = glm::vec3(0.0f, -10.0f, 10.0f);
+            transform_ptr->scale    = glm::vec3(20.0f, 20.0f, 20.0f);
 
             auto current_gameobject_model_component =
                 TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
