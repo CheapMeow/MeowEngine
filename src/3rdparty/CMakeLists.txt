@@ -40,6 +40,10 @@ if(NOT TARGET imgui)
   include(imgui.cmake)
 endif()
 
+add_library(imguizmo INTERFACE)
+target_include_directories(imguizmo
+                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo)
+
 include(FetchContent)
 
 option(QJS_BUILD_LIBC "" ON)

@@ -20,3 +20,6 @@
 	path = src/3rdparty/imgui
 	url = https://github.com/CheapMeow/imgui.git
 	branch = my_docking
+[submodule "src/3rdparty/ImGuizmo"]
+	path = src/3rdparty/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

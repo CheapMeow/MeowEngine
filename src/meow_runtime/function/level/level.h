@@ -24,6 +24,8 @@ namespace Meow
         void       SetMainCameraID(UUID go_id) { m_main_camera_id = go_id; }
         const UUID GetMainCameraID() const { return m_main_camera_id; }
 
+        std::weak_ptr<GameObject> LineTraceSingle(glm::vec3 start, glm::vec3 end);
+
     private:
         void FrustumCulling();
 
