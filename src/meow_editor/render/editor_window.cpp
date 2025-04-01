@@ -1,5 +1,6 @@
 #include "editor_window.h"
 
+#include "function/components/light/directional_light_component.h"
 #include "global/editor_context.h"
 #include "meow_runtime/function/components/camera/camera_3d_component.hpp"
 #include "meow_runtime/function/components/model/model_component.h"
@@ -71,6 +72,12 @@ namespace Meow
             camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
         }
 
+        {
+            auto                        uuid               = level->CreateObject();
+            std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
+            TryAddComponent(
+                current_gameobject, "DirectionalLightComponent", std::make_shared<DirectionalLightComponent>());
+        }
         GeometryFactory geometry_factory;
         geometry_factory.SetSphere(32, 32);
 
