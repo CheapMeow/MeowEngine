@@ -6,6 +6,7 @@
 #include "meow_runtime/function/global/runtime_context.h"
 #include "render/imgui_widgets/pipeline_statistics_widget.h"
 
+#include <ImGuizmo.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -103,6 +104,7 @@ namespace Meow
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
 
         ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
@@ -191,6 +193,9 @@ namespace Meow
                     reinterpret_cast<void*>(const_cast<vk::raii::CommandBuffer*>(&command_buffer)));
             }
         }
+
+        m_gizmo_widget.ShowGameObjectGizmo(m_gameobjects_widget.GetSelectedID());
+
         ImGui::End();
 
         ImGui::Begin("Render Settings");

@@ -112,6 +112,12 @@ namespace Meow
         m_current_scheme->buttons["Backward"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::S);
         m_current_scheme->buttons["Up"]       = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::E);
         m_current_scheme->buttons["Down"]     = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::Q);
+        m_current_scheme->buttons["LeftControl"] =
+            std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::LeftControl);
+        m_current_scheme->buttons["Q"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::Q);
+        m_current_scheme->buttons["W"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::W);
+        m_current_scheme->buttons["E"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::E);
+        m_current_scheme->buttons["R"] = std::make_unique<KeyboardInputButton>(window_ptr, KeyCode::R);
 
         m_current_scheme->buttons["LeftMouse"] =
             std::make_unique<MouseInputButton>(window_ptr, MouseButtonCode::ButtonLeft);

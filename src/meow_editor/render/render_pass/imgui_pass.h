@@ -8,6 +8,7 @@
 #include "render/imgui_widgets/components_widget.h"
 #include "render/imgui_widgets/flame_graph_widget.h"
 #include "render/imgui_widgets/game_objects_widget.h"
+#include "render/imgui_widgets/gizmo_widget.h"
 
 namespace Meow
 {
@@ -68,6 +69,7 @@ namespace Meow
         ComponentsWidget        m_components_widget;
         FlameGraphWidget        m_flame_graph_widget;
         BuiltinStatisticsWidget m_builtin_stat_widget;
+        GizmoWidget             m_gizmo_widget;
 
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;

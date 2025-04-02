@@ -40,9 +40,21 @@ if(NOT TARGET imgui)
   include(imgui.cmake)
 endif()
 
-add_library(imguizmo INTERFACE)
+add_library(imguizmo STATIC ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/GraphEditor.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/GraphEditor.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImCurveEdit.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImCurveEdit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImGradient.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImGradient.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImGuizmo.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImGuizmo.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImSequencer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImSequencer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo/ImZoomSlider.h)
 target_include_directories(imguizmo
                            INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/ImGuizmo)
+target_link_libraries(imguizmo PUBLIC imgui)
+target_include_directories(imguizmo PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
 
 include(FetchContent)
 
