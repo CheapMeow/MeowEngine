@@ -150,8 +150,8 @@ void main()
     vec3 color = ambient + Lo;
 
     // shadow
-    float depth0  = inShadowCoord.z - 0.0001;
-    float depth1  = texture(shadowMap, inShadowCoord.xy).r;
+    float depth0  = inShadowCoord.z - 0.0001; // light
+    float depth1  = texture(shadowMap, inShadowCoord.xy).r; // eye
     float shadow  = 1.0;
 
     if (depth0 >= depth1) {

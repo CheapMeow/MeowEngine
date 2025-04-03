@@ -198,6 +198,18 @@ namespace Meow
 
         ImGui::End();
 
+        {
+            ImGui::Begin("Shadow Map");
+
+            ImVec2 region_size = ImGui::GetContentRegionAvail();
+            float  width       = static_cast<float>(region_size.x);
+            float  height      = static_cast<float>(region_size.y);
+            ImVec2 image_size  = {width, height};
+
+            ImGui::Image((ImTextureID)m_shadow_map_desc, image_size);
+            ImGui::End();
+        }
+
         ImGui::Begin("Render Settings");
         if (ImGui::Combo(
                 "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
@@ -264,6 +276,14 @@ namespace Meow
                                                  VkImageLayout offscreen_image_layout)
     {
         m_offscreen_image_desc =
+            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
+    }
+
+    void ImGuiPass::RefreshShadowMap(VkSampler     offscreen_image_sampler,
+                                     VkImageView   offscreen_image_view,
+                                     VkImageLayout offscreen_image_layout)
+    {
+        m_shadow_map_desc =
             ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
     }
 

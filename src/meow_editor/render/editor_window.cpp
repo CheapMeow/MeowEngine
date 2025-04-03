@@ -33,6 +33,9 @@ namespace Meow
         m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                   *m_offscreen_render_target->image_view,
                                                   static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+        m_imgui_pass.RefreshShadowMap(*m_shadow_map_pass.GetShadowMap()->sampler,
+                                      *m_shadow_map_pass.GetShadowMap()->image_view,
+                                      static_cast<VkImageLayout>(m_shadow_map_pass.GetShadowMap()->layout));
 #endif
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
@@ -66,7 +69,8 @@ namespace Meow
             if (!camera_ptr)
                 MEOW_ERROR("shared ptr is invalid!");
 
-            transform_ptr->position = glm::vec3(0.0f, 0.0f, -10.0f);
+            transform_ptr->position = glm::vec3(0.0f, 10.0f, -6.0f);
+            transform_ptr->rotation = glm::quat(glm::vec3(-100.0f, 0.0f, 0.0f));
 
             camera_ptr->camera_mode  = CameraMode::Free;
             camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
@@ -79,9 +83,10 @@ namespace Meow
                 current_gameobject, "DirectionalLightComponent", std::make_shared<DirectionalLightComponent>());
             auto directional_light_transform =
                 TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-            directional_light_transform->position = glm::vec3(0.0f, 20.0f, 0.0f);
-            directional_light_transform->rotation = glm::quat(glm::vec3(50.0f, -30.0f, 0.0f));
+            directional_light_transform->position = glm::vec3(0.0f, 10.0f, -6.0f);
+            directional_light_transform->rotation = glm::quat(glm::vec3(-100.0f, 0.0f, 0.0f));
         }
+
         GeometryFactory geometry_factory;
         geometry_factory.SetSphere(32, 32);
 
@@ -598,9 +603,15 @@ namespace Meow
         m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
 
         if (is_offscreen_valid)
+        {
             m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                       *m_offscreen_render_target->image_view,
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+
+            m_imgui_pass.RefreshShadowMap(*m_shadow_map_pass.GetShadowMap()->sampler,
+                                          *m_shadow_map_pass.GetShadowMap()->image_view,
+                                          static_cast<VkImageLayout>(m_shadow_map_pass.GetShadowMap()->layout));
+        }
 #else
         m_shadow_map_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
