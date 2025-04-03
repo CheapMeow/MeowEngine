@@ -50,12 +50,8 @@ namespace Meow
 
         friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
-        void RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
-                                          VkImageView   offscreen_image_view,
-                                          VkImageLayout offscreen_image_layout);
-        void RefreshShadowMap(VkSampler     offscreen_image_sampler,
-                              VkImageView   offscreen_image_view,
-                              VkImageLayout offscreen_image_layout);
+        void RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
+        void RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
 
     private:
         bool         m_msaa_enabled = true;
@@ -69,7 +65,7 @@ namespace Meow
         VkDescriptorSet m_offscreen_image_desc;
 
         VkDescriptorSet m_shadow_map_desc;
-        
+
         GameObjectsWidget       m_gameobjects_widget;
         ComponentsWidget        m_components_widget;
         FlameGraphWidget        m_flame_graph_widget;

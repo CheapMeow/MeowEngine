@@ -271,20 +271,15 @@ namespace Meow
         }
     }
 
-    void ImGuiPass::RefreshOffscreenRenderTarget(VkSampler     offscreen_image_sampler,
-                                                 VkImageView   offscreen_image_view,
-                                                 VkImageLayout offscreen_image_layout)
+    void
+    ImGuiPass::RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
     {
-        m_offscreen_image_desc =
-            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
+        m_offscreen_image_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
     }
 
-    void ImGuiPass::RefreshShadowMap(VkSampler     offscreen_image_sampler,
-                                     VkImageView   offscreen_image_view,
-                                     VkImageLayout offscreen_image_layout)
+    void ImGuiPass::RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
     {
-        m_shadow_map_desc =
-            ImGui_ImplVulkan_AddTexture(offscreen_image_sampler, offscreen_image_view, offscreen_image_layout);
+        m_shadow_map_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
     }
 
     void swap(ImGuiPass& lhs, ImGuiPass& rhs)

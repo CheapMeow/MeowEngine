@@ -608,9 +608,10 @@ namespace Meow
                                                       *m_offscreen_render_target->image_view,
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
 
-            m_imgui_pass.RefreshShadowMap(*m_shadow_map_pass.GetShadowMap()->sampler,
-                                          *m_shadow_map_pass.GetShadowMap()->image_view,
-                                          static_cast<VkImageLayout>(m_shadow_map_pass.GetShadowMap()->layout));
+            m_imgui_pass.RefreshShadowMap(
+                *m_shadow_map_pass.GetDepthToColorAttachment()->sampler,
+                *m_shadow_map_pass.GetDepthToColorAttachment()->image_view,
+                static_cast<VkImageLayout>(m_shadow_map_pass.GetDepthToColorAttachment()->layout));
         }
 #else
         m_shadow_map_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);

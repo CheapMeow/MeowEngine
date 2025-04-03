@@ -36,6 +36,9 @@ namespace Meow
         ~EditorShadowMapPass() override = default;
 
         void CreateRenderPass() override;
+#ifdef MEOW_EDITOR
+        void CreateMaterial();
+#endif
 
         void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,
@@ -43,8 +46,14 @@ namespace Meow
 
         void Draw(const vk::raii::CommandBuffer& command_buffer) override;
 
+#ifdef MEOW_EDITOR
+        void RenderDepthToColor(const vk::raii::CommandBuffer& command_buffer);
+#endif
+
         void AfterPresent() override;
 
+        std::shared_ptr<ImageData> GetDepthToColorAttachment() {return m_depth_to_color_attachment;}
+        
         friend void swap(EditorShadowMapPass& lhs, EditorShadowMapPass& rhs);
 
     private:
@@ -53,6 +62,10 @@ namespace Meow
         vk::raii::QueryPool query_pool      = nullptr;
 
         BuiltinRenderStat m_render_stat[1];
+
+        std::shared_ptr<Material>  m_depth_to_color_material   = nullptr;
+        std::shared_ptr<ImageData> m_depth_to_color_attachment = nullptr;
+        Model                      m_quad_model                = nullptr;
 #endif
     };
 } // namespace Meow

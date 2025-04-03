@@ -2,6 +2,8 @@
 
 #include "meow_runtime/pch.h"
 
+#include "function/render/geometry/geometry_factory.h"
+#include "function/render/material/material_factory.h"
 #include "function/render/utils/vulkan_debug_utils.h"
 #include "global/editor_context.h"
 #include "meow_runtime/function/global/runtime_context.h"
@@ -57,13 +59,30 @@ namespace Meow
                 vk::ImageLayout::eUndefined,             /* initialLayout */
                 vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
+#ifdef MEOW_EDITOR
+            // depth to color attachment
+            {
+                vk::AttachmentDescriptionFlags(),         /* flags */
+                m_color_format,                           /* format */
+                vk::SampleCountFlagBits::e1,              /* samples */
+                vk::AttachmentLoadOp::eClear,             /* loadOp */
+                vk::AttachmentStoreOp::eStore,            /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,              /* initialLayout */
+                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+            },
+#endif
         };
 
         vk::AttachmentReference depth_attachment_reference(0, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+#ifdef MEOW_EDITOR
+        vk::AttachmentReference color_attachment_reference(1, vk::ImageLayout::eColorAttachmentOptimal);
+#endif
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
+            // shadow map pass
             {
-                // forward pass
                 vk::SubpassDescriptionFlags(),    /* flags */
                 vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
                 0,                                /* inputAttachmentCount */
@@ -75,6 +94,21 @@ namespace Meow
                 0,                                /* preserveAttachmentCount */
                 nullptr,                          /* pPreserveAttachments */
             },
+#ifdef MEOW_EDITOR
+            // depth to color pass
+            {
+                vk::SubpassDescriptionFlags(),    /* flags */
+                vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                0,                                /* inputAttachmentCount */
+                nullptr,                          /* pInputAttachments */
+                1,                                /* colorAttachmentCount */
+                &color_attachment_reference,      /* pColorAttachments */
+                nullptr,                          /* pResolveAttachments */
+                &depth_attachment_reference,      /* pDepthStencilAttachment */
+                0,                                /* preserveAttachmentCount */
+                nullptr,                          /* pPreserveAttachments */
+            },
+#endif
         };
 
         std::vector<vk::SubpassDependency> dependencies {
@@ -88,6 +122,7 @@ namespace Meow
                 vk::AccessFlagBits::eDepthStencilAttachmentWrite, /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,                /* dependencyFlags */
             },
+#ifndef MEOW_EDITOR
             // shadow map pass -> externel
             {
                 0,                                                /* srcSubpass */
@@ -98,6 +133,28 @@ namespace Meow
                 vk::AccessFlagBits::eShaderRead,                  /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,                /* dependencyFlags */
             },
+#else
+            // shadow map pass -> depth to color pass
+            {
+                0,                                                /* srcSubpass */
+                1,                                                /* dstSubpass */
+                vk::PipelineStageFlagBits::eLateFragmentTests,    /* srcStageMask */
+                vk::PipelineStageFlagBits::eFragmentShader,       /* dstStageMask */
+                vk::AccessFlagBits::eDepthStencilAttachmentWrite, /* srcAccessMask */
+                vk::AccessFlagBits::eShaderRead,                  /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                /* dependencyFlags */
+            },
+            // depth to color pass -> externel
+            {
+                1,                                                 /* srcSubpass */
+                VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
+                vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
+                vk::PipelineStageFlagBits::eFragmentShader,        /* dstStageMask */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
+            },
+#endif
         };
 
         // Create render pass
@@ -108,8 +165,14 @@ namespace Meow
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
+#ifndef MEOW_EDITOR
         clear_values.resize(1);
         clear_values[0].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+#else
+        clear_values.resize(2);
+        clear_values[0].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+        clear_values[1].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+#endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eRenderPass,
@@ -118,6 +181,48 @@ namespace Meow
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
+
+#ifdef MEOW_EDITOR
+    void EditorShadowMapPass::CreateMaterial()
+    {
+        ShadowMapPass::CreateMaterial();
+
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+        const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
+
+        MaterialFactory material_factory;
+
+        auto depth_to_color_shader = std::make_shared<Shader>(physical_device,
+                                                              logical_device,
+                                                              "builtin/shaders/depth_to_color.vert.spv",
+                                                              "builtin/shaders/depth_to_color.frag.spv");
+        m_depth_to_color_material  = std::make_shared<Material>(depth_to_color_shader);
+        g_runtime_context.resource_system->Register(m_depth_to_color_material);
+        material_factory.Init(depth_to_color_shader.get(), vk::FrontFace::eClockwise);
+        material_factory.SetOpaque(false, 1);
+        material_factory.SetDebugName("Forward Shadow Map Material");
+        material_factory.CreatePipeline(
+            logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 0);
+
+        m_depth_to_color_attachment = ImageData::CreateAttachment(m_color_format,
+                                                                  {2048, 2048},
+                                                                  vk::ImageUsageFlagBits::eColorAttachment |
+                                                                      vk::ImageUsageFlagBits::eInputAttachment,
+                                                                  vk::ImageAspectFlagBits::eColor,
+                                                                  {},
+                                                                  false);
+
+        m_depth_to_color_material->BindImageToDescriptorSet("inputDepth", *m_shadow_map);
+        
+        // Create quad model
+        std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+                                          1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
+        std::vector<uint32_t> indices  = {0, 1, 2, 0, 2, 3};
+
+        m_quad_model = std::move(
+            Model(std::move(vertices), std::move(indices), m_depth_to_color_material->shader->per_vertex_attributes));
+    }
+#endif
 
     void EditorShadowMapPass::Start(const vk::raii::CommandBuffer& command_buffer,
                                     vk::Extent2D                   extent,
@@ -148,7 +253,21 @@ namespace Meow
         if (m_query_enabled)
             command_buffer.endQuery(*query_pool, 0);
 #endif
+
+#ifdef MEOW_EDITOR
+        RenderDepthToColor(command_buffer);
+#endif
     }
+
+#ifdef MEOW_EDITOR
+    void EditorShadowMapPass::RenderDepthToColor(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_depth_to_color_material->BindDescriptorSetToPipeline(command_buffer, 0, 1);
+        m_quad_model.meshes[0]->BindDrawCmd(command_buffer);
+    }
+#endif
 
     void EditorShadowMapPass::AfterPresent()
     {
