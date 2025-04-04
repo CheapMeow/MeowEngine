@@ -33,9 +33,10 @@ namespace Meow
         m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
                                                   *m_offscreen_render_target->image_view,
                                                   static_cast<VkImageLayout>(m_offscreen_render_target->layout));
-        m_imgui_pass.RefreshShadowMap(*m_shadow_map_pass.GetShadowMap()->sampler,
-                                      *m_shadow_map_pass.GetShadowMap()->image_view,
-                                      static_cast<VkImageLayout>(m_shadow_map_pass.GetShadowMap()->layout));
+        m_imgui_pass.RefreshShadowMap(
+            *m_shadow_map_pass.GetDepthToColorRenderTarget()->sampler,
+            *m_shadow_map_pass.GetDepthToColorRenderTarget()->image_view,
+            static_cast<VkImageLayout>(m_shadow_map_pass.GetDepthToColorRenderTarget()->layout));
 #endif
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
@@ -609,9 +610,9 @@ namespace Meow
                                                       static_cast<VkImageLayout>(m_offscreen_render_target->layout));
 
             m_imgui_pass.RefreshShadowMap(
-                *m_shadow_map_pass.GetDepthToColorAttachment()->sampler,
-                *m_shadow_map_pass.GetDepthToColorAttachment()->image_view,
-                static_cast<VkImageLayout>(m_shadow_map_pass.GetDepthToColorAttachment()->layout));
+                *m_shadow_map_pass.GetDepthToColorRenderTarget()->sampler,
+                *m_shadow_map_pass.GetDepthToColorRenderTarget()->image_view,
+                static_cast<VkImageLayout>(m_shadow_map_pass.GetDepthToColorRenderTarget()->layout));
         }
 #else
         m_shadow_map_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);

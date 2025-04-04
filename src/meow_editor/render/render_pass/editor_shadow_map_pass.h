@@ -52,8 +52,10 @@ namespace Meow
 
         void AfterPresent() override;
 
-        std::shared_ptr<ImageData> GetDepthToColorAttachment() {return m_depth_to_color_attachment;}
-        
+#ifdef MEOW_EDITOR
+        std::shared_ptr<ImageData> GetDepthToColorRenderTarget() { return m_depth_to_color_render_target; }
+#endif
+
         friend void swap(EditorShadowMapPass& lhs, EditorShadowMapPass& rhs);
 
     private:
@@ -63,9 +65,8 @@ namespace Meow
 
         BuiltinRenderStat m_render_stat[1];
 
-        std::shared_ptr<Material>  m_depth_to_color_material   = nullptr;
-        std::shared_ptr<ImageData> m_depth_to_color_attachment = nullptr;
-        Model                      m_quad_model                = nullptr;
+        std::shared_ptr<Material> m_depth_to_color_material = nullptr;
+        Model                     m_quad_model              = nullptr;
 #endif
     };
 } // namespace Meow

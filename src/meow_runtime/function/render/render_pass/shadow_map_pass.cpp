@@ -58,6 +58,7 @@ namespace Meow
 
         // Provide attachment information to frame buffer
 
+#ifndef MEOW_EDITOR
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
                                                           1,                            /* attachmentCount */
@@ -71,6 +72,25 @@ namespace Meow
         {
             framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
+#else
+        vk::ImageView attachments[2];
+        attachments[0] = *m_shadow_map->image_view;
+        attachments[1] = *m_depth_to_color_render_target->image_view;
+
+        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
+                                                          *render_pass,                 /* renderPass */
+                                                          2,                            /* attachmentCount */
+                                                          attachments,                  /* pAttachments */
+                                                          m_shadow_map->extent.width,   /* width */
+                                                          m_shadow_map->extent.height,  /* height */
+                                                          1);                           /* layers */
+
+        framebuffers.reserve(output_image_views.size());
+        for (const auto& imageView : output_image_views)
+        {
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+        }
+#endif // !MEOW_EDITOR
     }
 
     void ShadowMapPass::UpdateUniformBuffer()
@@ -238,5 +258,9 @@ namespace Meow
         swap(lhs.m_shadow_map, rhs.m_shadow_map);
 
         swap(lhs.draw_call, rhs.draw_call);
+
+#ifdef MEOW_EDITOR
+        swap(lhs.m_depth_to_color_render_target, rhs.m_depth_to_color_render_target);
+#endif
     }
 } // namespace Meow

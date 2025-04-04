@@ -200,20 +200,20 @@ namespace Meow
         g_runtime_context.resource_system->Register(m_depth_to_color_material);
         material_factory.Init(depth_to_color_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
-        material_factory.SetDebugName("Forward Shadow Map Material");
+        material_factory.SetDebugName("Depth to Color Material");
         material_factory.CreatePipeline(
-            logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 0);
+            logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 1);
 
-        m_depth_to_color_attachment = ImageData::CreateAttachment(m_color_format,
-                                                                  {2048, 2048},
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
-                                                                  vk::ImageAspectFlagBits::eColor,
-                                                                  {},
-                                                                  false);
+        m_depth_to_color_render_target = ImageData::CreateRenderTarget(m_color_format,
+                                                                       {2048, 2048},
+                                                                       vk::ImageUsageFlagBits::eColorAttachment |
+                                                                           vk::ImageUsageFlagBits::eInputAttachment,
+                                                                       vk::ImageAspectFlagBits::eColor,
+                                                                       {},
+                                                                       false);
 
         m_depth_to_color_material->BindImageToDescriptorSet("inputDepth", *m_shadow_map);
-        
+
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,
                                           1.0f,  -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f};
@@ -255,6 +255,10 @@ namespace Meow
 #endif
 
 #ifdef MEOW_EDITOR
+        command_buffer.nextSubpass(vk::SubpassContents::eInline);
+
+        m_depth_to_color_material->BindPipeline(command_buffer);
+
         RenderDepthToColor(command_buffer);
 #endif
     }
@@ -301,6 +305,9 @@ namespace Meow
         swap(lhs.m_query_enabled, rhs.m_query_enabled);
         swap(lhs.query_pool, rhs.query_pool);
         swap(lhs.m_render_stat, rhs.m_render_stat);
+
+        swap(lhs.m_depth_to_color_material, rhs.m_depth_to_color_material);
+        swap(lhs.m_quad_model, rhs.m_quad_model);
 #endif
     }
 } // namespace Meow
