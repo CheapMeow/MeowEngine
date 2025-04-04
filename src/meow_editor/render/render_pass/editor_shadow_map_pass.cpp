@@ -200,9 +200,9 @@ namespace Meow
         g_runtime_context.resource_system->Register(m_depth_to_color_material);
         material_factory.Init(depth_to_color_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
-        material_factory.SetDebugName("Depth to Color Material");
         material_factory.CreatePipeline(
             logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 1);
+        m_depth_to_color_material->SetDebugName("Depth to Color Material");
 
         m_depth_to_color_render_target = ImageData::CreateRenderTarget(m_color_format,
                                                                        {2048, 2048},

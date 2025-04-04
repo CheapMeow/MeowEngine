@@ -64,6 +64,8 @@ namespace Meow
 
         ShadingModelType GetShadingModelType() { return m_shading_model_type; }
 
+        void SetDebugName(const std::string& debug_name);
+        
         friend void swap(Material& lhs, Material& rhs);
 
         std::shared_ptr<Shader> shader = nullptr;

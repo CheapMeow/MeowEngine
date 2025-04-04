@@ -3,6 +3,7 @@
 #include "pch.h"
 
 #include "function/global/runtime_context.h"
+#include "function/render/utils/vulkan_debug_utils.h"
 
 #include <algorithm>
 
@@ -280,6 +281,35 @@ namespace Meow
                                           first_set,
                                           descriptor_sets_to_bind,
                                           dynamic_offsets);
+    }
+
+    void Material::SetDebugName(const std::string& debug_name)
+    {
+        if (debug_name.empty())
+            return;
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        {
+            for (size_t i = 0; i < m_descriptor_sets.size(); i++)
+            {
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eDescriptorSet,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, *m_descriptor_sets[i]),
+                    (debug_name + " DescriptorSet" + std::to_string(i)).c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+        }
+
+        {
+            vk::DebugUtilsObjectNameInfoEXT name_info = {
+                vk::ObjectType::ePipeline,
+                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *graphics_pipeline),
+                (debug_name + " Pipeline").c_str()};
+            logical_device.setDebugUtilsObjectNameEXT(name_info);
+        }
+#endif
     }
 
     void swap(Material& lhs, Material& rhs)

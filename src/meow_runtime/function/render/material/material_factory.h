@@ -34,7 +34,6 @@ namespace Meow
         void SetMSAA(bool enabled);
         void SetOpaque(bool depth_buffered = true, int color_attachment_count = 1);
         void SetTranslucent(bool depth_buffered = true, int color_attachment_count = 1);
-        void SetDebugName(const std::string& debug_name) { m_debug_name = debug_name; }
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
                             const Shader*               shader,
@@ -47,6 +46,5 @@ namespace Meow
         PipelineCreateInfoContext context = {};
 
         bool        m_msaa_enabled = false;
-        std::string m_debug_name   = "";
     };
 } // namespace Meow

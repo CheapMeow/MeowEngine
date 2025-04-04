@@ -2,6 +2,7 @@
 
 #include "pch.h"
 
+#include "function/render/utils/vulkan_debug_utils.h"
 #include "global/editor_context.h"
 #include "meow_runtime/function/global/runtime_context.h"
 #include "render/imgui_widgets/pipeline_statistics_widget.h"
@@ -275,11 +276,29 @@ namespace Meow
     ImGuiPass::RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
     {
         m_offscreen_image_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        vk::DebugUtilsObjectNameInfoEXT name_info      = {
+            vk::ObjectType::eDescriptorSet,
+            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_offscreen_image_desc),
+            "Offscreen Image Descriptor Set"};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
     }
 
     void ImGuiPass::RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
     {
         m_shadow_map_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        vk::DebugUtilsObjectNameInfoEXT name_info      = {
+            vk::ObjectType::eDescriptorSet,
+            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_shadow_map_desc),
+            "Shadow Map to Color Render Target Descriptor Set"};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
     }
 
     void swap(ImGuiPass& lhs, ImGuiPass& rhs)

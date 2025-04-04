@@ -112,8 +112,6 @@ namespace Meow
         context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =
             vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), context.dynamic_states);
-
-        SetDebugName("");
     }
 
     void MaterialFactory::SetMSAA(bool enabled)
@@ -260,13 +258,5 @@ namespace Meow
 
         material_ptr->graphics_pipeline =
             vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        vk::DebugUtilsObjectNameInfoEXT name_info = {
-            vk::ObjectType::ePipeline,
-            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *material_ptr->graphics_pipeline),
-            m_debug_name.c_str()};
-        logical_device.setDebugUtilsObjectNameEXT(name_info);
-#endif
     }
 } // namespace Meow

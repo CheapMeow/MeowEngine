@@ -32,9 +32,9 @@ namespace Meow
         g_runtime_context.resource_system->Register(m_shadow_map_material);
         material_factory.Init(shadow_map_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 0);
-        material_factory.SetDebugName("Forward Shadow Map Material");
         material_factory.CreatePipeline(
             logical_device, render_pass, shadow_map_shader.get(), m_shadow_map_material.get(), 0);
+        m_shadow_map_material->SetDebugName("Shadow Map Material");
 
         m_shadow_map = ImageData::CreateRenderTarget(m_depth_format,
                                                      {2048, 2048},

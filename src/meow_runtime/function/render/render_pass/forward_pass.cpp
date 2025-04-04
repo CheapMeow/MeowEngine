@@ -31,8 +31,8 @@ namespace Meow
         material_factory.Init(opaque_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetOpaque(true, 1);
-        material_factory.SetDebugName("Forward Opaque Material");
         material_factory.CreatePipeline(logical_device, render_pass, opaque_shader.get(), m_opaque_material.get(), 0);
+        m_opaque_material->SetDebugName("Forward Opaque Material");
 
         input_vertex_attributes = m_opaque_material->shader->per_vertex_attributes;
 
@@ -114,8 +114,8 @@ namespace Meow
         material_factory.Init(skybox_shader.get(), vk::FrontFace::eCounterClockwise);
         material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetOpaque(true, 1);
-        material_factory.SetDebugName("Forward Skybox Material");
         material_factory.CreatePipeline(logical_device, render_pass, skybox_shader.get(), m_skybox_material.get(), 0);
+        m_skybox_material->SetDebugName("Forward Skybox Material");
 
         {
             auto texture_ptr = ImageData::CreateCubemap({
@@ -149,9 +149,9 @@ namespace Meow
         material_factory.Init(translucent_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetMSAA(m_msaa_enabled);
         material_factory.SetTranslucent(true, 1);
-        material_factory.SetDebugName("Forward Translucent Material");
         material_factory.CreatePipeline(
             logical_device, render_pass, translucent_shader.get(), m_translucent_material.get(), 0);
+        m_translucent_material->SetDebugName("Forward Translucent Material");
 
         {
             auto texture_ptr = g_runtime_context.resource_system->GetResource<ImageData>(albedo_image_id);
