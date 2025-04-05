@@ -1,20 +1,16 @@
-#include "editor_deferred_pass.h"
+#include "game_deferred_pass.h"
 
 #include "meow_runtime/pch.h"
 
-#include "global/editor_context.h"
 #include "meow_runtime/function/global/runtime_context.h"
 
 namespace Meow
 {
-    EditorDeferredPass::EditorDeferredPass(SurfaceData& surface_data)
+    GameDeferredPass::GameDeferredPass(SurfaceData& surface_data)
         : DeferredPass(surface_data)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
-
-        m_pass_names[0] = "GBuffer Subpass";
-        m_pass_names[1] = "Mesh Lighting Subpass";
 
         // Create a set to store all information of attachments
 
@@ -28,17 +24,17 @@ namespace Meow
         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
-// swap chain attachment
+            // swap chain attachment
             {
-                vk::AttachmentDescriptionFlags(),        /* flags */
-                m_color_format,                          /* format */
-                sample_count,                            /* samples */
-                vk::AttachmentLoadOp::eClear,            /* loadOp */
-                vk::AttachmentStoreOp::eStore,           /* storeOp */
-                vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
-                vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
-                vk::ImageLayout::eShaderReadOnlyOptimal, /* initialLayout */
-                vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
+                vk::AttachmentDescriptionFlags(), /* flags */
+                m_color_format,                   /* format */
+                sample_count,                     /* samples */
+                vk::AttachmentLoadOp::eClear,     /* loadOp */
+                vk::AttachmentStoreOp::eStore,    /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,      /* initialLayout */
+                vk::ImageLayout::ePresentSrcKHR,  /* finalLayout */
             },
             // color attachment
             {
@@ -205,99 +201,33 @@ namespace Meow
         clear_values[4].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
         CreateMaterial();
-
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 2,
-                                                        .pipelineStatistics = (1 << 11) - 1};
-
-        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
-
-        m_render_stat[0].vertex_attribute_metas = m_obj2attachment_material->shader->vertex_attribute_metas;
-        m_render_stat[0].buffer_meta_map        = m_obj2attachment_material->shader->buffer_meta_map;
-        m_render_stat[0].image_meta_map         = m_obj2attachment_material->shader->image_meta_map;
-
-        m_render_stat[1].vertex_attribute_metas = m_quad_material->shader->vertex_attribute_metas;
-        m_render_stat[1].buffer_meta_map        = m_quad_material->shader->buffer_meta_map;
-        m_render_stat[1].image_meta_map         = m_quad_material->shader->image_meta_map;
     }
 
-    void EditorDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                   vk::Extent2D                   extent,
-                                   uint32_t                       current_image_index)
+    void GameDeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
+                                 vk::Extent2D                   extent,
+                                 uint32_t                       current_image_index)
     {
-        if (m_query_enabled)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                command_buffer.resetQueryPool(*query_pool, 0, 2);
-            }
-        }
-
         DeferredPass::Start(command_buffer, extent, current_image_index);
     }
 
-    void EditorDeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void GameDeferredPass::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
         m_obj2attachment_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 0, {});
-
         RenderGBuffer(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 0);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_quad_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 1, {});
-
         RenderOpaqueMeshes(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 1);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_skybox_material->BindPipeline(command_buffer);
 
         RenderSkybox(command_buffer);
-    }
-
-    void EditorDeferredPass::AfterPresent()
-    {
-        FUNCTION_TIMER();
-
-        if (m_query_enabled)
-        {
-            for (int i = 1; i >= 0; i--)
-            {
-                std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
-
-                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
-            }
-        }
-
-        for (int i = 1; i >= 0; i--)
-        {
-            m_render_stat[i].draw_call = draw_call[i];
-            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
-        }
-    }
-
-    void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs)
-    {
-        using std::swap;
-
-        swap(lhs.m_query_enabled, rhs.m_query_enabled);
-        swap(lhs.query_pool, rhs.query_pool);
-        swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

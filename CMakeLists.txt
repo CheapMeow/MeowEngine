@@ -1,63 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-# should ahead of project
-
-if (NOT CMAKE_CXX_FLAGS_EDITORDEBUG)
-    set(CMAKE_CXX_FLAGS_EDITORDEBUG
-        "/Zi /Ob0 /Od /RTC1 /DMEOW_EDITOR /DMEOW_DEBUG"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_CXX_FLAGS_GAMEDEBUG)
-    set(CMAKE_CXX_FLAGS_GAMEDEBUG
-        "/Zi /Ob0 /Od /RTC1 /DMEOW_DEBUG"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_CXX_FLAGS_EDITORRELEASE)
-    set(CMAKE_CXX_FLAGS_EDITORRELEASE
-        "/O2 /Ob2 /DNDEBUG /DMEOW_EDITOR"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_CXX_FLAGS_GAMERELEASE)
-    set(CMAKE_CXX_FLAGS_GAMERELEASE
-        "/O2 /Ob2 /DNDEBUG"
-        CACHE STRING "")
-endif()
-
-if (NOT CMAKE_EXE_LINKER_FLAGS_EDITORDEBUG)
-    set(CMAKE_EXE_LINKER_FLAGS_EDITORDEBUG
-        "/debug /INCREMENTAL"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_EXE_LINKER_FLAGS_GAMEDEBUG)
-    set(CMAKE_EXE_LINKER_FLAGS_GAMEDEBUG
-        "/debug /INCREMENTAL"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_EXE_LINKER_FLAGS_EDITORRELEASE)
-    set(CMAKE_EXE_LINKER_FLAGS_EDITORRELEASE
-        "/INCREMENTAL:NO"
-        CACHE STRING "")
-endif()
-if (NOT CMAKE_EXE_LINKER_FLAGS_GAMERELEASE)
-    set(CMAKE_EXE_LINKER_FLAGS_GAMERELEASE
-        "/INCREMENTAL:NO"
-        CACHE STRING "")
-endif()
-
-project(MeowEngine LANGUAGES NONE)
-
-if(NOT CMAKE_CONFIGURATION_TYPES MATCHES "EDITORDEBUG")
-  list(APPEND CMAKE_CONFIGURATION_TYPES
-       "EDITORDEBUG;EDITORRELEASE;GAMEDEBUG;GAMERELEASE")
-  set(CMAKE_CONFIGURATION_TYPES
-      "${CMAKE_CONFIGURATION_TYPES}"
-      CACHE
-        STRING
-        "Append user-defined configuration to list of configurations to make it usable in Visual Studio"
-        FORCE)
-endif()
-
-enable_language(CXX)
+project(MeowEngine LANGUAGES CXX)
 
 # Stop in source builds
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
@@ -74,11 +17,13 @@ set(CODE_GENERATOR_ROOT_DIR ${SRC_ROOT_DIR}/code_generator)
 set(3RD_PARTY_ROOT_DIR ${SRC_ROOT_DIR}/3rdparty)
 set(RUNTIME_DIR ${SRC_ROOT_DIR}/meow_runtime)
 set(EDITOR_DIR ${SRC_ROOT_DIR}/meow_editor)
+set(GAME_DIR ${SRC_ROOT_DIR}/meow_game)
 
 set(CODE_GENERATOR_NAME CodeGenerator)
 set(GENERATED_FILE_TARGET_NAME GenerateRegisterFile)
 set(RUNTIME_NAME MeowRuntime)
 set(EDITOR_NAME MeowEditor)
+set(GAME_NAME MeowGame)
 
 include(cmake/Utils.cmake)
 
@@ -86,6 +31,7 @@ add_subdirectory(${3RD_PARTY_ROOT_DIR})
 add_subdirectory(${CODE_GENERATOR_ROOT_DIR})
 add_subdirectory(${RUNTIME_DIR})
 add_subdirectory(${EDITOR_DIR})
+add_subdirectory(${GAME_DIR})
 
 # Setup editor to be startup project
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT
@@ -96,7 +42,8 @@ get_all_targets(ALL_TAR_LIST)
 foreach(TAR ${ALL_TAR_LIST})
   if("${TAR}" STREQUAL "${CODE_GENERATOR_NAME}"
      OR "${TAR}" STREQUAL "${RUNTIME_NAME}"
-     OR "${TAR}" STREQUAL "${EDITOR_NAME}")
+     OR "${TAR}" STREQUAL "${EDITOR_NAME}"
+     OR "${TAR}" STREQUAL "${GAME_NAME}")
     continue()
   endif()
 

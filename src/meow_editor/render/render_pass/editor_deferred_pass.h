@@ -1,9 +1,7 @@
 #pragma once
 
 #include "meow_runtime/function/render/render_pass/deferred_pass.h"
-#ifdef MEOW_EDITOR
-#    include "render/structs/builtin_render_stat.h"
-#endif
+#include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
@@ -47,11 +45,9 @@ namespace Meow
         friend void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs);
 
     private:
-#ifdef MEOW_EDITOR
         bool                m_query_enabled = true;
         vk::raii::QueryPool query_pool      = nullptr;
 
         BuiltinRenderStat m_render_stat[2];
-#endif
     };
 } // namespace Meow

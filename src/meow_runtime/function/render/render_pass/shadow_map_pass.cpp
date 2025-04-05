@@ -16,6 +16,89 @@
 
 namespace Meow
 {
+    ShadowMapPass::ShadowMapPass(SurfaceData& surface_data)
+        : RenderPass(surface_data)
+    {
+        CreateRenderPass();
+        CreateMaterial();
+    }
+
+    void ShadowMapPass::CreateRenderPass()
+    {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        // Create a set to store all information of attachments
+
+        std::vector<vk::AttachmentDescription> attachment_descriptions;
+
+        attachment_descriptions = {
+            // depth attachment
+            {
+                vk::AttachmentDescriptionFlags(),        /* flags */
+                m_depth_format,                          /* format */
+                vk::SampleCountFlagBits::e1,             /* samples */
+                vk::AttachmentLoadOp::eClear,            /* loadOp */
+                vk::AttachmentStoreOp::eStore,           /* storeOp */
+                vk::AttachmentLoadOp::eClear,            /* stencilLoadOp */
+                vk::AttachmentStoreOp::eStore,           /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,             /* initialLayout */
+                vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
+            },
+        };
+
+        vk::AttachmentReference depth_attachment_reference(0, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+        std::vector<vk::SubpassDescription> subpass_descriptions {
+            // shadow map pass
+            {
+                vk::SubpassDescriptionFlags(),    /* flags */
+                vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
+                0,                                /* inputAttachmentCount */
+                nullptr,                          /* pInputAttachments */
+                0,                                /* colorAttachmentCount */
+                nullptr,                          /* pColorAttachments */
+                nullptr,                          /* pResolveAttachments */
+                &depth_attachment_reference,      /* pDepthStencilAttachment */
+                0,                                /* preserveAttachmentCount */
+                nullptr,                          /* pPreserveAttachments */
+            },
+        };
+
+        std::vector<vk::SubpassDependency> dependencies {
+            // externel -> shadow map pass
+            {
+                VK_SUBPASS_EXTERNAL,                              /* srcSubpass */
+                0,                                                /* dstSubpass */
+                vk::PipelineStageFlagBits::eFragmentShader,       /* srcStageMask */
+                vk::PipelineStageFlagBits::eEarlyFragmentTests,   /* dstStageMask */
+                vk::AccessFlagBits::eShaderRead,                  /* srcAccessMask */
+                vk::AccessFlagBits::eDepthStencilAttachmentWrite, /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                /* dependencyFlags */
+            },
+            // shadow map pass -> externel
+            {
+                0,                                                /* srcSubpass */
+                VK_SUBPASS_EXTERNAL,                              /* dstSubpass */
+                vk::PipelineStageFlagBits::eLateFragmentTests,    /* srcStageMask */
+                vk::PipelineStageFlagBits::eFragmentShader,       /* dstStageMask */
+                vk::AccessFlagBits::eDepthStencilAttachmentWrite, /* srcAccessMask */
+                vk::AccessFlagBits::eShaderRead,                  /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                /* dependencyFlags */
+            },
+        };
+
+        // Create render pass
+        vk::RenderPassCreateInfo render_pass_create_info(vk::RenderPassCreateFlags(), /* flags */
+                                                         attachment_descriptions,     /* pAttachments */
+                                                         subpass_descriptions,        /* pSubpasses */
+                                                         dependencies);               /* pDependencies */
+
+        render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
+
+        clear_values.resize(1);
+        clear_values[0].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+    }
+
     void ShadowMapPass::CreateMaterial()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
@@ -57,8 +140,6 @@ namespace Meow
         // Create attachment
 
         // Provide attachment information to frame buffer
-
-#ifndef MEOW_EDITOR
         vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
                                                           *render_pass,                 /* renderPass */
                                                           1,                            /* attachmentCount */
@@ -72,25 +153,6 @@ namespace Meow
         {
             framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
         }
-#else
-        vk::ImageView attachments[2];
-        attachments[0] = *m_shadow_map->image_view;
-        attachments[1] = *m_depth_to_color_render_target->image_view;
-
-        vk::FramebufferCreateInfo framebuffer_create_info(vk::FramebufferCreateFlags(), /* flags */
-                                                          *render_pass,                 /* renderPass */
-                                                          2,                            /* attachmentCount */
-                                                          attachments,                  /* pAttachments */
-                                                          m_shadow_map->extent.width,   /* width */
-                                                          m_shadow_map->extent.height,  /* height */
-                                                          1);                           /* layers */
-
-        framebuffers.reserve(output_image_views.size());
-        for (const auto& imageView : output_image_views)
-        {
-            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
-        }
-#endif // !MEOW_EDITOR
     }
 
     void ShadowMapPass::UpdateUniformBuffer()
@@ -213,6 +275,15 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_shadow_map->extent));
     }
 
+    void ShadowMapPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        m_shadow_map_material->BindPipeline(command_buffer);
+
+        RenderShadowMap(command_buffer);
+    }
+
     void ShadowMapPass::RenderShadowMap(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
@@ -258,9 +329,5 @@ namespace Meow
         swap(lhs.m_shadow_map, rhs.m_shadow_map);
 
         swap(lhs.draw_call, rhs.draw_call);
-
-#ifdef MEOW_EDITOR
-        swap(lhs.m_depth_to_color_render_target, rhs.m_depth_to_color_render_target);
-#endif
     }
 } // namespace Meow

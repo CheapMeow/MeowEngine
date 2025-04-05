@@ -19,9 +19,7 @@ namespace Meow
             : RenderPass()
         {}
 
-        ShadowMapPass(SurfaceData& surface_data)
-            : RenderPass(surface_data)
-        {}
+        ShadowMapPass(SurfaceData& surface_data);
 
         ShadowMapPass(ShadowMapPass&& rhs) noexcept
             : RenderPass(std::move(rhs))
@@ -42,8 +40,8 @@ namespace Meow
 
         ~ShadowMapPass() override = default;
 
-        virtual void CreateRenderPass() {}
-        void         CreateMaterial();
+        void CreateRenderPass();
+        void CreateMaterial();
 
         void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
@@ -54,6 +52,8 @@ namespace Meow
                    vk::Extent2D                   extent,
                    uint32_t                       current_image_index) override;
 
+        void Draw(const vk::raii::CommandBuffer& command_buffer) override;
+
         void RenderShadowMap(const vk::raii::CommandBuffer& command_buffer);
 
         std::shared_ptr<ImageData> GetShadowMap() { return m_shadow_map; }
@@ -63,10 +63,6 @@ namespace Meow
     protected:
         std::shared_ptr<Material>  m_shadow_map_material = nullptr;
         std::shared_ptr<ImageData> m_shadow_map          = nullptr;
-
-#ifdef MEOW_EDITOR
-        std::shared_ptr<ImageData> m_depth_to_color_render_target = nullptr;
-#endif
 
         std::string m_pass_names[1];
         int         draw_call[1] = {0};
