@@ -42,8 +42,6 @@ namespace Meow
 
         // Create a set to store all information of attachments
 
-        vk::SampleCountFlagBits sample_count = g_runtime_context.render_system->GetMSAASamples();
-
         std::vector<vk::AttachmentDescription> attachment_descriptions;
 
         attachment_descriptions = {
@@ -77,7 +75,10 @@ namespace Meow
 
         vk::AttachmentReference depth_attachment_reference(0, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 #ifdef MEOW_EDITOR
-        vk::AttachmentReference color_attachment_reference(1, vk::ImageLayout::eColorAttachmentOptimal);
+        std::vector<vk::AttachmentReference> color_attachment_references {
+            {0, vk::ImageLayout::eShaderReadOnlyOptimal},
+            {1, vk::ImageLayout::eColorAttachmentOptimal},
+        };
 #endif
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
@@ -101,10 +102,10 @@ namespace Meow
                 vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
                 0,                                /* inputAttachmentCount */
                 nullptr,                          /* pInputAttachments */
-                1,                                /* colorAttachmentCount */
-                &color_attachment_reference,      /* pColorAttachments */
+                2,                                /* colorAttachmentCount */
+                color_attachment_references,      /* pColorAttachments */
                 nullptr,                          /* pResolveAttachments */
-                &depth_attachment_reference,      /* pDepthStencilAttachment */
+                nullptr,                          /* pDepthStencilAttachment */
                 0,                                /* preserveAttachmentCount */
                 nullptr,                          /* pPreserveAttachments */
             },
