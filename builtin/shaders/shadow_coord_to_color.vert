@@ -21,7 +21,7 @@ layout (set = 1, binding = 0) uniform PerObjDataDynamic
 	mat4 modelMatrix;
 } objData;
 
-layout (location = 0) out vec3 outShadowCoord;
+layout (location = 0) out vec4 outShadowCoord;
 
 void main() 
 {
@@ -30,10 +30,5 @@ void main()
 	vec4 worldPos = objData.modelMatrix * vec4(inPosition.xyz, 1.0);
 	gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * worldPos;
 
-	vec4 shadowProj = lightData.projectionMatrix * lightData.viewMatrix * worldPos;
-	outShadowCoord.xyz = shadowProj.xyz / shadowProj.w;
-	// [-1, 1] -> [0, 1]
-	outShadowCoord.xy = outShadowCoord.xy * 0.5 + 0.5;
-	// flip y
-	outShadowCoord.y = 1.0 - outShadowCoord.y;
+	outShadowCoord = lightData.projectionMatrix * lightData.viewMatrix * worldPos;
 }

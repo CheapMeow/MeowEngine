@@ -24,7 +24,7 @@ layout (set = 2, binding = 0) uniform PerObjDataDynamic
 layout (location = 0) out vec3 outPosition;
 layout (location = 1) out vec3 outNormal;
 layout (location = 2) out vec2 outUV0;
-layout (location = 3) out vec3 outShadowCoord;
+layout (location = 3) out vec4 outShadowCoord;
 
 void main() 
 {
@@ -37,10 +37,5 @@ void main()
 	outNormal = normalize(normalMatrix * inNormal);
     outUV0 = inUV0;
 
-	vec4 shadowProj = lightData.projectionMatrix * lightData.viewMatrix * worldPos;
-	outShadowCoord.xyz = shadowProj.xyz / shadowProj.w;
-	// [-1, 1] -> [0, 1]
-	outShadowCoord.xy = outShadowCoord.xy * 0.5 + 0.5;
-	// flip y
-	outShadowCoord.y = 1.0 - outShadowCoord.y;
+	outShadowCoord = lightData.projectionMatrix * lightData.viewMatrix * worldPos;
 }

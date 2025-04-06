@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 inPosition;
 layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV0;
-layout (location = 3) in vec3 inShadowCoord;
+layout (location = 3) in vec4 inShadowCoord;
 
 layout (set = 1, binding = 0) uniform LightData 
 {
@@ -150,8 +150,13 @@ void main()
     vec3 color = ambient + Lo;
 
     // shadow
-    float depth0  = inShadowCoord.z - 0.0001; // light
-    float depth1  = texture(shadowMap, inShadowCoord.xy).r; // eye
+    vec3 ShadowCoord = inShadowCoord.xyz / inShadowCoord.w;
+	// [-1, 1] -> [0, 1]
+	ShadowCoord.xy = ShadowCoord.xy * 0.5 + 0.5;
+	// flip y
+	ShadowCoord.y = 1.0 - ShadowCoord.y;
+    float depth0  = ShadowCoord.z - 0.0001; // light
+    float depth1  = texture(shadowMap, ShadowCoord.xy).r; // eye
     float shadow  = 1.0;
 
     if (depth0 >= depth1) {
