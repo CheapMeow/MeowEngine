@@ -1,25 +1,25 @@
 #pragma once
 
-#include "meow_runtime/function/render/render_pass/deferred_pass.h"
+#include "meow_runtime/function/render/render_pass/deferred_pass_base.h"
 
 namespace Meow
 {
-    class GameDeferredPass : public DeferredPass
+    class DeferredPassGame : public DeferredPassBase
     {
     public:
-        GameDeferredPass(std::nullptr_t)
-            : DeferredPass(nullptr)
+        DeferredPassGame(std::nullptr_t)
+            : DeferredPassBase(nullptr)
         {}
 
-        GameDeferredPass(SurfaceData& surface_data);
+        DeferredPassGame(SurfaceData& surface_data);
 
-        GameDeferredPass(GameDeferredPass&& rhs) noexcept
-            : DeferredPass(nullptr)
+        DeferredPassGame(DeferredPassGame&& rhs) noexcept
+            : DeferredPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        GameDeferredPass& operator=(GameDeferredPass&& rhs) noexcept
+        DeferredPassGame& operator=(DeferredPassGame&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -28,7 +28,7 @@ namespace Meow
             return *this;
         }
 
-        ~GameDeferredPass() override = default;
+        ~DeferredPassGame() override = default;
 
         void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,

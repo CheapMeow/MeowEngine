@@ -1,4 +1,4 @@
-#include "deferred_pass.h"
+#include "deferred_pass_base.h"
 
 #include "pch.h"
 
@@ -17,7 +17,7 @@
 
 namespace Meow
 {
-    void DeferredPass::CreateMaterial()
+    void DeferredPassBase::CreateMaterial()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -105,7 +105,7 @@ namespace Meow
             std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader->per_vertex_attributes));
     }
 
-    void DeferredPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
+    void DeferredPassBase::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                            const vk::Extent2D&               extent)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -184,7 +184,7 @@ namespace Meow
         m_quad_material->BindImageToDescriptorSet("inputDepth", *m_depth_attachment);
     }
 
-    void DeferredPass::UpdateUniformBuffer()
+    void DeferredPassBase::UpdateUniformBuffer()
     {
         FUNCTION_TIMER();
 
@@ -280,7 +280,7 @@ namespace Meow
         m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
     }
 
-    void DeferredPass::Start(const vk::raii::CommandBuffer& command_buffer,
+    void DeferredPassBase::Start(const vk::raii::CommandBuffer& command_buffer,
                              vk::Extent2D                   extent,
                              uint32_t                       current_image_index)
     {
@@ -289,7 +289,7 @@ namespace Meow
             draw_call[i] = 0;
         }
 
-        RenderPass::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, current_image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,
@@ -301,7 +301,7 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
-    void DeferredPass::RenderGBuffer(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPassBase::RenderGBuffer(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -338,7 +338,7 @@ namespace Meow
         }
     }
 
-    void DeferredPass::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPassBase::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -351,7 +351,7 @@ namespace Meow
         }
     }
 
-    void DeferredPass::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
+    void DeferredPassBase::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -360,11 +360,11 @@ namespace Meow
         m_skybox_model.meshes[0]->BindDrawCmd(command_buffer);
     }
 
-    void swap(DeferredPass& lhs, DeferredPass& rhs)
+    void swap(DeferredPassBase& lhs, DeferredPassBase& rhs)
     {
         using std::swap;
 
-        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+        swap(static_cast<RenderPassBase&>(lhs), static_cast<RenderPassBase&>(rhs));
 
         swap(lhs.m_obj2attachment_material, rhs.m_obj2attachment_material);
         swap(lhs.m_quad_material, rhs.m_quad_material);

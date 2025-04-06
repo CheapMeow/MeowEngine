@@ -3,7 +3,7 @@
 #include "function/render/material/material.h"
 #include "function/render/material/shader.h"
 #include "function/render/model/model.hpp"
-#include "function/render/render_pass/render_pass.h"
+#include "function/render/render_pass/render_pass_base.h"
 
 namespace Meow
 {
@@ -28,28 +28,28 @@ namespace Meow
         PointLight lights[k_num_lights];
     };
 
-    class DeferredPass : public RenderPass
+    class DeferredPassBase : public RenderPassBase
     {
     public:
-        DeferredPass(std::nullptr_t)
-            : RenderPass(nullptr)
+        DeferredPassBase(std::nullptr_t)
+            : RenderPassBase(nullptr)
         {}
 
-        DeferredPass()
-            : RenderPass()
+        DeferredPassBase()
+            : RenderPassBase()
         {}
 
-        DeferredPass(SurfaceData& surface_data)
-            : RenderPass(surface_data)
+        DeferredPassBase(SurfaceData& surface_data)
+            : RenderPassBase(surface_data)
         {}
 
-        DeferredPass(DeferredPass&& rhs) noexcept
-            : RenderPass(nullptr)
+        DeferredPassBase(DeferredPassBase&& rhs) noexcept
+            : RenderPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        DeferredPass& operator=(DeferredPass&& rhs) noexcept
+        DeferredPassBase& operator=(DeferredPassBase&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -58,7 +58,7 @@ namespace Meow
             return *this;
         }
 
-        ~DeferredPass() override = default;
+        ~DeferredPassBase() override = default;
 
         void CreateMaterial();
 
@@ -79,7 +79,7 @@ namespace Meow
 
         UUID GetObj2AttachmentMatID() { return m_obj2attachment_material->uuid(); }
 
-        friend void swap(DeferredPass& lhs, DeferredPass& rhs);
+        friend void swap(DeferredPassBase& lhs, DeferredPassBase& rhs);
 
     protected:
         std::shared_ptr<Material> m_obj2attachment_material = nullptr;

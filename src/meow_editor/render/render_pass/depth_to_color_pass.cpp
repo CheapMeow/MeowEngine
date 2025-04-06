@@ -11,7 +11,7 @@
 namespace Meow
 {
     DepthToColorPass::DepthToColorPass(SurfaceData& surface_data)
-        : RenderPass(surface_data)
+        : RenderPassBase(surface_data)
     {
         CreateRenderPass();
         CreateMaterial();
@@ -169,7 +169,7 @@ namespace Meow
                                  vk::Extent2D                   extent,
                                  uint32_t                       current_image_index)
     {
-        RenderPass::Start(command_buffer, m_depth_to_color_render_target->extent, current_image_index);
+        RenderPassBase::Start(command_buffer, m_depth_to_color_render_target->extent, current_image_index);
     }
 
     void DepthToColorPass::Draw(const vk::raii::CommandBuffer& command_buffer)
@@ -190,7 +190,7 @@ namespace Meow
     {
         using std::swap;
 
-        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+        swap(static_cast<RenderPassBase&>(lhs), static_cast<RenderPassBase&>(rhs));
 
         swap(lhs.m_depth_to_color_material, rhs.m_depth_to_color_material);
         swap(lhs.m_depth_to_color_render_target, rhs.m_depth_to_color_render_target);

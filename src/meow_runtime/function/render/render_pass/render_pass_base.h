@@ -9,18 +9,18 @@
 
 namespace Meow
 {
-    class RenderPass : public NonCopyable
+    class RenderPassBase : public NonCopyable
     {
     public:
-        RenderPass(std::nullptr_t) {}
+        RenderPassBase(std::nullptr_t) {}
 
-        RenderPass() {}
+        RenderPassBase() {}
 
-        RenderPass(SurfaceData& surface_data);
+        RenderPassBase(SurfaceData& surface_data);
 
-        RenderPass(RenderPass&& rhs) noexcept { swap(*this, rhs); }
+        RenderPassBase(RenderPassBase&& rhs) noexcept { swap(*this, rhs); }
 
-        RenderPass& operator=(RenderPass&& rhs) noexcept
+        RenderPassBase& operator=(RenderPassBase&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -29,7 +29,7 @@ namespace Meow
             return *this;
         }
 
-        ~RenderPass() override = default;
+        ~RenderPassBase() override = default;
 
         virtual void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                          const vk::Extent2D&               extent)
@@ -46,7 +46,7 @@ namespace Meow
 
         virtual void AfterPresent();
 
-        friend void swap(RenderPass& lhs, RenderPass& rhs);
+        friend void swap(RenderPassBase& lhs, RenderPassBase& rhs);
 
         vk::raii::RenderPass               render_pass = nullptr;
         std::vector<vk::raii::Framebuffer> framebuffers;

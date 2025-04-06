@@ -1,4 +1,4 @@
-#include "render_pass.h"
+#include "render_pass_base.h"
 
 #include "pch.h"
 
@@ -6,7 +6,7 @@
 
 namespace Meow
 {
-    RenderPass::RenderPass(SurfaceData& surface_data)
+    RenderPassBase::RenderPassBase(SurfaceData& surface_data)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         m_color_format = PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*surface_data.surface)).format;
@@ -14,7 +14,7 @@ namespace Meow
     }
 
     void
-    RenderPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
+    RenderPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
         FUNCTION_TIMER();
 
@@ -23,16 +23,16 @@ namespace Meow
         command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
     }
 
-    void RenderPass::End(const vk::raii::CommandBuffer& command_buffer)
+    void RenderPassBase::End(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
         command_buffer.endRenderPass();
     }
 
-    void RenderPass::AfterPresent() {}
+    void RenderPassBase::AfterPresent() {}
 
-    void swap(RenderPass& lhs, RenderPass& rhs)
+    void swap(RenderPassBase& lhs, RenderPassBase& rhs)
     {
         using std::swap;
 

@@ -7,8 +7,8 @@
 #include "meow_runtime/function/render/buffer_data/swapchain_data.h"
 #include "meow_runtime/function/render/render_pass/shadow_map_pass.h"
 #include "meow_runtime/function/window/window.h"
-#include "render/render_pass/game_deferred_pass.h"
-#include "render/render_pass/game_forward_pass.h"
+#include "render/render_pass/deferred_pass_game.h"
+#include "render/render_pass/forward_pass_game.h"
 
 namespace Meow
 {
@@ -32,9 +32,9 @@ namespace Meow
         std::vector<PerFrameData> m_per_frame_data;
 
         ShadowMapPass    m_shadow_map_pass = nullptr;
-        GameDeferredPass m_deferred_pass   = nullptr;
-        GameForwardPass  m_forward_pass    = nullptr;
-        RenderPass*      m_render_pass_ptr = nullptr;
+        DeferredPassGame m_deferred_pass   = nullptr;
+        ForwardPassGame  m_forward_pass    = nullptr;
+        RenderPassBase*      m_render_pass_ptr = nullptr;
 
         bool           m_framebuffer_resized  = false;
         bool           m_iconified            = false;

@@ -373,8 +373,8 @@ namespace Meow
     void GameWindow::CreateRenderPass()
     {
         m_shadow_map_pass = ShadowMapPass(m_surface_data);
-        m_deferred_pass   = GameDeferredPass(m_surface_data);
-        m_forward_pass    = GameForwardPass(m_surface_data);
+        m_deferred_pass   = DeferredPassGame(m_surface_data);
+        m_forward_pass    = ForwardPassGame(m_surface_data);
         RefreshFrameBuffers();
 
         m_render_pass_ptr = &m_forward_pass;

@@ -18,11 +18,11 @@
 namespace Meow
 {
     ImGuiPass::ImGuiPass(std::nullptr_t)
-        : RenderPass(nullptr)
+        : RenderPassBase(nullptr)
     {}
 
     ImGuiPass::ImGuiPass(SurfaceData& surface_data)
-        : RenderPass(surface_data)
+        : RenderPassBase(surface_data)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
@@ -251,7 +251,7 @@ namespace Meow
 
         ImGui::End();
 
-        RenderPass::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, current_image_index);
     }
 
     void ImGuiPass::Draw(const vk::raii::CommandBuffer& command_buffer)
@@ -305,7 +305,7 @@ namespace Meow
     {
         using std::swap;
 
-        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+        swap(static_cast<RenderPassBase&>(lhs), static_cast<RenderPassBase&>(rhs));
 
         swap(lhs.m_cur_render_pass, rhs.m_cur_render_pass);
         swap(lhs.m_render_pass_names, rhs.m_render_pass_names);

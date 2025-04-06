@@ -2,22 +2,22 @@
 
 #include "function/render/material/material.h"
 #include "function/render/model/model.hpp"
-#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/render_pass/render_pass_base.h"
 #include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
-    class DepthToColorPass : public RenderPass
+    class DepthToColorPass : public RenderPassBase
     {
     public:
         DepthToColorPass(std::nullptr_t)
-            : RenderPass(nullptr)
+            : RenderPassBase(nullptr)
         {}
 
         DepthToColorPass(SurfaceData& surface_data);
 
         DepthToColorPass(DepthToColorPass&& rhs) noexcept
-            : RenderPass(nullptr)
+            : RenderPassBase(nullptr)
         {
             swap(*this, rhs);
         }

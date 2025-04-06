@@ -7,9 +7,9 @@
 #include "meow_runtime/function/render/buffer_data/swapchain_data.h"
 #include "meow_runtime/function/render/render_pass/shadow_map_pass.h"
 #include "meow_runtime/function/window/window.h"
+#include "render/render_pass/deferred_pass_editor.h"
 #include "render/render_pass/depth_to_color_pass.h"
-#include "render/render_pass/editor_deferred_pass.h"
-#include "render/render_pass/editor_forward_pass.h"
+#include "render/render_pass/forward_pass_editor.h"
 #include "render/render_pass/imgui_pass.h"
 
 namespace Meow
@@ -36,10 +36,10 @@ namespace Meow
 
         ShadowMapPass      m_shadow_map_pass     = nullptr;
         DepthToColorPass   m_depth_to_color_pass = nullptr;
-        EditorDeferredPass m_deferred_pass       = nullptr;
-        EditorForwardPass  m_forward_pass        = nullptr;
+        DeferredPassEditor m_deferred_pass       = nullptr;
+        ForwardPassEditor  m_forward_pass        = nullptr;
         ImGuiPass          m_imgui_pass          = nullptr;
-        RenderPass*        m_render_pass_ptr     = nullptr;
+        RenderPassBase*        m_render_pass_ptr     = nullptr;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;

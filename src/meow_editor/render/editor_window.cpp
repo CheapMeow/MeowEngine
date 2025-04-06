@@ -410,8 +410,8 @@ namespace Meow
     {
         m_shadow_map_pass     = ShadowMapPass(m_surface_data);
         m_depth_to_color_pass = DepthToColorPass(m_surface_data);
-        m_deferred_pass       = EditorDeferredPass(m_surface_data);
-        m_forward_pass        = EditorForwardPass(m_surface_data);
+        m_deferred_pass       = DeferredPassEditor(m_surface_data);
+        m_forward_pass        = ForwardPassEditor(m_surface_data);
         m_imgui_pass          = ImGuiPass(m_surface_data);
 
         RefreshFrameBuffers();

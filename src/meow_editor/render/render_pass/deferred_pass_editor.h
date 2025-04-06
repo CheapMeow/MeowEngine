@@ -1,27 +1,27 @@
 #pragma once
 
-#include "meow_runtime/function/render/render_pass/deferred_pass.h"
+#include "meow_runtime/function/render/render_pass/deferred_pass_base.h"
 #include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
 
-    class EditorDeferredPass : public DeferredPass
+    class DeferredPassEditor : public DeferredPassBase
     {
     public:
-        EditorDeferredPass(std::nullptr_t)
-            : DeferredPass(nullptr)
+        DeferredPassEditor(std::nullptr_t)
+            : DeferredPassBase(nullptr)
         {}
 
-        EditorDeferredPass(SurfaceData& surface_data);
+        DeferredPassEditor(SurfaceData& surface_data);
 
-        EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
-            : DeferredPass(nullptr)
+        DeferredPassEditor(DeferredPassEditor&& rhs) noexcept
+            : DeferredPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        EditorDeferredPass& operator=(EditorDeferredPass&& rhs) noexcept
+        DeferredPassEditor& operator=(DeferredPassEditor&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -30,7 +30,7 @@ namespace Meow
             return *this;
         }
 
-        ~EditorDeferredPass() override = default;
+        ~DeferredPassEditor() override = default;
 
         void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,
@@ -40,7 +40,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs);
+        friend void swap(DeferredPassEditor& lhs, DeferredPassEditor& rhs);
 
     private:
         bool                m_query_enabled = true;

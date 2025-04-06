@@ -3,7 +3,7 @@
 #include "meow_runtime/core/signal/signal.hpp"
 #include "meow_runtime/function/render/material/material.h"
 #include "meow_runtime/function/render/material/shader.h"
-#include "meow_runtime/function/render/render_pass/render_pass.h"
+#include "meow_runtime/function/render/render_pass/render_pass_base.h"
 #include "render/imgui_widgets/builtin_statistics_widget.h"
 #include "render/imgui_widgets/components_widget.h"
 #include "render/imgui_widgets/flame_graph_widget.h"
@@ -12,13 +12,13 @@
 
 namespace Meow
 {
-    class ImGuiPass : public RenderPass
+    class ImGuiPass : public RenderPassBase
     {
     public:
         ImGuiPass(std::nullptr_t);
 
         ImGuiPass(ImGuiPass&& rhs) noexcept
-            : RenderPass(nullptr)
+            : RenderPassBase(nullptr)
         {
             swap(*this, rhs);
         }

@@ -3,33 +3,33 @@
 #include "function/render/material/material.h"
 #include "function/render/material/shader.h"
 #include "function/render/model/model.hpp"
-#include "function/render/render_pass/render_pass.h"
+#include "function/render/render_pass/render_pass_base.h"
 #include "function/render/utils/vulkan_debug_utils.h"
 
 namespace Meow
 {
-    class ForwardPass : public RenderPass
+    class ForwardPassBase : public RenderPassBase
     {
     public:
-        ForwardPass(std::nullptr_t)
-            : RenderPass(nullptr)
+        ForwardPassBase(std::nullptr_t)
+            : RenderPassBase(nullptr)
         {}
 
-        ForwardPass()
-            : RenderPass()
+        ForwardPassBase()
+            : RenderPassBase()
         {}
 
-        ForwardPass(SurfaceData& surface_data)
-            : RenderPass(surface_data)
+        ForwardPassBase(SurfaceData& surface_data)
+            : RenderPassBase(surface_data)
         {}
 
-        ForwardPass(ForwardPass&& rhs) noexcept
-            : RenderPass(nullptr)
+        ForwardPassBase(ForwardPassBase&& rhs) noexcept
+            : RenderPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        ForwardPass& operator=(ForwardPass&& rhs) noexcept
+        ForwardPassBase& operator=(ForwardPassBase&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -38,7 +38,7 @@ namespace Meow
             return *this;
         }
 
-        ~ForwardPass() override = default;
+        ~ForwardPassBase() override = default;
 
         virtual void CreateRenderPass() {}
         void         CreateMaterial();
@@ -66,7 +66,7 @@ namespace Meow
         UUID GetForwardMatID() { return m_opaque_material->uuid(); }
         UUID GetTranslucentMatID() { return m_translucent_material->uuid(); }
 
-        friend void swap(ForwardPass& lhs, ForwardPass& rhs);
+        friend void swap(ForwardPassBase& lhs, ForwardPassBase& rhs);
 
     protected:
         std::shared_ptr<Material> m_opaque_material = nullptr;

@@ -3,26 +3,26 @@
 #include "function/render/material/material.h"
 #include "function/render/material/shader.h"
 #include "function/render/model/model.hpp"
-#include "function/render/render_pass/render_pass.h"
+#include "function/render/render_pass/render_pass_base.h"
 #include "function/render/utils/vulkan_debug_utils.h"
 
 namespace Meow
 {
-    class ShadowMapPass : public RenderPass
+    class ShadowMapPass : public RenderPassBase
     {
     public:
         ShadowMapPass(std::nullptr_t)
-            : RenderPass(nullptr)
+            : RenderPassBase(nullptr)
         {}
 
         ShadowMapPass()
-            : RenderPass()
+            : RenderPassBase()
         {}
 
         ShadowMapPass(SurfaceData& surface_data);
 
         ShadowMapPass(ShadowMapPass&& rhs) noexcept
-            : RenderPass(nullptr)
+            : RenderPassBase(nullptr)
         {
             swap(*this, rhs);
         }

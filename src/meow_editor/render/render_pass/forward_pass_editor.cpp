@@ -1,24 +1,43 @@
-#include "game_forward_pass.h"
+#include "forward_pass_editor.h"
 
 #include "meow_runtime/pch.h"
 
 #include "function/render/utils/vulkan_debug_utils.h"
+#include "global/editor_context.h"
 #include "meow_runtime/function/global/runtime_context.h"
 
 namespace Meow
 {
-    GameForwardPass::GameForwardPass(SurfaceData& surface_data)
-        : ForwardPass(surface_data)
+    ForwardPassEditor::ForwardPassEditor(SurfaceData& surface_data)
+        : ForwardPassBase(surface_data)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         CreateRenderPass();
         CreateMaterial();
+
+        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
+                                                        .queryCount         = 2,
+                                                        .pipelineStatistics = (1 << 11) - 1};
+
+        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
+
+        m_render_stat[0].vertex_attribute_metas = m_opaque_material->shader->vertex_attribute_metas;
+        m_render_stat[0].buffer_meta_map        = m_opaque_material->shader->buffer_meta_map;
+        m_render_stat[0].image_meta_map         = m_opaque_material->shader->image_meta_map;
+
+        m_render_stat[1].vertex_attribute_metas = m_skybox_material->shader->vertex_attribute_metas;
+        m_render_stat[1].buffer_meta_map        = m_skybox_material->shader->buffer_meta_map;
+        m_render_stat[1].image_meta_map         = m_skybox_material->shader->image_meta_map;
     }
 
-    void GameForwardPass::CreateRenderPass()
+    void ForwardPassEditor::CreateRenderPass()
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        m_pass_names[0] = "Mesh Lighting Subpass";
+        m_pass_names[1] = "Skybox Subpass";
 
         // Create a set to store all information of attachments
 
@@ -53,33 +72,34 @@ namespace Meow
                     vk::ImageLayout::eUndefined,                     /* initialLayout */
                     vk::ImageLayout::eDepthStencilAttachmentOptimal, /* finalLayout */
                 },
-                // swapchain image
+                // offscreen attachment
                 {
-                    vk::AttachmentDescriptionFlags(), /* flags */
-                    m_color_format,                   /* format */
-                    vk::SampleCountFlagBits::e1,      /* samples */
-                    vk::AttachmentLoadOp::eClear,     /* loadOp */
-                    vk::AttachmentStoreOp::eStore,    /* storeOp */
-                    vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
-                    vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                    vk::ImageLayout::eUndefined,      /* initialLayout */
-                    vk::ImageLayout::ePresentSrcKHR,  /* finalLayout */
+                    vk::AttachmentDescriptionFlags(),        /* flags */
+                    m_color_format,                          /* format */
+                    vk::SampleCountFlagBits::e1,             /* samples */
+                    vk::AttachmentLoadOp::eClear,            /* loadOp */
+                    vk::AttachmentStoreOp::eStore,           /* storeOp */
+                    vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
+                    vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
+                    vk::ImageLayout::eShaderReadOnlyOptimal, /* initialLayout */
+                    vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
                 },
             };
         }
         else
         {
             attachment_descriptions = {
+                // offscreen attachment
                 {
-                    vk::AttachmentDescriptionFlags(), /* flags */
-                    m_color_format,                   /* format */
-                    vk::SampleCountFlagBits::e1,      /* samples */
-                    vk::AttachmentLoadOp::eClear,     /* loadOp */
-                    vk::AttachmentStoreOp::eStore,    /* storeOp */
-                    vk::AttachmentLoadOp::eDontCare,  /* stencilLoadOp */
-                    vk::AttachmentStoreOp::eDontCare, /* stencilStoreOp */
-                    vk::ImageLayout::eUndefined,      /* initialLayout */
-                    vk::ImageLayout::ePresentSrcKHR,  /* finalLayout */
+                    vk::AttachmentDescriptionFlags(),        /* flags */
+                    m_color_format,                          /* format */
+                    vk::SampleCountFlagBits::e1,             /* samples */
+                    vk::AttachmentLoadOp::eClear,            /* loadOp */
+                    vk::AttachmentStoreOp::eStore,           /* storeOp */
+                    vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
+                    vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
+                    vk::ImageLayout::eShaderReadOnlyOptimal, /* initialLayout */
+                    vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
                 },
                 // depth attachment
                 {
@@ -128,7 +148,7 @@ namespace Meow
                     vk::AccessFlagBits::eColorAttachmentRead, /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,            /* dependencyFlags */
             },
-            // forward -> externel
+            // forward pass -> externel
             {
                 0,                                                 /* srcSubpass */
                 VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
@@ -171,26 +191,74 @@ namespace Meow
 #endif
     }
 
-    void GameForwardPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                vk::Extent2D                   extent,
-                                uint32_t                       current_image_index)
+    void ForwardPassEditor::Start(const vk::raii::CommandBuffer& command_buffer,
+                                  vk::Extent2D                   extent,
+                                  uint32_t                       current_image_index)
     {
-        ForwardPass::Start(command_buffer, extent, current_image_index);
+        if (m_query_enabled)
+            command_buffer.resetQueryPool(*query_pool, 0, 2);
+
+        ForwardPassBase::Start(command_buffer, extent, current_image_index);
     }
 
-    void GameForwardPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPassEditor::Draw(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
         m_opaque_material->BindPipeline(command_buffer);
 
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 0, {});
+
         RenderOpaqueMeshes(command_buffer);
+
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 0);
 
         m_skybox_material->BindPipeline(command_buffer);
 
+        if (m_query_enabled)
+            command_buffer.beginQuery(*query_pool, 1, {});
+
         RenderSkybox(command_buffer);
+
+        if (m_query_enabled)
+            command_buffer.endQuery(*query_pool, 1);
 
         m_translucent_material->BindPipeline(command_buffer);
         RenderTranslucentMeshes(command_buffer);
+    }
+
+    void ForwardPassEditor::AfterPresent()
+    {
+        FUNCTION_TIMER();
+
+        if (m_query_enabled)
+        {
+            for (int i = 1; i >= 0; i--)
+            {
+                std::pair<vk::Result, std::vector<uint32_t>> query_results =
+                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
+
+                g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
+            }
+        }
+
+        for (int i = 1; i >= 0; i--)
+        {
+            m_render_stat[i].draw_call = draw_call[i];
+            g_editor_context.profile_system->UploadBuiltinRenderStat(m_pass_names[i], m_render_stat[i]);
+        }
+    }
+
+    void swap(ForwardPassEditor& lhs, ForwardPassEditor& rhs)
+    {
+        using std::swap;
+
+        swap(static_cast<ForwardPassBase&>(lhs), static_cast<ForwardPassBase&>(rhs));
+
+        swap(lhs.m_query_enabled, rhs.m_query_enabled);
+        swap(lhs.query_pool, rhs.query_pool);
+        swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

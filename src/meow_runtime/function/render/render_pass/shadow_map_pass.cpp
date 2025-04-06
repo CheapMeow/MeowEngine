@@ -17,7 +17,7 @@
 namespace Meow
 {
     ShadowMapPass::ShadowMapPass(SurfaceData& surface_data)
-        : RenderPass(surface_data)
+        : RenderPassBase(surface_data)
     {
         CreateRenderPass();
         CreateMaterial();
@@ -263,7 +263,7 @@ namespace Meow
     {
         draw_call[0] = 0;
 
-        RenderPass::Start(command_buffer, m_shadow_map->extent, current_image_index);
+        RenderPassBase::Start(command_buffer, m_shadow_map->extent, current_image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,
@@ -325,7 +325,7 @@ namespace Meow
     {
         using std::swap;
 
-        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+        swap(static_cast<RenderPassBase&>(lhs), static_cast<RenderPassBase&>(rhs));
 
         swap(lhs.m_shadow_map_material, rhs.m_shadow_map_material);
         swap(lhs.m_shadow_map, rhs.m_shadow_map);

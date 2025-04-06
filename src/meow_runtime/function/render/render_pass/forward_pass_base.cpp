@@ -1,4 +1,4 @@
-#include "forward_pass.h"
+#include "forward_pass_base.h"
 
 #include "pch.h"
 
@@ -16,7 +16,7 @@
 
 namespace Meow
 {
-    void ForwardPass::CreateMaterial()
+    void ForwardPassBase::CreateMaterial()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -202,7 +202,7 @@ namespace Meow
         }
     }
 
-    void ForwardPass::PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map)
+    void ForwardPassBase::PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map)
     {
         std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
@@ -239,12 +239,12 @@ namespace Meow
         }
     }
 
-    void ForwardPass::BindShadowMap(std::shared_ptr<ImageData> shadow_map)
+    void ForwardPassBase::BindShadowMap(std::shared_ptr<ImageData> shadow_map)
     {
         m_opaque_material->BindImageToDescriptorSet("shadowMap", *shadow_map);
     }
 
-    void ForwardPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
+    void ForwardPassBase::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                           const vk::Extent2D&               extent)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
@@ -365,7 +365,7 @@ namespace Meow
         }
     }
 
-    void ForwardPass::UpdateUniformBuffer()
+    void ForwardPassBase::UpdateUniformBuffer()
     {
         FUNCTION_TIMER();
 
@@ -532,14 +532,14 @@ namespace Meow
     }
 
     void
-    ForwardPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
+    ForwardPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
     {
         for (int i = 0; i < 3; i++)
         {
             draw_call[i] = 0;
         }
 
-        RenderPass::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, current_image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,
@@ -551,7 +551,7 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
-    void ForwardPass::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPassBase::RenderOpaqueMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -589,7 +589,7 @@ namespace Meow
         }
     }
 
-    void ForwardPass::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPassBase::RenderSkybox(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -599,7 +599,7 @@ namespace Meow
         ++draw_call[1];
     }
 
-    void ForwardPass::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer)
+    void ForwardPassBase::RenderTranslucentMeshes(const vk::raii::CommandBuffer& command_buffer)
     {
         FUNCTION_TIMER();
 
@@ -667,7 +667,7 @@ namespace Meow
         }
     }
 
-    void ForwardPass::SetMSAAEnabled(bool enabled)
+    void ForwardPassBase::SetMSAAEnabled(bool enabled)
     {
         if (m_msaa_enabled == enabled)
         {
@@ -677,11 +677,11 @@ namespace Meow
         m_msaa_enabled = enabled;
     }
 
-    void swap(ForwardPass& lhs, ForwardPass& rhs)
+    void swap(ForwardPassBase& lhs, ForwardPassBase& rhs)
     {
         using std::swap;
 
-        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+        swap(static_cast<RenderPassBase&>(lhs), static_cast<RenderPassBase&>(rhs));
 
         swap(lhs.m_opaque_material, rhs.m_opaque_material);
         swap(lhs.m_skybox_material, rhs.m_skybox_material);

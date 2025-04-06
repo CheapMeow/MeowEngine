@@ -1,25 +1,25 @@
 #pragma once
 
-#include "meow_runtime/function/render/render_pass/forward_pass.h"
+#include "meow_runtime/function/render/render_pass/forward_pass_base.h"
 
 namespace Meow
 {
-    class GameForwardPass : public ForwardPass
+    class ForwardPassGame : public ForwardPassBase
     {
     public:
-        GameForwardPass(std::nullptr_t)
-            : ForwardPass(nullptr)
+        ForwardPassGame(std::nullptr_t)
+            : ForwardPassBase(nullptr)
         {}
 
-        GameForwardPass(SurfaceData& surface_data);
+        ForwardPassGame(SurfaceData& surface_data);
 
-        GameForwardPass(GameForwardPass&& rhs) noexcept
-            : ForwardPass(nullptr)
+        ForwardPassGame(ForwardPassGame&& rhs) noexcept
+            : ForwardPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        GameForwardPass& operator=(GameForwardPass&& rhs) noexcept
+        ForwardPassGame& operator=(ForwardPassGame&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -28,7 +28,7 @@ namespace Meow
             return *this;
         }
 
-        ~GameForwardPass() override = default;
+        ~ForwardPassGame() override = default;
 
         void CreateRenderPass() override;
 

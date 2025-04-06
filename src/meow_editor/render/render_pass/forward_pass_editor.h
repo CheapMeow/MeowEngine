@@ -1,26 +1,26 @@
 #pragma once
 
-#include "meow_runtime/function/render/render_pass/forward_pass.h"
+#include "meow_runtime/function/render/render_pass/forward_pass_base.h"
 #include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
-    class EditorForwardPass : public ForwardPass
+    class ForwardPassEditor : public ForwardPassBase
     {
     public:
-        EditorForwardPass(std::nullptr_t)
-            : ForwardPass(nullptr)
+        ForwardPassEditor(std::nullptr_t)
+            : ForwardPassBase(nullptr)
         {}
 
-        EditorForwardPass(SurfaceData& surface_data);
+        ForwardPassEditor(SurfaceData& surface_data);
 
-        EditorForwardPass(EditorForwardPass&& rhs) noexcept
-            : ForwardPass(nullptr)
+        ForwardPassEditor(ForwardPassEditor&& rhs) noexcept
+            : ForwardPassBase(nullptr)
         {
             swap(*this, rhs);
         }
 
-        EditorForwardPass& operator=(EditorForwardPass&& rhs) noexcept
+        ForwardPassEditor& operator=(ForwardPassEditor&& rhs) noexcept
         {
             if (this != &rhs)
             {
@@ -29,7 +29,7 @@ namespace Meow
             return *this;
         }
 
-        ~EditorForwardPass() override = default;
+        ~ForwardPassEditor() override = default;
 
         void CreateRenderPass() override;
 
@@ -41,7 +41,7 @@ namespace Meow
 
         void AfterPresent() override;
 
-        friend void swap(EditorForwardPass& lhs, EditorForwardPass& rhs);
+        friend void swap(ForwardPassEditor& lhs, ForwardPassEditor& rhs);
 
     private:
         bool                m_query_enabled = true;
