@@ -325,6 +325,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+
         swap(lhs.m_shadow_map_material, rhs.m_shadow_map_material);
         swap(lhs.m_shadow_map, rhs.m_shadow_map);
 

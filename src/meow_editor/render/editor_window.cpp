@@ -259,11 +259,11 @@ namespace Meow
 
         m_per_frame_data.clear();
         m_depth_to_color_pass = nullptr;
-        m_shadow_map_pass = nullptr;
-        m_forward_pass    = nullptr;
-        m_deferred_pass   = nullptr;
-        m_swapchain_data  = nullptr;
-        m_surface_data    = nullptr;
+        m_shadow_map_pass     = nullptr;
+        m_forward_pass        = nullptr;
+        m_deferred_pass       = nullptr;
+        m_swapchain_data      = nullptr;
+        m_surface_data        = nullptr;
     }
 
     void EditorWindow::Tick(float dt)
@@ -584,6 +584,8 @@ namespace Meow
             swapchain_image_views[i] = *m_swapchain_data.image_views[i];
         }
 
+        m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+        m_depth_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);

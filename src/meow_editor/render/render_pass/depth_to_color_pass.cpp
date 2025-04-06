@@ -117,7 +117,7 @@ namespace Meow
         material_factory.Init(depth_to_color_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
         material_factory.CreatePipeline(
-            logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 1);
+            logical_device, render_pass, depth_to_color_shader.get(), m_depth_to_color_material.get(), 0);
         m_depth_to_color_material->SetDebugName("Depth to Color Material");
 
         m_depth_to_color_render_target = ImageData::CreateRenderTarget(m_color_format,
@@ -135,6 +135,34 @@ namespace Meow
 
         m_quad_model = std::move(
             Model(std::move(vertices), std::move(indices), m_depth_to_color_material->shader->per_vertex_attributes));
+    }
+
+    void DepthToColorPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
+                                               const vk::Extent2D&               extent)
+    {
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        // clear
+
+        framebuffers.clear();
+
+        // Create attachment
+
+        // Provide attachment information to frame buffer
+        vk::FramebufferCreateInfo framebuffer_create_info(
+            vk::FramebufferCreateFlags(),                   /* flags */
+            *render_pass,                                   /* renderPass */
+            1,                                              /* attachmentCount */
+            &(*m_depth_to_color_render_target->image_view), /* pAttachments */
+            m_depth_to_color_render_target->extent.width,   /* width */
+            m_depth_to_color_render_target->extent.height,  /* height */
+            1);                                             /* layers */
+
+        framebuffers.reserve(output_image_views.size());
+        for (const auto& imageView : output_image_views)
+        {
+            framebuffers.push_back(vk::raii::Framebuffer(logical_device, framebuffer_create_info));
+        }
     }
 
     void DepthToColorPass::Start(const vk::raii::CommandBuffer& command_buffer,
@@ -161,6 +189,8 @@ namespace Meow
     void swap(DepthToColorPass& lhs, DepthToColorPass& rhs)
     {
         using std::swap;
+
+        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
 
         swap(lhs.m_depth_to_color_material, rhs.m_depth_to_color_material);
         swap(lhs.m_depth_to_color_render_target, rhs.m_depth_to_color_render_target);

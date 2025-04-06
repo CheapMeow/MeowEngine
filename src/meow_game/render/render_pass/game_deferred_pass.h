@@ -14,7 +14,7 @@ namespace Meow
         GameDeferredPass(SurfaceData& surface_data);
 
         GameDeferredPass(GameDeferredPass&& rhs) noexcept
-            : DeferredPass(std::move(rhs))
+            : DeferredPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -23,8 +23,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                DeferredPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

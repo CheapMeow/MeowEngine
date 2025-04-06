@@ -40,6 +40,9 @@ namespace Meow
     void swap(MouseInputAxis& lhs, MouseInputAxis& rhs)
     {
         using std::swap;
+
+        swap(static_cast<InputAxis&>(lhs), static_cast<InputAxis&>(rhs));
+
         swap(lhs.m_axis, rhs.m_axis);
         swap(lhs.m_slot_id, rhs.m_slot_id);
         swap(lhs.m_initialized, rhs.m_initialized);

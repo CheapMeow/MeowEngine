@@ -255,6 +255,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<ForwardPass&>(lhs), static_cast<ForwardPass&>(rhs));
+
         swap(lhs.m_query_enabled, rhs.m_query_enabled);
         swap(lhs.query_pool, rhs.query_pool);
         swap(lhs.m_render_stat, rhs.m_render_stat);

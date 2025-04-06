@@ -43,6 +43,9 @@ namespace Meow
     void swap(MouseInputButton& lhs, MouseInputButton& rhs)
     {
         using std::swap;
+
+        swap(static_cast<InputButton&>(lhs), static_cast<InputButton&>(rhs));
+
         swap(lhs.m_button, rhs.m_button);
         swap(lhs.m_slot_id, rhs.m_slot_id);
         swap(lhs.m_initialized, rhs.m_initialized);

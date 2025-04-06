@@ -17,7 +17,7 @@ namespace Meow
         DepthToColorPass(SurfaceData& surface_data);
 
         DepthToColorPass(DepthToColorPass&& rhs) noexcept
-            : RenderPass(std::move(rhs))
+            : RenderPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -26,8 +26,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                RenderPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;
@@ -37,6 +35,9 @@ namespace Meow
 
         void CreateRenderPass();
         void CreateMaterial();
+
+        void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
+                                 const vk::Extent2D&               extent) override;
 
         void Start(const vk::raii::CommandBuffer& command_buffer,
                    vk::Extent2D                   extent,

@@ -681,6 +681,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<RenderPass&>(lhs), static_cast<RenderPass&>(rhs));
+
         swap(lhs.m_opaque_material, rhs.m_opaque_material);
         swap(lhs.m_skybox_material, rhs.m_skybox_material);
         swap(lhs.m_skybox_model, rhs.m_skybox_model);

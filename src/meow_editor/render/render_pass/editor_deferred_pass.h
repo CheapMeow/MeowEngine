@@ -16,7 +16,7 @@ namespace Meow
         EditorDeferredPass(SurfaceData& surface_data);
 
         EditorDeferredPass(EditorDeferredPass&& rhs) noexcept
-            : DeferredPass(std::move(rhs))
+            : DeferredPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -25,8 +25,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                DeferredPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

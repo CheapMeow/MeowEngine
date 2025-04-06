@@ -18,7 +18,7 @@ namespace Meow
         ImGuiPass(std::nullptr_t);
 
         ImGuiPass(ImGuiPass&& rhs) noexcept
-            : RenderPass(std::move(rhs))
+            : RenderPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -27,8 +27,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                RenderPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

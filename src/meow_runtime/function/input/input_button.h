@@ -12,7 +12,8 @@ namespace Meow
     class InputButton : public NonCopyable
     {
     public:
-        InputButton()                                  = default;
+        InputButton(std::nullptr_t) {}
+        InputButton() = default;
 
         virtual InputAction GetAction() const { return InputAction::Release; };
 

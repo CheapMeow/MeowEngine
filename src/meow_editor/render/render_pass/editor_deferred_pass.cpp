@@ -28,7 +28,7 @@ namespace Meow
         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1;
 
         std::vector<vk::AttachmentDescription> attachment_descriptions {
-// swap chain attachment
+            // swap chain attachment
             {
                 vk::AttachmentDescriptionFlags(),        /* flags */
                 m_color_format,                          /* format */
@@ -295,6 +295,8 @@ namespace Meow
     void swap(EditorDeferredPass& lhs, EditorDeferredPass& rhs)
     {
         using std::swap;
+
+        swap(static_cast<DeferredPass&>(lhs), static_cast<DeferredPass&>(rhs));
 
         swap(lhs.m_query_enabled, rhs.m_query_enabled);
         swap(lhs.query_pool, rhs.query_pool);

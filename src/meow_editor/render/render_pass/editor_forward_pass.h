@@ -15,7 +15,7 @@ namespace Meow
         EditorForwardPass(SurfaceData& surface_data);
 
         EditorForwardPass(EditorForwardPass&& rhs) noexcept
-            : ForwardPass(std::move(rhs))
+            : ForwardPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -24,8 +24,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                ForwardPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

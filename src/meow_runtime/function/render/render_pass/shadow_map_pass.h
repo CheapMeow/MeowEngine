@@ -22,7 +22,7 @@ namespace Meow
         ShadowMapPass(SurfaceData& surface_data);
 
         ShadowMapPass(ShadowMapPass&& rhs) noexcept
-            : RenderPass(std::move(rhs))
+            : RenderPass(nullptr)
         {
             swap(*this, rhs);
         }
@@ -31,8 +31,6 @@ namespace Meow
         {
             if (this != &rhs)
             {
-                RenderPass::operator=(std::move(rhs));
-
                 swap(*this, rhs);
             }
             return *this;

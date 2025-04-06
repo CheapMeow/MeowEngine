@@ -316,6 +316,8 @@ namespace Meow
     {
         using std::swap;
 
+        swap(static_cast<ResourceBase&>(lhs), static_cast<ResourceBase&>(rhs));
+
         std::swap(lhs.shader, rhs.shader);
         std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
         std::swap(lhs.m_actived, rhs.m_actived);

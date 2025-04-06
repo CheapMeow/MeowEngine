@@ -11,6 +11,7 @@ namespace Meow
     class InputAxis : public NonCopyable
     {
     public:
+        InputAxis(std::nullptr_t) {}
         InputAxis() = default;
 
         /**
