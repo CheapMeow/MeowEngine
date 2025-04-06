@@ -26,15 +26,7 @@ namespace Meow
         CreatePerFrameData();
         CreateRenderPass();
         InitImGui();
-
-        is_offscreen_valid = true;
-        m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
-                                                  *m_offscreen_render_target->image_view,
-                                                  static_cast<VkImageLayout>(m_offscreen_render_target->layout));
-        m_imgui_pass.RefreshShadowMap(
-            *m_depth_to_color_pass.GetDepthToColorRenderTarget()->sampler,
-            *m_depth_to_color_pass.GetDepthToColorRenderTarget()->image_view,
-            static_cast<VkImageLayout>(m_depth_to_color_pass.GetDepthToColorRenderTarget()->layout));
+        BindImageToImguiPass();
 
         OnSize().connect([&](glm::ivec2 new_size) { m_framebuffer_resized = true; });
 
@@ -258,12 +250,13 @@ namespace Meow
         m_imgui_descriptor_pool = nullptr;
 
         m_per_frame_data.clear();
-        m_depth_to_color_pass = nullptr;
-        m_shadow_map_pass     = nullptr;
-        m_forward_pass        = nullptr;
-        m_deferred_pass       = nullptr;
-        m_swapchain_data      = nullptr;
-        m_surface_data        = nullptr;
+        m_depth_to_color_pass        = nullptr;
+        m_shadow_coord_to_color_pass = nullptr;
+        m_shadow_map_pass            = nullptr;
+        m_forward_pass               = nullptr;
+        m_deferred_pass              = nullptr;
+        m_swapchain_data             = nullptr;
+        m_surface_data               = nullptr;
     }
 
     void EditorWindow::Tick(float dt)
@@ -286,6 +279,7 @@ namespace Meow
         auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
 
         m_shadow_map_pass.UpdateUniformBuffer();
+        m_shadow_coord_to_color_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
         m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
 
@@ -311,6 +305,10 @@ namespace Meow
         m_depth_to_color_pass.Start(cmd_buffer, m_surface_data.extent, 0);
         m_depth_to_color_pass.Draw(cmd_buffer);
         m_depth_to_color_pass.End(cmd_buffer);
+
+        m_shadow_coord_to_color_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_shadow_coord_to_color_pass.Draw(cmd_buffer);
+        m_shadow_coord_to_color_pass.End(cmd_buffer);
 
         m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, 0);
         m_render_pass_ptr->Draw(cmd_buffer);
@@ -371,14 +369,6 @@ namespace Meow
                           nullptr,
                           g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
-
-        m_offscreen_render_target = ImageData::CreateRenderTarget(m_color_format,
-                                                                  m_surface_data.extent,
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
-                                                                  vk::ImageAspectFlagBits::eColor,
-                                                                  {},
-                                                                  false);
     }
 
     void EditorWindow::CreatePerFrameData()
@@ -408,11 +398,12 @@ namespace Meow
 
     void EditorWindow::CreateRenderPass()
     {
-        m_shadow_map_pass     = ShadowMapPass(m_surface_data);
-        m_depth_to_color_pass = DepthToColorPass(m_surface_data);
-        m_deferred_pass       = DeferredPassEditor(m_surface_data);
-        m_forward_pass        = ForwardPassEditor(m_surface_data);
-        m_imgui_pass          = ImGuiPass(m_surface_data);
+        m_shadow_map_pass            = ShadowMapPass(m_surface_data);
+        m_depth_to_color_pass        = DepthToColorPass(m_surface_data);
+        m_shadow_coord_to_color_pass = ShadowCoordToColorPass(m_surface_data);
+        m_deferred_pass              = DeferredPassEditor(m_surface_data);
+        m_forward_pass               = ForwardPassEditor(m_surface_data);
+        m_imgui_pass                 = ImGuiPass(m_surface_data);
 
         RefreshFrameBuffers();
 
@@ -560,6 +551,7 @@ namespace Meow
         CreateSwapChian();
         CreatePerFrameData();
         RefreshFrameBuffers();
+        BindImageToImguiPass();
 
         // update aspect ratio
 
@@ -584,22 +576,42 @@ namespace Meow
             swapchain_image_views[i] = *m_swapchain_data.image_views[i];
         }
 
+        m_offscreen_render_target = ImageData::CreateRenderTarget(m_color_format,
+                                                                  m_surface_data.extent,
+                                                                  vk::ImageUsageFlagBits::eColorAttachment |
+                                                                      vk::ImageUsageFlagBits::eInputAttachment,
+                                                                  vk::ImageAspectFlagBits::eColor,
+                                                                  {},
+                                                                  false);
+
         m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_depth_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+        m_shadow_coord_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view},
+                                                         m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
+    }
 
-        if (is_offscreen_valid)
-        {
-            m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
-                                                      *m_offscreen_render_target->image_view,
-                                                      static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+    void EditorWindow::BindImageToImguiPass()
+    {
+        m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
+                                                  *m_offscreen_render_target->image_view,
+                                                  static_cast<VkImageLayout>(m_offscreen_render_target->layout));
 
-            m_imgui_pass.RefreshShadowMap(
-                *m_depth_to_color_pass.GetDepthToColorRenderTarget()->sampler,
-                *m_depth_to_color_pass.GetDepthToColorRenderTarget()->image_view,
-                static_cast<VkImageLayout>(m_depth_to_color_pass.GetDepthToColorRenderTarget()->layout));
-        }
+        m_imgui_pass.RefreshShadowMap(
+            *m_depth_to_color_pass.GetDepthToColorRenderTarget()->sampler,
+            *m_depth_to_color_pass.GetDepthToColorRenderTarget()->image_view,
+            static_cast<VkImageLayout>(m_depth_to_color_pass.GetDepthToColorRenderTarget()->layout));
+
+        m_imgui_pass.RefreshShadowCoord(
+            *m_shadow_coord_to_color_pass.GetShadowCoordToColorRenderTarget()->sampler,
+            *m_shadow_coord_to_color_pass.GetShadowCoordToColorRenderTarget()->image_view,
+            static_cast<VkImageLayout>(m_shadow_coord_to_color_pass.GetShadowCoordToColorRenderTarget()->layout));
+
+        m_imgui_pass.RefreshShadowDepth(
+            *m_shadow_coord_to_color_pass.GetShadowDepthToColorRenderTarget()->sampler,
+            *m_shadow_coord_to_color_pass.GetShadowDepthToColorRenderTarget()->image_view,
+            static_cast<VkImageLayout>(m_shadow_coord_to_color_pass.GetShadowDepthToColorRenderTarget()->layout));
     }
 } // namespace Meow

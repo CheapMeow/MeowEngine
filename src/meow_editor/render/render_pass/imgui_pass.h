@@ -50,6 +50,8 @@ namespace Meow
 
         void RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
         void RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
+        void RefreshShadowCoord(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
+        void RefreshShadowDepth(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
 
     private:
         bool         m_msaa_enabled = true;
@@ -63,6 +65,8 @@ namespace Meow
         VkDescriptorSet m_offscreen_image_desc;
 
         VkDescriptorSet m_shadow_map_desc;
+        VkDescriptorSet m_shadow_coord_desc;
+        VkDescriptorSet m_shadow_depth_desc;
 
         GameObjectsWidget       m_gameobjects_widget;
         ComponentsWidget        m_components_widget;

@@ -106,7 +106,7 @@ namespace Meow
     }
 
     void DeferredPassBase::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
-                                           const vk::Extent2D&               extent)
+                                               const vk::Extent2D&               extent)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
@@ -281,8 +281,8 @@ namespace Meow
     }
 
     void DeferredPassBase::Start(const vk::raii::CommandBuffer& command_buffer,
-                             vk::Extent2D                   extent,
-                             uint32_t                       current_image_index)
+                                 vk::Extent2D                   extent,
+                                 uint32_t                       current_image_index)
     {
         for (int i = 0; i < 2; i++)
         {

@@ -211,6 +211,66 @@ namespace Meow
             ImGui::End();
         }
 
+        {
+            ImGui::Begin("Shadow Coord");
+
+            if (it != all_gameobjects_map.end())
+            {
+                const auto main_camera           = it->second;
+                const auto main_camera_component = main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+                if (main_camera_component)
+                {
+                    auto   aspect_ratio = main_camera_component->aspect_ratio; // width / height
+                    ImVec2 region_size  = ImGui::GetContentRegionAvail();
+                    float  width        = static_cast<float>(region_size.x);
+                    float  height       = static_cast<float>(region_size.y);
+                    if (width / height > aspect_ratio)
+                    {
+                        width = aspect_ratio * height;
+                    }
+                    else
+                    {
+                        height = width / aspect_ratio;
+                    }
+                    ImVec2 image_size = {width, height};
+                    ImGui::SetCursorPos((ImGui::GetWindowSize() - image_size) * 0.5f);
+                    ImGui::Image((ImTextureID)m_shadow_coord_desc, image_size);
+                }
+            }
+
+            ImGui::End();
+        }
+
+        {
+            ImGui::Begin("Shadow Depth");
+
+            if (it != all_gameobjects_map.end())
+            {
+                const auto main_camera           = it->second;
+                const auto main_camera_component = main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
+                if (main_camera_component)
+                {
+                    auto   aspect_ratio = main_camera_component->aspect_ratio; // width / height
+                    ImVec2 region_size  = ImGui::GetContentRegionAvail();
+                    float  width        = static_cast<float>(region_size.x);
+                    float  height       = static_cast<float>(region_size.y);
+                    if (width / height > aspect_ratio)
+                    {
+                        width = aspect_ratio * height;
+                    }
+                    else
+                    {
+                        height = width / aspect_ratio;
+                    }
+                    ImVec2 image_size = {width, height};
+                    ImGui::SetCursorPos((ImGui::GetWindowSize() - image_size) * 0.5f);
+                    ImGui::Image((ImTextureID)m_shadow_depth_desc, image_size);
+                }
+            }
+
+            ImGui::End();
+        }
+
         ImGui::Begin("Render Settings");
         if (ImGui::Combo(
                 "Current Render Pass", &m_cur_render_pass, m_render_pass_names.data(), m_render_pass_names.size()))
@@ -297,6 +357,34 @@ namespace Meow
             vk::ObjectType::eDescriptorSet,
             NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_shadow_map_desc),
             "Shadow Map to Color Render Target Descriptor Set"};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+    }
+
+    void ImGuiPass::RefreshShadowCoord(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
+    {
+        m_shadow_coord_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        vk::DebugUtilsObjectNameInfoEXT name_info      = {
+            vk::ObjectType::eDescriptorSet,
+            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_shadow_map_desc),
+            "Shadow Coord to Color Render Target Descriptor Set"};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+    }
+
+    void ImGuiPass::RefreshShadowDepth(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
+    {
+        m_shadow_depth_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        vk::DebugUtilsObjectNameInfoEXT name_info      = {
+            vk::ObjectType::eDescriptorSet,
+            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_shadow_map_desc),
+            "Shadow Depth to Color Render Target Descriptor Set"};
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }

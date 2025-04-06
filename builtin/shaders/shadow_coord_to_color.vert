@@ -16,15 +16,12 @@ layout (set = 0, binding = 1) uniform DirectionalLightData
 	mat4 projectionMatrix;
 } lightData;
 
-layout (set = 2, binding = 0) uniform PerObjDataDynamic 
+layout (set = 1, binding = 0) uniform PerObjDataDynamic 
 {
 	mat4 modelMatrix;
 } objData;
 
-layout (location = 0) out vec3 outPosition;
-layout (location = 1) out vec3 outNormal;
-layout (location = 2) out vec2 outUV0;
-layout (location = 3) out vec3 outShadowCoord;
+layout (location = 0) out vec3 outShadowCoord;
 
 void main() 
 {
@@ -32,10 +29,6 @@ void main()
 
 	vec4 worldPos = objData.modelMatrix * vec4(inPosition.xyz, 1.0);
 	gl_Position = sceneData.projectionMatrix * sceneData.viewMatrix * worldPos;
-
-    outPosition = worldPos.xyz;
-	outNormal = normalize(normalMatrix * inNormal);
-    outUV0 = inUV0;
 
 	vec4 shadowProj = lightData.projectionMatrix * lightData.viewMatrix * worldPos;
 	outShadowCoord.xyz = shadowProj.xyz / shadowProj.w;

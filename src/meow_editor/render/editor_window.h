@@ -11,6 +11,7 @@
 #include "render/render_pass/depth_to_color_pass.h"
 #include "render/render_pass/forward_pass_editor.h"
 #include "render/render_pass/imgui_pass.h"
+#include "render/render_pass/shadow_coord_to_color_pass.h"
 
 namespace Meow
 {
@@ -29,17 +30,19 @@ namespace Meow
         void InitImGui();
         void RecreateSwapChain();
         void RefreshFrameBuffers();
+        void BindImageToImguiPass();
 
         SwapChainData m_swapchain_data = nullptr;
 
         std::vector<PerFrameData> m_per_frame_data;
 
-        ShadowMapPass      m_shadow_map_pass     = nullptr;
-        DepthToColorPass   m_depth_to_color_pass = nullptr;
-        DeferredPassEditor m_deferred_pass       = nullptr;
-        ForwardPassEditor  m_forward_pass        = nullptr;
-        ImGuiPass          m_imgui_pass          = nullptr;
-        RenderPassBase*        m_render_pass_ptr     = nullptr;
+        ShadowMapPass          m_shadow_map_pass            = nullptr;
+        DepthToColorPass       m_depth_to_color_pass        = nullptr;
+        ShadowCoordToColorPass m_shadow_coord_to_color_pass = nullptr;
+        DeferredPassEditor     m_deferred_pass              = nullptr;
+        ForwardPassEditor      m_forward_pass               = nullptr;
+        ImGuiPass              m_imgui_pass                 = nullptr;
+        RenderPassBase*        m_render_pass_ptr            = nullptr;
 
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;

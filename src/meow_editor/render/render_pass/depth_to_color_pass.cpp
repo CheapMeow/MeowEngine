@@ -170,6 +170,15 @@ namespace Meow
                                  uint32_t                       current_image_index)
     {
         RenderPassBase::Start(command_buffer, m_depth_to_color_render_target->extent, current_image_index);
+
+        command_buffer.setViewport(0,
+                                   vk::Viewport(0.0f,
+                                                static_cast<float>(m_depth_to_color_render_target->extent.height),
+                                                static_cast<float>(m_depth_to_color_render_target->extent.width),
+                                                -static_cast<float>(m_depth_to_color_render_target->extent.height),
+                                                0.0f,
+                                                1.0f));
+        command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_depth_to_color_render_target->extent));
     }
 
     void DepthToColorPass::Draw(const vk::raii::CommandBuffer& command_buffer)
