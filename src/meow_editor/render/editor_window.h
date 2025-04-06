@@ -57,6 +57,9 @@ namespace Meow
         std::shared_ptr<ImageData> m_offscreen_render_target;
         bool                       is_offscreen_valid = false;
 
+        vk::Format                 m_depth_format               = vk::Format::eD16Unorm;
+        std::shared_ptr<ImageData> m_depth_debugging_attachment = nullptr;
+
         // TODO: hard code render pass switching
         std::vector<std::weak_ptr<GameObject>> opaque_objects;
         std::vector<std::weak_ptr<GameObject>> translucent_objects;

@@ -39,7 +39,7 @@ namespace Meow
                 vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
             },
         };
-        vk::AttachmentReference color_attachment_reference = {0, vk::ImageLayout::eShaderReadOnlyOptimal};
+        vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
             // depth to color pass

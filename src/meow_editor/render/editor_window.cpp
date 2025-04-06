@@ -584,6 +584,15 @@ namespace Meow
                                                                   {},
                                                                   false);
 
+        m_depth_debugging_attachment = ImageData::CreateAttachment(m_depth_format,
+                                                                   m_surface_data.extent,
+                                                                   vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                                                                   vk::ImageAspectFlagBits::eDepth,
+                                                                   {},
+                                                                   false);
+
+        m_shadow_coord_to_color_pass.BindDepthAttachment(m_depth_debugging_attachment);
+
         m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_depth_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
         m_shadow_coord_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view},

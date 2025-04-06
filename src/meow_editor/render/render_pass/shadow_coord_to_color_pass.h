@@ -36,6 +36,10 @@ namespace Meow
         void CreateRenderPass();
         void CreateMaterial();
 
+        void BindDepthAttachment(std::shared_ptr<ImageData> depth_attachment)
+        {
+            m_depth_debugging_attachment = depth_attachment;
+        }
         void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
 
@@ -53,6 +57,8 @@ namespace Meow
         friend void swap(ShadowCoordToColorPass& lhs, ShadowCoordToColorPass& rhs);
 
     private:
+        std::shared_ptr<ImageData> m_depth_debugging_attachment = nullptr;
+
         std::shared_ptr<Material>  m_shadow_coord_to_color_material      = nullptr;
         std::shared_ptr<ImageData> m_shadow_coord_to_color_render_target = nullptr;
         std::shared_ptr<ImageData> m_shadow_depth_to_color_render_target = nullptr;

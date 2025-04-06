@@ -30,7 +30,7 @@ namespace Meow
         std::vector<vk::AttachmentDescription> attachment_descriptions;
 
         attachment_descriptions = {
-            // color attachment
+            // shadow coord color attachment
             {
                 vk::AttachmentDescriptionFlags(),         /* flags */
                 m_color_format,                           /* format */
@@ -42,22 +42,50 @@ namespace Meow
                 vk::ImageLayout::eUndefined,              /* initialLayout */
                 vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
             },
+            // shadow depth color attachment
+            {
+                vk::AttachmentDescriptionFlags(),         /* flags */
+                m_color_format,                           /* format */
+                vk::SampleCountFlagBits::e1,              /* samples */
+                vk::AttachmentLoadOp::eClear,             /* loadOp */
+                vk::AttachmentStoreOp::eStore,            /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,              /* initialLayout */
+                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+            },
+            // depth attachment
+            {
+                vk::AttachmentDescriptionFlags(),                /* flags */
+                m_depth_format,                                  /* format */
+                vk::SampleCountFlagBits::e1,                     /* samples */
+                vk::AttachmentLoadOp::eClear,                    /* loadOp */
+                vk::AttachmentStoreOp::eDontCare,                /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,                 /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,                /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,                     /* initialLayout */
+                vk::ImageLayout::eDepthStencilAttachmentOptimal, /* finalLayout */
+            },
         };
-        vk::AttachmentReference color_attachment_reference = {0, vk::ImageLayout::eShaderReadOnlyOptimal};
+        std::vector<vk::AttachmentReference> color_attachment_references {
+            {0, vk::ImageLayout::eColorAttachmentOptimal},
+            {1, vk::ImageLayout::eColorAttachmentOptimal},
+        };
+        vk::AttachmentReference depth_attachment_reference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
             // depth to color pass
             {
-                vk::SubpassDescriptionFlags(),    /* flags */
-                vk::PipelineBindPoint::eGraphics, /* pipelineBindPoint */
-                0,                                /* inputAttachmentCount */
-                nullptr,                          /* pInputAttachments */
-                1,                                /* colorAttachmentCount */
-                &color_attachment_reference,      /* pColorAttachments */
-                nullptr,                          /* pResolveAttachments */
-                nullptr,                          /* pDepthStencilAttachment */
-                0,                                /* preserveAttachmentCount */
-                nullptr,                          /* pPreserveAttachments */
+                vk::SubpassDescriptionFlags(),      /* flags */
+                vk::PipelineBindPoint::eGraphics,   /* pipelineBindPoint */
+                0,                                  /* inputAttachmentCount */
+                nullptr,                            /* pInputAttachments */
+                2,                                  /* colorAttachmentCount */
+                color_attachment_references.data(), /* pColorAttachments */
+                nullptr,                            /* pResolveAttachments */
+                &depth_attachment_reference,        /* pDepthStencilAttachment */
+                0,                                  /* preserveAttachmentCount */
+                nullptr,                            /* pPreserveAttachments */
             },
         };
 
@@ -94,8 +122,10 @@ namespace Meow
 
         render_pass = vk::raii::RenderPass(logical_device, render_pass_create_info);
 
-        clear_values.resize(1);
-        clear_values[0].color = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values.resize(3);
+        clear_values[0].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values[1].color        = vk::ClearColorValue(0.6f, 0.6f, 0.6f, 1.0f);
+        clear_values[2].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eRenderPass,
@@ -119,7 +149,7 @@ namespace Meow
         m_shadow_coord_to_color_material  = std::make_shared<Material>(shadow_coord_to_color_shader);
         g_runtime_context.resource_system->Register(m_shadow_coord_to_color_material);
         material_factory.Init(shadow_coord_to_color_shader.get(), vk::FrontFace::eClockwise);
-        material_factory.SetOpaque(false, 1);
+        material_factory.SetOpaque(true, 2);
         material_factory.CreatePipeline(
             logical_device, render_pass, shadow_coord_to_color_shader.get(), m_shadow_coord_to_color_material.get(), 0);
         m_shadow_coord_to_color_material->SetDebugName("Depth to Color Material");
@@ -163,15 +193,16 @@ namespace Meow
             {},
             false);
 
-        vk::ImageView attachments[2];
+        vk::ImageView attachments[3];
         attachments[0] = *m_shadow_coord_to_color_render_target->image_view;
         attachments[1] = *m_shadow_depth_to_color_render_target->image_view;
+        attachments[2] = *m_depth_debugging_attachment->image_view;
 
         // Provide attachment information to frame buffer
         vk::FramebufferCreateInfo framebuffer_create_info(
             vk::FramebufferCreateFlags(),                         /* flags */
             *render_pass,                                         /* renderPass */
-            2,                                                    /* attachmentCount */
+            3,                                                    /* attachmentCount */
             attachments,                                          /* pAttachments */
             m_shadow_coord_to_color_render_target->extent.width,  /* width */
             m_shadow_coord_to_color_render_target->extent.height, /* height */
