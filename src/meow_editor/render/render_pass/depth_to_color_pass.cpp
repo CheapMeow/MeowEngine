@@ -169,7 +169,7 @@ namespace Meow
                                  vk::Extent2D                   extent,
                                  uint32_t                       current_image_index)
     {
-        RenderPass::Start(command_buffer, extent, current_image_index);
+        RenderPass::Start(command_buffer, m_depth_to_color_render_target->extent, current_image_index);
     }
 
     void DepthToColorPass::Draw(const vk::raii::CommandBuffer& command_buffer)
