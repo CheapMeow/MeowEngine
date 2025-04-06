@@ -1,6 +1,6 @@
 #version 450
 
-layout (location = 3) in vec3 inShadowCoord;
+layout (location = 0) in vec3 inShadowCoord;
 
 layout (location = 0) out vec4 outShadowCoord;
 layout (location = 1) out vec4 outShadowDepth;
