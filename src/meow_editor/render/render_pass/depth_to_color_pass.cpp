@@ -39,7 +39,7 @@ namespace Meow
                 vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
             },
         };
-        vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eShaderReadOnlyOptimal);
+        vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
 
         std::vector<vk::SubpassDescription> subpass_descriptions {
             // depth to color pass
@@ -127,6 +127,8 @@ namespace Meow
                                                                        vk::ImageAspectFlagBits::eColor,
                                                                        {},
                                                                        false);
+
+        m_depth_to_color_render_target->SetDebugName("Depth to Color Render Target");
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,

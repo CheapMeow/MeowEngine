@@ -193,6 +193,9 @@ namespace Meow
             {},
             false);
 
+        m_shadow_coord_to_color_render_target->SetDebugName("Shadow Coord to Color Render Target");
+        m_shadow_depth_to_color_render_target->SetDebugName("Shadow Depth to Color Render Target");
+
         vk::ImageView attachments[3];
         attachments[0] = *m_shadow_coord_to_color_render_target->image_view;
         attachments[1] = *m_shadow_depth_to_color_render_target->image_view;

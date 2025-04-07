@@ -116,5 +116,7 @@ namespace Meow
                       vk::FormatFeatureFlags          format_feature_flags = {},
                       bool                            anisotropy_enable    = false,
                       bool                            force_staging        = true);
+
+        void SetDebugName(const std::string& debug_name);
     };
 } // namespace Meow

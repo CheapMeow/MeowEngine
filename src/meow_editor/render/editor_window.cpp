@@ -591,6 +591,9 @@ namespace Meow
                                                                    {},
                                                                    false);
 
+        m_offscreen_render_target->SetDebugName("Offscreen Render Target");
+        m_depth_debugging_attachment->SetDebugName("Depth Debugging Attachment");
+
         m_shadow_coord_to_color_pass.BindDepthAttachment(m_depth_debugging_attachment);
 
         m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);

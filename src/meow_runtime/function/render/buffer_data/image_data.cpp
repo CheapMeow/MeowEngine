@@ -594,4 +594,19 @@ namespace Meow
 
         return image_data_ptr;
     }
+
+    void ImageData::SetDebugName(const std::string& debug_name)
+    {
+        if (debug_name.empty())
+            return;
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+
+        vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eImage,
+                                                     NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *image),
+                                                     (debug_name + " Image").c_str()};
+        logical_device.setDebugUtilsObjectNameEXT(name_info);
+#endif
+    }
 } // namespace Meow

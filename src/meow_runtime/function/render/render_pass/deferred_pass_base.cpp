@@ -96,6 +96,8 @@ namespace Meow
                 g_runtime_context.resource_system->Register(texture_ptr);
                 m_skybox_material->BindImageToDescriptorSet("environmentMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Skybox Texture");
         }
 
         GeometryFactory geometry_factory;
@@ -152,6 +154,11 @@ namespace Meow
                                                          vk::ImageAspectFlagBits::eDepth,
                                                          {},
                                                          false);
+
+        m_color_attachment->SetDebugName("Deferred Color Attachment");
+        m_normal_attachment->SetDebugName("Deferred Normal Attachment");
+        m_position_attachment->SetDebugName("Deferred Position Attachment");
+        m_depth_attachment->SetDebugName("Deferred Depth Attachment");
 
         // Provide attachment information to frame buffer
 

@@ -126,6 +126,8 @@ namespace Meow
                                                      vk::ImageAspectFlagBits::eDepth,
                                                      {},
                                                      false);
+
+        m_shadow_map->SetDebugName("Shadow Map Texture");
     }
 
     void ShadowMapPass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,

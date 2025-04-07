@@ -50,6 +50,8 @@ namespace Meow
                 albedo_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("albedoMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Albedo Texture");
         }
 
         {
@@ -59,6 +61,8 @@ namespace Meow
                 normal_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("normalMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Normal Texture");
         }
 
         {
@@ -68,6 +72,8 @@ namespace Meow
                 metallic_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("metallicMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Metallic Texture");
         }
 
         {
@@ -77,6 +83,8 @@ namespace Meow
                 roughness_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("roughnessMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Roughness Texture");
         }
 
         {
@@ -86,6 +94,8 @@ namespace Meow
                 ao_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("aoMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("AO Texture");
         }
 
         {
@@ -102,6 +112,8 @@ namespace Meow
                 irradiance_image_id = g_runtime_context.resource_system->Register(texture_ptr);
                 m_opaque_material->BindImageToDescriptorSet("irradianceMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Irradiance Texture");
         }
 
         // skybox
@@ -131,6 +143,8 @@ namespace Meow
                 g_runtime_context.resource_system->Register(texture_ptr);
                 m_skybox_material->BindImageToDescriptorSet("environmentMap", *texture_ptr);
             }
+
+            texture_ptr->SetDebugName("Skybox Texture");
         }
 
         GeometryFactory geometry_factory;
@@ -245,7 +259,7 @@ namespace Meow
     }
 
     void ForwardPassBase::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
-                                          const vk::Extent2D&               extent)
+                                              const vk::Extent2D&               extent)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
@@ -291,15 +305,7 @@ namespace Meow
         m_depth_attachment = ImageData::CreateAttachment(
             m_depth_format, extent, depth_msaa_usage, vk::ImageAspectFlagBits::eDepth, {}, false, sample_count);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        {
-            vk::DebugUtilsObjectNameInfoEXT name_info = {
-                vk::ObjectType::eImage,
-                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *m_depth_attachment->image),
-                "Depth Attachment"};
-            logical_device.setDebugUtilsObjectNameEXT(name_info);
-        }
-#endif
+        m_depth_attachment->SetDebugName("Depth Attachment");
 
         m_color_msaa_attachment = nullptr;
         if (m_msaa_enabled)
@@ -309,15 +315,7 @@ namespace Meow
             m_color_msaa_attachment = ImageData::CreateAttachment(
                 m_color_format, extent, color_msaa_usage, vk::ImageAspectFlagBits::eColor, {}, false, sample_count);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-            {
-                vk::DebugUtilsObjectNameInfoEXT name_info = {
-                    vk::ObjectType::eImage,
-                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *m_color_msaa_attachment->image),
-                    "Color MSAA Attachment"};
-                logical_device.setDebugUtilsObjectNameEXT(name_info);
-            }
-#endif
+            m_color_msaa_attachment->SetDebugName("Color MSAA Attachment");
         }
 
         // Provide attachment information to frame buffer
@@ -531,8 +529,9 @@ namespace Meow
         }
     }
 
-    void
-    ForwardPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
+    void ForwardPassBase::Start(const vk::raii::CommandBuffer& command_buffer,
+                                vk::Extent2D                   extent,
+                                uint32_t                       current_image_index)
     {
         for (int i = 0; i < 3; i++)
         {
