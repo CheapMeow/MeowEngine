@@ -2,6 +2,7 @@
 
 #include "function/components/light/directional_light_component.h"
 #include "global/editor_context.h"
+#include "meow_runtime/core/reflect/reflect.hpp"
 #include "meow_runtime/function/components/camera/camera_3d_component.hpp"
 #include "meow_runtime/function/components/model/model_component.h"
 #include "meow_runtime/function/components/transform/transform_3d_component.hpp"
@@ -192,6 +193,28 @@ namespace Meow
 
             // TODO: hard code render pass cast
             current_gameobject_model_component->material_id = m_forward_pass.GetForwardMatID();
+
+            {
+                const reflect::TypeDescriptor& type_desc = reflect::Registry::instance().GetType("ModelComponent");
+                const std::vector<reflect::MethodAccessor>& method_accessor = type_desc.GetMethods();
+                for (const auto& method : method_accessor)
+                {
+                    std::cout << method.name() << std::endl;
+                    method.Invoke(*current_gameobject_model_component.get());
+                }
+            }
+
+            Component* component_ptr = current_gameobject_model_component.get();
+
+            {
+                const reflect::TypeDescriptor& type_desc = reflect::Registry::instance().GetType("Component");
+                const std::vector<reflect::MethodAccessor>& method_accessor = type_desc.GetMethods();
+                for (const auto& method : method_accessor)
+                {
+                    std::cout << method.name() << std::endl;
+                    method.Invoke(*component_ptr);
+                }
+            }
 
             if (model_shared_ptr)
             {

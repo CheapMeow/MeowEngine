@@ -171,7 +171,7 @@ namespace Meow
             bool is_const() const { return m_is_const; }
 
             template<typename ClassType, typename... Args>
-            std::any Invoke(ClassType& c, Args&&... args)
+            std::any Invoke(ClassType& c, Args&&... args) const
             {
                 if (m_args_number != sizeof...(Args))
                 {
