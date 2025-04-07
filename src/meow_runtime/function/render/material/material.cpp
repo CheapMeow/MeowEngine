@@ -294,19 +294,23 @@ namespace Meow
         {
             for (size_t i = 0; i < m_descriptor_sets.size(); i++)
             {
+                std::string descriptor_set_name = debug_name + " DescriptorSet" + std::to_string(i);
+
                 vk::DebugUtilsObjectNameInfoEXT name_info = {
                     vk::ObjectType::eDescriptorSet,
                     NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, *m_descriptor_sets[i]),
-                    (debug_name + " DescriptorSet" + std::to_string(i)).c_str()};
+                    descriptor_set_name.c_str()};
                 logical_device.setDebugUtilsObjectNameEXT(name_info);
             }
         }
 
         {
+            std::string pipeline_name = debug_name + " Pipeline";
+
             vk::DebugUtilsObjectNameInfoEXT name_info = {
                 vk::ObjectType::ePipeline,
                 NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *graphics_pipeline),
-                (debug_name + " Pipeline").c_str()};
+                pipeline_name.c_str()};
             logical_device.setDebugUtilsObjectNameEXT(name_info);
         }
 #endif

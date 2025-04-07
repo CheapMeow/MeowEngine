@@ -28,15 +28,15 @@ namespace Meow
         attachment_descriptions = {
             // color attachment
             {
-                vk::AttachmentDescriptionFlags(),         /* flags */
-                m_color_format,                           /* format */
-                vk::SampleCountFlagBits::e1,              /* samples */
-                vk::AttachmentLoadOp::eClear,             /* loadOp */
-                vk::AttachmentStoreOp::eStore,            /* storeOp */
-                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
-                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
-                vk::ImageLayout::eUndefined,              /* initialLayout */
-                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+                vk::AttachmentDescriptionFlags(),        /* flags */
+                m_color_format,                          /* format */
+                vk::SampleCountFlagBits::e1,             /* samples */
+                vk::AttachmentLoadOp::eClear,            /* loadOp */
+                vk::AttachmentStoreOp::eStore,           /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,             /* initialLayout */
+                vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
         };
         vk::AttachmentReference color_attachment_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
@@ -65,9 +65,8 @@ namespace Meow
                 vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
                 vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
-                vk::AccessFlagBits::eColorAttachmentWrite |
-                    vk::AccessFlagBits::eColorAttachmentRead, /* dstAccessMask */
-                vk::DependencyFlagBits::eByRegion,            /* dependencyFlags */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
             // depth to color pass -> externel
             {
@@ -75,10 +74,9 @@ namespace Meow
                 VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
                 vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
-                vk::AccessFlagBits::eColorAttachmentWrite |
-                    vk::AccessFlagBits::eColorAttachmentRead, /* srcAccessMask */
-                vk::AccessFlagBits::eMemoryRead,              /* dstAccessMask */
-                vk::DependencyFlagBits::eByRegion,            /* dependencyFlags */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                vk::AccessFlagBits::eMemoryRead,                   /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
         };
 

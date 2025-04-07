@@ -32,27 +32,27 @@ namespace Meow
         attachment_descriptions = {
             // shadow coord color attachment
             {
-                vk::AttachmentDescriptionFlags(),         /* flags */
-                m_color_format,                           /* format */
-                vk::SampleCountFlagBits::e1,              /* samples */
-                vk::AttachmentLoadOp::eClear,             /* loadOp */
-                vk::AttachmentStoreOp::eStore,            /* storeOp */
-                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
-                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
-                vk::ImageLayout::eUndefined,              /* initialLayout */
-                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+                vk::AttachmentDescriptionFlags(),        /* flags */
+                m_color_format,                          /* format */
+                vk::SampleCountFlagBits::e1,             /* samples */
+                vk::AttachmentLoadOp::eClear,            /* loadOp */
+                vk::AttachmentStoreOp::eStore,           /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,             /* initialLayout */
+                vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
             // shadow depth color attachment
             {
-                vk::AttachmentDescriptionFlags(),         /* flags */
-                m_color_format,                           /* format */
-                vk::SampleCountFlagBits::e1,              /* samples */
-                vk::AttachmentLoadOp::eClear,             /* loadOp */
-                vk::AttachmentStoreOp::eStore,            /* storeOp */
-                vk::AttachmentLoadOp::eDontCare,          /* stencilLoadOp */
-                vk::AttachmentStoreOp::eDontCare,         /* stencilStoreOp */
-                vk::ImageLayout::eUndefined,              /* initialLayout */
-                vk::ImageLayout::eColorAttachmentOptimal, /* finalLayout */
+                vk::AttachmentDescriptionFlags(),        /* flags */
+                m_color_format,                          /* format */
+                vk::SampleCountFlagBits::e1,             /* samples */
+                vk::AttachmentLoadOp::eClear,            /* loadOp */
+                vk::AttachmentStoreOp::eStore,           /* storeOp */
+                vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
+                vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
+                vk::ImageLayout::eUndefined,             /* initialLayout */
+                vk::ImageLayout::eShaderReadOnlyOptimal, /* finalLayout */
             },
             // depth attachment
             {
@@ -97,9 +97,8 @@ namespace Meow
                 vk::PipelineStageFlagBits::eBottomOfPipe,          /* srcStageMask */
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* dstStageMask */
                 vk::AccessFlagBits::eMemoryRead,                   /* srcAccessMask */
-                vk::AccessFlagBits::eColorAttachmentWrite |
-                    vk::AccessFlagBits::eColorAttachmentRead, /* dstAccessMask */
-                vk::DependencyFlagBits::eByRegion,            /* dependencyFlags */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
             // depth to color pass -> externel
             {
@@ -107,10 +106,9 @@ namespace Meow
                 VK_SUBPASS_EXTERNAL,                               /* dstSubpass */
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
                 vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
-                vk::AccessFlagBits::eColorAttachmentWrite |
-                    vk::AccessFlagBits::eColorAttachmentRead, /* srcAccessMask */
-                vk::AccessFlagBits::eMemoryRead,              /* dstAccessMask */
-                vk::DependencyFlagBits::eByRegion,            /* dependencyFlags */
+                vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
+                vk::AccessFlagBits::eMemoryRead,                   /* dstAccessMask */
+                vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
         };
 
@@ -130,7 +128,7 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eRenderPass,
                                                      NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkRenderPass, *render_pass),
-                                                     "Depth To Color RenderPass"};
+                                                     "Shadow Coord To Color RenderPass"};
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
@@ -152,7 +150,7 @@ namespace Meow
         material_factory.SetOpaque(true, 2);
         material_factory.CreatePipeline(
             logical_device, render_pass, shadow_coord_to_color_shader.get(), m_shadow_coord_to_color_material.get(), 0);
-        m_shadow_coord_to_color_material->SetDebugName("Depth to Color Material");
+        m_shadow_coord_to_color_material->SetDebugName("Shadow Coord to Color Material");
 
         // Create quad model
         std::vector<float>    vertices = {-1.0f, 1.0f,  0.0f, 0.0f, 0.0f, 1.0f,  1.0f,  0.0f, 1.0f, 0.0f,

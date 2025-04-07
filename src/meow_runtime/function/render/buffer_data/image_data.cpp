@@ -1,6 +1,7 @@
 #include "image_data.h"
 
 #include "function/global/runtime_context.h"
+#include "function/render/utils/vulkan_debug_utils.h"
 
 namespace Meow
 {
@@ -603,9 +604,8 @@ namespace Meow
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
-        vk::DebugUtilsObjectNameInfoEXT name_info = {vk::ObjectType::eImage,
-                                                     NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *image),
-                                                     (debug_name + " Image").c_str()};
+        vk::DebugUtilsObjectNameInfoEXT name_info = {
+            vk::ObjectType::eImage, NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkImage, *image), debug_name.c_str()};
         logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
     }
