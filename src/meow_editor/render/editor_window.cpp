@@ -73,7 +73,7 @@ namespace Meow
                 current_gameobject, "DirectionalLightComponent", std::make_shared<DirectionalLightComponent>());
             auto directional_light_transform =
                 TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-            directional_light_transform->position = glm::vec3(0.0f, 10.0f, -6.0f);
+            directional_light_transform->position = glm::vec3(0.0f, 30.0f, -50.0f);
             directional_light_transform->rotation = glm::quat(glm::vec3(-100.0f, 0.0f, 0.0f));
         }
 
