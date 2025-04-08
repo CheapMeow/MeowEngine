@@ -30,10 +30,12 @@ namespace Meow
     class MaterialFactory
     {
     public:
-        void Init(const Shader* shader, vk::FrontFace front_face = vk::FrontFace::eClockwise);
+        void Init(Shader* shader, vk::FrontFace front_face = vk::FrontFace::eClockwise);
+        void SetVertexAttributeStrideAndOffset(uint32_t vertex_stride, const std::vector<uint32_t>& offsets);
         void SetMSAA(bool enabled);
         void SetOpaque(bool depth_buffered = true, int color_attachment_count = 1);
         void SetTranslucent(bool depth_buffered = true, int color_attachment_count = 1);
+        void SetPointTopology();
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
                             const Shader*               shader,
@@ -44,9 +46,9 @@ namespace Meow
                                    Material*               material_ptr) const;
 
     private:
-        ShadingModelType m_shading_model_type = ShadingModelType::Opaque;
-
-        PipelineCreateInfoContext context = {};
+        ShadingModelType          m_shading_model_type = ShadingModelType::Opaque;
+        Shader*                   m_last_shader        = nullptr;
+        PipelineCreateInfoContext context              = {};
 
         bool m_msaa_enabled = false;
     };

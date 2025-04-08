@@ -5,7 +5,7 @@
 
 namespace Meow
 {
-    void MaterialFactory::Init(const Shader* shader, vk::FrontFace front_face)
+    void MaterialFactory::Init(Shader* shader, vk::FrontFace front_face)
     {
         FUNCTION_TIMER();
 
@@ -14,6 +14,8 @@ namespace Meow
             MEOW_ERROR("shader is nullptr!");
             return;
         }
+
+        m_last_shader = shader;
 
         std::vector<vk::PipelineShaderStageCreateInfo>().swap(context.pipeline_shader_stage_create_infos);
         if (shader->is_vert_shader_valid)
@@ -112,6 +114,33 @@ namespace Meow
         context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =
             vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), context.dynamic_states);
+    }
+
+    void MaterialFactory::SetVertexAttributeStrideAndOffset(uint32_t                     vertex_stride,
+                                                            const std::vector<uint32_t>& offsets)
+    {
+        if (m_last_shader->per_vertex_attributes.size() != offsets.size())
+        {
+            MEOW_ERROR("vertex attribute size not match!");
+            return;
+        }
+
+        std::vector<vk::VertexInputAttributeDescription>().swap(context.vertex_input_attribute_descriptions);
+        context.vertex_input_binding_description = vk::VertexInputBindingDescription(0, vertex_stride);
+
+        if (0 < vertex_stride)
+        {
+            context.vertex_input_attribute_descriptions.reserve(m_last_shader->per_vertex_attributes.size());
+            for (uint32_t i = 0; i < m_last_shader->per_vertex_attributes.size(); i++)
+            {
+                context.vertex_input_attribute_descriptions.emplace_back(
+                    i, 0, VertexAttributeToVkFormat(m_last_shader->per_vertex_attributes[i]), offsets[i]);
+            }
+            context.pipeline_vertex_input_state_create_info.setVertexBindingDescriptions(
+                context.vertex_input_binding_description);
+            context.pipeline_vertex_input_state_create_info.setVertexAttributeDescriptions(
+                context.vertex_input_attribute_descriptions);
+        }
     }
 
     void MaterialFactory::SetMSAA(bool enabled)
@@ -217,6 +246,12 @@ namespace Meow
                                                   vk::LogicOp::eNoOp,                             /* logicOp */
                                                   context.pipeline_color_blend_attachment_states, /* pAttachments */
                                                   {{1.0f, 1.0f, 1.0f, 1.0f}});
+    }
+
+    void MaterialFactory::SetPointTopology()
+    {
+        context.pipeline_input_assembly_state_create_info = vk::PipelineInputAssemblyStateCreateInfo(
+            vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::ePointList);
     }
 
     void MaterialFactory::CreatePipeline(const vk::raii::Device&     logical_device,

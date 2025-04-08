@@ -62,6 +62,11 @@ namespace Meow
     vk::raii::DescriptorSets
     DescriptorAllocatorGrowable::Allocate(std::vector<vk::DescriptorSetLayout> descriptor_set_layouts, void* pNext)
     {
+        if (descriptor_set_layouts.size() == 0)
+        {
+            return nullptr;
+        }
+
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         // get or create a pool to allocate from
