@@ -1,6 +1,7 @@
 #include "gpu_particle_2d.h"
 
 #include "function/global/runtime_context.h"
+#include "function/render/material/material_factory.h"
 
 namespace Meow
 {
@@ -27,6 +28,18 @@ namespace Meow
                                                          graphics_queue,
                                                          sizeof(GPUParticleData2D) * particle_count);
         }
+
+        MaterialFactory material_factory;
+
+        // auto particle_shader = std::make_shared<Shader>(
+        //     physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
+
+        // m_particle_material = std::make_shared<Material>(particle_shader);
+        // g_runtime_context.resource_system->Register(m_particle_material);
+        // material_factory.Init(particle_shader.get(), vk::FrontFace::eClockwise);
+        // material_factory.SetOpaque(true, 3);
+        // material_factory.CreatePipeline(
+        //     logical_device, render_pass, particle_shader.get(), m_particle_material.get(), 0);
     }
 
     GPUParticle2D::~GPUParticle2D() {}

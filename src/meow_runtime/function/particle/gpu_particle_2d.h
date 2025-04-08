@@ -2,6 +2,7 @@
 
 #include "gpu_particle_base.h"
 
+#include "function/render/material/material.h"
 #include "gpu_particle_data_2d.h"
 
 namespace Meow
@@ -16,5 +17,6 @@ namespace Meow
 
     private:
         std::vector<GPUParticleData2D> m_particle_data;
+        std::shared_ptr<Material>      m_particle_material;
     };
 } // namespace Meow
