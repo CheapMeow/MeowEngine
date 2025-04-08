@@ -2,6 +2,7 @@
 
 #include "function/global/runtime_context.h"
 #include "function/render/material/material_factory.h"
+#include "function/render/material/shader_factory.h"
 
 namespace Meow
 {
@@ -29,10 +30,14 @@ namespace Meow
                                                          sizeof(GPUParticleData2D) * particle_count);
         }
 
+        ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        // auto particle_shader = std::make_shared<Shader>(
-        //     physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
+        auto particle_shader = shader_factory.clear()
+                                   .SetVertexShader("builtin/shaders/particle.vert.spv")
+                                   .SetFragmentShader("builtin/shaders/particle.frag.spv")
+                                   .SetComputeShader("builtin/shaders/particle.comp.spv")
+                                   .Create();
 
         // m_particle_material = std::make_shared<Material>(particle_shader);
         // g_runtime_context.resource_system->Register(m_particle_material);

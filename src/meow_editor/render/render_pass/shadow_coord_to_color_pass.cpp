@@ -9,6 +9,7 @@
 #include "function/render/buffer_data/per_scene_data.h"
 #include "function/render/geometry/geometry_factory.h"
 #include "function/render/material/material_factory.h"
+#include "function/render/material/shader_factory.h"
 #include "function/render/utils/vulkan_debug_utils.h"
 #include "global/editor_context.h"
 
@@ -138,13 +139,14 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        auto shadow_coord_to_color_shader = std::make_shared<Shader>(physical_device,
-                                                                     logical_device,
-                                                                     "builtin/shaders/shadow_coord_to_color.vert.spv",
-                                                                     "builtin/shaders/shadow_coord_to_color.frag.spv");
-        m_shadow_coord_to_color_material  = std::make_shared<Material>(shadow_coord_to_color_shader);
+        auto shadow_coord_to_color_shader = shader_factory.clear()
+                                                .SetVertexShader("builtin/shaders/shadow_coord_to_color.vert.spv")
+                                                .SetFragmentShader("builtin/shaders/shadow_coord_to_color.frag.spv")
+                                                .Create();
+        m_shadow_coord_to_color_material = std::make_shared<Material>(shadow_coord_to_color_shader);
         g_runtime_context.resource_system->Register(m_shadow_coord_to_color_material);
         material_factory.Init(shadow_coord_to_color_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(true, 2);

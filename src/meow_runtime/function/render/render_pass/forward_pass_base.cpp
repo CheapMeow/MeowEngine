@@ -11,6 +11,7 @@
 #include "function/render/buffer_data/per_scene_data.h"
 #include "function/render/geometry/geometry_factory.h"
 #include "function/render/material/material_factory.h"
+#include "function/render/material/shader_factory.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -21,10 +22,13 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        auto opaque_shader = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/pbr.vert.spv", "builtin/shaders/pbr.frag.spv");
+        auto opaque_shader = shader_factory.clear()
+                                 .SetVertexShader("builtin/shaders/pbr.vert.spv")
+                                 .SetFragmentShader("builtin/shaders/pbr.frag.spv")
+                                 .Create();
 
         m_opaque_material = std::make_shared<Material>(opaque_shader);
         g_runtime_context.resource_system->Register(m_opaque_material);
@@ -118,8 +122,10 @@ namespace Meow
 
         // skybox
 
-        auto skybox_shader = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
+        auto skybox_shader = shader_factory.clear()
+                                 .SetVertexShader("builtin/shaders/skybox.vert.spv")
+                                 .SetFragmentShader("builtin/shaders/skybox.frag.spv")
+                                 .Create();
 
         m_skybox_material = std::make_shared<Material>(skybox_shader);
         g_runtime_context.resource_system->Register(m_skybox_material);
@@ -153,10 +159,10 @@ namespace Meow
         m_skybox_model =
             std::move(Model(cube_vertices, std::vector<uint32_t> {}, skybox_shader->per_vertex_attributes));
 
-        auto translucent_shader = std::make_shared<Shader>(physical_device,
-                                                           logical_device,
-                                                           "builtin/shaders/pbr_translucent.vert.spv",
-                                                           "builtin/shaders/pbr_translucent.frag.spv");
+        auto translucent_shader = shader_factory.clear()
+                                      .SetVertexShader("builtin/shaders/pbr_translucent.vert.spv")
+                                      .SetFragmentShader("builtin/shaders/pbr_translucent.frag.spv")
+                                      .Create();
 
         m_translucent_material = std::make_shared<Material>(translucent_shader);
         g_runtime_context.resource_system->Register(m_translucent_material);

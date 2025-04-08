@@ -11,6 +11,7 @@
 #include "function/render/buffer_data/per_scene_data.h"
 #include "function/render/geometry/geometry_factory.h"
 #include "function/render/material/material_factory.h"
+#include "function/render/material/shader_factory.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>
@@ -22,10 +23,13 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        auto obj_shader = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/obj.vert.spv", "builtin/shaders/obj.frag.spv");
+        auto obj_shader = shader_factory.clear()
+                              .SetVertexShader("builtin/shaders/obj.vert.spv")
+                              .SetFragmentShader("builtin/shaders/obj.frag.spv")
+                              .Create();
 
         m_obj2attachment_material = std::make_shared<Material>(obj_shader);
         g_runtime_context.resource_system->Register(m_obj2attachment_material);
@@ -34,8 +38,10 @@ namespace Meow
         material_factory.CreatePipeline(
             logical_device, render_pass, obj_shader.get(), m_obj2attachment_material.get(), 0);
 
-        auto quad_shader = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/quad.vert.spv", "builtin/shaders/quad.frag.spv");
+        auto quad_shader = shader_factory.clear()
+                               .SetVertexShader("builtin/shaders/quad.vert.spv")
+                               .SetFragmentShader("builtin/shaders/quad.frag.spv")
+                               .Create();
 
         m_quad_material = std::make_shared<Material>(quad_shader);
         g_runtime_context.resource_system->Register(m_quad_material);
@@ -73,8 +79,10 @@ namespace Meow
 
         // skybox
 
-        auto skybox_shader = std::make_shared<Shader>(
-            physical_device, logical_device, "builtin/shaders/skybox.vert.spv", "builtin/shaders/skybox.frag.spv");
+        auto skybox_shader = shader_factory.clear()
+                                 .SetVertexShader("builtin/shaders/skybox.vert.spv")
+                                 .SetFragmentShader("builtin/shaders/skybox.frag.spv")
+                                 .Create();
 
         m_skybox_material = std::make_shared<Material>(skybox_shader);
         g_runtime_context.resource_system->Register(m_skybox_material);

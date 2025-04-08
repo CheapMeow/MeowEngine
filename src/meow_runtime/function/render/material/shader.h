@@ -158,17 +158,12 @@ namespace Meow
         using InputBindingsVector   = std::vector<vk::VertexInputBindingDescription>;
         using InputAttributesVector = std::vector<vk::VertexInputAttributeDescription>;
 
-        // stored for creating pipeline
-
         vk::raii::ShaderModule vert_shader_module = nullptr;
         vk::raii::ShaderModule frag_shader_module = nullptr;
         vk::raii::ShaderModule geom_shader_module = nullptr;
         vk::raii::ShaderModule comp_shader_module = nullptr;
         vk::raii::ShaderModule tesc_shader_module = nullptr;
         vk::raii::ShaderModule tese_shader_module = nullptr;
-
-        // a dirty hack
-        // because raii class doesn't provide operator== override
 
         bool is_vert_shader_valid = false;
         bool is_frag_shader_valid = false;
@@ -177,14 +172,12 @@ namespace Meow
         bool is_tesc_shader_valid = false;
         bool is_tese_shader_valid = false;
 
-        DescriptorSetLayoutMetas set_layout_metas;
-
+        DescriptorSetLayoutMetas                    set_layout_metas;
         std::vector<VertexAttributeMeta>            vertex_attribute_metas;
         std::unordered_map<std::string, BufferMeta> buffer_meta_map;
         std::unordered_map<std::string, ImageMeta>  image_meta_map;
 
-        uint32_t dynamic_uniform_buffer_count = 0;
-
+        uint32_t                        dynamic_uniform_buffer_count = 0;
         std::vector<VertexAttributeBit> per_vertex_attributes;
         std::vector<VertexAttributeBit> instance_attributes;
 
@@ -192,73 +185,15 @@ namespace Meow
         InputAttributesVector input_attributes;
 
         std::vector<vk::DescriptorSetLayout> descriptor_set_layouts;
+        vk::raii::PipelineLayout             pipeline_layout = nullptr;
 
-        vk::raii::PipelineLayout pipeline_layout = nullptr;
+        Shader() = default;
+        ~Shader();
 
     private:
         vk::Device                        m_device     = {};
         const vk::raii::DeviceDispatcher* m_dispatcher = nullptr;
 
-    public:
-        Shader() {}
-
-        Shader(const vk::raii::PhysicalDevice& physical_device,
-               const vk::raii::Device&         logical_device,
-               std::string                     vert_shader_file_path,
-               std::string                     frag_shader_file_path,
-               std::string                     geom_shader_file_path = "",
-               std::string                     comp_shader_file_path = "",
-               std::string                     tesc_shader_file_path = "",
-               std::string                     tese_shader_file_path = "");
-
-        ~Shader()
-        {
-            for (int i = 0; i < descriptor_set_layouts.size(); ++i)
-            {
-                m_dispatcher->vkDestroyDescriptorSetLayout(
-                    static_cast<VkDevice>(m_device),
-                    static_cast<VkDescriptorSetLayout>(descriptor_set_layouts[i]),
-                    nullptr);
-            }
-        }
-
-    private:
-        bool CreateShaderModuleAndGetMeta(
-            const vk::raii::Device&                         logical_device,
-            vk::raii::ShaderModule&                         shader_module,
-            const std::string&                              shader_file_path,
-            vk::ShaderStageFlagBits                         stage,
-            std::vector<vk::PipelineShaderStageCreateInfo>& pipeline_shader_stage_create_infos);
-
-        void GetAttachmentsMeta(spirv_cross::Compiler&        compiler,
-                                spirv_cross::ShaderResources& resources,
-                                vk::ShaderStageFlags          stageFlags);
-
-        void GetUniformBuffersMeta(spirv_cross::Compiler&        compiler,
-                                   spirv_cross::ShaderResources& resources,
-                                   vk::ShaderStageFlags          stageFlags);
-
-        void GetTexturesMeta(spirv_cross::Compiler&        compiler,
-                             spirv_cross::ShaderResources& resources,
-                             vk::ShaderStageFlags          stageFlags);
-
-        void GetInputMeta(spirv_cross::Compiler&        compiler,
-                          spirv_cross::ShaderResources& resources,
-                          vk::ShaderStageFlags          stageFlags);
-
-        void GetStorageBuffersMeta(spirv_cross::Compiler&        compiler,
-                                   spirv_cross::ShaderResources& resources,
-                                   vk::ShaderStageFlags          stageFlags);
-
-        void GetStorageImagesMeta(spirv_cross::Compiler&        compiler,
-                                  spirv_cross::ShaderResources& resources,
-                                  vk::ShaderStageFlags          stageFlags);
-
-        void GenerateInputInfo();
-
-        void GeneratePipelineLayout(const vk::raii::Device& raii_logical_device);
-
-        void GenerateDynamicUniformBufferOffset();
+        friend class ShaderFactory;
     };
-
 } // namespace Meow

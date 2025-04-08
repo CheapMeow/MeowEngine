@@ -5,6 +5,7 @@
 #include "function/global/runtime_context.h"
 #include "function/render/geometry/geometry_factory.h"
 #include "function/render/material/material_factory.h"
+#include "function/render/material/shader_factory.h"
 #include "function/render/utils/vulkan_debug_utils.h"
 #include "global/editor_context.h"
 
@@ -104,13 +105,14 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        ShaderFactory shader_factory;
         MaterialFactory material_factory;
 
-        auto depth_to_color_shader = std::make_shared<Shader>(physical_device,
-                                                              logical_device,
-                                                              "builtin/shaders/depth_to_color.vert.spv",
-                                                              "builtin/shaders/depth_to_color.frag.spv");
-        m_depth_to_color_material  = std::make_shared<Material>(depth_to_color_shader);
+        auto depth_to_color_shader = shader_factory.clear()
+                                         .SetVertexShader("builtin/shaders/depth_to_color.vert.spv")
+                                         .SetFragmentShader("builtin/shaders/depth_to_color.frag.spv")
+                                         .Create();
+        m_depth_to_color_material = std::make_shared<Material>(depth_to_color_shader);
         g_runtime_context.resource_system->Register(m_depth_to_color_material);
         material_factory.Init(depth_to_color_shader.get(), vk::FrontFace::eClockwise);
         material_factory.SetOpaque(false, 1);
