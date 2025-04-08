@@ -54,6 +54,7 @@ namespace Meow
         vk::raii::Device            m_logical_device              = nullptr;
         vk::raii::Queue             m_graphics_queue              = nullptr;
         vk::raii::Queue             m_present_queue               = nullptr;
+        vk::raii::Queue             m_compute_queue               = nullptr;
         vk::raii::CommandPool       m_onetime_submit_command_pool = nullptr;
         DescriptorAllocatorGrowable m_descriptor_allocator        = nullptr;
 
@@ -96,5 +97,6 @@ namespace Meow
 
         uint32_t m_graphics_queue_family_index = 0;
         uint32_t m_present_queue_family_index  = 0;
+        uint32_t m_compute_queue_family_index  = 0;
     };
 } // namespace Meow

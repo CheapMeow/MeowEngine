@@ -162,8 +162,11 @@ namespace Meow
         volkLoadDevice(*logical_device);
 #endif
 
+        m_compute_queue_family_index = FindComputeQueueFamilyIndex(m_physical_device);
+
         m_graphics_queue = vk::raii::Queue(m_logical_device, m_graphics_queue_family_index, 0);
         m_present_queue  = vk::raii::Queue(m_logical_device, m_present_queue_family_index, 0);
+        m_compute_queue  = vk::raii::Queue(m_logical_device, m_compute_queue_family_index, 0);
     }
 
     void RenderSystem::CreateCommandPool()

@@ -63,6 +63,8 @@ namespace Meow
     FindGraphicsAndPresentQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device,
                                            vk::raii::SurfaceKHR const&     surface);
 
+    uint32_t FindComputeQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device);
+
     vk::SurfaceFormatKHR PickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats);
 
     vk::PresentModeKHR PickPresentMode(std::vector<vk::PresentModeKHR> const& present_modes);

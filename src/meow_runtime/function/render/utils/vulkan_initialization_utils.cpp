@@ -449,6 +449,20 @@ namespace Meow
         throw std::runtime_error("Could not find queues for both graphics or present -> terminating");
     }
 
+    uint32_t FindComputeQueueFamilyIndex(vk::raii::PhysicalDevice const& physical_device)
+    {
+        std::vector<vk::QueueFamilyProperties> queue_family_properties = physical_device.getQueueFamilyProperties();
+        assert(queue_family_properties.size() < std::numeric_limits<uint32_t>::max());
+
+        // get the first index into queueFamiliyProperties which supports compute
+        std::vector<vk::QueueFamilyProperties>::const_iterator compute_queue_family_property = std::find_if(
+            queue_family_properties.begin(), queue_family_properties.end(), [](vk::QueueFamilyProperties const& qfp) {
+                return qfp.queueFlags & vk::QueueFlagBits::eCompute;
+            });
+        assert(compute_queue_family_property != queue_family_properties.end());
+        return static_cast<uint32_t>(std::distance(queue_family_properties.cbegin(), compute_queue_family_property));
+    }
+
     vk::SurfaceFormatKHR PickSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const& formats)
     {
         assert(!formats.empty());
