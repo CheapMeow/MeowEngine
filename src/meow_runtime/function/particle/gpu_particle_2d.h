@@ -12,6 +12,9 @@ namespace Meow
         GPUParticle2D(uint32_t particle_count);
         ~GPUParticle2D() override;
 
-        void UploadParticleData(const std::vector<GPUParticleData2D>& particle_data);
+        void UploadParticleData(const std::vector<GPUParticleData2D>& in_particle_data);
+
+    private:
+        std::vector<GPUParticleData2D> m_particle_data;
     };
 } // namespace Meow
