@@ -32,18 +32,17 @@ namespace Meow
 
         if (vertex_buffer_ptr)
         {
-            cmd_buffer.bindVertexBuffers(0, {*vertex_buffer_ptr->buffer_data_ptr->buffer}, {vertex_buffer_ptr->offset});
+            cmd_buffer.bindVertexBuffers(0, {*vertex_buffer_ptr->buffer}, {vertex_buffer_ptr->offset});
         }
 
         if (instance_buffer_ptr)
         {
-            cmd_buffer.bindVertexBuffers(
-                0, {*instance_buffer_ptr->buffer_data_ptr->buffer}, {instance_buffer_ptr->offset});
+            cmd_buffer.bindVertexBuffers(0, {*instance_buffer_ptr->buffer}, {instance_buffer_ptr->offset});
         }
 
         if (index_buffer_ptr)
         {
-            cmd_buffer.bindIndexBuffer(*index_buffer_ptr->buffer_data_ptr->buffer, 0, index_buffer_ptr->index_type);
+            cmd_buffer.bindIndexBuffer(*index_buffer_ptr->buffer, 0, index_buffer_ptr->index_type);
         }
     }
 

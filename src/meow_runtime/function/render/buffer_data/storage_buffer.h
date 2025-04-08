@@ -6,10 +6,9 @@
 
 namespace Meow
 {
-    struct StorageBuffer
+    struct StorageBuffer : public BufferData
     {
-        std::shared_ptr<BufferData> buffer_data_ptr = nullptr;
-        VkDeviceSize                offset          = 0;
+        VkDeviceSize offset = 0;
 
         StorageBuffer() {};
 
@@ -18,15 +17,14 @@ namespace Meow
                       vk::raii::CommandPool const&    command_pool,
                       vk::raii::Queue const&          queue,
                       std::vector<float>&             data)
+            : BufferData(physical_device,
+                         device,
+                         data.size() * sizeof(float),
+                         vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
+                             vk::BufferUsageFlagBits::eTransferDst,
+                         vk::MemoryPropertyFlagBits::eDeviceLocal)
         {
-            buffer_data_ptr = std::make_shared<BufferData>(physical_device,
-                                                           device,
-                                                           data.size() * sizeof(float),
-                                                           vk::BufferUsageFlagBits::eStorageBuffer |
-                                                               vk::BufferUsageFlagBits::eStorageBuffer |
-                                                               vk::BufferUsageFlagBits::eTransferDst,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal);
-            buffer_data_ptr->Upload(physical_device, device, command_pool, queue, data, 0);
+            Upload(physical_device, device, command_pool, queue, data, 0);
         }
     };
 

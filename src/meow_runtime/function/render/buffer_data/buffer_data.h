@@ -1,10 +1,11 @@
 #pragma once
 
+#include "core/base/non_copyable.h"
 #include "function/render/utils/vulkan_initialization_utils.hpp"
 
 namespace Meow
 {
-    struct BufferData
+    struct BufferData : public NonCopyable
     {
         // the DeviceMemory should be destroyed before the Buffer it is bound to; to get that order with the
         // standard destructor of the BufferData, the order of DeviceMemory and Buffer here matters
@@ -14,6 +15,9 @@ namespace Meow
         vk::DeviceSize          device_size;
         vk::BufferUsageFlags    usage_flags;
         vk::MemoryPropertyFlags property_flags;
+
+        BufferData() {}
+        BufferData(std::nullptr_t) {}
 
         BufferData(vk::raii::PhysicalDevice const& physical_device,
                    vk::raii::Device const&         logical_device,
@@ -31,12 +35,8 @@ namespace Meow
             buffer.bindMemory(*device_memory, 0);
         }
 
-        BufferData(std::nullptr_t) {}
-
         ~BufferData() { clear(); }
 
-        BufferData()                  = delete;
-        BufferData(BufferData const&) = delete;
         BufferData(BufferData&& rhs)
             : device_memory(std::exchange(rhs.device_memory, nullptr))
             , buffer(std::exchange(rhs.buffer, nullptr))
@@ -44,7 +44,6 @@ namespace Meow
             , usage_flags(rhs.usage_flags)
             , property_flags(rhs.property_flags)
         {}
-        BufferData& operator=(BufferData const&) = delete;
         BufferData& operator=(BufferData&& rhs)
         {
             if (this != &rhs)

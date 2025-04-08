@@ -7,24 +7,22 @@
 
 namespace Meow
 {
-    struct VertexBuffer
+    struct VertexBuffer : public BufferData
     {
-        std::shared_ptr<BufferData> buffer_data_ptr = nullptr;
-        VkDeviceSize                offset          = 0;
+        VkDeviceSize offset = 0;
 
         VertexBuffer(vk::raii::PhysicalDevice const& physical_device,
                      vk::raii::Device const&         device,
                      vk::raii::CommandPool const&    command_pool,
                      vk::raii::Queue const&          queue,
                      std::vector<float>&             vertices)
+            : BufferData(physical_device,
+                         device,
+                         vertices.size() * sizeof(float),
+                         vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+                         vk::MemoryPropertyFlagBits::eDeviceLocal)
         {
-            buffer_data_ptr = std::make_shared<BufferData>(physical_device,
-                                                           device,
-                                                           vertices.size() * sizeof(float),
-                                                           vk::BufferUsageFlagBits::eVertexBuffer |
-                                                               vk::BufferUsageFlagBits::eTransferDst,
-                                                           vk::MemoryPropertyFlagBits::eDeviceLocal);
-            buffer_data_ptr->Upload(physical_device, device, command_pool, queue, vertices, 0);
+            Upload(physical_device, device, command_pool, queue, vertices, 0);
         }
     };
 
