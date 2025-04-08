@@ -259,4 +259,16 @@ namespace Meow
         material_ptr->graphics_pipeline =
             vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
     }
+
+    void MaterialFactory::CreateComputePipeline(const vk::raii::Device& logical_device,
+                                                const Shader*           shader,
+                                                Material*               material_ptr) const
+    {
+        vk::ComputePipelineCreateInfo compute_pipeline_create_info(
+            vk::PipelineCreateFlags(),                     /* flags */
+            context.pipeline_shader_stage_create_infos[0], /* pStages */
+            *shader->pipeline_layout);                     /* layout */
+
+        material_ptr->compute_pipeline = vk::raii::Pipeline(logical_device, nullptr, compute_pipeline_create_info);
+    }
 } // namespace Meow

@@ -9,6 +9,7 @@ namespace Meow
 {
     class GPUParticle2D : public GPUParticleBase
     {
+    public:
         GPUParticle2D() = default;
         GPUParticle2D(uint32_t particle_count);
         ~GPUParticle2D() override;
@@ -17,6 +18,6 @@ namespace Meow
 
     private:
         std::vector<GPUParticleData2D> m_particle_data;
-        std::shared_ptr<Material>      m_particle_material;
+        std::shared_ptr<Material>      m_particle_comp_material;
     };
 } // namespace Meow

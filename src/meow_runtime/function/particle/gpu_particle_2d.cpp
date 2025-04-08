@@ -33,18 +33,12 @@ namespace Meow
         ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        auto particle_shader = shader_factory.clear()
-                                   .SetVertexShader("builtin/shaders/particle.vert.spv")
-                                   .SetFragmentShader("builtin/shaders/particle.frag.spv")
-                                   .SetComputeShader("builtin/shaders/particle.comp.spv")
-                                   .Create();
+        auto particle_shader = shader_factory.clear().SetComputeShader("builtin/shaders/particle.comp.spv").Create();
 
-        // m_particle_material = std::make_shared<Material>(particle_shader);
-        // g_runtime_context.resource_system->Register(m_particle_material);
-        // material_factory.Init(particle_shader.get(), vk::FrontFace::eClockwise);
-        // material_factory.SetOpaque(true, 3);
-        // material_factory.CreatePipeline(
-        //     logical_device, render_pass, particle_shader.get(), m_particle_material.get(), 0);
+        m_particle_comp_material = std::make_shared<Material>(particle_shader);
+        g_runtime_context.resource_system->Register(m_particle_comp_material);
+        material_factory.Init(particle_shader.get());
+        material_factory.CreateComputePipeline(logical_device, particle_shader.get(), m_particle_comp_material.get());
     }
 
     GPUParticle2D::~GPUParticle2D() {}

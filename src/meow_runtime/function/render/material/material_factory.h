@@ -39,12 +39,15 @@ namespace Meow
                             const Shader*               shader,
                             Material*                   material_ptr,
                             int                         subpass = 0) const;
+        void CreateComputePipeline(const vk::raii::Device& logical_device,
+                                   const Shader*           shader,
+                                   Material*               material_ptr) const;
 
     private:
         ShadingModelType m_shading_model_type = ShadingModelType::Opaque;
 
         PipelineCreateInfoContext context = {};
 
-        bool        m_msaa_enabled = false;
+        bool m_msaa_enabled = false;
     };
 } // namespace Meow

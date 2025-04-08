@@ -25,6 +25,7 @@ namespace Meow
         g_runtime_context.render_system   = std::make_shared<RenderSystem>();
         g_runtime_context.input_system    = std::make_shared<InputSystem>();
         g_runtime_context.level_system    = std::make_shared<LevelSystem>();
+        g_runtime_context.particle_system = std::make_shared<ParticleSystem>();
 
         JSEngine js_engine;
         // js_engine.test_cpp_call_js();
@@ -42,6 +43,7 @@ namespace Meow
         g_runtime_context.render_system->Start();
         g_runtime_context.window_system->Start();
         g_runtime_context.input_system->Start();
+        g_runtime_context.particle_system->Start();
 
         return true;
     }
@@ -55,6 +57,7 @@ namespace Meow
         g_runtime_context.input_system->Tick(dt);
         g_runtime_context.render_system->Tick(dt);
         g_runtime_context.level_system->Tick(dt);
+        g_runtime_context.particle_system->Tick(dt);
 
         TimerSingleton::Get().Clear();
     }
@@ -62,6 +65,7 @@ namespace Meow
     void MeowRuntime::ShutDown()
     {
         // TODO: ShutDown Dependencies graph
+        g_runtime_context.particle_system = nullptr;
         g_runtime_context.level_system    = nullptr;
         g_runtime_context.resource_system = nullptr;
         g_runtime_context.input_system    = nullptr;

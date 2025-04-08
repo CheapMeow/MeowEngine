@@ -74,6 +74,7 @@ namespace Meow
         void CreateUniformBuffer();
 
         vk::raii::Pipeline graphics_pipeline = nullptr;
+        vk::raii::Pipeline compute_pipeline = nullptr;
 
         // stored for binding descriptor set
 
