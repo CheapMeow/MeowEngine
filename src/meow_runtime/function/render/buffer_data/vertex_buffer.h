@@ -16,7 +16,6 @@ namespace Meow
                      vk::raii::Device const&         device,
                      vk::raii::CommandPool const&    command_pool,
                      vk::raii::Queue const&          queue,
-                     vk::MemoryPropertyFlags         property_flags,
                      std::vector<float>&             vertices)
         {
             buffer_data_ptr = std::make_shared<BufferData>(physical_device,
@@ -24,7 +23,7 @@ namespace Meow
                                                            vertices.size() * sizeof(float),
                                                            vk::BufferUsageFlagBits::eVertexBuffer |
                                                                vk::BufferUsageFlagBits::eTransferDst,
-                                                           property_flags);
+                                                           vk::MemoryPropertyFlagBits::eDeviceLocal);
             buffer_data_ptr->Upload(physical_device, device, command_pool, queue, vertices, 0);
         }
     };

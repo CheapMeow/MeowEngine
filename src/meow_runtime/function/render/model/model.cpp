@@ -650,9 +650,9 @@ namespace Meow
         }
 
         new_mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, new_mesh->vertices);
+            physical_device, device, command_pool, queue, new_mesh->vertices);
         new_mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
-            physical_device, device, command_pool, queue, vk::MemoryPropertyFlagBits::eDeviceLocal, new_mesh->indices);
+            physical_device, device, command_pool, queue, new_mesh->indices);
 
         delete root_node;
         root_node       = new_node;

@@ -16,21 +16,13 @@ namespace Meow
 
         if (!vertices.empty())
         {
-            vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
-                                                               logical_device,
-                                                               onetime_submit_command_pool,
-                                                               graphics_queue,
-                                                               vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                               vertices);
+            vertex_buffer_ptr = std::make_shared<VertexBuffer>(
+                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, vertices);
         }
         if (!indices.empty())
         {
-            index_buffer_ptr = std::make_shared<IndexBuffer>(physical_device,
-                                                             logical_device,
-                                                             onetime_submit_command_pool,
-                                                             graphics_queue,
-                                                             vk::MemoryPropertyFlagBits::eDeviceLocal,
-                                                             indices);
+            index_buffer_ptr = std::make_shared<IndexBuffer>(
+                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, indices);
         }
     }
 

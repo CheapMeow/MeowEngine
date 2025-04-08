@@ -17,7 +17,6 @@ namespace Meow
                     vk::raii::Device const&         device,
                     vk::raii::CommandPool const&    command_pool,
                     vk::raii::Queue const&          queue,
-                    vk::MemoryPropertyFlags         property_flags,
                     std::vector<uint32_t>&          indices)
         {
             index_count = indices.size();
@@ -27,7 +26,7 @@ namespace Meow
                                                            indices.size() * sizeof(uint32_t),
                                                            vk::BufferUsageFlagBits::eIndexBuffer |
                                                                vk::BufferUsageFlagBits::eTransferDst,
-                                                           property_flags);
+                                                           vk::MemoryPropertyFlagBits::eDeviceLocal);
             buffer_data_ptr->Upload(physical_device, device, command_pool, queue, indices, 0);
         }
     };
