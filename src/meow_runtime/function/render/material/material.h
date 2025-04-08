@@ -40,9 +40,10 @@ namespace Meow
         void BindBufferToDescriptorSet(const std::string&          name,
                                        const vk::raii::Buffer&     buffer,
                                        vk::DeviceSize              range            = VK_WHOLE_SIZE,
-                                       const vk::raii::BufferView* raii_buffer_view = nullptr);
+                                       const vk::raii::BufferView* raii_buffer_view = nullptr,
+                                       uint32_t                    frame_index      = 0);
 
-        void BindImageToDescriptorSet(const std::string& name, ImageData& image_data);
+        void BindImageToDescriptorSet(const std::string& name, ImageData& image_data, uint32_t frame_index = 0);
 
         void BeginPopulatingDynamicUniformBufferPerFrame();
 
@@ -65,7 +66,7 @@ namespace Meow
         ShadingModelType GetShadingModelType() { return m_shading_model_type; }
 
         void SetDebugName(const std::string& debug_name);
-        
+
         friend void swap(Material& lhs, Material& rhs);
 
         std::shared_ptr<Shader> shader = nullptr;
@@ -74,7 +75,7 @@ namespace Meow
         void CreateUniformBuffer();
 
         vk::raii::Pipeline graphics_pipeline = nullptr;
-        vk::raii::Pipeline compute_pipeline = nullptr;
+        vk::raii::Pipeline compute_pipeline  = nullptr;
 
         // stored for binding descriptor set
 

@@ -52,7 +52,8 @@ namespace Meow
     void Material::BindBufferToDescriptorSet(const std::string&          name,
                                              const vk::raii::Buffer&     buffer,
                                              vk::DeviceSize              range,
-                                             const vk::raii::BufferView* raii_buffer_view)
+                                             const vk::raii::BufferView* raii_buffer_view,
+                                             uint32_t                    frame_index)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
@@ -105,7 +106,7 @@ namespace Meow
         logical_device.updateDescriptorSets(write_descriptor_set, nullptr);
     }
 
-    void Material::BindImageToDescriptorSet(const std::string& name, ImageData& image_data)
+    void Material::BindImageToDescriptorSet(const std::string& name, ImageData& image_data, uint32_t frame_index)
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 

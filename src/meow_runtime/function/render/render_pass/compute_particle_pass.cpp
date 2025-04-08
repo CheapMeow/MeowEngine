@@ -4,6 +4,7 @@
 
 #include "core/math/math.h"
 #include "function/global/runtime_context.h"
+#include "function/particle/gpu_particle_2d.h"
 #include "function/particle/gpu_particle_data_2d.h"
 #include "function/render/material/material_factory.h"
 #include "function/render/material/shader_factory.h"
@@ -175,7 +176,26 @@ namespace Meow
         RenderParticles(command_buffer);
     }
 
-    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer) { FUNCTION_TIMER(); }
+    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer)
+    {
+        FUNCTION_TIMER();
+
+        const std::vector<std::shared_ptr<GPUParticleBase>> particles =
+            g_runtime_context.particle_system->GetGPUParticles();
+
+        for (std::shared_ptr<GPUParticleBase> particle : particles)
+        {
+            if (std::shared_ptr<GPUParticle2D> gpu_particle_2d = std::dynamic_pointer_cast<GPUParticle2D>(particle))
+            {
+                if (gpu_particle_2d->GetParticleCount() == 0)
+                {
+                    continue;
+                }
+            }
+
+            ++draw_call[0];
+        }
+    }
 
     void swap(ComputeParticlePass& lhs, ComputeParticlePass& rhs)
     {

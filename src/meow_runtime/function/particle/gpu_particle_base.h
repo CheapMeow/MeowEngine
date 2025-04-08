@@ -15,6 +15,8 @@ namespace Meow
         {}
         virtual ~GPUParticleBase() override {}
 
+        const uint32_t GetParticleCount() const { return m_particle_count; }
+
     protected:
         uint32_t                   k_max_frames_in_flight = 0;
         std::vector<StorageBuffer> m_particle_storage_buffer;

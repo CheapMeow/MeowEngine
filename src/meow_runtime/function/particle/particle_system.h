@@ -18,7 +18,8 @@ namespace Meow
 
         void AddGPUParticle2D(uint32_t particle_count);
 
-        std::shared_ptr<GPUParticleBase> GetGPUParticle(uint32_t index);
+        std::shared_ptr<GPUParticleBase>                     GetGPUParticle(uint32_t index);
+        const std::vector<std::shared_ptr<GPUParticleBase>>& GetGPUParticles() const { return m_gpu_particles; }
 
     private:
         std::vector<std::shared_ptr<GPUParticleBase>> m_gpu_particles;
