@@ -11,6 +11,8 @@ namespace Meow
         std::shared_ptr<BufferData> buffer_data_ptr = nullptr;
         VkDeviceSize                offset          = 0;
 
+        StorageBuffer() {};
+
         StorageBuffer(vk::raii::PhysicalDevice const& physical_device,
                       vk::raii::Device const&         device,
                       vk::raii::CommandPool const&    command_pool,

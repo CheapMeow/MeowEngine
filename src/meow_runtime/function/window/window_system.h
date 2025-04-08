@@ -1,7 +1,7 @@
 #pragma once
 
 #include "function/system.h"
-#include "function/window/window.h"
+#include "function/window/graphics_window.h"
 
 #include <memory>
 
@@ -21,6 +21,11 @@ namespace Meow
         {
             m_current_window      = window;
             m_current_glfw_window = window->GetGLFWWindow();
+        }
+
+        std::shared_ptr<GraphicsWindow> GetCurrentFocusGraphicsWindow()
+        {
+            return std::static_pointer_cast<GraphicsWindow>(m_current_window);
         }
 
         std::shared_ptr<Window> GetCurrentFocusWindow() { return m_current_window; }

@@ -21,6 +21,7 @@ namespace Meow
 
         virtual ~GraphicsWindow() override {}
 
+        uint32_t           GetMaxFramesInFlight() const { return k_max_frames_in_flight; }
         void               CreateSurface();
         const SurfaceData& GetSurfaceData() { return m_surface_data; }
         const vk::Format   GetColorFormat() { return m_color_format; }
