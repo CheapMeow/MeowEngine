@@ -1,5 +1,4 @@
 #include "shader_factory.h"
-
 #include "function/global/runtime_context.h"
 
 namespace Meow
@@ -12,14 +11,6 @@ namespace Meow
         m_comp_shader_file_path.clear();
         m_tesc_shader_file_path.clear();
         m_tese_shader_file_path.clear();
-
-        m_set_layout_metas = {};
-        m_vertex_attribute_metas.clear();
-        m_buffer_meta_map.clear();
-        m_image_meta_map.clear();
-        m_per_vertex_attributes.clear();
-        m_instance_attributes.clear();
-
         return *this;
     }
 
@@ -71,7 +62,8 @@ namespace Meow
 
         if (!m_vert_shader_file_path.empty())
         {
-            shader->is_vert_shader_valid = CreateShaderModuleAndGetMeta(shader->vert_shader_module,
+            shader->is_vert_shader_valid = CreateShaderModuleAndGetMeta(*shader,
+                                                                        shader->vert_shader_module,
                                                                         m_vert_shader_file_path,
                                                                         vk::ShaderStageFlagBits::eVertex,
                                                                         pipeline_shader_stage_create_infos);
@@ -79,7 +71,8 @@ namespace Meow
 
         if (!m_frag_shader_file_path.empty())
         {
-            shader->is_frag_shader_valid = CreateShaderModuleAndGetMeta(shader->frag_shader_module,
+            shader->is_frag_shader_valid = CreateShaderModuleAndGetMeta(*shader,
+                                                                        shader->frag_shader_module,
                                                                         m_frag_shader_file_path,
                                                                         vk::ShaderStageFlagBits::eFragment,
                                                                         pipeline_shader_stage_create_infos);
@@ -87,7 +80,8 @@ namespace Meow
 
         if (!m_geom_shader_file_path.empty())
         {
-            shader->is_geom_shader_valid = CreateShaderModuleAndGetMeta(shader->geom_shader_module,
+            shader->is_geom_shader_valid = CreateShaderModuleAndGetMeta(*shader,
+                                                                        shader->geom_shader_module,
                                                                         m_geom_shader_file_path,
                                                                         vk::ShaderStageFlagBits::eGeometry,
                                                                         pipeline_shader_stage_create_infos);
@@ -95,7 +89,8 @@ namespace Meow
 
         if (!m_comp_shader_file_path.empty())
         {
-            shader->is_comp_shader_valid = CreateShaderModuleAndGetMeta(shader->comp_shader_module,
+            shader->is_comp_shader_valid = CreateShaderModuleAndGetMeta(*shader,
+                                                                        shader->comp_shader_module,
                                                                         m_comp_shader_file_path,
                                                                         vk::ShaderStageFlagBits::eCompute,
                                                                         pipeline_shader_stage_create_infos);
@@ -103,7 +98,8 @@ namespace Meow
 
         if (!m_tesc_shader_file_path.empty())
         {
-            shader->is_tesc_shader_valid = CreateShaderModuleAndGetMeta(shader->tesc_shader_module,
+            shader->is_tesc_shader_valid = CreateShaderModuleAndGetMeta(*shader,
+                                                                        shader->tesc_shader_module,
                                                                         m_tesc_shader_file_path,
                                                                         vk::ShaderStageFlagBits::eTessellationControl,
                                                                         pipeline_shader_stage_create_infos);
@@ -112,30 +108,22 @@ namespace Meow
         if (!m_tese_shader_file_path.empty())
         {
             shader->is_tese_shader_valid =
-                CreateShaderModuleAndGetMeta(shader->tese_shader_module,
+                CreateShaderModuleAndGetMeta(*shader,
+                                             shader->tese_shader_module,
                                              m_tese_shader_file_path,
                                              vk::ShaderStageFlagBits::eTessellationEvaluation,
                                              pipeline_shader_stage_create_infos);
         }
 
-        // Transfer collected metadata to the shader
-        shader->set_layout_metas       = std::move(m_set_layout_metas);
-        shader->vertex_attribute_metas = std::move(m_vertex_attribute_metas);
-        shader->buffer_meta_map        = std::move(m_buffer_meta_map);
-        shader->image_meta_map         = std::move(m_image_meta_map);
-
         GenerateInputInfo(*shader);
         GeneratePipelineLayout(*shader);
         GenerateDynamicUniformBufferOffset(*shader);
-
-        // Transfer collected metadata to the shader
-        shader->per_vertex_attributes  = std::move(m_per_vertex_attributes);
-        shader->instance_attributes    = std::move(m_instance_attributes);
 
         return shader;
     }
 
     bool ShaderFactory::CreateShaderModuleAndGetMeta(
+        Shader&                                         shader,
         vk::raii::ShaderModule&                         shader_module,
         const std::string&                              shader_file_path,
         vk::ShaderStageFlagBits                         stage,
@@ -145,27 +133,28 @@ namespace Meow
 
         auto [data_ptr, data_size] = g_runtime_context.file_system.get()->ReadBinaryFile(shader_file_path);
 
-        shader_module =
-            vk::raii::ShaderModule(logical_device, {vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr});
+        shader_module = vk::raii::ShaderModule(
+            logical_device, vk::ShaderModuleCreateInfo(vk::ShaderModuleCreateFlags(), data_size, (uint32_t*)data_ptr));
 
         pipeline_shader_stage_create_infos.emplace_back(
-            vk::PipelineShaderStageCreateFlags {}, stage, *shader_module, "main", nullptr);
+            vk::PipelineShaderStageCreateFlags(), stage, *shader_module, "main", nullptr);
 
         spirv_cross::Compiler        compiler((uint32_t*)data_ptr, data_size / sizeof(uint32_t));
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-        GetAttachmentsMeta(compiler, resources, stage);
-        GetUniformBuffersMeta(compiler, resources, stage);
-        GetTexturesMeta(compiler, resources, stage);
-        GetStorageImagesMeta(compiler, resources, stage);
-        GetInputMeta(compiler, resources, stage);
-        GetStorageBuffersMeta(compiler, resources, stage);
+        GetAttachmentsMeta(shader, compiler, resources, stage);
+        GetUniformBuffersMeta(shader, compiler, resources, stage);
+        GetTexturesMeta(shader, compiler, resources, stage);
+        GetStorageImagesMeta(shader, compiler, resources, stage);
+        GetInputMeta(shader, compiler, resources, stage);
+        GetStorageBuffersMeta(shader, compiler, resources, stage);
 
         delete[] data_ptr;
         return true;
     }
 
-    void ShaderFactory::GetAttachmentsMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetAttachmentsMeta(Shader&                       shader,
+                                           spirv_cross::Compiler&        compiler,
                                            spirv_cross::ShaderResources& resources,
                                            vk::ShaderStageFlags          stageFlags)
     {
@@ -177,20 +166,20 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding, vk::DescriptorType::eInputAttachment, 1, stageFlags, nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding(
+                binding, vk::DescriptorType::eInputAttachment, 1, stageFlags, nullptr);
 
-            m_set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            shader.set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
-            auto it = m_image_meta_map.find(var_name);
-            if (it == m_image_meta_map.end())
+            auto it = shader.image_meta_map.find(var_name);
+            if (it == shader.image_meta_map.end())
             {
-                ImageMeta image_meta      = {};
+                ImageMeta image_meta;
                 image_meta.set            = set;
                 image_meta.binding        = binding;
                 image_meta.stageFlags     = stageFlags;
                 image_meta.descriptorType = set_layout_binding.descriptorType;
-                m_image_meta_map.emplace(var_name, image_meta);
+                shader.image_meta_map.emplace(var_name, image_meta);
             }
             else
             {
@@ -199,7 +188,8 @@ namespace Meow
         }
     }
 
-    void ShaderFactory::GetUniformBuffersMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetUniformBuffersMeta(Shader&                       shader,
+                                              spirv_cross::Compiler&        compiler,
                                               spirv_cross::ShaderResources& resources,
                                               vk::ShaderStageFlags          stageFlags)
     {
@@ -214,20 +204,20 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding {binding,
-                                                               (type_name.find("Dynamic") != std::string::npos) ?
-                                                                   vk::DescriptorType::eUniformBufferDynamic :
-                                                                   vk::DescriptorType::eUniformBuffer,
-                                                               1,
-                                                               stageFlags,
-                                                               nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding(binding,
+                                                              (type_name.find("Dynamic") != std::string::npos) ?
+                                                                  vk::DescriptorType::eUniformBufferDynamic :
+                                                                  vk::DescriptorType::eUniformBuffer,
+                                                              1,
+                                                              stageFlags,
+                                                              nullptr);
 
-            m_set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            shader.set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
-            auto it = m_buffer_meta_map.find(var_name);
-            if (it == m_buffer_meta_map.end())
+            auto it = shader.buffer_meta_map.find(var_name);
+            if (it == shader.buffer_meta_map.end())
             {
-                BufferMeta buffer_meta     = {};
+                BufferMeta buffer_meta;
                 buffer_meta.set            = set;
                 buffer_meta.binding        = binding;
                 buffer_meta.size           = uniform_buffer_struct_size;
@@ -239,7 +229,7 @@ namespace Meow
                 buffer_meta.type_name = type_name;
 #endif
 
-                m_buffer_meta_map.emplace(var_name, buffer_meta);
+                shader.buffer_meta_map.emplace(var_name, buffer_meta);
             }
             else
             {
@@ -248,7 +238,8 @@ namespace Meow
         }
     }
 
-    void ShaderFactory::GetTexturesMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetTexturesMeta(Shader&                       shader,
+                                        spirv_cross::Compiler&        compiler,
                                         spirv_cross::ShaderResources& resources,
                                         vk::ShaderStageFlags          stageFlags)
     {
@@ -260,20 +251,20 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding, vk::DescriptorType::eCombinedImageSampler, 1, stageFlags, nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding(
+                binding, vk::DescriptorType::eCombinedImageSampler, 1, stageFlags, nullptr);
 
-            m_set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            shader.set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
-            auto it = m_image_meta_map.find(var_name);
-            if (it == m_image_meta_map.end())
+            auto it = shader.image_meta_map.find(var_name);
+            if (it == shader.image_meta_map.end())
             {
-                ImageMeta image_meta      = {};
+                ImageMeta image_meta;
                 image_meta.set            = set;
                 image_meta.binding        = binding;
                 image_meta.stageFlags     = stageFlags;
                 image_meta.descriptorType = set_layout_binding.descriptorType;
-                m_image_meta_map.emplace(var_name, image_meta);
+                shader.image_meta_map.emplace(var_name, image_meta);
             }
             else
             {
@@ -282,7 +273,8 @@ namespace Meow
         }
     }
 
-    void ShaderFactory::GetInputMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetInputMeta(Shader&                       shader,
+                                     spirv_cross::Compiler&        compiler,
                                      spirv_cross::ShaderResources& resources,
                                      vk::ShaderStageFlags          stageFlags)
     {
@@ -314,15 +306,16 @@ namespace Meow
                     attribute = VertexAttributeBit::InstanceFloat4;
             }
 
-            int32_t             location              = compiler.get_decoration(res.id, spv::DecorationLocation);
-            VertexAttributeMeta vertex_attribute_meta = {};
-            vertex_attribute_meta.location            = location;
-            vertex_attribute_meta.attribute           = attribute;
-            m_vertex_attribute_metas.push_back(vertex_attribute_meta);
+            int32_t             location = compiler.get_decoration(res.id, spv::DecorationLocation);
+            VertexAttributeMeta vertex_attribute_meta;
+            vertex_attribute_meta.location  = location;
+            vertex_attribute_meta.attribute = attribute;
+            shader.vertex_attribute_metas.push_back(vertex_attribute_meta);
         }
     }
 
-    void ShaderFactory::GetStorageBuffersMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetStorageBuffersMeta(Shader&                       shader,
+                                              spirv_cross::Compiler&        compiler,
                                               spirv_cross::ShaderResources& resources,
                                               vk::ShaderStageFlags          stageFlags)
     {
@@ -334,21 +327,21 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding, vk::DescriptorType::eStorageBuffer, 1, stageFlags, nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding(
+                binding, vk::DescriptorType::eStorageBuffer, 1, stageFlags, nullptr);
 
-            m_set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            shader.set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
-            auto it = m_buffer_meta_map.find(var_name);
-            if (it == m_buffer_meta_map.end())
+            auto it = shader.buffer_meta_map.find(var_name);
+            if (it == shader.buffer_meta_map.end())
             {
-                BufferMeta buffer_meta     = {};
+                BufferMeta buffer_meta;
                 buffer_meta.set            = set;
                 buffer_meta.binding        = binding;
                 buffer_meta.size           = 0;
                 buffer_meta.stageFlags     = stageFlags;
                 buffer_meta.descriptorType = set_layout_binding.descriptorType;
-                m_buffer_meta_map.emplace(var_name, buffer_meta);
+                shader.buffer_meta_map.emplace(var_name, buffer_meta);
             }
             else
             {
@@ -357,7 +350,8 @@ namespace Meow
         }
     }
 
-    void ShaderFactory::GetStorageImagesMeta(spirv_cross::Compiler&        compiler,
+    void ShaderFactory::GetStorageImagesMeta(Shader&                       shader,
+                                             spirv_cross::Compiler&        compiler,
                                              spirv_cross::ShaderResources& resources,
                                              vk::ShaderStageFlags          stageFlags)
     {
@@ -369,20 +363,20 @@ namespace Meow
             uint32_t set     = compiler.get_decoration(res.id, spv::DecorationDescriptorSet);
             uint32_t binding = compiler.get_decoration(res.id, spv::DecorationBinding);
 
-            vk::DescriptorSetLayoutBinding set_layout_binding {
-                binding, vk::DescriptorType::eStorageImage, 1, stageFlags, nullptr};
+            vk::DescriptorSetLayoutBinding set_layout_binding(
+                binding, vk::DescriptorType::eStorageImage, 1, stageFlags, nullptr);
 
-            m_set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
+            shader.set_layout_metas.AddDescriptorSetLayoutBinding(var_name, set, set_layout_binding);
 
-            auto it = m_image_meta_map.find(var_name);
-            if (it == m_image_meta_map.end())
+            auto it = shader.image_meta_map.find(var_name);
+            if (it == shader.image_meta_map.end())
             {
-                ImageMeta image_meta      = {};
+                ImageMeta image_meta;
                 image_meta.set            = set;
                 image_meta.binding        = binding;
                 image_meta.stageFlags     = stageFlags;
                 image_meta.descriptorType = set_layout_binding.descriptorType;
-                m_image_meta_map.emplace(var_name, image_meta);
+                shader.image_meta_map.emplace(var_name, image_meta);
             }
             else
             {
@@ -393,63 +387,66 @@ namespace Meow
 
     void ShaderFactory::GenerateInputInfo(Shader& shader)
     {
-        std::sort(m_vertex_attribute_metas.begin(),
-                  m_vertex_attribute_metas.end(),
+        std::sort(shader.vertex_attribute_metas.begin(),
+                  shader.vertex_attribute_metas.end(),
                   [](const VertexAttributeMeta& a, const VertexAttributeMeta& b) { return a.location < b.location; });
 
-        for (const auto& meta : m_vertex_attribute_metas)
+        shader.per_vertex_attributes.clear();
+        shader.instance_attributes.clear();
+
+        for (const auto& meta : shader.vertex_attribute_metas)
         {
             VertexAttributeBit attribute = meta.attribute;
             if (attribute == VertexAttributeBit::InstanceFloat1 || attribute == VertexAttributeBit::InstanceFloat2 ||
                 attribute == VertexAttributeBit::InstanceFloat3 || attribute == VertexAttributeBit::InstanceFloat4)
             {
-                m_instance_attributes.push_back(attribute);
+                shader.instance_attributes.push_back(attribute);
             }
             else
             {
-                m_per_vertex_attributes.push_back(attribute);
+                shader.per_vertex_attributes.push_back(attribute);
             }
         }
 
         shader.input_bindings.clear();
-        if (!m_per_vertex_attributes.empty())
+        if (!shader.per_vertex_attributes.empty())
         {
-            uint32_t                          stride = VertexAttributesToSize(m_per_vertex_attributes);
-            vk::VertexInputBindingDescription per_vertex_input_binding {0, stride, vk::VertexInputRate::eVertex};
+            uint32_t                          stride = VertexAttributesToSize(shader.per_vertex_attributes);
+            vk::VertexInputBindingDescription per_vertex_input_binding(0, stride, vk::VertexInputRate::eVertex);
             shader.input_bindings.push_back(per_vertex_input_binding);
         }
 
-        if (!m_instance_attributes.empty())
+        if (!shader.instance_attributes.empty())
         {
-            uint32_t                          stride = VertexAttributesToSize(m_instance_attributes);
-            vk::VertexInputBindingDescription instanceInputBinding {1, stride, vk::VertexInputRate::eInstance};
+            uint32_t                          stride = VertexAttributesToSize(shader.instance_attributes);
+            vk::VertexInputBindingDescription instanceInputBinding(1, stride, vk::VertexInputRate::eInstance);
             shader.input_bindings.push_back(instanceInputBinding);
         }
 
         uint32_t location = 0;
         shader.input_attributes.clear();
 
-        if (!m_per_vertex_attributes.empty())
+        if (!shader.per_vertex_attributes.empty())
         {
             uint32_t offset = 0;
-            for (size_t i = 0; i < m_per_vertex_attributes.size(); ++i)
+            for (size_t i = 0; i < shader.per_vertex_attributes.size(); ++i)
             {
-                vk::VertexInputAttributeDescription input_attribute {
-                    0, location, VertexAttributeToVkFormat(m_per_vertex_attributes[i]), offset};
-                offset += VertexAttributeToSize(m_per_vertex_attributes[i]);
+                vk::VertexInputAttributeDescription input_attribute(
+                    0, location, VertexAttributeToVkFormat(shader.per_vertex_attributes[i]), offset);
+                offset += VertexAttributeToSize(shader.per_vertex_attributes[i]);
                 shader.input_attributes.push_back(input_attribute);
                 location += 1;
             }
         }
 
-        if (!m_instance_attributes.empty())
+        if (!shader.instance_attributes.empty())
         {
             uint32_t offset = 0;
-            for (size_t i = 0; i < m_instance_attributes.size(); ++i)
+            for (size_t i = 0; i < shader.instance_attributes.size(); ++i)
             {
-                vk::VertexInputAttributeDescription input_attribute {
-                    1, location, VertexAttributeToVkFormat(m_instance_attributes[i]), offset};
-                offset += VertexAttributeToSize(m_instance_attributes[i]);
+                vk::VertexInputAttributeDescription input_attribute(
+                    1, location, VertexAttributeToVkFormat(shader.instance_attributes[i]), offset);
+                offset += VertexAttributeToSize(shader.instance_attributes[i]);
                 shader.input_attributes.push_back(input_attribute);
                 location += 1;
             }
@@ -486,7 +483,7 @@ namespace Meow
             for (auto& set_layout_meta : metas)
             {
                 vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info(
-                    vk::DescriptorSetLayoutCreateFlags {}, set_layout_meta.bindings);
+                    vk::DescriptorSetLayoutCreateFlags(), set_layout_meta.bindings);
 
                 vk::DescriptorSetLayout setLayout;
                 logical_device.getDispatcher()->vkCreateDescriptorSetLayout(
