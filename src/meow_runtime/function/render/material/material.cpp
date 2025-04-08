@@ -9,15 +9,7 @@
 
 namespace Meow
 {
-    Material::Material(std::shared_ptr<Shader> shader)
-    {
-        DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
-
-        this->shader      = shader;
-        m_descriptor_sets = descriptor_allocator.Allocate(shader->descriptor_set_layouts);
-
-        CreateUniformBuffer();
-    }
+    Material::Material(std::shared_ptr<Shader> shader) { this->shader = shader; }
 
     void Material::CreateUniformBuffer()
     {
@@ -93,7 +85,7 @@ namespace Meow
         }
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *m_descriptor_sets[meta->set],                                        // dstSet
+            *m_descriptor_sets_per_frame[frame_index][meta->set],                 // dstSet
             meta->binding,                                                        // dstBinding
             0,                                                                    // dstArrayElement
             1,                                                                    // descriptorCount
@@ -123,7 +115,7 @@ namespace Meow
             *image_data.sampler, *image_data.image_view, vk::ImageLayout::eShaderReadOnlyOptimal);
 
         vk::WriteDescriptorSet write_descriptor_set(
-            *m_descriptor_sets[bindInfo.set],                                           // dstSet
+            *m_descriptor_sets_per_frame[frame_index][bindInfo.set],                    // dstSet
             bindInfo.binding,                                                           // dstBinding
             0,                                                                          // dstArrayElement
             1,                                                                          // descriptorCount
@@ -256,7 +248,8 @@ namespace Meow
                                                uint32_t                       first_set,
                                                uint32_t                       set_count,
                                                uint32_t                       draw_call,
-                                               bool                           is_dynamic)
+                                               bool                           is_dynamic,
+                                               uint32_t                       frame_index)
     {
         if (is_dynamic)
         {
@@ -270,7 +263,7 @@ namespace Meow
         std::vector<vk::DescriptorSet> descriptor_sets_to_bind(set_count);
         for (uint32_t i = first_set; i < first_set + set_count; ++i)
         {
-            descriptor_sets_to_bind[i - first_set] = *m_descriptor_sets[i];
+            descriptor_sets_to_bind[i - first_set] = *m_descriptor_sets_per_frame[frame_index][i];
         }
 
         std::vector<uint32_t> dynamic_offsets {};
@@ -284,7 +277,7 @@ namespace Meow
                                           dynamic_offsets);
     }
 
-    void Material::SetDebugName(const std::string& debug_name)
+    void Material::SetDebugName(const std::string& debug_name, uint32_t frame_index)
     {
         if (debug_name.empty())
             return;
@@ -293,13 +286,14 @@ namespace Meow
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
 
         {
-            for (size_t i = 0; i < m_descriptor_sets.size(); i++)
+            for (size_t i = 0; i < m_descriptor_sets_per_frame[frame_index].size(); i++)
             {
                 std::string descriptor_set_name = debug_name + " DescriptorSet" + std::to_string(i);
 
                 vk::DebugUtilsObjectNameInfoEXT name_info = {
                     vk::ObjectType::eDescriptorSet,
-                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, *m_descriptor_sets[i]),
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet,
+                                                           *m_descriptor_sets_per_frame[frame_index][i]),
                     descriptor_set_name.c_str()};
                 logical_device.setDebugUtilsObjectNameEXT(name_info);
             }
@@ -328,7 +322,7 @@ namespace Meow
         std::swap(lhs.m_actived, rhs.m_actived);
         std::swap(lhs.m_obj_count, rhs.m_obj_count);
         std::swap(lhs.m_per_obj_dynamic_offsets, rhs.m_per_obj_dynamic_offsets);
-        std::swap(lhs.m_descriptor_sets, rhs.m_descriptor_sets);
+        std::swap(lhs.m_descriptor_sets_per_frame, rhs.m_descriptor_sets_per_frame);
         std::swap(lhs.m_uniform_buffers, rhs.m_uniform_buffers);
         std::swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
     }

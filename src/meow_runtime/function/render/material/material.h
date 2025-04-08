@@ -60,12 +60,13 @@ namespace Meow
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                          uint32_t                       first_set,
                                          uint32_t                       set_count,
-                                         uint32_t                       draw_call  = 0,
-                                         bool                           is_dynamic = false);
+                                         uint32_t                       draw_call   = 0,
+                                         bool                           is_dynamic  = false,
+                                         uint32_t                       frame_index = 0);
 
         ShadingModelType GetShadingModelType() { return m_shading_model_type; }
 
-        void SetDebugName(const std::string& debug_name);
+        void SetDebugName(const std::string& debug_name, uint32_t frame_index = 0);
 
         friend void swap(Material& lhs, Material& rhs);
 
@@ -82,7 +83,8 @@ namespace Meow
         bool                                                            m_actived   = false;
         int32_t                                                         m_obj_count = 0;
         std::vector<std::vector<uint32_t>>                              m_per_obj_dynamic_offsets;
-        vk::raii::DescriptorSets                                        m_descriptor_sets = nullptr;
+        uint32_t                                                        m_descriptor_set_duplicate_number = 1;
+        std::vector<vk::raii::DescriptorSets>                           m_descriptor_sets_per_frame;
         std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;
         std::unique_ptr<UniformBuffer>                                  m_dynamic_uniform_buffer;
 

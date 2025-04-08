@@ -36,6 +36,7 @@ namespace Meow
         void SetOpaque(bool depth_buffered = true, int color_attachment_count = 1);
         void SetTranslucent(bool depth_buffered = true, int color_attachment_count = 1);
         void SetPointTopology();
+        void SetDescriptorSetDuplicateNumber(uint32_t number);
         void CreatePipeline(const vk::raii::Device&     logical_device,
                             const vk::raii::RenderPass& render_pass,
                             const Shader*               shader,
@@ -46,9 +47,10 @@ namespace Meow
                                    Material*               material_ptr) const;
 
     private:
-        ShadingModelType          m_shading_model_type = ShadingModelType::Opaque;
-        Shader*                   m_last_shader        = nullptr;
-        PipelineCreateInfoContext context              = {};
+        ShadingModelType          m_shading_model_type              = ShadingModelType::Opaque;
+        Shader*                   m_last_shader                     = nullptr;
+        uint32_t                  m_descriptor_set_duplicate_number = 1;
+        PipelineCreateInfoContext context                           = {};
 
         bool m_msaa_enabled = false;
     };
