@@ -16,13 +16,23 @@ namespace Meow
 
         if (!vertices.empty())
         {
-            vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, vertices);
+            vertex_buffer_ptr = std::make_shared<VertexBuffer>(physical_device,
+                                                               logical_device,
+                                                               onetime_submit_command_pool,
+                                                               graphics_queue,
+                                                               vertices.size() * sizeof(float));
+            vertex_buffer_ptr->Upload(
+                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, vertices, 0);
         }
         if (!indices.empty())
         {
-            index_buffer_ptr = std::make_shared<IndexBuffer>(
-                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, indices);
+            index_buffer_ptr = std::make_shared<IndexBuffer>(physical_device,
+                                                             logical_device,
+                                                             onetime_submit_command_pool,
+                                                             graphics_queue,
+                                                             indices.size() * sizeof(uint32_t));
+            index_buffer_ptr->Upload(
+                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, indices, 0);
         }
     }
 
@@ -52,7 +62,7 @@ namespace Meow
 
         if (vertex_buffer_ptr && index_buffer_ptr)
         {
-            cmd_buffer.drawIndexed(index_buffer_ptr->index_count, 1, 0, 0, 0);
+            cmd_buffer.drawIndexed(index_buffer_ptr->data_number, 1, 0, 0, 0);
         }
         else if (vertex_buffer_ptr)
         {

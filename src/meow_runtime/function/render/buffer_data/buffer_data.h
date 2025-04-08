@@ -16,6 +16,8 @@ namespace Meow
         vk::BufferUsageFlags    usage_flags;
         vk::MemoryPropertyFlags property_flags;
 
+        uint32_t data_number = 0;
+
         BufferData() {}
         BufferData(std::nullptr_t) {}
 
@@ -94,7 +96,7 @@ namespace Meow
                     vk::raii::CommandPool const&    command_pool,
                     vk::raii::Queue const&          queue,
                     std::vector<DataType> const&    data,
-                    size_t                          stride) const
+                    size_t                          stride)
         {
             if (!(usage_flags & vk::BufferUsageFlagBits::eTransferDst))
             {
@@ -107,7 +109,8 @@ namespace Meow
             size_t element_size = stride ? stride : sizeof(DataType);
             assert(sizeof(DataType) <= element_size);
 
-            size_t dataSize = data.size() * element_size;
+            data_number     = data.size();
+            size_t dataSize = data_number * element_size;
             assert(dataSize <= device_size);
 
             BufferData staging_buffer(physical_device, logical_device, dataSize, vk::BufferUsageFlagBits::eTransferSrc);

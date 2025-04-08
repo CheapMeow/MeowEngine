@@ -16,16 +16,14 @@ namespace Meow
                       vk::raii::Device const&         device,
                       vk::raii::CommandPool const&    command_pool,
                       vk::raii::Queue const&          queue,
-                      std::vector<float>&             data)
+                      vk::DeviceSize                  size)
             : BufferData(physical_device,
                          device,
-                         data.size() * sizeof(float),
+                         size,
                          vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
                              vk::BufferUsageFlagBits::eTransferDst,
                          vk::MemoryPropertyFlagBits::eDeviceLocal)
-        {
-            Upload(physical_device, device, command_pool, queue, data, 0);
-        }
+        {}
     };
 
 } // namespace Meow

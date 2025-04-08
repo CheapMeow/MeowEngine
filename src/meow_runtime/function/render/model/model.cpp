@@ -650,9 +650,12 @@ namespace Meow
         }
 
         new_mesh->vertex_buffer_ptr = std::make_shared<VertexBuffer>(
-            physical_device, device, command_pool, queue, new_mesh->vertices);
+            physical_device, device, command_pool, queue, new_mesh->vertices.size() * sizeof(float));
+        new_mesh->vertex_buffer_ptr->Upload(physical_device, device, command_pool, queue, new_mesh->vertices, 0);
+
         new_mesh->index_buffer_ptr = std::make_shared<IndexBuffer>(
-            physical_device, device, command_pool, queue, new_mesh->indices);
+            physical_device, device, command_pool, queue, new_mesh->indices.size() * sizeof(uint32_t));
+        new_mesh->index_buffer_ptr->Upload(physical_device, device, command_pool, queue, new_mesh->indices, 0);
 
         delete root_node;
         root_node       = new_node;
