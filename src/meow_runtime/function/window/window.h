@@ -3,7 +3,6 @@
 #include "core/base/non_copyable.h"
 #include "core/signal/signal.hpp"
 #include "function/input/input_enum.h"
-#include "function/render/buffer_data/surface_data.h"
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -310,12 +309,6 @@ namespace Meow
          */
         Signal<glm::vec2>& OnMouseScroll() { return m_on_mouse_scroll_signal; }
 
-        // --------------------------Render--------------------------
-
-        void               CreateSurface();
-        const SurfaceData& GetSurfaceData() { return m_surface_data; }
-        const vk::Format   GetColorFormat() { return m_color_format; }
-
     protected:
         friend void CallbackWindowPosition(GLFWwindow* glfwWindow, int32_t xpos, int32_t ypos);
         friend void CallbackWindowSize(GLFWwindow* glfwWindow, int32_t width, int32_t height);
@@ -378,10 +371,5 @@ namespace Meow
         Signal<MouseButtonCode, InputAction, uint8_t> m_on_mouse_button_signal;
         Signal<glm::vec2>                             m_on_mouse_position_signal;
         Signal<glm::vec2>                             m_on_mouse_scroll_signal;
-
-        // --------------------------Render--------------------------
-
-        SurfaceData m_surface_data = nullptr;
-        vk::Format  m_color_format;
     };
 } // namespace Meow

@@ -3,6 +3,7 @@
 #include "pch.h"
 
 #include "function/global/runtime_context.h"
+#include "function/render/buffer_data/surface_data.h"
 
 #include <map>
 #include <volk.h>
