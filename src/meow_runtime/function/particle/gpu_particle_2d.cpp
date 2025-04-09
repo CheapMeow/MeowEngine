@@ -20,14 +20,14 @@ namespace Meow
 
         m_particle_data.resize(particle_count);
 
-        m_particle_storage_buffer.resize(k_max_frames_in_flight);
+        m_particle_storage_buffer_per_frame.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
-            m_particle_storage_buffer[i] = StorageBuffer(physical_device,
-                                                         logical_device,
-                                                         onetime_submit_command_pool,
-                                                         graphics_queue,
-                                                         sizeof(GPUParticleData2D) * particle_count);
+            m_particle_storage_buffer_per_frame[i] = StorageBuffer(physical_device,
+                                                                   logical_device,
+                                                                   onetime_submit_command_pool,
+                                                                   graphics_queue,
+                                                                   sizeof(GPUParticleData2D) * particle_count);
         }
 
         ShaderFactory   shader_factory;
@@ -58,7 +58,7 @@ namespace Meow
 
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
-            m_particle_storage_buffer[i].Upload(
+            m_particle_storage_buffer_per_frame[i].Upload(
                 physical_device, logical_device, onetime_submit_command_pool, graphics_queue, m_particle_data, 0);
         }
     }

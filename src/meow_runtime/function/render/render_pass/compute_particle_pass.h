@@ -1,5 +1,6 @@
 #pragma once
 
+#include "function/particle/gpu_particle_2d.h"
 #include "function/render/material/material.h"
 #include "function/render/material/shader.h"
 #include "function/render/model/model.hpp"
@@ -57,7 +58,8 @@ namespace Meow
         friend void swap(ComputeParticlePass& lhs, ComputeParticlePass& rhs);
 
     protected:
-        std::shared_ptr<Material> m_particle_render_material = nullptr;
+        std::shared_ptr<Material>      m_particle_render_material = nullptr;
+        std::shared_ptr<GPUParticle2D> m_gpu_particle_2d          = nullptr;
 
         std::string m_pass_names[1];
         int         draw_call[1] = {0};

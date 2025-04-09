@@ -4,8 +4,6 @@
 
 #include "core/math/math.h"
 #include "function/global/runtime_context.h"
-#include "function/particle/gpu_particle_2d.h"
-#include "function/particle/gpu_particle_data_2d.h"
 #include "function/render/material/material_factory.h"
 #include "function/render/material/shader_factory.h"
 
@@ -115,6 +113,25 @@ namespace Meow
         material_factory.CreatePipeline(
             logical_device, render_pass, particle_render_shader.get(), m_particle_render_material.get(), 0);
         m_particle_render_material->SetDebugName("Particle Render Material");
+
+        // TODO: temp
+
+        g_runtime_context.particle_system->AddGPUParticle2D(1000);
+        m_gpu_particle_2d =
+            std::static_pointer_cast<GPUParticle2D>(g_runtime_context.particle_system->GetGPUParticle(0));
+
+        const uint32_t max_frames_in_flight = m_gpu_particle_2d->GetMaxFramesInFlight();
+        for (uint32_t i = 0; i < max_frames_in_flight; ++i)
+        {
+            m_particle_render_material->BindBufferToDescriptorSet(
+                "ParticleSSBOIn",
+                m_gpu_particle_2d->GetParticleStorageBuffer()[(i - 1) % max_frames_in_flight].buffer,
+                VK_WHOLE_SIZE,
+                nullptr,
+                (i - 1) % max_frames_in_flight);
+            m_particle_render_material->BindBufferToDescriptorSet(
+                "ParticleSSBOOut", m_gpu_particle_2d->GetParticleStorageBuffer()[i].buffer, VK_WHOLE_SIZE, nullptr, i);
+        }
     }
 
     void ComputeParticlePass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
