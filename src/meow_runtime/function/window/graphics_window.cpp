@@ -21,6 +21,12 @@ namespace Meow
                           nullptr,
                           g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex(),
                           g_runtime_context.render_system->GetPresentQueueFamilyIndex());
+
+        m_swapchain_image_views.resize(m_swapchain_data.image_views.size());
+        for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
+        {
+            m_swapchain_image_views[i] = *m_swapchain_data.image_views[i];
+        }
     }
 
     void GraphicsWindow::CreatePerFrameData()

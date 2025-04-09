@@ -181,7 +181,7 @@ namespace Meow
                         }
                     },
                     reinterpret_cast<void*>(const_cast<vk::raii::CommandBuffer*>(&command_buffer)));
-                ImGui::Image((ImTextureID)m_offscreen_image_desc, image_size);
+                ImGui::Image((ImTextureID)m_offscreen_image_descs[current_image_index], image_size);
                 draw_list->AddCallback(
                     [](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
                         vk::raii::CommandBuffer* command_buffer_ptr =
@@ -332,19 +332,25 @@ namespace Meow
         }
     }
 
-    void
-    ImGuiPass::RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
+    void ImGuiPass::RefreshOffscreenRenderTarget(std::vector<std::shared_ptr<ImageData>>& offscreen_render_targets,
+                                                 VkImageLayout                            image_layout)
     {
-        m_offscreen_image_desc = ImGui_ImplVulkan_AddTexture(image_sampler, image_view, image_layout);
+        m_offscreen_image_descs.resize(offscreen_render_targets.size());
+        for (uint32_t i = 0; i < offscreen_render_targets.size(); i++)
+        {
+            m_offscreen_image_descs[i] = ImGui_ImplVulkan_AddTexture(
+                *offscreen_render_targets[i]->sampler, *offscreen_render_targets[i]->image_view, image_layout);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-        const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        vk::DebugUtilsObjectNameInfoEXT name_info      = {
-            vk::ObjectType::eDescriptorSet,
-            NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_offscreen_image_desc),
-            "Offscreen Image Descriptor Set"};
-        logical_device.setDebugUtilsObjectNameEXT(name_info);
+            const vk::raii::Device&         logical_device = g_runtime_context.render_system->GetLogicalDevice();
+            std::string                     debug_name     = "Offscreen Image Descriptor Set " + std::to_string(i);
+            vk::DebugUtilsObjectNameInfoEXT name_info      = {
+                vk::ObjectType::eDescriptorSet,
+                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkDescriptorSet, m_offscreen_image_descs[i]),
+                debug_name.c_str()};
+            logical_device.setDebugUtilsObjectNameEXT(name_info);
 #endif
+        }
     }
 
     void ImGuiPass::RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout)
@@ -400,7 +406,7 @@ namespace Meow
         swap(lhs.m_on_pass_changed, rhs.m_on_pass_changed);
 
         swap(lhs.m_is_offscreen_image_valid, rhs.m_is_offscreen_image_valid);
-        swap(lhs.m_offscreen_image_desc, rhs.m_offscreen_image_desc);
+        swap(lhs.m_offscreen_image_descs, rhs.m_offscreen_image_descs);
 
         swap(lhs.m_gameobjects_widget, rhs.m_gameobjects_widget);
         swap(lhs.m_components_widget, rhs.m_components_widget);

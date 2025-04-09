@@ -321,19 +321,19 @@ namespace Meow
 
         cmd_buffer.begin({});
 
-        m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_shadow_map_pass.Draw(cmd_buffer);
         m_shadow_map_pass.End(cmd_buffer);
 
-        m_depth_to_color_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_depth_to_color_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_depth_to_color_pass.Draw(cmd_buffer);
         m_depth_to_color_pass.End(cmd_buffer);
 
-        m_shadow_coord_to_color_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_shadow_coord_to_color_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_shadow_coord_to_color_pass.Draw(cmd_buffer);
         m_shadow_coord_to_color_pass.End(cmd_buffer);
 
-        m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, 0);
+        m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_render_pass_ptr->Draw(cmd_buffer);
         m_render_pass_ptr->End(cmd_buffer);
 
@@ -395,8 +395,8 @@ namespace Meow
                 m_forward_pass.CreateRenderPass();
                 m_forward_pass.CreateMaterial();
 
-                m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
-                m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
+                m_deferred_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+                m_forward_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
             });
         });
 
@@ -548,20 +548,26 @@ namespace Meow
 
     void EditorWindow::RefreshFrameBuffers()
     {
-        std::vector<vk::ImageView> swapchain_image_views;
-        swapchain_image_views.resize(m_swapchain_data.image_views.size());
-        for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
+        uint32_t swapchain_image_count = static_cast<uint32_t>(m_swapchain_data.images.size());
+
+        m_offscreen_render_targets.resize(swapchain_image_count);
+        for (uint32_t i = 0; i < swapchain_image_count; i++)
         {
-            swapchain_image_views[i] = *m_swapchain_data.image_views[i];
+            m_offscreen_render_targets[i] = ImageData::CreateRenderTarget(m_color_format,
+                                                                          m_surface_data.extent,
+                                                                          vk::ImageUsageFlagBits::eColorAttachment |
+                                                                              vk::ImageUsageFlagBits::eInputAttachment,
+                                                                          vk::ImageAspectFlagBits::eColor,
+                                                                          {},
+                                                                          false);
+            m_offscreen_render_targets[i]->SetDebugName("Offscreen Render Target");
         }
 
-        m_offscreen_render_target = ImageData::CreateRenderTarget(m_color_format,
-                                                                  m_surface_data.extent,
-                                                                  vk::ImageUsageFlagBits::eColorAttachment |
-                                                                      vk::ImageUsageFlagBits::eInputAttachment,
-                                                                  vk::ImageAspectFlagBits::eColor,
-                                                                  {},
-                                                                  false);
+        m_offscreen_render_target_image_views.resize(swapchain_image_count);
+        for (uint32_t i = 0; i < swapchain_image_count; i++)
+        {
+            m_offscreen_render_target_image_views[i] = *m_offscreen_render_targets[i]->image_view;
+        }
 
         m_depth_debugging_attachment = ImageData::CreateAttachment(m_depth_format,
                                                                    m_surface_data.extent,
@@ -569,26 +575,22 @@ namespace Meow
                                                                    vk::ImageAspectFlagBits::eDepth,
                                                                    {},
                                                                    false);
-
-        m_offscreen_render_target->SetDebugName("Offscreen Render Target");
         m_depth_debugging_attachment->SetDebugName("Depth Debugging Attachment");
 
         m_shadow_coord_to_color_pass.BindDepthAttachment(m_depth_debugging_attachment);
 
-        m_shadow_map_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
-        m_depth_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
-        m_shadow_coord_to_color_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view},
-                                                         m_surface_data.extent);
-        m_deferred_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers({*m_offscreen_render_target->image_view}, m_surface_data.extent);
-        m_imgui_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
+        m_shadow_map_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_depth_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_shadow_coord_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_deferred_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_imgui_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);
     }
 
     void EditorWindow::BindImageToImguiPass()
     {
-        m_imgui_pass.RefreshOffscreenRenderTarget(*m_offscreen_render_target->sampler,
-                                                  *m_offscreen_render_target->image_view,
-                                                  static_cast<VkImageLayout>(m_offscreen_render_target->layout));
+        m_imgui_pass.RefreshOffscreenRenderTarget(m_offscreen_render_targets,
+                                                  static_cast<VkImageLayout>(m_offscreen_render_targets[0]->layout));
 
         m_imgui_pass.RefreshShadowMap(
             *m_depth_to_color_pass.GetDepthToColorRenderTarget()->sampler,

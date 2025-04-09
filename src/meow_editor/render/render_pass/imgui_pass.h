@@ -48,7 +48,8 @@ namespace Meow
 
         friend void swap(ImGuiPass& lhs, ImGuiPass& rhs);
 
-        void RefreshOffscreenRenderTarget(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
+        void RefreshOffscreenRenderTarget(std::vector<std::shared_ptr<ImageData>>& offscreen_render_targets,
+                                          VkImageLayout                            image_layout);
         void RefreshShadowMap(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
         void RefreshShadowCoord(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
         void RefreshShadowDepth(VkSampler image_sampler, VkImageView image_view, VkImageLayout image_layout);
@@ -61,8 +62,8 @@ namespace Meow
         std::vector<const char*> m_render_pass_names = {"Deferred", "Forward"};
         Signal<int>              m_on_pass_changed;
 
-        bool            m_is_offscreen_image_valid = false;
-        VkDescriptorSet m_offscreen_image_desc;
+        bool                         m_is_offscreen_image_valid = false;
+        std::vector<VkDescriptorSet> m_offscreen_image_descs;
 
         VkDescriptorSet m_shadow_map_desc;
         VkDescriptorSet m_shadow_coord_desc;

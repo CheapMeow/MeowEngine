@@ -285,7 +285,7 @@ namespace Meow
 
         cmd_buffer.begin({});
 
-        m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, 0);
+        m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, m_current_image_index);
         m_shadow_map_pass.Draw(cmd_buffer);
         m_shadow_map_pass.End(cmd_buffer);
 
@@ -371,16 +371,9 @@ namespace Meow
 
     void GameWindow::RefreshFrameBuffers()
     {
-        std::vector<vk::ImageView> swapchain_image_views;
-        swapchain_image_views.resize(m_swapchain_data.image_views.size());
-        for (int i = 0; i < m_swapchain_data.image_views.size(); i++)
-        {
-            swapchain_image_views[i] = *m_swapchain_data.image_views[i];
-        }
-
-        m_shadow_map_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
-        m_deferred_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
-        m_forward_pass.RefreshFrameBuffers(swapchain_image_views, m_surface_data.extent);
+        m_shadow_map_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);
+        m_deferred_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);
+        m_forward_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);
 
         m_forward_pass.BindShadowMap(m_shadow_map_pass.GetShadowMap());
         m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());

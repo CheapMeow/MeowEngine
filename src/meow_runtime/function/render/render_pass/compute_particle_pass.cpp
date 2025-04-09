@@ -119,19 +119,6 @@ namespace Meow
         g_runtime_context.particle_system->AddGPUParticle2D(1000);
         m_gpu_particle_2d =
             std::static_pointer_cast<GPUParticle2D>(g_runtime_context.particle_system->GetGPUParticle(0));
-
-        const uint32_t max_frames_in_flight = m_gpu_particle_2d->GetMaxFramesInFlight();
-        for (uint32_t i = 0; i < max_frames_in_flight; ++i)
-        {
-            m_particle_render_material->BindBufferToDescriptorSet(
-                "ParticleSSBOIn",
-                m_gpu_particle_2d->GetParticleStorageBuffer()[(i - 1) % max_frames_in_flight].buffer,
-                VK_WHOLE_SIZE,
-                nullptr,
-                (i - 1) % max_frames_in_flight);
-            m_particle_render_material->BindBufferToDescriptorSet(
-                "ParticleSSBOOut", m_gpu_particle_2d->GetParticleStorageBuffer()[i].buffer, VK_WHOLE_SIZE, nullptr, i);
-        }
     }
 
     void ComputeParticlePass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
@@ -164,7 +151,15 @@ namespace Meow
         }
     }
 
-    void ComputeParticlePass::UpdateUniformBuffer() {}
+    void ComputeParticlePass::UpdateUniformBuffer()
+    {
+        std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
+
+        for (std::shared_ptr<GPUParticleBase> particle : particles)
+        {
+            particle->UpdateUniformBuffer();
+        }
+    }
 
     void ComputeParticlePass::Start(const vk::raii::CommandBuffer& command_buffer,
                                     vk::Extent2D                   extent,
@@ -197,18 +192,13 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        const std::vector<std::shared_ptr<GPUParticleBase>> particles =
-            g_runtime_context.particle_system->GetGPUParticles();
+        // uint32_t current_frame_index = g_runtime_context.render_system->ge
+
+        std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
 
         for (std::shared_ptr<GPUParticleBase> particle : particles)
         {
-            if (std::shared_ptr<GPUParticle2D> gpu_particle_2d = std::dynamic_pointer_cast<GPUParticle2D>(particle))
-            {
-                if (gpu_particle_2d->GetParticleCount() == 0)
-                {
-                    continue;
-                }
-            }
+            particle->BindPipeline(command_buffer);
 
             ++draw_call[0];
         }

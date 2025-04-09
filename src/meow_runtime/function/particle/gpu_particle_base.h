@@ -15,6 +15,10 @@ namespace Meow
         {}
         virtual ~GPUParticleBase() override {}
 
+        virtual void UpdateUniformBuffer() {}
+        virtual void BindPipeline(const vk::raii::CommandBuffer& command_buffer) {}
+        virtual void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
+
         const uint32_t              GetParticleCount() const { return m_particle_count; }
         const uint32_t              GetMaxFramesInFlight() const { return k_max_frames_in_flight; }
         std::vector<StorageBuffer>& GetParticleStorageBuffer() { return m_particle_storage_buffer_per_frame; }

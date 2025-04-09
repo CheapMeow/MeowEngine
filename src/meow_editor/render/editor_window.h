@@ -37,8 +37,9 @@ namespace Meow
         // TODO: Dynamic descriptor pool?
         vk::raii::DescriptorPool m_imgui_descriptor_pool = nullptr;
 
-        std::shared_ptr<ImageData> m_offscreen_render_target;
-        bool                       is_offscreen_valid = false;
+        std::vector<std::shared_ptr<ImageData>> m_offscreen_render_targets;
+        std::vector<vk::ImageView>              m_offscreen_render_target_image_views;
+        bool                                    is_offscreen_valid = false;
 
         vk::Format                 m_depth_format               = vk::Format::eD16Unorm;
         std::shared_ptr<ImageData> m_depth_debugging_attachment = nullptr;
