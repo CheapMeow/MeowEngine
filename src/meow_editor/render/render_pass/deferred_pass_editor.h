@@ -34,7 +34,7 @@ namespace Meow
 
         void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index) override;
 
-        void Draw(const vk::raii::CommandBuffer& command_buffer) override;
+        void Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
 
         void AfterPresent() override;
 

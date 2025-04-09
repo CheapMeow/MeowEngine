@@ -49,9 +49,9 @@ namespace Meow
 
         void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index) override;
 
-        void Draw(const vk::raii::CommandBuffer& command_buffer) override;
+        void Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
 
-        void RenderParticles(const vk::raii::CommandBuffer& command_buffer);
+        void RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index);
 
         friend void swap(ComputeParticlePass& lhs, ComputeParticlePass& rhs);
 

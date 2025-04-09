@@ -277,7 +277,7 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_shadow_map->extent));
     }
 
-    void ShadowMapPass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void ShadowMapPass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 

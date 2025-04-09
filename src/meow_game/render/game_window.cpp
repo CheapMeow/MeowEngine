@@ -286,11 +286,11 @@ namespace Meow
         cmd_buffer.begin({});
 
         m_shadow_map_pass.Start(cmd_buffer, m_surface_data.extent, m_image_index);
-        m_shadow_map_pass.Draw(cmd_buffer);
+        m_shadow_map_pass.Draw(cmd_buffer, m_frame_index);
         m_shadow_map_pass.End(cmd_buffer);
 
         m_render_pass_ptr->Start(cmd_buffer, m_surface_data.extent, m_image_index);
-        m_render_pass_ptr->Draw(cmd_buffer);
+        m_render_pass_ptr->Draw(cmd_buffer, m_frame_index);
         m_render_pass_ptr->End(cmd_buffer);
 
         cmd_buffer.end();

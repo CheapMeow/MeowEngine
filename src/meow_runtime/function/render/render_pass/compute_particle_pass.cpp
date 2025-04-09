@@ -178,27 +178,25 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
-    void ComputeParticlePass::Draw(const vk::raii::CommandBuffer& command_buffer)
+    void ComputeParticlePass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
         m_particle_render_material->BindPipeline(command_buffer);
 
-        RenderParticles(command_buffer);
+        RenderParticles(command_buffer, frame_index);
     }
 
-    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer)
+    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
-
-        // uint32_t frame_index = g_runtime_context.render_system->ge
 
         std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
 
         for (std::shared_ptr<GPUParticleBase> particle : particles)
         {
             particle->BindPipeline(command_buffer);
-
+            particle->BindDescriptorSetToPipeline(command_buffer, frame_index);
             ++draw_call[0];
         }
     }
