@@ -41,6 +41,8 @@ namespace Meow
                                                                graphics_queue_family_index);
             m_per_frame_data[i].command_pool = vk::raii::CommandPool(logical_device, command_pool_create_info);
 
+            // graphics
+
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
                 *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
@@ -51,6 +53,17 @@ namespace Meow
             m_per_frame_data[i].render_finished_semaphore =
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
             m_per_frame_data[i].in_flight_fence = vk::raii::Fence(logical_device, vk::FenceCreateInfo());
+
+            // compute
+
+            vk::CommandBufferAllocateInfo compute_command_buffer_allocate_info(
+                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+            vk::raii::CommandBuffers compute_command_buffers(logical_device, compute_command_buffer_allocate_info);
+            m_per_frame_data[i].compute_command_buffer = std::move(compute_command_buffers[0]);
+
+            m_per_frame_data[i].compute_finished_semaphore =
+                vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
+            m_per_frame_data[i].compute_in_flight_fence = vk::raii::Fence(logical_device, vk::FenceCreateInfo());
         }
     }
 

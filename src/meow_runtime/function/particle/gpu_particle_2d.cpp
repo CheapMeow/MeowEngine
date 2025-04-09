@@ -95,4 +95,9 @@ namespace Meow
     {
         m_particle_comp_material->BindDescriptorSetToPipeline(command_buffer, 0, 1, 0, false, frame_index);
     }
+
+    void GPUParticle2D::Dispatch(const vk::raii::CommandBuffer& command_buffer)
+    {
+        command_buffer.dispatch(m_particle_count / 256, 1, 1); // TODO: use local size from shader
+    }
 } // namespace Meow

@@ -18,6 +18,7 @@ namespace Meow
         virtual void UpdateUniformBuffer() {}
         virtual void BindPipeline(const vk::raii::CommandBuffer& command_buffer) {}
         virtual void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
+        virtual void Dispatch(const vk::raii::CommandBuffer& command_buffer) {}
 
         const uint32_t              GetParticleCount() const { return m_particle_count; }
         const uint32_t              GetMaxFramesInFlight() const { return k_max_frames_in_flight; }

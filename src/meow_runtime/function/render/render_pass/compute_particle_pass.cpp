@@ -197,6 +197,7 @@ namespace Meow
         {
             particle->BindPipeline(command_buffer);
             particle->BindDescriptorSetToPipeline(command_buffer, frame_index);
+            particle->Dispatch(command_buffer);
             ++draw_call[0];
         }
     }
