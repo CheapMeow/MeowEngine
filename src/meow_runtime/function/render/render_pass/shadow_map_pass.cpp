@@ -261,13 +261,11 @@ namespace Meow
         }
     }
 
-    void ShadowMapPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                              vk::Extent2D                   extent,
-                              uint32_t                       current_image_index)
+    void ShadowMapPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         draw_call[0] = 0;
 
-        RenderPassBase::Start(command_buffer, m_shadow_map->extent, current_image_index);
+        RenderPassBase::Start(command_buffer, m_shadow_map->extent, image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,

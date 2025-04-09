@@ -67,9 +67,7 @@ namespace Meow
 
         void UpdateUniformBuffer() override;
 
-        void Start(const vk::raii::CommandBuffer& command_buffer,
-                   vk::Extent2D                   extent,
-                   uint32_t                       current_image_index) override;
+        void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index) override;
 
         void RenderGBuffer(const vk::raii::CommandBuffer& command_buffer);
 

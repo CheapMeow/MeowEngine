@@ -171,11 +171,10 @@ namespace Meow
 #endif
     }
 
-    void ForwardPassGame::Start(const vk::raii::CommandBuffer& command_buffer,
-                                vk::Extent2D                   extent,
-                                uint32_t                       current_image_index)
+    void
+    ForwardPassGame::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
-        ForwardPassBase::Start(command_buffer, extent, current_image_index);
+        ForwardPassBase::Start(command_buffer, extent, image_index);
     }
 
     void ForwardPassGame::Draw(const vk::raii::CommandBuffer& command_buffer)

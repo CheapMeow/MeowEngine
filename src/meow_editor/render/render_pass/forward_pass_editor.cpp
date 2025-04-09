@@ -191,14 +191,13 @@ namespace Meow
 #endif
     }
 
-    void ForwardPassEditor::Start(const vk::raii::CommandBuffer& command_buffer,
-                                  vk::Extent2D                   extent,
-                                  uint32_t                       current_image_index)
+    void
+    ForwardPassEditor::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         if (m_query_enabled)
             command_buffer.resetQueryPool(*query_pool, 0, 2);
 
-        ForwardPassBase::Start(command_buffer, extent, current_image_index);
+        ForwardPassBase::Start(command_buffer, extent, image_index);
     }
 
     void ForwardPassEditor::Draw(const vk::raii::CommandBuffer& command_buffer)

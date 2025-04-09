@@ -37,8 +37,7 @@ namespace Meow
 
         virtual void UpdateUniformBuffer() {}
 
-        virtual void
-        Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index);
+        virtual void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index);
 
         virtual void Draw(const vk::raii::CommandBuffer& command_buffer) {}
 

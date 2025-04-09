@@ -535,16 +535,15 @@ namespace Meow
         }
     }
 
-    void ForwardPassBase::Start(const vk::raii::CommandBuffer& command_buffer,
-                                vk::Extent2D                   extent,
-                                uint32_t                       current_image_index)
+    void
+    ForwardPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         for (int i = 0; i < 3; i++)
         {
             draw_call[i] = 0;
         }
 
-        RenderPassBase::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,

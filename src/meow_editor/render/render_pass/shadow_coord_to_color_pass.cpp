@@ -333,14 +333,14 @@ namespace Meow
 
     void ShadowCoordToColorPass::Start(const vk::raii::CommandBuffer& command_buffer,
                                        vk::Extent2D                   extent,
-                                       uint32_t                       current_image_index)
+                                       uint32_t                       image_index)
     {
         for (int i = 0; i < 1; i++)
         {
             draw_call[i] = 0;
         }
 
-        RenderPassBase::Start(command_buffer, m_shadow_coord_to_color_render_target->extent, current_image_index);
+        RenderPassBase::Start(command_buffer, m_shadow_coord_to_color_render_target->extent, image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,

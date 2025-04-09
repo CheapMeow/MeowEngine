@@ -39,7 +39,7 @@ namespace Meow
         bool           m_iconified            = false;
         const uint64_t k_fence_timeout        = 100000000;
         const uint32_t k_max_frames_in_flight = 2;
-        uint32_t       m_current_frame_index  = 0;
-        uint32_t       m_current_image_index  = 0;
+        uint32_t       m_frame_index          = 0;
+        uint32_t       m_image_index          = 0;
     };
 } // namespace Meow

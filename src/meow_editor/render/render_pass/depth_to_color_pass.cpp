@@ -105,7 +105,7 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
-        ShaderFactory shader_factory;
+        ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
         auto depth_to_color_shader = shader_factory.clear()
@@ -167,11 +167,10 @@ namespace Meow
         }
     }
 
-    void DepthToColorPass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                 vk::Extent2D                   extent,
-                                 uint32_t                       current_image_index)
+    void
+    DepthToColorPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
-        RenderPassBase::Start(command_buffer, m_depth_to_color_render_target->extent, current_image_index);
+        RenderPassBase::Start(command_buffer, m_depth_to_color_render_target->extent, image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,

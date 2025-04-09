@@ -203,11 +203,10 @@ namespace Meow
         CreateMaterial();
     }
 
-    void DeferredPassGame::Start(const vk::raii::CommandBuffer& command_buffer,
-                                 vk::Extent2D                   extent,
-                                 uint32_t                       current_image_index)
+    void
+    DeferredPassGame::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
-        DeferredPassBase::Start(command_buffer, extent, current_image_index);
+        DeferredPassBase::Start(command_buffer, extent, image_index);
     }
 
     void DeferredPassGame::Draw(const vk::raii::CommandBuffer& command_buffer)

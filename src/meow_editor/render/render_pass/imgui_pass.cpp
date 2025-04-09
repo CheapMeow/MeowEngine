@@ -96,8 +96,7 @@ namespace Meow
         }
     }
 
-    void
-    ImGuiPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
+    void ImGuiPass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         FUNCTION_TIMER();
 
@@ -181,7 +180,7 @@ namespace Meow
                         }
                     },
                     reinterpret_cast<void*>(const_cast<vk::raii::CommandBuffer*>(&command_buffer)));
-                ImGui::Image((ImTextureID)m_offscreen_image_descs[current_image_index], image_size);
+                ImGui::Image((ImTextureID)m_offscreen_image_descs[image_index], image_size);
                 draw_list->AddCallback(
                     [](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
                         vk::raii::CommandBuffer* command_buffer_ptr =
@@ -311,7 +310,7 @@ namespace Meow
 
         ImGui::End();
 
-        RenderPassBase::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, image_index);
     }
 
     void ImGuiPass::Draw(const vk::raii::CommandBuffer& command_buffer)

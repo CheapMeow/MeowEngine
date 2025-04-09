@@ -161,13 +161,12 @@ namespace Meow
         }
     }
 
-    void ComputeParticlePass::Start(const vk::raii::CommandBuffer& command_buffer,
-                                    vk::Extent2D                   extent,
-                                    uint32_t                       current_image_index)
+    void
+    ComputeParticlePass::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         draw_call[0] = 0;
 
-        RenderPassBase::Start(command_buffer, extent, current_image_index);
+        RenderPassBase::Start(command_buffer, extent, image_index);
 
         command_buffer.setViewport(0,
                                    vk::Viewport(0.0f,
@@ -192,7 +191,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        // uint32_t current_frame_index = g_runtime_context.render_system->ge
+        // uint32_t frame_index = g_runtime_context.render_system->ge
 
         std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
 

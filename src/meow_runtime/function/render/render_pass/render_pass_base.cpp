@@ -13,13 +13,12 @@ namespace Meow
         ASSERT(m_color_format != vk::Format::eUndefined);
     }
 
-    void
-    RenderPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t current_image_index)
+    void RenderPassBase::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         FUNCTION_TIMER();
 
         vk::RenderPassBeginInfo render_pass_begin_info(
-            *render_pass, *framebuffers[current_image_index], vk::Rect2D(vk::Offset2D(0, 0), extent), clear_values);
+            *render_pass, *framebuffers[image_index], vk::Rect2D(vk::Offset2D(0, 0), extent), clear_values);
         command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
     }
 

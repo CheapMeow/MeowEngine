@@ -222,9 +222,8 @@ namespace Meow
         m_render_stat[1].image_meta_map         = m_quad_material->shader->image_meta_map;
     }
 
-    void DeferredPassEditor::Start(const vk::raii::CommandBuffer& command_buffer,
-                                   vk::Extent2D                   extent,
-                                   uint32_t                       current_image_index)
+    void
+    DeferredPassEditor::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
         if (m_query_enabled)
         {
@@ -234,7 +233,7 @@ namespace Meow
             }
         }
 
-        DeferredPassBase::Start(command_buffer, extent, current_image_index);
+        DeferredPassBase::Start(command_buffer, extent, image_index);
     }
 
     void DeferredPassEditor::Draw(const vk::raii::CommandBuffer& command_buffer)
