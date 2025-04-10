@@ -38,7 +38,7 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphics_pipeline);
+        command_buffer.bindPipeline(m_bind_point, *m_pipeline);
     }
 
     void Material::BindBufferToDescriptorSet(const std::string&          name,
@@ -64,6 +64,11 @@ namespace Meow
                 {
                     meta  = &it->second;
                     range = meta->size;
+                    break;
+                }
+                if (it->second.descriptorType == vk::DescriptorType::eStorageBuffer)
+                {
+                    meta  = &it->second;
                     break;
                 }
             }
@@ -300,7 +305,7 @@ namespace Meow
 
             vk::DebugUtilsObjectNameInfoEXT name_info = {
                 vk::ObjectType::ePipeline,
-                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *graphics_pipeline),
+                NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkPipeline, *m_pipeline),
                 pipeline_name.c_str()};
             logical_device.setDebugUtilsObjectNameEXT(name_info);
         }
@@ -314,7 +319,7 @@ namespace Meow
         swap(static_cast<ResourceBase&>(lhs), static_cast<ResourceBase&>(rhs));
 
         std::swap(lhs.shader, rhs.shader);
-        std::swap(lhs.graphics_pipeline, rhs.graphics_pipeline);
+        std::swap(lhs.m_pipeline, rhs.m_pipeline);
         std::swap(lhs.m_actived, rhs.m_actived);
         std::swap(lhs.m_obj_count, rhs.m_obj_count);
         std::swap(lhs.m_per_obj_dynamic_offsets, rhs.m_per_obj_dynamic_offsets);

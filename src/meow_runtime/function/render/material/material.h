@@ -75,8 +75,7 @@ namespace Meow
     private:
         void CreateUniformBuffer();
 
-        vk::raii::Pipeline graphics_pipeline = nullptr;
-        vk::raii::Pipeline compute_pipeline  = nullptr;
+        vk::raii::Pipeline m_pipeline = nullptr;
 
         // stored for binding descriptor set
 
@@ -88,6 +87,7 @@ namespace Meow
         std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;
         std::unique_ptr<UniformBuffer>                                  m_dynamic_uniform_buffer;
 
-        ShadingModelType m_shading_model_type;
+        ShadingModelType      m_shading_model_type;
+        vk::PipelineBindPoint m_bind_point;
     };
 } // namespace Meow

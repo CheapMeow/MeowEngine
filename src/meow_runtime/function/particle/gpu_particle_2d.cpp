@@ -45,13 +45,13 @@ namespace Meow
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
             m_particle_comp_material->BindBufferToDescriptorSet(
-                "ParticleSSBOIn",
+                "inParticles",
                 m_particle_storage_buffer_per_frame[(i - 1) % k_max_frames_in_flight].buffer,
                 VK_WHOLE_SIZE,
                 nullptr,
                 (i - 1) % k_max_frames_in_flight);
             m_particle_comp_material->BindBufferToDescriptorSet(
-                "ParticleSSBOOut", m_particle_storage_buffer_per_frame[i].buffer, VK_WHOLE_SIZE, nullptr, i);
+                "outParticles", m_particle_storage_buffer_per_frame[i].buffer, VK_WHOLE_SIZE, nullptr, i);
         }
     }
 

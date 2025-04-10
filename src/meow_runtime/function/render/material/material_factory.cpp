@@ -298,7 +298,7 @@ namespace Meow
             *render_pass,                                       /* renderPass */
             subpass);                                           /* subpass */
 
-        material_ptr->graphics_pipeline =
+        material_ptr->m_pipeline =
             vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
 
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
@@ -312,6 +312,8 @@ namespace Meow
         }
 
         material_ptr->CreateUniformBuffer();
+
+        material_ptr->m_bind_point = vk::PipelineBindPoint::eGraphics;
     }
 
     void MaterialFactory::CreateComputePipeline(const vk::raii::Device& logical_device,
@@ -323,7 +325,7 @@ namespace Meow
             context.pipeline_shader_stage_create_infos[0], /* pStages */
             *shader->pipeline_layout);                     /* layout */
 
-        material_ptr->compute_pipeline = vk::raii::Pipeline(logical_device, nullptr, compute_pipeline_create_info);
+        material_ptr->m_pipeline = vk::raii::Pipeline(logical_device, nullptr, compute_pipeline_create_info);
 
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
 
@@ -334,7 +336,9 @@ namespace Meow
             material_ptr->m_descriptor_sets_per_frame.push_back(
                 descriptor_allocator.Allocate(shader->descriptor_set_layouts));
         }
-        
+
         material_ptr->CreateUniformBuffer();
+
+        material_ptr->m_bind_point = vk::PipelineBindPoint::eCompute;
     }
 } // namespace Meow
