@@ -32,11 +32,11 @@ namespace Meow
 
         void RefreshBuffer();
 
-        void BindOnly(const vk::raii::CommandBuffer& cmd_buffer);
+        void BindOnly(const vk::raii::CommandBuffer& command_buffer);
 
-        void DrawOnly(const vk::raii::CommandBuffer& cmd_buffer);
+        void DrawOnly(const vk::raii::CommandBuffer& command_buffer);
 
-        void BindDrawCmd(const vk::raii::CommandBuffer& cmd_buffer);
+        void BindDrawCmd(const vk::raii::CommandBuffer& command_buffer);
 
         ~ModelMesh() { link_node = nullptr; }
     };
