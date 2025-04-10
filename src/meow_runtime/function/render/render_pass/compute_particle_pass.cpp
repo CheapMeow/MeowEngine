@@ -182,12 +182,11 @@ namespace Meow
     {
         FUNCTION_TIMER();
 
-        m_particle_render_material->BindPipeline(command_buffer);
-
+        ComputeParticles(command_buffer, frame_index);
         RenderParticles(command_buffer, frame_index);
     }
 
-    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void ComputeParticlePass::ComputeParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -199,6 +198,23 @@ namespace Meow
             particle->BindDescriptorSetToPipeline(command_buffer, frame_index);
             particle->Dispatch(command_buffer);
             ++draw_call[0];
+        }
+    }
+
+    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    {
+        FUNCTION_TIMER();
+
+        m_particle_render_material->BindPipeline(command_buffer);
+
+        std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
+
+        for (std::shared_ptr<GPUParticleBase> particle : particles)
+        {
+            Meow::StorageBuffer& storage_buffer = particle->GetParticleStorageBuffer()[frame_index];
+            command_buffer.bindVertexBuffers(0, {*storage_buffer.buffer}, {storage_buffer.offset});
+            command_buffer.draw(particle->GetParticleCount(), 1, 0, 0, 0);
+            ++draw_call[1];
         }
     }
 

@@ -51,6 +51,7 @@ namespace Meow
 
         void Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
 
+        void ComputeParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index);
         void RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index);
 
         friend void swap(ComputeParticlePass& lhs, ComputeParticlePass& rhs);
@@ -59,7 +60,7 @@ namespace Meow
         std::shared_ptr<Material>      m_particle_render_material = nullptr;
         std::shared_ptr<GPUParticle2D> m_gpu_particle_2d          = nullptr;
 
-        std::string m_pass_names[1];
-        int         draw_call[1] = {0};
+        std::string m_pass_names[2];
+        int         draw_call[2] = {0, 0};
     };
 } // namespace Meow
