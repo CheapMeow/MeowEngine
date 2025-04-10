@@ -1,6 +1,7 @@
 #pragma once
 
 #include "meow_runtime/function/object/game_object.h"
+#include "meow_runtime/function/render/render_pass/compute_particle_pass.h"
 #include "meow_runtime/function/render/render_pass/shadow_map_pass.h"
 #include "meow_runtime/function/window/graphics_window.h"
 #include "render/render_pass/deferred_pass_editor.h"
@@ -31,6 +32,7 @@ namespace Meow
         ShadowCoordToColorPass m_shadow_coord_to_color_pass = nullptr;
         DeferredPassEditor     m_deferred_pass              = nullptr;
         ForwardPassEditor      m_forward_pass               = nullptr;
+        ComputeParticlePass    m_compute_particle_pass      = nullptr;
         ImGuiPass              m_imgui_pass                 = nullptr;
         RenderPassBase*        m_render_pass_ptr            = nullptr;
 

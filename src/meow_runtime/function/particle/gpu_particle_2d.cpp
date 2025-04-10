@@ -15,8 +15,7 @@ namespace Meow
             g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
-        k_max_frames_in_flight =
-            g_runtime_context.window_system->GetCurrentFocusGraphicsWindow()->GetMaxFramesInFlight();
+        k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_particle_data.resize(particle_count);
 
@@ -33,7 +32,8 @@ namespace Meow
         ShaderFactory   shader_factory;
         MaterialFactory material_factory;
 
-        auto particle_shader = shader_factory.clear().SetComputeShader("builtin/shaders/particle.comp.spv").Create();
+        auto particle_shader =
+            shader_factory.clear().SetComputeShader("builtin/shaders/gpu_particle_2d.comp.spv").Create();
 
         m_particle_comp_material = std::make_shared<Material>(particle_shader);
         g_runtime_context.resource_system->Register(m_particle_comp_material);

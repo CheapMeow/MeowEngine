@@ -7,6 +7,8 @@ namespace Meow
     ParticleSystem::ParticleSystem() {}
     ParticleSystem::~ParticleSystem() {}
 
+    void ParticleSystem::Start() { AddGPUParticle2D(1000); }
+
     void ParticleSystem::AddGPUParticle2D(uint32_t particle_count)
     {
         m_gpu_particles.push_back(std::make_shared<GPUParticle2D>(particle_count));

@@ -324,5 +324,17 @@ namespace Meow
             *shader->pipeline_layout);                     /* layout */
 
         material_ptr->compute_pipeline = vk::raii::Pipeline(logical_device, nullptr, compute_pipeline_create_info);
+
+        DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
+
+        material_ptr->m_descriptor_set_duplicate_number = m_descriptor_set_duplicate_number;
+        material_ptr->m_descriptor_sets_per_frame.clear();
+        for (uint32_t i = 0; i < m_descriptor_set_duplicate_number; ++i)
+        {
+            material_ptr->m_descriptor_sets_per_frame.push_back(
+                descriptor_allocator.Allocate(shader->descriptor_set_layouts));
+        }
+        
+        material_ptr->CreateUniformBuffer();
     }
 } // namespace Meow

@@ -37,9 +37,10 @@ namespace Meow
         const uint32_t                GetGraphicsQueueFamiliyIndex() const { return m_graphics_queue_family_index; }
         const uint32_t                GetPresentQueueFamilyIndex() const { return m_present_queue_family_index; }
         const vk::SampleCountFlagBits GetMSAASamples() const { return m_msaa_samples; }
-        const bool GetDepthWritebackResolveSupported() const { return m_depth_writeback_resolve_supported; }
-        const bool GetResolveDepthOnWriteback() const { return m_resolve_depth_on_writeback; }
-        const bool GetPostProcessRunning() const { return m_postprocess_running; }
+        const bool     GetDepthWritebackResolveSupported() const { return m_depth_writeback_resolve_supported; }
+        const bool     GetResolveDepthOnWriteback() const { return m_resolve_depth_on_writeback; }
+        const bool     GetPostProcessRunning() const { return m_postprocess_running; }
+        const uint32_t GetMaxFramesInFlight() const { return k_max_frames_in_flight; }
 
     private:
         void CreateVulkanInstance();
@@ -98,5 +99,7 @@ namespace Meow
         uint32_t m_graphics_queue_family_index = 0;
         uint32_t m_present_queue_family_index  = 0;
         uint32_t m_compute_queue_family_index  = 0;
+
+        const uint32_t k_max_frames_in_flight = 2;
     };
 } // namespace Meow

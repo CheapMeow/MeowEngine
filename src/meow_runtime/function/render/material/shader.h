@@ -191,8 +191,8 @@ namespace Meow
         ~Shader();
 
     private:
-        vk::Device                        m_device     = {};
-        const vk::raii::DeviceDispatcher* m_dispatcher = nullptr;
+        vk::Device                                m_device     = {};
+        const vk::raii::detail::DeviceDispatcher* m_dispatcher = nullptr;
 
         friend class ShaderFactory;
     };

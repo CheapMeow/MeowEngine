@@ -113,12 +113,6 @@ namespace Meow
         material_factory.CreatePipeline(
             logical_device, render_pass, particle_render_shader.get(), m_particle_render_material.get(), 0);
         m_particle_render_material->SetDebugName("Particle Render Material");
-
-        // TODO: temp
-
-        g_runtime_context.particle_system->AddGPUParticle2D(1000);
-        m_gpu_particle_2d =
-            std::static_pointer_cast<GPUParticle2D>(g_runtime_context.particle_system->GetGPUParticle(0));
     }
 
     void ComputeParticlePass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,

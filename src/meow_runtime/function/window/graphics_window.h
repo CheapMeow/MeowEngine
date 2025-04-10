@@ -21,7 +21,6 @@ namespace Meow
 
         virtual ~GraphicsWindow() override {}
 
-        uint32_t           GetMaxFramesInFlight() const { return k_max_frames_in_flight; }
         void               CreateSurface();
         const SurfaceData& GetSurfaceData() { return m_surface_data; }
         const vk::Format   GetColorFormat() { return m_color_format; }
@@ -35,11 +34,10 @@ namespace Meow
         std::vector<vk::ImageView> m_swapchain_image_views;
         std::vector<PerFrameData>  m_per_frame_data;
 
-        bool           m_framebuffer_resized  = false;
-        bool           m_iconified            = false;
-        const uint64_t k_fence_timeout        = 100000000;
-        const uint32_t k_max_frames_in_flight = 2;
-        uint32_t       m_frame_index          = 0;
-        uint32_t       m_image_index          = 0;
+        bool           m_framebuffer_resized = false;
+        bool           m_iconified           = false;
+        const uint64_t k_fence_timeout       = 100000000;
+        uint32_t       m_frame_index         = 0;
+        uint32_t       m_image_index         = 0;
     };
 } // namespace Meow

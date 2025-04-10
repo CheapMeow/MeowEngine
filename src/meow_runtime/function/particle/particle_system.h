@@ -12,7 +12,7 @@ namespace Meow
         ParticleSystem();
         ~ParticleSystem();
 
-        void Start() override {}
+        void Start() override;
 
         void Tick(float dt) override {}
 

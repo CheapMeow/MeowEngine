@@ -300,9 +300,11 @@ namespace Meow
         auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
         auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
         auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
+        const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_shadow_map_pass.UpdateUniformBuffer();
         m_shadow_coord_to_color_pass.UpdateUniformBuffer();
+        m_compute_particle_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
         m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
 
@@ -332,6 +334,10 @@ namespace Meow
         m_shadow_coord_to_color_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
         m_shadow_coord_to_color_pass.Draw(command_buffer, m_frame_index);
         m_shadow_coord_to_color_pass.End(command_buffer);
+
+        m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_compute_particle_pass.Draw(command_buffer, m_frame_index);
+        m_compute_particle_pass.End(command_buffer);
 
         m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
         m_render_pass_ptr->Draw(command_buffer, m_frame_index);
@@ -379,6 +385,7 @@ namespace Meow
         m_shadow_map_pass            = ShadowMapPass(m_surface_data);
         m_depth_to_color_pass        = DepthToColorPass(m_surface_data);
         m_shadow_coord_to_color_pass = ShadowCoordToColorPass(m_surface_data);
+        m_compute_particle_pass      = ComputeParticlePass(m_surface_data);
         m_deferred_pass              = DeferredPassEditor(m_surface_data);
         m_forward_pass               = ForwardPassEditor(m_surface_data);
         m_imgui_pass                 = ImGuiPass(m_surface_data);
@@ -438,8 +445,9 @@ namespace Meow
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::CommandPool&    onetime_submit_command_pool =
             g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
-        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
-        const vk::raii::Queue& graphics_queue  = g_runtime_context.render_system->GetGraphicsQueue();
+        const auto graphics_queue_family_index        = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const vk::raii::Queue& graphics_queue         = g_runtime_context.render_system->GetGraphicsQueue();
+        const auto             k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eSampler, 1000},
                                                           {vk::DescriptorType::eCombinedImageSampler, 1000},
@@ -581,6 +589,7 @@ namespace Meow
         m_shadow_map_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_depth_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_shadow_coord_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_compute_particle_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);

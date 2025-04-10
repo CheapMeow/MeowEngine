@@ -23,14 +23,8 @@ namespace Meow
             m_current_glfw_window = window->GetGLFWWindow();
         }
 
-        std::shared_ptr<GraphicsWindow> GetCurrentFocusGraphicsWindow()
-        {
-            return std::static_pointer_cast<GraphicsWindow>(m_current_window);
-        }
-
         std::shared_ptr<Window> GetCurrentFocusWindow() { return m_current_window; }
-
-        GLFWwindow* GetCurrentFocusGLFWWindow() { return m_current_glfw_window; }
+        GLFWwindow*             GetCurrentFocusGLFWWindow() { return m_current_glfw_window; }
 
     private:
         GLFWwindow*             m_current_glfw_window = nullptr;

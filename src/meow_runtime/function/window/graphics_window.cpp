@@ -33,6 +33,7 @@ namespace Meow
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
         const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const auto k_max_frames_in_flight      = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_per_frame_data.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)

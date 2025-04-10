@@ -193,7 +193,6 @@ namespace Meow
         }
 
         auto it = shader->buffer_meta_map.find(name);
-#ifdef MEOW_DEBUG
         if (it == shader->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
@@ -212,7 +211,6 @@ namespace Meow
                        it->second.dynamic_seq);
             return;
         }
-#endif
 
         m_per_obj_dynamic_offsets[m_obj_count][it->second.dynamic_seq] =
             static_cast<uint32_t>(m_dynamic_uniform_buffer->Populate(data, it->second.size));
@@ -227,7 +225,6 @@ namespace Meow
         }
 
         auto it = shader->buffer_meta_map.find(name);
-#ifdef MEOW_DEBUG
         if (it == shader->buffer_meta_map.end())
         {
             MEOW_ERROR("Uniform {} not found.", name);
@@ -238,7 +235,6 @@ namespace Meow
         {
             MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
-#endif
 
         m_uniform_buffers[it->first]->Reset();
         m_uniform_buffers[it->first]->Populate(data, size);

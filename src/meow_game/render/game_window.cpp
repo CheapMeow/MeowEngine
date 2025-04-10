@@ -265,6 +265,7 @@ namespace Meow
         auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
         auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
         auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
+        const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_shadow_map_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
