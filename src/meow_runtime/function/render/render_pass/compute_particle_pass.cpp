@@ -213,7 +213,7 @@ namespace Meow
         {
             Meow::StorageBuffer& storage_buffer = particle->GetParticleStorageBuffer()[frame_index];
             command_buffer.bindVertexBuffers(0, {*storage_buffer.buffer}, {storage_buffer.offset});
-            command_buffer.draw(particle->GetParticleCount(), 1, 0, 0, 0);
+            command_buffer.draw(particle->GetParticleCount(), 1, 0, 0);
             ++draw_call[1];
         }
     }
