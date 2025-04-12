@@ -38,6 +38,7 @@ namespace Meow
         m_particle_comp_material = std::make_shared<Material>(particle_shader);
         g_runtime_context.resource_system->Register(m_particle_comp_material);
         material_factory.Init(particle_shader.get());
+        material_factory.SetDescriptorSetDuplicateNumber(k_max_frames_in_flight);
         material_factory.CreateComputePipeline(logical_device, particle_shader.get(), m_particle_comp_material.get());
 
         // TODO: multiple gpu particles reuse same pipeline,
