@@ -302,6 +302,8 @@ namespace Meow
         auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
         const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
 
+        auto& compute_command_buffer = per_frame_data.compute_command_buffer;
+
         m_shadow_map_pass.UpdateUniformBuffer();
         m_shadow_coord_to_color_pass.UpdateUniformBuffer();
         m_compute_particle_pass.UpdateUniformBuffer();
@@ -336,6 +338,7 @@ namespace Meow
         m_shadow_coord_to_color_pass.End(command_buffer);
 
         m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_compute_particle_pass.Compute(compute_command_buffer, m_frame_index);
         m_compute_particle_pass.Draw(command_buffer, m_frame_index);
         m_compute_particle_pass.End(command_buffer);
 

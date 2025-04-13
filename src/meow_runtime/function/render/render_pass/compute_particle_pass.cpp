@@ -172,15 +172,7 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
-    void ComputeParticlePass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
-    {
-        FUNCTION_TIMER();
-
-        ComputeParticles(command_buffer, frame_index);
-        RenderParticles(command_buffer, frame_index);
-    }
-
-    void ComputeParticlePass::ComputeParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void ComputeParticlePass::Compute(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -195,7 +187,7 @@ namespace Meow
         }
     }
 
-    void ComputeParticlePass::RenderParticles(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void ComputeParticlePass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
