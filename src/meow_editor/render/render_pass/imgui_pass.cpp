@@ -313,7 +313,7 @@ namespace Meow
         RenderPassBase::Start(command_buffer, extent, image_index);
     }
 
-    void ImGuiPass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void ImGuiPass::RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 

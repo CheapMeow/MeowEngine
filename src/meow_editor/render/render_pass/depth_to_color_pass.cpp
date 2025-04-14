@@ -182,7 +182,7 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), m_depth_to_color_render_target->extent));
     }
 
-    void DepthToColorPass::Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void DepthToColorPass::RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 

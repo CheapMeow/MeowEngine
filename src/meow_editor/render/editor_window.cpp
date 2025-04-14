@@ -326,28 +326,28 @@ namespace Meow
         command_buffer.begin({});
 
         m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_shadow_map_pass.Draw(command_buffer, m_frame_index);
+        m_shadow_map_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_map_pass.End(command_buffer);
 
         m_depth_to_color_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_depth_to_color_pass.Draw(command_buffer, m_frame_index);
+        m_depth_to_color_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_depth_to_color_pass.End(command_buffer);
 
         m_shadow_coord_to_color_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_shadow_coord_to_color_pass.Draw(command_buffer, m_frame_index);
+        m_shadow_coord_to_color_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_coord_to_color_pass.End(command_buffer);
 
         m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_compute_particle_pass.Compute(compute_command_buffer, m_frame_index);
-        m_compute_particle_pass.Draw(command_buffer, m_frame_index);
+        m_compute_particle_pass.RecordComputeCommand(compute_command_buffer, m_frame_index);
+        m_compute_particle_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_compute_particle_pass.End(command_buffer);
 
         m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_render_pass_ptr->Draw(command_buffer, m_frame_index);
+        m_render_pass_ptr->RecordGraphicsCommand(command_buffer, m_frame_index);
         m_render_pass_ptr->End(command_buffer);
 
         m_imgui_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_imgui_pass.Draw(command_buffer, m_frame_index);
+        m_imgui_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_imgui_pass.End(command_buffer);
 
         command_buffer.end();

@@ -41,7 +41,7 @@ namespace Meow
 
         void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index) override;
 
-        void Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
+        void RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
 
         void                       BindShadowMap(std::shared_ptr<ImageData> shadow_map);
         std::shared_ptr<ImageData> GetDepthToColorRenderTarget() { return m_depth_to_color_render_target; }

@@ -39,8 +39,8 @@ namespace Meow
 
         virtual void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index);
 
-        virtual void Compute(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
-        virtual void Draw(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
+        virtual void RecordComputeCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
+        virtual void RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) {}
 
         virtual void End(const vk::raii::CommandBuffer& command_buffer);
 
