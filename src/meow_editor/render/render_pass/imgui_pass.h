@@ -72,8 +72,5 @@ namespace Meow
         FlameGraphWidget        m_flame_graph_widget;
         BuiltinStatisticsWidget m_builtin_stat_widget;
         GizmoWidget             m_gizmo_widget;
-
-        bool                m_query_enabled = true;
-        vk::raii::QueryPool query_pool      = nullptr;
     };
 } // namespace Meow

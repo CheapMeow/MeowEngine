@@ -1,11 +1,12 @@
 #pragma once
 
 #include "meow_runtime/function/render/render_pass/forward_pass_base.h"
+#include "pipeline_queryable.h"
 #include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
-    class ForwardPassEditor : public ForwardPassBase
+    class ForwardPassEditor : public ForwardPassBase, public PipelineQueryable
     {
     public:
         ForwardPassEditor(std::nullptr_t)
@@ -42,9 +43,6 @@ namespace Meow
         friend void swap(ForwardPassEditor& lhs, ForwardPassEditor& rhs);
 
     private:
-        bool                m_query_enabled = true;
-        vk::raii::QueryPool query_pool      = nullptr;
-
         BuiltinRenderStat m_render_stat[2];
     };
 } // namespace Meow

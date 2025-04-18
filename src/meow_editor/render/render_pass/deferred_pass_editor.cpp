@@ -13,6 +13,8 @@ namespace Meow
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
+        CreateQueryPool(logical_device, 2);
+
         m_pass_names[0] = "GBuffer Subpass";
         m_pass_names[1] = "Mesh Lighting Subpass";
 
@@ -206,13 +208,6 @@ namespace Meow
 
         CreateMaterial();
 
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 2,
-                                                        .pipelineStatistics = (1 << 11) - 1};
-
-        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
-
         m_render_stat[0].vertex_attribute_metas = m_obj2attachment_material->shader->vertex_attribute_metas;
         m_render_stat[0].buffer_meta_map        = m_obj2attachment_material->shader->buffer_meta_map;
         m_render_stat[0].image_meta_map         = m_obj2attachment_material->shader->image_meta_map;
@@ -225,14 +220,7 @@ namespace Meow
     void
     DeferredPassEditor::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
-        if (m_query_enabled)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                command_buffer.resetQueryPool(*query_pool, 0, 2);
-            }
-        }
-
+        ResetQueryPool(command_buffer);
         DeferredPassBase::Start(command_buffer, extent, image_index);
     }
 
@@ -242,31 +230,25 @@ namespace Meow
 
         m_obj2attachment_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 0, {});
-
+        BeginQuery(command_buffer);
         RenderGBuffer(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 0);
+        EndQuery(command_buffer);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_quad_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 1, {});
-
+        BeginQuery(command_buffer);
         RenderOpaqueMeshes(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 1);
+        EndQuery(command_buffer);
 
         command_buffer.nextSubpass(vk::SubpassContents::eInline);
 
         m_skybox_material->BindPipeline(command_buffer);
 
+        BeginQuery(command_buffer);
         RenderSkybox(command_buffer);
+        EndQuery(command_buffer);
     }
 
     void DeferredPassEditor::AfterPresent()
@@ -277,9 +259,7 @@ namespace Meow
         {
             for (int i = 1; i >= 0; i--)
             {
-                std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
-
+                std::pair<vk::Result, std::vector<uint32_t>> query_results = GetQueryResults(i);
                 g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
             }
         }
@@ -296,9 +276,8 @@ namespace Meow
         using std::swap;
 
         swap(static_cast<DeferredPassBase&>(lhs), static_cast<DeferredPassBase&>(rhs));
+        swap(static_cast<PipelineQueryable&>(lhs), static_cast<PipelineQueryable&>(rhs));
 
-        swap(lhs.m_query_enabled, rhs.m_query_enabled);
-        swap(lhs.query_pool, rhs.query_pool);
         swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

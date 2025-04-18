@@ -303,10 +303,7 @@ namespace Meow
 
         m_builtin_stat_widget.Draw(g_editor_context.profile_system->GetBuiltinRenderStat());
 
-        if (m_query_enabled)
-            PipelineStatisticsWidget::Draw(g_editor_context.profile_system->GetPipelineStat());
-        else
-            ImGui::Text("Pipeline Statistics is disabled.");
+        PipelineStatisticsWidget::Draw(g_editor_context.profile_system->GetPipelineStat());
 
         ImGui::End();
 
@@ -411,9 +408,6 @@ namespace Meow
         swap(lhs.m_components_widget, rhs.m_components_widget);
         swap(lhs.m_flame_graph_widget, rhs.m_flame_graph_widget);
         swap(lhs.m_builtin_stat_widget, rhs.m_builtin_stat_widget);
-
-        swap(lhs.m_query_enabled, rhs.m_query_enabled);
-        swap(lhs.query_pool, rhs.query_pool);
     }
 
 } // namespace Meow

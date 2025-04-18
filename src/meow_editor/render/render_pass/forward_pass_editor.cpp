@@ -15,13 +15,7 @@ namespace Meow
 
         CreateRenderPass();
         CreateMaterial();
-
-        VkQueryPoolCreateInfo query_pool_create_info = {.sType              = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
-                                                        .queryType          = VK_QUERY_TYPE_PIPELINE_STATISTICS,
-                                                        .queryCount         = 2,
-                                                        .pipelineStatistics = (1 << 11) - 1};
-
-        query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
+        CreateQueryPool(logical_device, 2);
 
         m_render_stat[0].vertex_attribute_metas = m_opaque_material->shader->vertex_attribute_metas;
         m_render_stat[0].buffer_meta_map        = m_opaque_material->shader->buffer_meta_map;
@@ -194,9 +188,7 @@ namespace Meow
     void
     ForwardPassEditor::Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index)
     {
-        if (m_query_enabled)
-            command_buffer.resetQueryPool(*query_pool, 0, 2);
-
+        ResetQueryPool(command_buffer);
         ForwardPassBase::Start(command_buffer, extent, image_index);
     }
 
@@ -206,23 +198,15 @@ namespace Meow
 
         m_opaque_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 0, {});
-
+        BeginQuery(command_buffer);
         RenderOpaqueMeshes(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 0);
+        EndQuery(command_buffer);
 
         m_skybox_material->BindPipeline(command_buffer);
 
-        if (m_query_enabled)
-            command_buffer.beginQuery(*query_pool, 1, {});
-
+        BeginQuery(command_buffer);
         RenderSkybox(command_buffer);
-
-        if (m_query_enabled)
-            command_buffer.endQuery(*query_pool, 1);
+        EndQuery(command_buffer);
 
         m_translucent_material->BindPipeline(command_buffer);
         RenderTranslucentMeshes(command_buffer);
@@ -236,9 +220,7 @@ namespace Meow
         {
             for (int i = 1; i >= 0; i--)
             {
-                std::pair<vk::Result, std::vector<uint32_t>> query_results =
-                    query_pool.getResults<uint32_t>(i, 1, sizeof(uint32_t) * 11, sizeof(uint32_t) * 11, {});
-
+                std::pair<vk::Result, std::vector<uint32_t>> query_results = GetQueryResults(i);
                 g_editor_context.profile_system->UploadPipelineStat(m_pass_names[i], query_results.second);
             }
         }
@@ -255,9 +237,8 @@ namespace Meow
         using std::swap;
 
         swap(static_cast<ForwardPassBase&>(lhs), static_cast<ForwardPassBase&>(rhs));
+        swap(static_cast<PipelineQueryable&>(lhs), static_cast<PipelineQueryable&>(rhs));
 
-        swap(lhs.m_query_enabled, rhs.m_query_enabled);
-        swap(lhs.query_pool, rhs.query_pool);
         swap(lhs.m_render_stat, rhs.m_render_stat);
     }
 } // namespace Meow

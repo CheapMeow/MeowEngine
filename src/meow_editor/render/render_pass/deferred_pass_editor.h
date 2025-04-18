@@ -1,12 +1,13 @@
 #pragma once
 
 #include "meow_runtime/function/render/render_pass/deferred_pass_base.h"
+#include "pipeline_queryable.h"
 #include "render/structs/builtin_render_stat.h"
 
 namespace Meow
 {
 
-    class DeferredPassEditor : public DeferredPassBase
+    class DeferredPassEditor : public DeferredPassBase, public PipelineQueryable
     {
     public:
         DeferredPassEditor(std::nullptr_t)
@@ -41,9 +42,6 @@ namespace Meow
         friend void swap(DeferredPassEditor& lhs, DeferredPassEditor& rhs);
 
     private:
-        bool                m_query_enabled = true;
-        vk::raii::QueryPool query_pool      = nullptr;
-
         BuiltinRenderStat m_render_stat[2];
     };
 } // namespace Meow
