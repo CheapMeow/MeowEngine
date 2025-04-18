@@ -53,7 +53,8 @@ namespace Meow
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
             m_per_frame_data[i].render_finished_semaphore =
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
-            m_per_frame_data[i].in_flight_fence = vk::raii::Fence(logical_device, vk::FenceCreateInfo());
+            m_per_frame_data[i].in_flight_fence =
+                vk::raii::Fence(logical_device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
 
             // compute
 
@@ -64,7 +65,8 @@ namespace Meow
 
             m_per_frame_data[i].compute_finished_semaphore =
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
-            m_per_frame_data[i].compute_in_flight_fence = vk::raii::Fence(logical_device, vk::FenceCreateInfo());
+            m_per_frame_data[i].compute_in_flight_fence =
+                vk::raii::Fence(logical_device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
         }
     }
 

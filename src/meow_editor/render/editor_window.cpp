@@ -312,6 +312,10 @@ namespace Meow
 
         // ------------------- render -------------------
 
+        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
+            ;
+        logical_device.resetFences({*in_flight_fence});
+
         auto [result, m_image_index] =
             SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *image_acquired_semaphore);
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebuffer_resized)
@@ -323,6 +327,7 @@ namespace Meow
         assert(result == vk::Result::eSuccess);
         assert(m_image_index < m_swapchain_data.images.size());
 
+        command_buffer.reset();
         command_buffer.begin({});
 
         m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
@@ -356,11 +361,6 @@ namespace Meow
         vk::SubmitInfo         submit_info(
             *image_acquired_semaphore, wait_destination_stage_mask, *command_buffer, *render_finished_semaphore);
         graphics_queue.submit(submit_info, *in_flight_fence);
-
-        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
-            ;
-        command_buffer.reset();
-        logical_device.resetFences({*in_flight_fence});
 
         vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, m_image_index);
         result = QueuePresentWrapper(present_queue, present_info);
