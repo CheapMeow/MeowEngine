@@ -50,59 +50,97 @@ namespace Meow
 
     bool Camera3DComponent::CheckVisibility(BoundingBox* bounding) { return m_frustum.checkIfInside(bounding); }
 
-    void Camera3DComponent::TickFreeCamera(float dt)
+    std::pair<glm::vec3, glm::quat> Camera3DComponent::CalculateFreeCameraDeltas(float dt)
+    {
+        // Default zero deltas
+        glm::vec3 movement_delta(0.0f);
+        glm::quat rotation_delta(1.0f, 0.0f, 0.0f, 0.0f); // Identity quaternion
+
+        if (!m_transform.lock())
+        {
+            return {movement_delta, rotation_delta};
+        }
+        
+        // Handle mouse rotation
+        if (g_runtime_context.input_system->GetButton("RightMouse")->GetAction() == InputAction::Press)
+        {
+            float dx = g_runtime_context.input_system->GetAxis("MouseX")->GetAmount();
+            float dy = g_runtime_context.input_system->GetAxis("MouseY")->GetAmount();
+
+            auto      transform_component = m_transform.lock();
+            glm::vec3 temp_right          = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+
+            glm::quat dyaw =
+                Math::QuaternionFromAngleAxis(-dx * dt * camera_rotate_velocity, glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::quat dpitch = Math::QuaternionFromAngleAxis(-dy * dt * camera_rotate_velocity, temp_right);
+
+            rotation_delta = dyaw * dpitch;
+        }
+
+        // Calculate movement direction vectors
+        auto      transform_component = m_transform.lock();
+        glm::vec3 right               = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+        glm::vec3 forward             = transform_component->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
+        glm::vec3 up                  = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        // Handle keyboard movement
+        if (g_runtime_context.input_system->GetButton("Left")->GetAction() == InputAction::Press)
+        {
+            movement_delta += -right;
+        }
+        if (g_runtime_context.input_system->GetButton("Right")->GetAction() == InputAction::Press)
+        {
+            movement_delta += right;
+        }
+        if (g_runtime_context.input_system->GetButton("Forward")->GetAction() == InputAction::Press)
+        {
+            movement_delta += forward;
+        }
+        if (g_runtime_context.input_system->GetButton("Backward")->GetAction() == InputAction::Press)
+        {
+            movement_delta += -forward;
+        }
+        if (g_runtime_context.input_system->GetButton("Up")->GetAction() == InputAction::Press)
+        {
+            movement_delta += up;
+        }
+        if (g_runtime_context.input_system->GetButton("Down")->GetAction() == InputAction::Press)
+        {
+            movement_delta += -up;
+        }
+
+        // Normalize and scale movement
+        if (glm::length(movement_delta) > 0.0f)
+        {
+            movement_delta = glm::normalize(movement_delta) * dt * camera_move_velocity;
+        }
+
+        return {movement_delta, rotation_delta};
+    }
+
+    void Camera3DComponent::ApplySmoothCameraMovement(float            dt,
+                                                      const glm::vec3& movement_delta,
+                                                      const glm::quat& rotation_delta)
     {
         if (std::shared_ptr<Transform3DComponent> transform_component = m_transform.lock())
         {
-            if (g_runtime_context.input_system->GetButton("RightMouse")->GetAction() == InputAction::Press)
-            {
-                float dx = g_runtime_context.input_system->GetAxis("MouseX")->GetAmount();
-                float dy = g_runtime_context.input_system->GetAxis("MouseY")->GetAmount();
+            // Calculate target values
+            glm::quat target_rotation = rotation_delta * transform_component->rotation;
+            glm::vec3 target_position = transform_component->position + movement_delta;
 
-                glm::vec3 temp_right = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+            // Apply smooth rotation (spherical interpolation)
+            transform_component->rotation = glm::slerp(
+                transform_component->rotation, target_rotation, 1.0f - std::exp(-rotation_smooth_factor * dt));
 
-                // TODO: config camera rotate velocity
-                glm::quat dyaw   = Math::QuaternionFromAngleAxis(-dx * dt * 100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
-                glm::quat dpitch = Math::QuaternionFromAngleAxis(-dy * dt * 100.0f, temp_right);
-
-                transform_component->rotation = dyaw * dpitch * transform_component->rotation;
-            }
-
-            glm::vec3 right   = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
-            glm::vec3 forward = transform_component->rotation * glm::vec3(0.0f, 0.0f, 1.0f);
-            glm::vec3 up      = glm::vec3(0.0f, 1.0f, 0.0f);
-
-            glm::vec3 movement = glm::vec3(0.0f);
-
-            if (g_runtime_context.input_system->GetButton("Left")->GetAction() == InputAction::Press)
-            {
-                movement += -right;
-            }
-            if (g_runtime_context.input_system->GetButton("Right")->GetAction() == InputAction::Press)
-            {
-                movement += right;
-            }
-            if (g_runtime_context.input_system->GetButton("Forward")->GetAction() == InputAction::Press)
-            {
-                movement += forward;
-            }
-            if (g_runtime_context.input_system->GetButton("Backward")->GetAction() == InputAction::Press)
-            {
-                movement += -forward;
-            }
-            if (g_runtime_context.input_system->GetButton("Up")->GetAction() == InputAction::Press)
-            {
-                movement += up;
-            }
-            if (g_runtime_context.input_system->GetButton("Down")->GetAction() == InputAction::Press)
-            {
-                movement += -up;
-            }
-
-            // TODO: config camera move velocity
-            movement *= dt * 20.0f;
-
-            transform_component->position += movement;
+            // Apply smooth movement (linear interpolation)
+            transform_component->position =
+                glm::mix(transform_component->position, target_position, 1.0f - std::exp(-movement_smooth_factor * dt));
         }
+    }
+
+    void Camera3DComponent::TickFreeCamera(float dt)
+    {
+        auto [movement_delta, rotation_delta] = CalculateFreeCameraDeltas(dt);
+        ApplySmoothCameraMovement(dt, movement_delta, rotation_delta);
     }
 } // namespace Meow

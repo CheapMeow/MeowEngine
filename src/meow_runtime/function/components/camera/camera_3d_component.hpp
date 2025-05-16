@@ -36,6 +36,22 @@ namespace Meow
         [[reflectable_field()]]
         CameraMode camera_mode = CameraMode::Invalid;
 
+        // Camera speed parameters
+
+        [[reflectable_field()]]
+        float camera_rotate_velocity = 100.0f;
+
+        [[reflectable_field()]]
+        float camera_move_velocity = 20.0f;
+
+        // Smoothing parameters
+
+        [[reflectable_field()]]
+        float rotation_smooth_factor = 5.0f;
+
+        [[reflectable_field()]]
+        float movement_smooth_factor = 5.0f;
+
         void Start() override;
 
         void Tick(float dt) override;
@@ -45,6 +61,9 @@ namespace Meow
         bool CheckVisibility(BoundingBox* bounding);
 
     private:
+        std::pair<glm::vec3, glm::quat> CalculateFreeCameraDeltas(float dt);
+
+        void ApplySmoothCameraMovement(float dt, const glm::vec3& movement_delta, const glm::quat& rotation_delta);
         void TickFreeCamera(float dt);
 
         std::weak_ptr<Transform3DComponent> m_transform;
