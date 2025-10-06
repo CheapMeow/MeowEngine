@@ -11,6 +11,22 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 endif()
 
+option(ENABLE_ASAN "Enable AddressSanitizer (runtime memory check)" OFF)
+
+if (ENABLE_ASAN)
+    message(STATUS "AddressSanitizer ENABLED")
+
+    if (MSVC)
+        add_compile_options(/fsanitize=address /Zi /Od)
+        add_link_options(/INFERASANLIBS /DEBUG)
+    else()
+        add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
+        add_link_options(-fsanitize=address)
+    endif()
+else()
+    message(STATUS "AddressSanitizer DISABLED")
+endif()
+
 set(ENGINE_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SRC_ROOT_DIR ${ENGINE_ROOT_DIR}/src)
 set(CODE_GENERATOR_ROOT_DIR ${SRC_ROOT_DIR}/code_generator)
