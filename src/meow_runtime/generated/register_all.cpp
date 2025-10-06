@@ -22,7 +22,11 @@ namespace Meow
 			.AddField("aspect_ratio", "float", &Camera3DComponent::aspect_ratio)
 			.AddField("near_plane", "float", &Camera3DComponent::near_plane)
 			.AddField("far_plane", "float", &Camera3DComponent::far_plane)
-			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode);
+			.AddField("camera_mode", "CameraMode", &Camera3DComponent::camera_mode)
+			.AddField("camera_rotate_velocity", "float", &Camera3DComponent::camera_rotate_velocity)
+			.AddField("camera_move_velocity", "float", &Camera3DComponent::camera_move_velocity)
+			.AddField("rotation_smooth_factor", "float", &Camera3DComponent::rotation_smooth_factor)
+			.AddField("movement_smooth_factor", "float", &Camera3DComponent::movement_smooth_factor);
 
 		reflect::AddClass<DirectionalLightComponent>("DirectionalLightComponent")
 			.AddField("field_of_view", "float", &DirectionalLightComponent::field_of_view)
