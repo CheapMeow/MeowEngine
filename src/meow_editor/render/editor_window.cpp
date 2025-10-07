@@ -306,8 +306,8 @@ namespace Meow
 
         m_shadow_map_pass.UpdateUniformBuffer();
         m_shadow_coord_to_color_pass.UpdateUniformBuffer();
-        m_compute_particle_pass.UpdateUniformBuffer();
         m_render_pass_ptr->UpdateUniformBuffer();
+        m_compute_particle_pass.UpdateUniformBuffer();
         m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
 
         // ------------------- render -------------------
@@ -342,14 +342,14 @@ namespace Meow
         m_shadow_coord_to_color_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_coord_to_color_pass.End(command_buffer);
 
+        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_render_pass_ptr->RecordGraphicsCommand(command_buffer, m_frame_index);
+        m_render_pass_ptr->End(command_buffer);
+
         m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
         m_compute_particle_pass.RecordComputeCommand(compute_command_buffer, m_frame_index);
         m_compute_particle_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_compute_particle_pass.End(command_buffer);
-
-        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_render_pass_ptr->RecordGraphicsCommand(command_buffer, m_frame_index);
-        m_render_pass_ptr->End(command_buffer);
 
         m_imgui_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
         m_imgui_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
@@ -388,9 +388,9 @@ namespace Meow
         m_shadow_map_pass            = ShadowMapPass(m_surface_data);
         m_depth_to_color_pass        = DepthToColorPass(m_surface_data);
         m_shadow_coord_to_color_pass = ShadowCoordToColorPass(m_surface_data);
-        m_compute_particle_pass      = ComputeParticlePass(m_surface_data);
         m_deferred_pass              = DeferredPassEditor(m_surface_data);
         m_forward_pass               = ForwardPassEditor(m_surface_data);
+        m_compute_particle_pass      = ComputeParticlePass(m_surface_data);
         m_imgui_pass                 = ImGuiPass(m_surface_data);
 
         RefreshFrameBuffers();
@@ -592,9 +592,9 @@ namespace Meow
         m_shadow_map_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_depth_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_shadow_coord_to_color_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
-        m_compute_particle_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_deferred_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_forward_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
+        m_compute_particle_pass.RefreshFrameBuffers(m_offscreen_render_target_image_views, m_surface_data.extent);
         m_imgui_pass.RefreshFrameBuffers(m_swapchain_image_views, m_surface_data.extent);
     }
 

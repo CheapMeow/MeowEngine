@@ -40,7 +40,8 @@ namespace Meow
         material_factory.Init(particle_shader.get());
         material_factory.SetDescriptorSetDuplicateNumber(k_max_frames_in_flight);
         material_factory.CreateComputePipeline(logical_device, particle_shader.get(), m_particle_comp_material.get());
-
+        m_particle_comp_material->SetDebugName("GPUParticleData2D compute material");
+        
         // TODO: multiple gpu particles reuse same pipeline,
         // but different descriptor set
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)

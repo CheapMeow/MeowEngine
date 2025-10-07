@@ -30,7 +30,7 @@ namespace Meow
                 vk::AttachmentDescriptionFlags(),        /* flags */
                 m_color_format,                          /* format */
                 vk::SampleCountFlagBits::e1,             /* samples */
-                vk::AttachmentLoadOp::eDontCare,         /* loadOp */
+                vk::AttachmentLoadOp::eLoad,             /* loadOp */
                 vk::AttachmentStoreOp::eStore,           /* storeOp */
                 vk::AttachmentLoadOp::eDontCare,         /* stencilLoadOp */
                 vk::AttachmentStoreOp::eDontCare,        /* stencilStoreOp */
@@ -112,7 +112,7 @@ namespace Meow
         material_factory.SetPointTopology();
         material_factory.CreatePipeline(
             logical_device, render_pass, particle_render_shader.get(), m_particle_render_material.get(), 0);
-        m_particle_render_material->SetDebugName("Particle Render Material");
+        m_particle_render_material->SetDebugName("GPUParticleData2D Render Material");
     }
 
     void ComputeParticlePass::RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
