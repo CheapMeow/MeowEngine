@@ -14,14 +14,13 @@ namespace Meow
         GPUParticle2D(uint32_t particle_count);
         ~GPUParticle2D() override;
 
-        void UploadParticleData(const std::vector<GPUParticleData2D>& in_particle_data);
+        void UploadParticleData(const std::vector<GPUParticleData2D>& particle_data);
         void UpdateUniformBuffer(uint32_t frame_index) override;
         void BindPipeline(const vk::raii::CommandBuffer& command_buffer) override;
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
         void Dispatch(const vk::raii::CommandBuffer& command_buffer) override;
 
     private:
-        std::vector<GPUParticleData2D> m_particle_data;
-        std::shared_ptr<Material>      m_particle_comp_material;
+        std::shared_ptr<Material> m_particle_comp_material;
     };
 } // namespace Meow

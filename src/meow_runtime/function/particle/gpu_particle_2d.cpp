@@ -17,8 +17,6 @@ namespace Meow
 
         const auto k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
 
-        m_particle_data.resize(particle_count);
-
         m_particle_storage_buffer_per_frame.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
@@ -58,7 +56,7 @@ namespace Meow
 
     GPUParticle2D::~GPUParticle2D() {}
 
-    void GPUParticle2D::UploadParticleData(const std::vector<GPUParticleData2D>& in_particle_data)
+    void GPUParticle2D::UploadParticleData(const std::vector<GPUParticleData2D>& particle_data)
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
@@ -66,15 +64,10 @@ namespace Meow
             g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
-        for (uint32_t i = 0; i < m_particle_data.size() && i < in_particle_data.size(); ++i)
-        {
-            m_particle_data[i] = in_particle_data[i];
-        }
-
         for (auto& particle_storage_buffer : m_particle_storage_buffer_per_frame)
         {
             particle_storage_buffer.Upload(
-                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, m_particle_data, 0);
+                physical_device, logical_device, onetime_submit_command_pool, graphics_queue, particle_data, 0);
         }
     }
 
