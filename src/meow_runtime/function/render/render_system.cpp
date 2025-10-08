@@ -172,9 +172,17 @@ namespace Meow
 
     void RenderSystem::CreateCommandPool()
     {
-        vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
-                                                           m_graphics_queue_family_index);
-        m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+        {
+            vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eTransient,
+                                                               m_graphics_queue_family_index);
+            m_onetime_submit_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+        }
+
+        {
+            vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                                                               m_graphics_queue_family_index);
+            m_command_pool = vk::raii::CommandPool(m_logical_device, command_pool_create_info);
+        }
     }
 
     void RenderSystem::CreateDescriptorAllocator()
@@ -211,6 +219,7 @@ namespace Meow
         m_logical_device.waitIdle();
 
         m_descriptor_allocator        = nullptr;
+        m_command_pool                = nullptr;
         m_onetime_submit_command_pool = nullptr;
         m_present_queue               = nullptr;
         m_graphics_queue              = nullptr;

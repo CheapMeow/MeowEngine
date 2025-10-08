@@ -46,22 +46,19 @@ namespace Meow
 
     void GraphicsWindow::CreatePerFrameData()
     {
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::Queue&  graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
-        const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
-        const auto k_max_frames_in_flight      = g_runtime_context.render_system->GetMaxFramesInFlight();
+        const vk::raii::Device&      logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&       graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+        const vk::raii::CommandPool& command_pool   = g_runtime_context.render_system->GetCommandPool();
+        const auto graphics_queue_family_index      = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
+        const auto k_max_frames_in_flight           = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_per_frame_data.resize(k_max_frames_in_flight);
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
-            vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
-                                                               graphics_queue_family_index);
-            m_per_frame_data[i].command_pool = vk::raii::CommandPool(logical_device, command_pool_create_info);
-
             // graphics
 
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
-                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+                *command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
             m_per_frame_data[i].graphics_command_buffer = std::move(command_buffers[0]);
 
@@ -75,7 +72,7 @@ namespace Meow
             // compute
 
             vk::CommandBufferAllocateInfo compute_command_buffer_allocate_info(
-                *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
+                *command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers compute_command_buffers(logical_device, compute_command_buffer_allocate_info);
             m_per_frame_data[i].compute_command_buffer = std::move(compute_command_buffers[0]);
 
@@ -98,16 +95,6 @@ namespace Meow
 
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
-            {
-                std::string command_pool_name = std::format("{} command pool frame {}", debug_name, i);
-
-                vk::DebugUtilsObjectNameInfoEXT name_info = {
-                    vk::ObjectType::eCommandPool,
-                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkCommandPool, *m_per_frame_data[i].command_pool),
-                    command_pool_name.c_str()};
-                logical_device.setDebugUtilsObjectNameEXT(name_info);
-            }
-
             {
                 std::string command_buffer_name = std::format("{} graphics command buffer frame {}", debug_name, i);
 

@@ -33,6 +33,7 @@ namespace Meow
         const vk::raii::Queue&          GetPresentQueue() const { return m_present_queue; }
         const vk::raii::Queue&          GetComputeQueue() const { return m_compute_queue; }
         const vk::raii::CommandPool&    GetOneTimeSubmitCommandPool() const { return m_onetime_submit_command_pool; }
+        const vk::raii::CommandPool&    GetCommandPool() const { return m_command_pool; }
         DescriptorAllocatorGrowable&    GetDescriptorAllocator() { return m_descriptor_allocator; }
 
         const uint32_t                GetGraphicsQueueFamiliyIndex() const { return m_graphics_queue_family_index; }
@@ -58,6 +59,7 @@ namespace Meow
         vk::raii::Queue             m_present_queue               = nullptr;
         vk::raii::Queue             m_compute_queue               = nullptr;
         vk::raii::CommandPool       m_onetime_submit_command_pool = nullptr;
+        vk::raii::CommandPool       m_command_pool                = nullptr;
         DescriptorAllocatorGrowable m_descriptor_allocator        = nullptr;
 
         vk::SampleCountFlagBits m_msaa_samples;

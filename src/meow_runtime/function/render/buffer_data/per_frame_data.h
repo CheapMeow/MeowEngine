@@ -6,8 +6,6 @@ namespace Meow
 {
     struct PerFrameData
     {
-        vk::raii::CommandPool command_pool = nullptr;
-
         // graphics
 
         vk::raii::CommandBuffer graphics_command_buffer   = nullptr;
