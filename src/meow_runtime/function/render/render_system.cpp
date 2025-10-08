@@ -14,6 +14,29 @@ namespace Meow
         VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
     };
 
+    RenderSystem::RenderSystem()
+    {
+        CreateVulkanInstance();
+        CreatePhysicalDevice();
+        CreateLogicalDevice();
+        CreateCommandPool();
+        CreateDescriptorAllocator();
+    }
+
+    RenderSystem::~RenderSystem()
+    {
+        m_descriptor_allocator        = nullptr;
+        m_command_pool                = nullptr;
+        m_onetime_submit_command_pool = nullptr;
+        m_present_queue               = nullptr;
+        m_graphics_queue              = nullptr;
+        m_logical_device              = nullptr;
+        m_physical_device             = nullptr;
+        m_vulkan_instance             = nullptr;
+    }
+
+    void RenderSystem::Shutdown() { m_logical_device.waitIdle(); }
+
     void RenderSystem::CreateVulkanInstance()
     {
 #ifdef MEOW_DEBUG
@@ -203,28 +226,5 @@ namespace Meow
                                                           {vk::DescriptorType::eStorageBufferDynamic, 1000},
                                                           {vk::DescriptorType::eInputAttachment, 1000}};
         m_descriptor_allocator = DescriptorAllocatorGrowable(m_logical_device, 1000, pool_sizes);
-    }
-
-    RenderSystem::RenderSystem()
-    {
-        CreateVulkanInstance();
-        CreatePhysicalDevice();
-        CreateLogicalDevice();
-        CreateCommandPool();
-        CreateDescriptorAllocator();
-    }
-
-    RenderSystem::~RenderSystem()
-    {
-        m_logical_device.waitIdle();
-
-        m_descriptor_allocator        = nullptr;
-        m_command_pool                = nullptr;
-        m_onetime_submit_command_pool = nullptr;
-        m_present_queue               = nullptr;
-        m_graphics_queue              = nullptr;
-        m_logical_device              = nullptr;
-        m_physical_device             = nullptr;
-        m_vulkan_instance             = nullptr;
     }
 } // namespace Meow

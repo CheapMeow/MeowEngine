@@ -22,9 +22,7 @@ namespace Meow
         RenderSystem();
         ~RenderSystem();
 
-        void Start() override {}
-
-        void Tick(float dt) override {}
+        void Shutdown() override;
 
         const vk::raii::Instance&       GetInstance() const { return m_vulkan_instance; };
         const vk::raii::PhysicalDevice& GetPhysicalDevice() const { return m_physical_device; }

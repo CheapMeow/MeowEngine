@@ -5,8 +5,21 @@ namespace Meow
     class System
     {
     public:
-        virtual void Start() {};
+        /**
+         * @brief Start is called behind of constructor function,
+         * to solve the initialization dependency problem between systems.
+         */
+        virtual void Start() {}
 
-        virtual void Tick(float dt) {};
+        /**
+         * @brief Tick is called every frame.
+         */
+        virtual void Tick(float dt) {}
+
+        /**
+         * @brief Shutdown is called before the destructor function,
+         * to solve the destruction dependency problem between systems.
+         */
+        virtual void Shutdown() {}
     };
 } // namespace Meow

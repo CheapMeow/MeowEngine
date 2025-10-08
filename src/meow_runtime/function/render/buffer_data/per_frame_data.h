@@ -8,10 +8,8 @@ namespace Meow
     {
         // graphics
 
-        vk::raii::CommandBuffer graphics_command_buffer   = nullptr;
-        vk::raii::Semaphore     image_acquired_semaphore  = nullptr;
-        vk::raii::Semaphore     render_finished_semaphore = nullptr;
-        vk::raii::Fence         graphics_in_flight_fence  = nullptr;
+        vk::raii::CommandBuffer graphics_command_buffer  = nullptr;
+        vk::raii::Fence         graphics_in_flight_fence = nullptr;
 
         // compute
 
@@ -22,5 +20,15 @@ namespace Meow
         PerFrameData() {}
 
         PerFrameData(std::nullptr_t) {}
+    };
+
+    struct PerSwapChainImageData
+    {
+        vk::raii::Semaphore present_finished_semaphore = nullptr;
+        vk::raii::Semaphore render_finished_semaphore  = nullptr;
+
+        PerSwapChainImageData() {}
+
+        PerSwapChainImageData(std::nullptr_t) {}
     };
 } // namespace Meow

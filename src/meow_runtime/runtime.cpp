@@ -65,6 +65,9 @@ namespace Meow
     void MeowRuntime::ShutDown()
     {
         // TODO: ShutDown Dependencies graph
+
+        g_runtime_context.render_system->Shutdown();
+
         g_runtime_context.particle_system = nullptr;
         g_runtime_context.level_system    = nullptr;
         g_runtime_context.resource_system = nullptr;

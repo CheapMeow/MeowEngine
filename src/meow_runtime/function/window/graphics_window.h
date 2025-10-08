@@ -28,18 +28,20 @@ namespace Meow
         void               CreateSwapChian();
         void               CreatePerFrameData();
 
-        void SetPerFrameDataDebugName() const;
+        void SetDebugName() const;
 
-        SurfaceData                m_surface_data = nullptr;
-        vk::Format                 m_color_format;
-        SwapChainData              m_swapchain_data = nullptr;
-        std::vector<vk::ImageView> m_swapchain_image_views;
-        std::vector<PerFrameData>  m_per_frame_data;
+        SurfaceData                        m_surface_data = nullptr;
+        vk::Format                         m_color_format;
+        SwapChainData                      m_swapchain_data = nullptr;
+        std::vector<vk::ImageView>         m_swapchain_image_views;
+        uint32_t                           m_swapchain_image_number;
+        std::vector<PerFrameData>          m_per_frame_data;
+        std::vector<PerSwapChainImageData> m_per_image_data;
 
-        bool           m_framebuffer_resized = false;
-        bool           m_iconified           = false;
-        const uint64_t k_fence_timeout       = 100000000;
-        uint32_t       m_frame_index         = 0;
-        uint32_t       m_image_index         = 0;
+        bool           m_framebuffer_resized   = false;
+        bool           m_iconified             = false;
+        const uint64_t k_fence_timeout         = 100000000;
+        uint32_t       m_frame_index           = 0;
+        uint32_t       m_image_semaphore_index = 0;
     };
 } // namespace Meow

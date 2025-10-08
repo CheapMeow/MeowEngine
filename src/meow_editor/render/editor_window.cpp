@@ -264,9 +264,6 @@ namespace Meow
 
     EditorWindow::~EditorWindow()
     {
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        logical_device.waitIdle();
-
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
@@ -274,6 +271,7 @@ namespace Meow
         m_imgui_pass            = nullptr;
         m_imgui_descriptor_pool = nullptr;
 
+        m_per_image_data.clear();
         m_per_frame_data.clear();
         m_depth_to_color_pass        = nullptr;
         m_shadow_coord_to_color_pass = nullptr;
@@ -294,20 +292,21 @@ namespace Meow
         if (m_iconified)
             return;
 
-        const vk::raii::Device& logical_device            = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::Queue&  graphics_queue            = g_runtime_context.render_system->GetGraphicsQueue();
-        const vk::raii::Queue&  present_queue             = g_runtime_context.render_system->GetPresentQueue();
-        const vk::raii::Queue&  compute_queue             = g_runtime_context.render_system->GetComputeQueue();
-        auto&                   per_frame_data            = m_per_frame_data[m_frame_index];
-        auto&                   command_buffer            = per_frame_data.graphics_command_buffer;
-        auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
-        auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
-        auto&                   graphics_in_flight_fence  = per_frame_data.graphics_in_flight_fence;
-        const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
+        const vk::raii::Device& logical_device             = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&  graphics_queue             = g_runtime_context.render_system->GetGraphicsQueue();
+        const vk::raii::Queue&  present_queue              = g_runtime_context.render_system->GetPresentQueue();
+        const vk::raii::Queue&  compute_queue              = g_runtime_context.render_system->GetComputeQueue();
+        auto&                   frame_data                 = m_per_frame_data[m_frame_index];
+        auto&                   command_buffer             = frame_data.graphics_command_buffer;
+        auto&                   image_data                 = m_per_image_data[m_image_semaphore_index];
+        auto&                   present_finished_semaphore = image_data.present_finished_semaphore;
+        auto&                   render_finished_semaphore  = image_data.render_finished_semaphore;
+        auto&                   graphics_in_flight_fence   = frame_data.graphics_in_flight_fence;
+        const auto              k_max_frames_in_flight     = g_runtime_context.render_system->GetMaxFramesInFlight();
 
-        auto& compute_command_buffer     = per_frame_data.compute_command_buffer;
-        auto& compute_finished_semaphore = per_frame_data.compute_finished_semaphore;
-        auto& compute_in_flight_fence    = per_frame_data.compute_in_flight_fence;
+        auto& compute_command_buffer     = frame_data.compute_command_buffer;
+        auto& compute_finished_semaphore = frame_data.compute_finished_semaphore;
+        auto& compute_in_flight_fence    = frame_data.compute_in_flight_fence;
 
         m_shadow_map_pass.UpdateUniformBuffer(m_frame_index);
         m_shadow_coord_to_color_pass.UpdateUniformBuffer(m_frame_index);
@@ -341,8 +340,8 @@ namespace Meow
             ;
         logical_device.resetFences({*graphics_in_flight_fence});
 
-        auto [result, m_image_index] =
-            SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *image_acquired_semaphore);
+        auto [result, image_index] =
+            SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *present_finished_semaphore);
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebuffer_resized)
         {
             m_framebuffer_resized = false;
@@ -350,32 +349,32 @@ namespace Meow
             return;
         }
         assert(result == vk::Result::eSuccess);
-        assert(m_image_index < m_swapchain_data.images.size());
+        assert(image_index < m_swapchain_data.images.size());
 
         command_buffer.reset();
         command_buffer.begin({});
 
-        m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_shadow_map_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_map_pass.End(command_buffer);
 
-        m_depth_to_color_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_depth_to_color_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_depth_to_color_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_depth_to_color_pass.End(command_buffer);
 
-        m_shadow_coord_to_color_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_shadow_coord_to_color_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_shadow_coord_to_color_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_coord_to_color_pass.End(command_buffer);
 
-        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, image_index);
         m_render_pass_ptr->RecordGraphicsCommand(command_buffer, m_frame_index);
         m_render_pass_ptr->End(command_buffer);
 
-        m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_compute_particle_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_compute_particle_pass.End(command_buffer);
 
-        m_imgui_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_imgui_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_imgui_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_imgui_pass.End(command_buffer);
 
@@ -384,13 +383,14 @@ namespace Meow
         {
             std::array<const vk::PipelineStageFlags, 2> wait_destination_stage_masks {
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eVertexInput};
-            std::array<const vk::Semaphore, 2> wait_semaphores {*image_acquired_semaphore, *compute_finished_semaphore};
+            std::array<const vk::Semaphore, 2> wait_semaphores {*present_finished_semaphore,
+                                                                *compute_finished_semaphore};
             vk::SubmitInfo                     submit_info(
                 wait_semaphores, wait_destination_stage_masks, *command_buffer, *render_finished_semaphore);
             graphics_queue.submit(submit_info, *graphics_in_flight_fence);
         }
 
-        vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, m_image_index);
+        vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, image_index);
         result = QueuePresentWrapper(present_queue, present_info);
         switch (result)
         {
@@ -403,7 +403,8 @@ namespace Meow
                 assert(false); // an unexpected result is returned !
         }
 
-        m_frame_index = (m_frame_index + 1) % k_max_frames_in_flight;
+        m_frame_index           = (m_frame_index + 1) % k_max_frames_in_flight;
+        m_image_semaphore_index = (m_image_semaphore_index + 1) % m_swapchain_image_number;
 
         m_render_pass_ptr->AfterPresent();
         m_imgui_pass.AfterPresent();
@@ -559,6 +560,7 @@ namespace Meow
 
         logical_device.waitIdle();
 
+        m_per_image_data.clear();
         m_per_frame_data.clear();
         m_swapchain_data = nullptr;
         m_surface_data   = nullptr;

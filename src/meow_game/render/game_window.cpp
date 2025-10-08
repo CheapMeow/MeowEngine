@@ -238,9 +238,7 @@ namespace Meow
 
     GameWindow::~GameWindow()
     {
-        const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
-        logical_device.waitIdle();
-
+        m_per_image_data.clear();
         m_per_frame_data.clear();
         m_shadow_map_pass = nullptr;
         m_forward_pass    = nullptr;
@@ -259,15 +257,16 @@ namespace Meow
         if (m_iconified)
             return;
 
-        const vk::raii::Device& logical_device            = g_runtime_context.render_system->GetLogicalDevice();
-        const vk::raii::Queue&  graphics_queue            = g_runtime_context.render_system->GetGraphicsQueue();
-        const vk::raii::Queue&  present_queue             = g_runtime_context.render_system->GetPresentQueue();
-        auto&                   per_frame_data            = m_per_frame_data[m_frame_index];
-        auto&                   command_buffer            = per_frame_data.graphics_command_buffer;
-        auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
-        auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
-        auto&                   in_flight_fence           = per_frame_data.graphics_in_flight_fence;
-        const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
+        const vk::raii::Device& logical_device             = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&  graphics_queue             = g_runtime_context.render_system->GetGraphicsQueue();
+        const vk::raii::Queue&  present_queue              = g_runtime_context.render_system->GetPresentQueue();
+        auto&                   frame_data                 = m_per_frame_data[m_frame_index];
+        auto&                   command_buffer             = frame_data.graphics_command_buffer;
+        auto&                   image_data                 = m_per_image_data[m_image_semaphore_index];
+        auto&                   present_finished_semaphore = image_data.present_finished_semaphore;
+        auto&                   render_finished_semaphore  = image_data.render_finished_semaphore;
+        auto&                   in_flight_fence            = frame_data.graphics_in_flight_fence;
+        const auto              k_max_frames_in_flight     = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_shadow_map_pass.UpdateUniformBuffer(m_frame_index);
         m_render_pass_ptr->UpdateUniformBuffer(m_frame_index);
@@ -279,8 +278,8 @@ namespace Meow
             ;
         logical_device.resetFences({*in_flight_fence});
 
-        auto [result, m_image_index] =
-            SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *image_acquired_semaphore);
+        auto [result, image_index] =
+            SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *present_finished_semaphore);
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR || m_framebuffer_resized)
         {
             m_framebuffer_resized = false;
@@ -288,16 +287,16 @@ namespace Meow
             return;
         }
         assert(result == vk::Result::eSuccess);
-        assert(m_image_index < m_swapchain_data.images.size());
+        assert(image_index < m_swapchain_data.images.size());
 
         command_buffer.reset();
         command_buffer.begin({});
 
-        m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_shadow_map_pass.Start(command_buffer, m_surface_data.extent, image_index);
         m_shadow_map_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_shadow_map_pass.End(command_buffer);
 
-        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, m_image_index);
+        m_render_pass_ptr->Start(command_buffer, m_surface_data.extent, image_index);
         m_render_pass_ptr->RecordGraphicsCommand(command_buffer, m_frame_index);
         m_render_pass_ptr->End(command_buffer);
 
@@ -305,10 +304,10 @@ namespace Meow
 
         vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
         vk::SubmitInfo         submit_info(
-            *image_acquired_semaphore, wait_destination_stage_mask, *command_buffer, *render_finished_semaphore);
+            *present_finished_semaphore, wait_destination_stage_mask, *command_buffer, *render_finished_semaphore);
         graphics_queue.submit(submit_info, *in_flight_fence);
 
-        vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, m_image_index);
+        vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, image_index);
         result = QueuePresentWrapper(present_queue, present_info);
         switch (result)
         {
@@ -321,7 +320,8 @@ namespace Meow
                 assert(false); // an unexpected result is returned !
         }
 
-        m_frame_index = (m_frame_index + 1) % k_max_frames_in_flight;
+        m_frame_index           = (m_frame_index + 1) % k_max_frames_in_flight;
+        m_image_semaphore_index = (m_image_semaphore_index + 1) % m_swapchain_image_number;
 
         m_render_pass_ptr->AfterPresent();
 
@@ -348,6 +348,7 @@ namespace Meow
 
         logical_device.waitIdle();
 
+        m_per_image_data.clear();
         m_per_frame_data.clear();
         m_swapchain_data = nullptr;
         m_surface_data   = nullptr;
