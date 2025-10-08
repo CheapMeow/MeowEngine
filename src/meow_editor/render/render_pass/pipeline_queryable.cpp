@@ -2,6 +2,9 @@
 
 #include "pch.h"
 
+#include "function/global/runtime_context.h"
+#include "function/render/utils/vulkan_initialization_utils.hpp"
+
 namespace Meow
 {
     void PipelineQueryable::CreateQueryPool(const vk::raii::Device& logical_device, uint32_t query_count)
@@ -14,6 +17,16 @@ namespace Meow
         query_pool = logical_device.createQueryPool(query_pool_create_info, nullptr);
 
         m_query_count_max = query_count;
+
+        const vk::raii::CommandPool& onetime_submit_command_pool =
+            g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
+        const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
+
+        // At first use, all queries should be reset
+        OneTimeSubmit(logical_device,
+                      onetime_submit_command_pool,
+                      graphics_queue,
+                      [this](vk::raii::CommandBuffer& command_buffer) { ResetQueryPool(command_buffer); });
     }
 
     void PipelineQueryable::BeginQuery(const vk::raii::CommandBuffer& command_buffer)
@@ -45,10 +58,7 @@ namespace Meow
 
     void PipelineQueryable::ResetQueryPool(const vk::raii::CommandBuffer& command_buffer)
     {
-        if (m_query_count_accumulated == 0)
-            return;
-
-        command_buffer.resetQueryPool(*query_pool, 0, m_query_count_accumulated);
+        command_buffer.resetQueryPool(*query_pool, 0, m_query_count_max);
         m_query_count_accumulated = 0;
     }
 
