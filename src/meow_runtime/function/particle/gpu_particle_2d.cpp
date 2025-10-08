@@ -15,7 +15,7 @@ namespace Meow
             g_runtime_context.render_system->GetOneTimeSubmitCommandPool();
         const vk::raii::Queue& graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
 
-        k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
+        const auto k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
 
         m_particle_data.resize(particle_count);
 
@@ -38,10 +38,9 @@ namespace Meow
         m_particle_comp_material = std::make_shared<Material>(particle_shader);
         g_runtime_context.resource_system->Register(m_particle_comp_material);
         material_factory.Init(particle_shader.get());
-        material_factory.SetDescriptorSetDuplicateNumber(k_max_frames_in_flight);
         material_factory.CreateComputePipeline(logical_device, particle_shader.get(), m_particle_comp_material.get());
         m_particle_comp_material->SetDebugName("GPUParticleData2D compute material");
-        
+
         // TODO: multiple gpu particles reuse same pipeline,
         // but different descriptor set
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
@@ -72,20 +71,20 @@ namespace Meow
             m_particle_data[i] = in_particle_data[i];
         }
 
-        for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
+        for (auto& particle_storage_buffer : m_particle_storage_buffer_per_frame)
         {
-            m_particle_storage_buffer_per_frame[i].Upload(
+            particle_storage_buffer.Upload(
                 physical_device, logical_device, onetime_submit_command_pool, graphics_queue, m_particle_data, 0);
         }
     }
 
-    void GPUParticle2D::UpdateUniformBuffer()
+    void GPUParticle2D::UpdateUniformBuffer(uint32_t frame_index)
     {
         float dt = g_runtime_context.time_system->GetDeltaTime();
 
         // TODO: multiple gpu particles reuse same pipeline,
         // but different descriptor set
-        m_particle_comp_material->PopulateUniformBuffer("ubo", &dt, sizeof(float));
+        m_particle_comp_material->PopulateUniformBuffer("ubo", &dt, sizeof(float), frame_index);
     }
 
     void GPUParticle2D::BindPipeline(const vk::raii::CommandBuffer& command_buffer)

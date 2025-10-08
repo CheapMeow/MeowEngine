@@ -159,7 +159,7 @@ namespace Meow
         }
     }
 
-    void ShadowMapPass::UpdateUniformBuffer()
+    void ShadowMapPass::UpdateUniformBuffer(uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -216,10 +216,11 @@ namespace Meow
                                              glm::vec3(0.0f, 1.0f, 0.0f));
                 per_light_data.projection =
                     Math::perspective_vk(directional_light_comp_ptr->field_of_view,
-                                         (float)m_shadow_map->extent.width / m_shadow_map->extent.height,
+                                         static_cast<float>(m_shadow_map->extent.width) / m_shadow_map->extent.height,
                                          directional_light_comp_ptr->near_plane,
                                          directional_light_comp_ptr->far_plane);
-                m_shadow_map_material->PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
+                m_shadow_map_material->PopulateUniformBuffer(
+                    "lightData", &per_light_data, sizeof(per_light_data), frame_index);
                 break;
             }
         }
@@ -253,7 +254,7 @@ namespace Meow
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_shadow_map_material->BeginPopulatingDynamicUniformBufferPerObject();
-                    m_shadow_map_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_shadow_map_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model), frame_index);
                     m_shadow_map_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }

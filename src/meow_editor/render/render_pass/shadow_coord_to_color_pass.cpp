@@ -218,7 +218,7 @@ namespace Meow
         }
     }
 
-    void ShadowCoordToColorPass::UpdateUniformBuffer()
+    void ShadowCoordToColorPass::UpdateUniformBuffer(uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -255,7 +255,8 @@ namespace Meow
                                  main_camera_component->near_plane,
                                  main_camera_component->far_plane);
 
-        m_shadow_coord_to_color_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_shadow_coord_to_color_material->PopulateUniformBuffer(
+            "sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
 
         // light
 
@@ -283,12 +284,12 @@ namespace Meow
                                              glm::vec3(0.0f, 1.0f, 0.0f));
                 per_light_data.projection =
                     Math::perspective_vk(directional_light_comp_ptr->field_of_view,
-                                         (float)m_shadow_coord_to_color_render_target->extent.width /
+                                         static_cast<float>(m_shadow_coord_to_color_render_target->extent.width) /
                                              m_shadow_coord_to_color_render_target->extent.height,
                                          directional_light_comp_ptr->near_plane,
                                          directional_light_comp_ptr->far_plane);
                 m_shadow_coord_to_color_material->PopulateUniformBuffer(
-                    "lightData", &per_light_data, sizeof(per_light_data));
+                    "lightData", &per_light_data, sizeof(per_light_data), frame_index);
                 break;
             }
         }
@@ -323,7 +324,8 @@ namespace Meow
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_shadow_coord_to_color_material->BeginPopulatingDynamicUniformBufferPerObject();
-                    m_shadow_coord_to_color_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_shadow_coord_to_color_material->PopulateDynamicUniformBuffer(
+                        "objData", &model, sizeof(model), frame_index);
                     m_shadow_coord_to_color_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
@@ -352,7 +354,8 @@ namespace Meow
         command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), extent));
     }
 
-    void ShadowCoordToColorPass::RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index)
+    void ShadowCoordToColorPass::RecordGraphicsCommand(const vk::raii::CommandBuffer& command_buffer,
+                                                       uint32_t                       frame_index)
     {
         FUNCTION_TIMER();
 

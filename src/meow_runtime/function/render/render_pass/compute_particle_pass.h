@@ -45,7 +45,7 @@ namespace Meow
         void RefreshFrameBuffers(const std::vector<vk::ImageView>& output_image_views,
                                  const vk::Extent2D&               extent) override;
 
-        void UpdateUniformBuffer() override;
+        void UpdateUniformBuffer(uint32_t frame_index) override;
 
         void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index) override;
 

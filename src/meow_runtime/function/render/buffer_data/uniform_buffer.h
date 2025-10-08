@@ -30,13 +30,13 @@ namespace Meow
             mapped_data_ptr = (uint8_t*)device_memory.mapMemory(0, VK_WHOLE_SIZE);
         }
 
-        ~UniformBuffer()
+        ~UniformBuffer() override
         {
             mapped_data_ptr = nullptr;
             device_memory.unmapMemory();
         }
 
-        void Reset();
+        void ResetMemory();
 
         uint64_t AllocateMemory(uint64_t size);
 

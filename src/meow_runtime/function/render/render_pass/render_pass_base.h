@@ -35,7 +35,7 @@ namespace Meow
                                          const vk::Extent2D&               extent)
         {}
 
-        virtual void UpdateUniformBuffer() {}
+        virtual void UpdateUniformBuffer(uint32_t frame_index) {}
 
         virtual void Start(const vk::raii::CommandBuffer& command_buffer, vk::Extent2D extent, uint32_t image_index);
 

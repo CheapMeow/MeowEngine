@@ -114,8 +114,6 @@ namespace Meow
         context.dynamic_states = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
         context.pipeline_dynamic_state_create_info =
             vk::PipelineDynamicStateCreateInfo(vk::PipelineDynamicStateCreateFlags(), context.dynamic_states);
-
-        m_descriptor_set_duplicate_number = 1;
     }
 
     void MaterialFactory::SetVertexAttributeStrideAndOffset(uint32_t                     vertex_stride,
@@ -256,11 +254,6 @@ namespace Meow
             vk::PipelineInputAssemblyStateCreateFlags(), vk::PrimitiveTopology::ePointList);
     }
 
-    void MaterialFactory::SetDescriptorSetDuplicateNumber(uint32_t number)
-    {
-        m_descriptor_set_duplicate_number = number;
-    }
-
     void MaterialFactory::CreatePipeline(const vk::raii::Device&     logical_device,
                                          const vk::raii::RenderPass& render_pass,
                                          const class Shader*         shader,
@@ -298,14 +291,14 @@ namespace Meow
             *render_pass,                                       /* renderPass */
             subpass);                                           /* subpass */
 
-        material_ptr->m_pipeline =
-            vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
+        material_ptr->m_pipeline = vk::raii::Pipeline(logical_device, pipeline_cache, graphics_pipeline_create_info);
 
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
 
-        material_ptr->m_descriptor_set_duplicate_number = m_descriptor_set_duplicate_number;
+        const auto k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
+
         material_ptr->m_descriptor_sets_per_frame.clear();
-        for (uint32_t i = 0; i < m_descriptor_set_duplicate_number; ++i)
+        for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
             material_ptr->m_descriptor_sets_per_frame.push_back(
                 descriptor_allocator.Allocate(shader->descriptor_set_layouts));
@@ -329,9 +322,10 @@ namespace Meow
 
         DescriptorAllocatorGrowable& descriptor_allocator = g_runtime_context.render_system->GetDescriptorAllocator();
 
-        material_ptr->m_descriptor_set_duplicate_number = m_descriptor_set_duplicate_number;
+        const auto k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
+
         material_ptr->m_descriptor_sets_per_frame.clear();
-        for (uint32_t i = 0; i < m_descriptor_set_duplicate_number; ++i)
+        for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
             material_ptr->m_descriptor_sets_per_frame.push_back(
                 descriptor_allocator.Allocate(shader->descriptor_set_layouts));

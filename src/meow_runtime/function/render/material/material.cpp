@@ -13,6 +13,10 @@ namespace Meow
 
     void Material::CreateUniformBuffer()
     {
+        const auto k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
+
+        m_dynamic_uniform_buffer_per_frame.resize(k_max_frames_in_flight);
+
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
         const vk::raii::Device&         logical_device  = g_runtime_context.render_system->GetLogicalDevice();
 
@@ -20,16 +24,25 @@ namespace Meow
         {
             if (it->second.descriptorType == vk::DescriptorType::eUniformBuffer)
             {
-                m_uniform_buffers[it->first] =
-                    std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, it->second.size));
-                BindBufferToDescriptorSet(it->first, m_uniform_buffers[it->first]->buffer);
+                m_uniform_buffers_per_frame[it->first].resize(k_max_frames_in_flight);
+                for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
+                {
+                    m_uniform_buffers_per_frame[it->first][i] =
+                        std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, it->second.size));
+                    BindBufferToDescriptorSet(
+                        it->first, m_uniform_buffers_per_frame[it->first][i]->buffer, VK_WHOLE_SIZE, nullptr, i);
+                }
             }
             if (it->second.descriptorType == vk::DescriptorType::eUniformBufferDynamic)
             {
-                if (!m_dynamic_uniform_buffer)
-                    m_dynamic_uniform_buffer =
-                        std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, 32 * 1024));
-                BindBufferToDescriptorSet(it->first, m_dynamic_uniform_buffer->buffer);
+                for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
+                {
+                    if (!m_dynamic_uniform_buffer_per_frame[i])
+                        m_dynamic_uniform_buffer_per_frame[i] =
+                            std::move(std::make_unique<UniformBuffer>(physical_device, logical_device, 32 * 1024));
+                    BindBufferToDescriptorSet(
+                        it->first, m_dynamic_uniform_buffer_per_frame[i]->buffer, VK_WHOLE_SIZE, nullptr, i);
+                }
             }
         }
     }
@@ -68,7 +81,7 @@ namespace Meow
                 }
                 if (it->second.descriptorType == vk::DescriptorType::eStorageBuffer)
                 {
-                    meta  = &it->second;
+                    meta = &it->second;
                     break;
                 }
             }
@@ -147,7 +160,10 @@ namespace Meow
 
         m_obj_count = 0;
         m_per_obj_dynamic_offsets.clear();
-        m_dynamic_uniform_buffer->Reset();
+        for (auto& dynamic_uniform_buffer : m_dynamic_uniform_buffer_per_frame)
+        {
+            dynamic_uniform_buffer->ResetMemory();
+        }
     }
 
     void Material::EndPopulatingDynamicUniformBufferPerFrame()
@@ -187,7 +203,8 @@ namespace Meow
         ++m_obj_count;
     }
 
-    void Material::PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size)
+    void
+    Material::PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size, uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -218,10 +235,10 @@ namespace Meow
         }
 
         m_per_obj_dynamic_offsets[m_obj_count][it->second.dynamic_seq] =
-            static_cast<uint32_t>(m_dynamic_uniform_buffer->Populate(data, it->second.size));
+            static_cast<uint32_t>(m_dynamic_uniform_buffer_per_frame[frame_index]->Populate(data, it->second.size));
     }
 
-    void Material::PopulateUniformBuffer(const std::string& name, void* data, uint32_t size)
+    void Material::PopulateUniformBuffer(const std::string& name, void* data, uint32_t size, uint32_t frame_index)
     {
         if (!shader)
         {
@@ -241,8 +258,8 @@ namespace Meow
             MEOW_WARN("Uniform {} size not match, dst={} src={}", name, it->second.size, size);
         }
 
-        m_uniform_buffers[it->first]->Reset();
-        m_uniform_buffers[it->first]->Populate(data, size);
+        m_uniform_buffers_per_frame[it->first][frame_index]->ResetMemory();
+        m_uniform_buffers_per_frame[it->first][frame_index]->Populate(data, size);
     }
 
     void Material::BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
@@ -271,11 +288,8 @@ namespace Meow
         if (is_dynamic)
             dynamic_offsets = m_per_obj_dynamic_offsets[draw_call];
 
-        command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                          *shader->pipeline_layout,
-                                          first_set,
-                                          descriptor_sets_to_bind,
-                                          dynamic_offsets);
+        command_buffer.bindDescriptorSets(
+            m_bind_point, *shader->pipeline_layout, first_set, descriptor_sets_to_bind, dynamic_offsets);
     }
 
     void Material::SetDebugName(const std::string& debug_name, uint32_t frame_index)
@@ -289,7 +303,8 @@ namespace Meow
         {
             for (size_t i = 0; i < m_descriptor_sets_per_frame[frame_index].size(); i++)
             {
-                std::string descriptor_set_name = debug_name + " DescriptorSet" + std::to_string(i);
+                std::string descriptor_set_name =
+                    std::format("{} DescriptorSet {} frame {}", debug_name, i, frame_index);
 
                 vk::DebugUtilsObjectNameInfoEXT name_info = {
                     vk::ObjectType::eDescriptorSet,
@@ -301,7 +316,7 @@ namespace Meow
         }
 
         {
-            std::string pipeline_name = debug_name + " Pipeline";
+            std::string pipeline_name = std::format("{} Pipeline {}", debug_name, frame_index);
 
             vk::DebugUtilsObjectNameInfoEXT name_info = {
                 vk::ObjectType::ePipeline,
@@ -324,7 +339,7 @@ namespace Meow
         std::swap(lhs.m_obj_count, rhs.m_obj_count);
         std::swap(lhs.m_per_obj_dynamic_offsets, rhs.m_per_obj_dynamic_offsets);
         std::swap(lhs.m_descriptor_sets_per_frame, rhs.m_descriptor_sets_per_frame);
-        std::swap(lhs.m_uniform_buffers, rhs.m_uniform_buffers);
-        std::swap(lhs.m_dynamic_uniform_buffer, rhs.m_dynamic_uniform_buffer);
+        std::swap(lhs.m_uniform_buffers_per_frame, rhs.m_uniform_buffers_per_frame);
+        std::swap(lhs.m_dynamic_uniform_buffer_per_frame, rhs.m_dynamic_uniform_buffer_per_frame);
     }
 } // namespace Meow

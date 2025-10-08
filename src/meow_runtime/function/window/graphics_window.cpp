@@ -2,8 +2,23 @@
 
 #include "function/global/runtime_context.h"
 
+#include "function/render/utils/vulkan_debug_utils.h"
+
 namespace Meow
 {
+    void GraphicsWindow::CreateSurface()
+    {
+        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
+        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+
+        auto         size = GetSize();
+        vk::Extent2D extent(size.x, size.y);
+        m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
+
+        m_color_format = PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
+        ASSERT(m_color_format != vk::Format::eUndefined);
+    }
+
     void GraphicsWindow::CreateSwapChian()
     {
         const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
@@ -32,6 +47,7 @@ namespace Meow
     void GraphicsWindow::CreatePerFrameData()
     {
         const vk::raii::Device& logical_device = g_runtime_context.render_system->GetLogicalDevice();
+        const vk::raii::Queue&  graphics_queue = g_runtime_context.render_system->GetGraphicsQueue();
         const auto graphics_queue_family_index = g_runtime_context.render_system->GetGraphicsQueueFamiliyIndex();
         const auto k_max_frames_in_flight      = g_runtime_context.render_system->GetMaxFramesInFlight();
 
@@ -47,13 +63,13 @@ namespace Meow
             vk::CommandBufferAllocateInfo command_buffer_allocate_info(
                 *m_per_frame_data[i].command_pool, vk::CommandBufferLevel::ePrimary, 1);
             vk::raii::CommandBuffers command_buffers(logical_device, command_buffer_allocate_info);
-            m_per_frame_data[i].command_buffer = std::move(command_buffers[0]);
+            m_per_frame_data[i].graphics_command_buffer = std::move(command_buffers[0]);
 
             m_per_frame_data[i].image_acquired_semaphore =
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
             m_per_frame_data[i].render_finished_semaphore =
                 vk::raii::Semaphore(logical_device, vk::SemaphoreCreateInfo());
-            m_per_frame_data[i].in_flight_fence =
+            m_per_frame_data[i].graphics_in_flight_fence =
                 vk::raii::Fence(logical_device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
 
             // compute
@@ -68,18 +84,103 @@ namespace Meow
             m_per_frame_data[i].compute_in_flight_fence =
                 vk::raii::Fence(logical_device, vk::FenceCreateInfo(vk::FenceCreateFlagBits::eSignaled));
         }
+
+        SetPerFrameDataDebugName();
     }
 
-    void GraphicsWindow::CreateSurface()
+    void GraphicsWindow::SetPerFrameDataDebugName() const
     {
-        const vk::raii::Instance&       vulkan_instance = g_runtime_context.render_system->GetInstance();
-        const vk::raii::PhysicalDevice& physical_device = g_runtime_context.render_system->GetPhysicalDevice();
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+        const vk::raii::Device& logical_device         = g_runtime_context.render_system->GetLogicalDevice();
+        const auto              k_max_frames_in_flight = g_runtime_context.render_system->GetMaxFramesInFlight();
 
-        auto         size = GetSize();
-        vk::Extent2D extent(size.x, size.y);
-        m_surface_data = SurfaceData(vulkan_instance, GetGLFWWindow(), extent);
+        const std::string debug_name = "PerFrameData";
 
-        m_color_format = PickSurfaceFormat((physical_device).getSurfaceFormatsKHR(*m_surface_data.surface)).format;
-        ASSERT(m_color_format != vk::Format::eUndefined);
+        for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
+        {
+            {
+                std::string command_pool_name = std::format("{} command pool frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eCommandPool,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkCommandPool, *m_per_frame_data[i].command_pool),
+                    command_pool_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string command_buffer_name = std::format("{} graphics command buffer frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eCommandBuffer,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkCommandBuffer,
+                                                           *m_per_frame_data[i].graphics_command_buffer),
+                    command_buffer_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string semaphore_name = std::format("{} image acquired semaphore frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eSemaphore,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkSemaphore, *m_per_frame_data[i].image_acquired_semaphore),
+                    semaphore_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string semaphore_name = std::format("{} render finished semaphore frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eSemaphore,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkSemaphore, *m_per_frame_data[i].render_finished_semaphore),
+                    semaphore_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string fence_name = std::format("{} in graphics flight fence frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eFence,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkFence, *m_per_frame_data[i].graphics_in_flight_fence),
+                    fence_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string command_buffer_name = std::format("{} compute command buffer frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eCommandBuffer,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkCommandBuffer,
+                                                           *m_per_frame_data[i].compute_command_buffer),
+                    command_buffer_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string semaphore_name = std::format("{} compute finished semaphore frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eSemaphore,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkSemaphore,
+                                                           *m_per_frame_data[i].compute_finished_semaphore),
+                    semaphore_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+
+            {
+                std::string fence_name = std::format("{} in compute flight fence frame {}", debug_name, i);
+
+                vk::DebugUtilsObjectNameInfoEXT name_info = {
+                    vk::ObjectType::eFence,
+                    NON_DISPATCHABLE_HANDLE_TO_UINT64_CAST(VkFence, *m_per_frame_data[i].compute_in_flight_fence),
+                    fence_name.c_str()};
+                logical_device.setDebugUtilsObjectNameEXT(name_info);
+            }
+        }
+#endif
     }
 } // namespace Meow

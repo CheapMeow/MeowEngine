@@ -53,9 +53,9 @@ namespace Meow
 
         void EndPopulatingDynamicUniformBufferPerObject();
 
-        void PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size);
+        void PopulateDynamicUniformBuffer(const std::string& name, void* data, uint32_t size, uint32_t frame_index);
 
-        void PopulateUniformBuffer(const std::string& name, void* data, uint32_t size);
+        void PopulateUniformBuffer(const std::string& name, void* data, uint32_t size, uint32_t frame_index);
 
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer,
                                          uint32_t                       first_set,
@@ -79,13 +79,12 @@ namespace Meow
 
         // stored for binding descriptor set
 
-        bool                                                            m_actived   = false;
-        int32_t                                                         m_obj_count = 0;
-        std::vector<std::vector<uint32_t>>                              m_per_obj_dynamic_offsets;
-        uint32_t                                                        m_descriptor_set_duplicate_number = 1;
-        std::vector<vk::raii::DescriptorSets>                           m_descriptor_sets_per_frame;
-        std::unordered_map<std::string, std::unique_ptr<UniformBuffer>> m_uniform_buffers;
-        std::unique_ptr<UniformBuffer>                                  m_dynamic_uniform_buffer;
+        bool                                                                         m_actived   = false;
+        int32_t                                                                      m_obj_count = 0;
+        std::vector<std::vector<uint32_t>>                                           m_per_obj_dynamic_offsets;
+        std::vector<vk::raii::DescriptorSets>                                        m_descriptor_sets_per_frame;
+        std::unordered_map<std::string, std::vector<std::unique_ptr<UniformBuffer>>> m_uniform_buffers_per_frame;
+        std::vector<std::unique_ptr<UniformBuffer>>                                  m_dynamic_uniform_buffer_per_frame;
 
         ShadingModelType      m_shading_model_type;
         vk::PipelineBindPoint m_bind_point;

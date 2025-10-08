@@ -31,6 +31,7 @@ namespace Meow
         const vk::raii::Device&         GetLogicalDevice() const { return m_logical_device; }
         const vk::raii::Queue&          GetGraphicsQueue() const { return m_graphics_queue; }
         const vk::raii::Queue&          GetPresentQueue() const { return m_present_queue; }
+        const vk::raii::Queue&          GetComputeQueue() const { return m_compute_queue; }
         const vk::raii::CommandPool&    GetOneTimeSubmitCommandPool() const { return m_onetime_submit_command_pool; }
         DescriptorAllocatorGrowable&    GetDescriptorAllocator() { return m_descriptor_allocator; }
 

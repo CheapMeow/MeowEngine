@@ -19,15 +19,17 @@ namespace Meow
             : Window(id, glfw_window)
         {}
 
-        virtual ~GraphicsWindow() override {}
+        ~GraphicsWindow() override {}
 
+    protected:
         void               CreateSurface();
         const SurfaceData& GetSurfaceData() { return m_surface_data; }
         const vk::Format   GetColorFormat() { return m_color_format; }
         void               CreateSwapChian();
         void               CreatePerFrameData();
 
-    protected:
+        void SetPerFrameDataDebugName() const;
+
         SurfaceData                m_surface_data = nullptr;
         vk::Format                 m_color_format;
         SwapChainData              m_swapchain_data = nullptr;

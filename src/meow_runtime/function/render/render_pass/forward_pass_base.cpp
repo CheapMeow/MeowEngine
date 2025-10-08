@@ -222,7 +222,7 @@ namespace Meow
         }
     }
 
-    void ForwardPassBase::PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map)
+    void ForwardPassBase::PopulateDirectionalLightData(std::shared_ptr<ImageData> shadow_map, uint32_t frame_index)
     {
         std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
@@ -250,10 +250,11 @@ namespace Meow
                                              glm::vec3(0.0f, 1.0f, 0.0f));
                 per_light_data.projection =
                     Math::perspective_vk(directional_light_comp_ptr->field_of_view,
-                                         (float)shadow_map->extent.width / shadow_map->extent.height,
+                                         static_cast<float>(shadow_map->extent.width) / shadow_map->extent.height,
                                          directional_light_comp_ptr->near_plane,
                                          directional_light_comp_ptr->far_plane);
-                m_opaque_material->PopulateUniformBuffer("lightData", &per_light_data, sizeof(per_light_data));
+                m_opaque_material->PopulateUniformBuffer(
+                    "lightData", &per_light_data, sizeof(per_light_data), frame_index);
                 break;
             }
         }
@@ -369,7 +370,7 @@ namespace Meow
         }
     }
 
-    void ForwardPassBase::UpdateUniformBuffer()
+    void ForwardPassBase::UpdateUniformBuffer(uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -412,7 +413,7 @@ namespace Meow
                                  main_camera_component->near_plane,
                                  main_camera_component->far_plane);
 
-        m_opaque_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_opaque_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
 
         struct LightData
         {
@@ -434,7 +435,7 @@ namespace Meow
         LightData lights;
         lights.camPos = main_camera_transfrom_component->position;
 
-        m_opaque_material->PopulateUniformBuffer("lights", &lights, sizeof(lights));
+        m_opaque_material->PopulateUniformBuffer("lights", &lights, sizeof(lights), frame_index);
 
         // Update mesh uniform
 
@@ -467,7 +468,7 @@ namespace Meow
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_opaque_material->BeginPopulatingDynamicUniformBufferPerObject();
-                    m_opaque_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_opaque_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model), frame_index);
                     m_opaque_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
@@ -477,7 +478,7 @@ namespace Meow
         // skybox
 
         per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
-        m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
 
         // translucent
 
@@ -488,8 +489,9 @@ namespace Meow
         };
 
         per_scene_data.view = view;
-        m_translucent_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
-        m_translucent_material->PopulateUniformBuffer("lights", &lights, sizeof(lights));
+        m_translucent_material->PopulateUniformBuffer(
+            "sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
+        m_translucent_material->PopulateUniformBuffer("lights", &lights, sizeof(lights), frame_index);
         m_translucent_material->BeginPopulatingDynamicUniformBufferPerFrame();
         const auto* visibles_translucent_ptr = level->GetVisiblesPerShadingModel(ShadingModelType::Translucent);
         if (visibles_translucent_ptr)
@@ -522,12 +524,12 @@ namespace Meow
                 TranslucentObjectData translucent_obj_data;
 
                 translucent_obj_data.model = current_gameobject_transfrom_component->GetTransform();
-                translucent_obj_data.alpha = (float)obj_index / visibles_size;
+                translucent_obj_data.alpha = static_cast<float>(obj_index) / visibles_size;
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_translucent_material->BeginPopulatingDynamicUniformBufferPerObject();
                     m_translucent_material->PopulateDynamicUniformBuffer(
-                        "objData", &translucent_obj_data, sizeof(translucent_obj_data));
+                        "objData", &translucent_obj_data, sizeof(translucent_obj_data), frame_index);
                     m_translucent_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }

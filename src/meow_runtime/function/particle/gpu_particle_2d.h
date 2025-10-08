@@ -15,7 +15,7 @@ namespace Meow
         ~GPUParticle2D() override;
 
         void UploadParticleData(const std::vector<GPUParticleData2D>& in_particle_data);
-        void UpdateUniformBuffer() override;
+        void UpdateUniformBuffer(uint32_t frame_index) override;
         void BindPipeline(const vk::raii::CommandBuffer& command_buffer) override;
         void BindDescriptorSetToPipeline(const vk::raii::CommandBuffer& command_buffer, uint32_t frame_index) override;
         void Dispatch(const vk::raii::CommandBuffer& command_buffer) override;

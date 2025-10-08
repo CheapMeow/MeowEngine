@@ -75,7 +75,7 @@ namespace Meow
                 vk::PipelineStageFlagBits::eColorAttachmentOutput, /* srcStageMask */
                 vk::PipelineStageFlagBits::eBottomOfPipe,          /* dstStageMask */
                 vk::AccessFlagBits::eColorAttachmentWrite,         /* srcAccessMask */
-                vk::AccessFlagBits::eShaderRead,                   /* dstAccessMask */
+                vk::AccessFlagBits::eMemoryRead,                   /* dstAccessMask */
                 vk::DependencyFlagBits::eByRegion,                 /* dependencyFlags */
             },
         };
@@ -145,13 +145,13 @@ namespace Meow
         }
     }
 
-    void ComputeParticlePass::UpdateUniformBuffer()
+    void ComputeParticlePass::UpdateUniformBuffer(uint32_t frame_index)
     {
         std::vector<std::shared_ptr<GPUParticleBase>> particles = g_runtime_context.particle_system->GetGPUParticles();
 
         for (std::shared_ptr<GPUParticleBase> particle : particles)
         {
-            particle->UpdateUniformBuffer();
+            particle->UpdateUniformBuffer(frame_index);
         }
     }
 
@@ -197,7 +197,7 @@ namespace Meow
 
         for (std::shared_ptr<GPUParticleBase> particle : particles)
         {
-            Meow::StorageBuffer& storage_buffer = particle->GetParticleStorageBuffer()[frame_index];
+            StorageBuffer& storage_buffer = particle->GetParticleStorageBuffer()[frame_index];
             command_buffer.bindVertexBuffers(0, {*storage_buffer.buffer}, {storage_buffer.offset});
             command_buffer.draw(particle->GetParticleCount(), 1, 0, 0);
             ++draw_call[1];

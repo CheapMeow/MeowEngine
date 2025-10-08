@@ -199,7 +199,7 @@ namespace Meow
         m_quad_material->BindImageToDescriptorSet("inputDepth", *m_depth_attachment);
     }
 
-    void DeferredPassBase::UpdateUniformBuffer()
+    void DeferredPassBase::UpdateUniformBuffer(uint32_t frame_index)
     {
         FUNCTION_TIMER();
 
@@ -236,7 +236,8 @@ namespace Meow
                                  main_camera_component->near_plane,
                                  main_camera_component->far_plane);
 
-        m_obj2attachment_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_obj2attachment_material->PopulateUniformBuffer(
+            "sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
 
         // Update mesh uniform
 
@@ -270,7 +271,8 @@ namespace Meow
                 for (uint32_t i = 0; i < current_gameobject_model_component->model.lock()->meshes.size(); ++i)
                 {
                     m_obj2attachment_material->BeginPopulatingDynamicUniformBufferPerObject();
-                    m_obj2attachment_material->PopulateDynamicUniformBuffer("objData", &model, sizeof(model));
+                    m_obj2attachment_material->PopulateDynamicUniformBuffer(
+                        "objData", &model, sizeof(model), frame_index);
                     m_obj2attachment_material->EndPopulatingDynamicUniformBufferPerObject();
                 }
             }
@@ -287,12 +289,12 @@ namespace Meow
             m_LightDatas.lights[i].position.z = m_LightInfos.position[i].z + bias * m_LightInfos.direction[i].z;
         }
 
-        m_quad_material->PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas));
+        m_quad_material->PopulateUniformBuffer("lightDatas", &m_LightDatas, sizeof(m_LightDatas), frame_index);
 
         // skybox
 
         per_scene_data.view = lookAt(glm::vec3(0.0f), glm::vec3(0.0f) + forward, glm::vec3(0.0f, 1.0f, 0.0f));
-        m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data));
+        m_skybox_material->PopulateUniformBuffer("sceneData", &per_scene_data, sizeof(per_scene_data), frame_index);
     }
 
     void

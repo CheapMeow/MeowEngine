@@ -34,7 +34,7 @@ namespace Meow
         OnIconify().connect([&](bool iconified) { m_iconified = iconified; });
 
         auto& per_frame_data = m_per_frame_data[m_frame_index];
-        auto& command_buffer = per_frame_data.command_buffer;
+        auto& command_buffer = per_frame_data.graphics_command_buffer;
 
         std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
@@ -64,7 +64,7 @@ namespace Meow
             transform_ptr->rotation = glm::quat(glm::vec3(-100.0f, 0.0f, 0.0f));
 
             camera_ptr->camera_mode  = CameraMode::Free;
-            camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+            camera_ptr->aspect_ratio = static_cast<float>(m_surface_data.extent.width) / m_surface_data.extent.height;
         }
 
         {
@@ -103,9 +103,10 @@ namespace Meow
                     current_gameobject->SetName("Sphere " + std::to_string(row * column_number + col));
                     auto transform_ptr = TryAddComponent(
                         current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-                    transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
-                                                        (float)row * spacing - (float)row_number / 2.0f * spacing,
-                                                        0.0f);
+                    transform_ptr->position = glm::vec3(
+                        static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
+                        static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
+                        0.0f);
 
                     auto current_gameobject_model_component =
                         TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
@@ -146,9 +147,10 @@ namespace Meow
                     current_gameobject->SetName("Sphere Translucent" + std::to_string(row * column_number + col));
                     auto transform_ptr = TryAddComponent(
                         current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-                    transform_ptr->position = glm::vec3((float)col * spacing - (float)column_number / 2.0f * spacing,
-                                                        (float)row * spacing - (float)row_number / 2.0f * spacing,
-                                                        -5.0f);
+                    transform_ptr->position = glm::vec3(
+                        static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
+                        static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
+                        -5.0f);
 
                     auto current_gameobject_model_component =
                         TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
@@ -295,26 +297,49 @@ namespace Meow
         const vk::raii::Device& logical_device            = g_runtime_context.render_system->GetLogicalDevice();
         const vk::raii::Queue&  graphics_queue            = g_runtime_context.render_system->GetGraphicsQueue();
         const vk::raii::Queue&  present_queue             = g_runtime_context.render_system->GetPresentQueue();
+        const vk::raii::Queue&  compute_queue             = g_runtime_context.render_system->GetComputeQueue();
         auto&                   per_frame_data            = m_per_frame_data[m_frame_index];
-        auto&                   command_buffer            = per_frame_data.command_buffer;
+        auto&                   command_buffer            = per_frame_data.graphics_command_buffer;
         auto&                   image_acquired_semaphore  = per_frame_data.image_acquired_semaphore;
         auto&                   render_finished_semaphore = per_frame_data.render_finished_semaphore;
-        auto&                   in_flight_fence           = per_frame_data.in_flight_fence;
+        auto&                   graphics_in_flight_fence  = per_frame_data.graphics_in_flight_fence;
         const auto              k_max_frames_in_flight    = g_runtime_context.render_system->GetMaxFramesInFlight();
 
-        auto& compute_command_buffer = per_frame_data.compute_command_buffer;
+        auto& compute_command_buffer     = per_frame_data.compute_command_buffer;
+        auto& compute_finished_semaphore = per_frame_data.compute_finished_semaphore;
+        auto& compute_in_flight_fence    = per_frame_data.compute_in_flight_fence;
 
-        m_shadow_map_pass.UpdateUniformBuffer();
-        m_shadow_coord_to_color_pass.UpdateUniformBuffer();
-        m_render_pass_ptr->UpdateUniformBuffer();
-        m_compute_particle_pass.UpdateUniformBuffer();
-        m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
+        m_shadow_map_pass.UpdateUniformBuffer(m_frame_index);
+        m_shadow_coord_to_color_pass.UpdateUniformBuffer(m_frame_index);
+        m_render_pass_ptr->UpdateUniformBuffer(m_frame_index);
+        m_compute_particle_pass.UpdateUniformBuffer(m_frame_index);
+        m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap(), m_frame_index);
+
+        // ------------------- compute -------------------
+
+        while (vk::Result::eTimeout ==
+               logical_device.waitForFences({*compute_in_flight_fence}, VK_TRUE, k_fence_timeout))
+            ;
+        logical_device.resetFences({*compute_in_flight_fence});
+
+        compute_command_buffer.reset();
+        compute_command_buffer.begin({});
+
+        m_compute_particle_pass.RecordComputeCommand(compute_command_buffer, m_frame_index);
+
+        compute_command_buffer.end();
+
+        {
+            vk::SubmitInfo submit_info({}, {}, *compute_command_buffer, *compute_finished_semaphore);
+            compute_queue.submit(submit_info, *compute_in_flight_fence);
+        }
 
         // ------------------- render -------------------
 
-        while (vk::Result::eTimeout == logical_device.waitForFences({*in_flight_fence}, VK_TRUE, k_fence_timeout))
+        while (vk::Result::eTimeout ==
+               logical_device.waitForFences({*graphics_in_flight_fence}, VK_TRUE, k_fence_timeout))
             ;
-        logical_device.resetFences({*in_flight_fence});
+        logical_device.resetFences({*graphics_in_flight_fence});
 
         auto [result, m_image_index] =
             SwapchainNextImageWrapper(m_swapchain_data.swap_chain, k_fence_timeout, *image_acquired_semaphore);
@@ -347,7 +372,6 @@ namespace Meow
         m_render_pass_ptr->End(command_buffer);
 
         m_compute_particle_pass.Start(command_buffer, m_surface_data.extent, m_image_index);
-        m_compute_particle_pass.RecordComputeCommand(compute_command_buffer, m_frame_index);
         m_compute_particle_pass.RecordGraphicsCommand(command_buffer, m_frame_index);
         m_compute_particle_pass.End(command_buffer);
 
@@ -357,10 +381,14 @@ namespace Meow
 
         command_buffer.end();
 
-        vk::PipelineStageFlags wait_destination_stage_mask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
-        vk::SubmitInfo         submit_info(
-            *image_acquired_semaphore, wait_destination_stage_mask, *command_buffer, *render_finished_semaphore);
-        graphics_queue.submit(submit_info, *in_flight_fence);
+        {
+            std::array<const vk::PipelineStageFlags, 2> wait_destination_stage_masks {
+                vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eVertexInput};
+            std::array<const vk::Semaphore, 2> wait_semaphores {*image_acquired_semaphore, *compute_finished_semaphore};
+            vk::SubmitInfo                     submit_info(
+                wait_semaphores, wait_destination_stage_masks, *command_buffer, *render_finished_semaphore);
+            graphics_queue.submit(submit_info, *graphics_in_flight_fence);
+        }
 
         vk::PresentInfoKHR present_info(*render_finished_semaphore, *m_swapchain_data.swap_chain, m_image_index);
         result = QueuePresentWrapper(present_queue, present_info);
@@ -438,7 +466,6 @@ namespace Meow
 
         m_depth_to_color_pass.BindShadowMap(m_shadow_map_pass.GetShadowMap());
         m_forward_pass.BindShadowMap(m_shadow_map_pass.GetShadowMap());
-        m_forward_pass.PopulateDirectionalLightData(m_shadow_map_pass.GetShadowMap());
     }
 
     void EditorWindow::InitImGui()
@@ -553,7 +580,7 @@ namespace Meow
         std::shared_ptr<Camera3DComponent> camera_ptr =
             current_gameobject->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        camera_ptr->aspect_ratio = (float)m_surface_data.extent.width / m_surface_data.extent.height;
+        camera_ptr->aspect_ratio = static_cast<float>(m_surface_data.extent.width) / m_surface_data.extent.height;
     }
 
     void EditorWindow::RefreshFrameBuffers()

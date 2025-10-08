@@ -6,22 +6,22 @@
 
 namespace Meow
 {
-    struct StorageBuffer : public BufferData
+    struct StorageBuffer : BufferData
     {
         VkDeviceSize offset = 0;
 
         StorageBuffer() {};
 
-        StorageBuffer(vk::raii::PhysicalDevice const& physical_device,
-                      vk::raii::Device const&         device,
-                      vk::raii::CommandPool const&    command_pool,
-                      vk::raii::Queue const&          queue,
+        StorageBuffer(const vk::raii::PhysicalDevice& physical_device,
+                      const vk::raii::Device&         device,
+                      const vk::raii::CommandPool&    command_pool,
+                      const vk::raii::Queue&          queue,
                       vk::DeviceSize                  size)
             : BufferData(physical_device,
                          device,
                          size,
                          vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
-                             vk::BufferUsageFlagBits::eTransferDst,
+                             vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer,
                          vk::MemoryPropertyFlagBits::eDeviceLocal)
         {}
     };

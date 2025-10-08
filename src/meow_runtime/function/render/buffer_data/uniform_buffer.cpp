@@ -4,7 +4,7 @@
 
 namespace Meow
 {
-    void UniformBuffer::Reset() { allocated_memory = 0; }
+    void UniformBuffer::ResetMemory() { allocated_memory = 0; }
 
     uint64_t UniformBuffer::AllocateMemory(uint64_t size)
     {
