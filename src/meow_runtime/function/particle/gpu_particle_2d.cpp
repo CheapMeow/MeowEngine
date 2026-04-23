@@ -45,10 +45,10 @@ namespace Meow
         {
             m_particle_comp_material->BindBufferToDescriptorSet(
                 "inParticles",
-                m_particle_storage_buffer_per_frame[(i - 1) % k_max_frames_in_flight].buffer,
+                m_particle_storage_buffer_per_frame[(i + 1) % k_max_frames_in_flight].buffer,
                 VK_WHOLE_SIZE,
                 nullptr,
-                (i - 1) % k_max_frames_in_flight);
+                (i + 1) % k_max_frames_in_flight);
             m_particle_comp_material->BindBufferToDescriptorSet(
                 "outParticles", m_particle_storage_buffer_per_frame[i].buffer, VK_WHOLE_SIZE, nullptr, i);
         }

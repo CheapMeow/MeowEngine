@@ -316,7 +316,7 @@ namespace Meow
         }
 
         {
-            std::string pipeline_name = std::format("{} Pipeline {}", debug_name, frame_index);
+            std::string pipeline_name = std::format("{} Pipeline", debug_name);
 
             vk::DebugUtilsObjectNameInfoEXT name_info = {
                 vk::ObjectType::ePipeline,
