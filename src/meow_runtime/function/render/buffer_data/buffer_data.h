@@ -26,46 +26,15 @@ namespace Meow
                    vk::DeviceSize                  size,
                    vk::BufferUsageFlags            usage,
                    vk::MemoryPropertyFlags         property_flags = vk::MemoryPropertyFlagBits::eHostVisible |
-                                                            vk::MemoryPropertyFlagBits::eHostCoherent)
-            : buffer(logical_device, vk::BufferCreateInfo({}, size, usage))
-            , device_size(size)
-            , usage_flags(usage)
-            , property_flags(property_flags)
-        {
-            device_memory = AllocateDeviceMemory(
-                logical_device, physical_device.getMemoryProperties(), buffer.getMemoryRequirements(), property_flags);
-            buffer.bindMemory(*device_memory, 0);
-        }
+                                                            vk::MemoryPropertyFlagBits::eHostCoherent);
 
         ~BufferData() { clear(); }
 
-        BufferData(BufferData&& rhs)
-            : device_memory(std::exchange(rhs.device_memory, nullptr))
-            , buffer(std::exchange(rhs.buffer, nullptr))
-            , device_size(rhs.device_size)
-            , usage_flags(rhs.usage_flags)
-            , property_flags(rhs.property_flags)
-        {}
-        BufferData& operator=(BufferData&& rhs)
-        {
-            if (this != &rhs)
-            {
-                clear();
+        BufferData(BufferData&& rhs);
 
-                device_memory  = std::exchange(rhs.device_memory, nullptr);
-                buffer         = std::exchange(rhs.buffer, nullptr);
-                device_size    = rhs.device_size;
-                usage_flags    = rhs.usage_flags;
-                property_flags = rhs.property_flags;
-            }
-            return *this;
-        }
+        BufferData& operator=(BufferData&& rhs);
 
-        void clear()
-        {
-            device_memory = nullptr;
-            buffer        = nullptr;
-        }
+        void clear();
 
         template<typename DataType>
         void Upload(DataType const& data) const
@@ -120,5 +89,7 @@ namespace Meow
                 command_buffer.copyBuffer(*staging_buffer.buffer, *this->buffer, vk::BufferCopy(0, 0, dataSize));
             });
         }
+
+        void SetDebugName(const std::string& debug_name);
     };
 } // namespace Meow
