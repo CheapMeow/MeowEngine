@@ -29,10 +29,19 @@ namespace Meow
 
         const std::vector<EnumParseResult>& GetEnumResults() const { return enum_results; }
 
+        // Exports results to a readable text file for change detection
+        void ExportResults(const fs::path& output_path) const;
+
+        // Returns true if the current results match the content of the given file
+        bool IsSameAs(const fs::path& previous_result_path) const;
+
     private:
         bool ParseClass(const fs::path& path, CXCursor class_cursor);
 
         bool ParseEnum(const fs::path& path, CXCursor enum_cursor);
+
+        // Serializes results into a clean, human-readable string
+        std::string SerializeResults() const;
 
         bool                            is_recording = false;
         fs::path                        src_path;

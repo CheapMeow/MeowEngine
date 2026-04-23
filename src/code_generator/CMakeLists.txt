@@ -55,7 +55,7 @@ list(APPEND INCLUDE_DIRS "-I$ENV{LLVM_DIR}/lib/clang/19/include") # for
 add_custom_command(
   OUTPUT ${RUNTIME_DIR}/generated/register_all.cpp
   COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_DIRS} "-S${RUNTIME_DIR}"
-          "-O${RUNTIME_DIR}/generated"
+          "-O${RUNTIME_DIR}/generated" "-D${CMAKE_CURRENT_BINARY_DIR}/code_gen_cache.txt"
   DEPENDS ${FILES_DEPEND}
   COMMENT "Generating register_all.cpp")
 add_custom_target(${GENERATED_FILE_TARGET_NAME}

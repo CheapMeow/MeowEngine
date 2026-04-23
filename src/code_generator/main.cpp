@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
     std::vector<std::string> include_paths;
     std::string              src_path    = "";
     std::string              output_path = "";
+    std::string              dump_path   = "";
 
     int include_path_count = 0;
 
@@ -31,6 +32,15 @@ int main(int argc, char* argv[])
                 return 1;
             }
             src_path = arg.substr(2);
+        }
+        else if (arg.substr(0, 2) == "-D" && arg.size() > 2)
+        {
+            if (dump_path.size() > 0)
+            {
+                std::cerr << "[CodeGenerator] More than one -D<dump_path>!" << std::endl;
+                return 1;
+            }
+            dump_path = arg.substr(2);
         }
         else if (arg.substr(0, 2) == "-O" && arg.size() > 2)
         {
@@ -107,6 +117,19 @@ int main(int argc, char* argv[])
         parser.ParseFile(files[i], include_paths);
     }
     parser.End();
+
+    // Early exit logic if metadata hasn't changed
+    if (!dump_path.empty())
+    {
+        if (parser.IsSameAs(dump_path))
+        {
+            std::cout << "[CodeGenerator] No metadata changes detected. Exiting." << std::endl;
+            return 0;
+        }
+
+        // Update the cache file for the next run
+        parser.ExportResults(dump_path);
+    }
 
     CodeGenerator generator;
     generator.Begin(src_path, output_path);

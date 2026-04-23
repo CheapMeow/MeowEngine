@@ -226,4 +226,58 @@ namespace Meow
 
         return true;
     }
+
+    std::string Parser::SerializeResults() const
+    {
+        std::stringstream ss;
+
+        // List all scanned relative paths
+        ss << "Scanned Files:\n";
+        for (const auto& path : include_relative_paths)
+            ss << "  " << path << "\n";
+        ss << "\n";
+
+        // Serialize classes, fields and methods
+        for (const auto& res : class_results)
+        {
+            ss << "Class: " << res.class_name << "\n";
+            for (const auto& f : res.field_results)
+                ss << "  Field: " << f.field_type_name << " " << f.field_name << "\n";
+            for (const auto& m : res.method_results)
+                ss << "  Method: " << m.method_name << "()\n";
+            ss << "\n";
+        }
+
+        // Serialize enums
+        for (const auto& res : enum_results)
+        {
+            ss << "Enum: " << res.enum_name << " (" << res.underlying_type_name << ")\n";
+            for (const auto& e : res.enum_element_names)
+                ss << "  Value: " << e << "\n";
+            ss << "\n";
+        }
+
+        return ss.str();
+    }
+
+    void Parser::ExportResults(const fs::path& output_path) const
+    {
+        std::ofstream ofs(output_path);
+        if (ofs.is_open())
+        {
+            ofs << SerializeResults();
+            ofs.close();
+        }
+    }
+
+    bool Parser::IsSameAs(const fs::path& previous_result_path) const
+    {
+        if (!fs::exists(previous_result_path))
+            return false;
+
+        std::ifstream ifs(previous_result_path);
+        std::string   content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+        return content == SerializeResults();
+    }
 } // namespace Meow
