@@ -51,3 +51,6 @@ build-release/
 
 .xmake/
 vsxmake2022/
+
+# imgui
+imgui.ini
