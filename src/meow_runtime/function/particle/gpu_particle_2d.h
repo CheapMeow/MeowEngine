@@ -21,6 +21,8 @@ namespace Meow
         void Dispatch(const vk::raii::CommandBuffer& command_buffer) override;
 
     private:
+        void SetDebugName();
+
         std::shared_ptr<Material> m_particle_comp_material;
     };
 } // namespace Meow

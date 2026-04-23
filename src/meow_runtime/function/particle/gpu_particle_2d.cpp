@@ -52,6 +52,8 @@ namespace Meow
             m_particle_comp_material->BindBufferToDescriptorSet(
                 "outParticles", m_particle_storage_buffer_per_frame[i].buffer, VK_WHOLE_SIZE, nullptr, i);
         }
+
+        SetDebugName();
     }
 
     GPUParticle2D::~GPUParticle2D() {}
@@ -93,5 +95,14 @@ namespace Meow
     void GPUParticle2D::Dispatch(const vk::raii::CommandBuffer& command_buffer)
     {
         command_buffer.dispatch(m_particle_count / 256, 1, 1); // TODO: use local size from shader
+    }
+
+    void GPUParticle2D::SetDebugName()
+    {
+        for (uint32_t i = 0; i < m_particle_storage_buffer_per_frame.size(); ++i)
+        {
+            m_particle_storage_buffer_per_frame[i].SetDebugName("GPUParticleData2D storage buffer " +
+                                                                std::to_string(i));
+        }
     }
 } // namespace Meow
