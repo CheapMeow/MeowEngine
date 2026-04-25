@@ -44,13 +44,13 @@ namespace Meow
         for (uint32_t i = 0; i < k_max_frames_in_flight; ++i)
         {
             m_particle_comp_material->BindBufferToDescriptorSet(
-                "inParticles",
-                m_particle_storage_buffer_per_frame[i].buffer,
+                "inParticles", m_particle_storage_buffer_per_frame[i].buffer, VK_WHOLE_SIZE, nullptr, i);
+            m_particle_comp_material->BindBufferToDescriptorSet(
+                "outParticles",
+                m_particle_storage_buffer_per_frame[(i + 1) % k_max_frames_in_flight].buffer,
                 VK_WHOLE_SIZE,
                 nullptr,
                 i);
-            m_particle_comp_material->BindBufferToDescriptorSet(
-                "outParticles", m_particle_storage_buffer_per_frame[(i + 1) % k_max_frames_in_flight].buffer, VK_WHOLE_SIZE, nullptr, i);
         }
 
         SetDebugName();
@@ -94,7 +94,9 @@ namespace Meow
 
     void GPUParticle2D::Dispatch(const vk::raii::CommandBuffer& command_buffer)
     {
-        command_buffer.dispatch(m_particle_count / 256, 1, 1); // TODO: use local size from shader
+        if (m_particle_count > 0)
+            command_buffer.dispatch(
+                std::ceil((double)m_particle_count / 256), 1, 1); // TODO: use local size from shader
     }
 
     void GPUParticle2D::SetDebugName()
