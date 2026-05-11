@@ -17,8 +17,8 @@ namespace Meow
         float GetDeltaTime() const { return m_dt; }
 
     private:
-        float m_elapsed_time;
-        float m_dt;
+        float m_elapsed_time = 0.0f;
+        float m_dt = 0.0f;
 
         std::chrono::time_point<std::chrono::steady_clock> m_start_timepoint;
         std::chrono::time_point<std::chrono::steady_clock> m_last_timepoint;

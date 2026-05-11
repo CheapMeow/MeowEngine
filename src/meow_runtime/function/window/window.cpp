@@ -217,11 +217,11 @@ namespace Meow
         glfwPollEvents();
 
         // Updates the position delta.
-        m_mouse_position_delta = dt * (m_mouse_last_position - m_mouse_position);
+        m_mouse_position_delta = m_mouse_last_position - m_mouse_position;
         m_mouse_last_position  = m_mouse_position;
 
         // Updates the scroll delta.
-        m_mouse_scroll_delta = dt * (m_mouse_last_scroll - m_mouse_scroll);
+        m_mouse_scroll_delta = m_mouse_last_scroll - m_mouse_scroll;
         m_mouse_last_scroll  = m_mouse_scroll;
     }
 
