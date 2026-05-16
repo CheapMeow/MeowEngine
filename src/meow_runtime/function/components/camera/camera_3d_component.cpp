@@ -5,6 +5,9 @@
 #include "function/global/runtime_context.h"
 #include "function/object/game_object.h"
 
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
 namespace Meow
 {
     void Camera3DComponent::Start()
@@ -60,7 +63,7 @@ namespace Meow
         {
             return {movement_delta, rotation_delta};
         }
-        
+
         // Handle mouse rotation
         if (g_runtime_context.input_system->GetButton("RightMouse")->GetAction() == InputAction::Press)
         {
@@ -70,9 +73,11 @@ namespace Meow
             auto      transform_component = m_transform.lock();
             glm::vec3 temp_right          = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
 
-            glm::quat dyaw =
-                Math::QuaternionFromAngleAxis(-dx * dt * camera_rotate_velocity, glm::vec3(0.0f, 1.0f, 0.0f));
-            glm::quat dpitch = Math::QuaternionFromAngleAxis(-dy * dt * camera_rotate_velocity, temp_right);
+            float yaw_angle   = dx * camera_rotate_velocity;
+            float pitch_angle = dy * camera_rotate_velocity;
+
+            glm::quat dyaw   = Math::QuaternionFromAngleAxis(yaw_angle, glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::quat dpitch = Math::QuaternionFromAngleAxis(pitch_angle, temp_right);
 
             rotation_delta = dyaw * dpitch;
         }
