@@ -79,95 +79,95 @@ namespace Meow
         }
 
         GeometryFactory geometry_factory;
-        geometry_factory.SetSphere(32, 32);
+        // geometry_factory.SetSphere(32, 32);
 
-        {
-            std::size_t        row_number    = 7;
-            std::size_t        column_number = 7;
-            float              spacing       = 2.5;
-            std::vector<float> sphere_vertices =
-                geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
-            std::vector<uint32_t> sphere_indices = geometry_factory.GetIndices();
-            for (std::size_t row = 0; row < row_number; ++row)
-            {
-                for (std::size_t col = 0; col < column_number; ++col)
-                {
-                    UUID                        uuid               = level->CreateObject();
-                    std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
+        // {
+        //     std::size_t        row_number    = 7;
+        //     std::size_t        column_number = 7;
+        //     float              spacing       = 2.5;
+        //     std::vector<float> sphere_vertices =
+        //         geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
+        //     std::vector<uint32_t> sphere_indices = geometry_factory.GetIndices();
+        //     for (std::size_t row = 0; row < row_number; ++row)
+        //     {
+        //         for (std::size_t col = 0; col < column_number; ++col)
+        //         {
+        //             UUID                        uuid               = level->CreateObject();
+        //             std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
 
-                    opaque_objects.push_back(current_gameobject);
+        //             opaque_objects.push_back(current_gameobject);
 
-                    if (!current_gameobject)
-                        MEOW_ERROR("GameObject is invalid!");
+        //             if (!current_gameobject)
+        //                 MEOW_ERROR("GameObject is invalid!");
 
-                    current_gameobject->SetName("Sphere " + std::to_string(row * column_number + col));
-                    auto transform_ptr = TryAddComponent(
-                        current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-                    transform_ptr->position = glm::vec3(
-                        static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
-                        static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
-                        0.0f);
+        //             current_gameobject->SetName("Sphere " + std::to_string(row * column_number + col));
+        //             auto transform_ptr = TryAddComponent(
+        //                 current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+        //             transform_ptr->position = glm::vec3(
+        //                 static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
+        //                 static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
+        //                 0.0f);
 
-                    auto current_gameobject_model_component =
-                        TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
-                    auto model_shared_ptr = std::make_shared<Model>(
-                        sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+        //             auto current_gameobject_model_component =
+        //                 TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
+        //             auto model_shared_ptr = std::make_shared<Model>(
+        //                 sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
 
-                    // TODO: hard code render pass cast
-                    current_gameobject_model_component->material_id = m_forward_pass.GetForwardMatID();
+        //             // TODO: hard code render pass cast
+        //             current_gameobject_model_component->material_id = m_forward_pass.GetForwardMatID();
 
-                    if (model_shared_ptr)
-                    {
-                        g_runtime_context.resource_system->Register(model_shared_ptr);
-                        current_gameobject_model_component->model = model_shared_ptr;
-                    }
-                }
-            }
-        }
+        //             if (model_shared_ptr)
+        //             {
+        //                 g_runtime_context.resource_system->Register(model_shared_ptr);
+        //                 current_gameobject_model_component->model = model_shared_ptr;
+        //             }
+        //         }
+        //     }
+        // }
 
-        {
-            std::size_t        row_number    = 7;
-            std::size_t        column_number = 7;
-            float              spacing       = 2.5;
-            std::vector<float> sphere_vertices =
-                geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
-            std::vector<uint32_t> sphere_indices = geometry_factory.GetIndices();
-            for (std::size_t row = 0; row < row_number; ++row)
-            {
-                for (std::size_t col = 0; col < column_number; ++col)
-                {
-                    UUID                        uuid               = level->CreateObject();
-                    std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
+        // {
+        //     std::size_t        row_number    = 7;
+        //     std::size_t        column_number = 7;
+        //     float              spacing       = 2.5;
+        //     std::vector<float> sphere_vertices =
+        //         geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
+        //     std::vector<uint32_t> sphere_indices = geometry_factory.GetIndices();
+        //     for (std::size_t row = 0; row < row_number; ++row)
+        //     {
+        //         for (std::size_t col = 0; col < column_number; ++col)
+        //         {
+        //             UUID                        uuid               = level->CreateObject();
+        //             std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
 
-                    translucent_objects.push_back(current_gameobject);
+        //             translucent_objects.push_back(current_gameobject);
 
-                    if (!current_gameobject)
-                        MEOW_ERROR("GameObject is invalid!");
+        //             if (!current_gameobject)
+        //                 MEOW_ERROR("GameObject is invalid!");
 
-                    current_gameobject->SetName("Sphere Translucent" + std::to_string(row * column_number + col));
-                    auto transform_ptr = TryAddComponent(
-                        current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
-                    transform_ptr->position = glm::vec3(
-                        static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
-                        static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
-                        -5.0f);
+        //             current_gameobject->SetName("Sphere Translucent" + std::to_string(row * column_number + col));
+        //             auto transform_ptr = TryAddComponent(
+        //                 current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+        //             transform_ptr->position = glm::vec3(
+        //                 static_cast<float>(col) * spacing - static_cast<float>(column_number) / 2.0f * spacing,
+        //                 static_cast<float>(row) * spacing - static_cast<float>(row_number) / 2.0f * spacing,
+        //                 -5.0f);
 
-                    auto current_gameobject_model_component =
-                        TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
-                    auto model_shared_ptr = std::make_shared<Model>(
-                        sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
+        //             auto current_gameobject_model_component =
+        //                 TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
+        //             auto model_shared_ptr = std::make_shared<Model>(
+        //                 sphere_vertices, sphere_indices, m_render_pass_ptr->input_vertex_attributes);
 
-                    // TODO: hard code render pass cast
-                    current_gameobject_model_component->material_id = m_forward_pass.GetTranslucentMatID();
+        //             // TODO: hard code render pass cast
+        //             current_gameobject_model_component->material_id = m_forward_pass.GetTranslucentMatID();
 
-                    if (model_shared_ptr)
-                    {
-                        g_runtime_context.resource_system->Register(model_shared_ptr);
-                        current_gameobject_model_component->model = model_shared_ptr;
-                    }
-                }
-            }
-        }
+        //             if (model_shared_ptr)
+        //             {
+        //                 g_runtime_context.resource_system->Register(model_shared_ptr);
+        //                 current_gameobject_model_component->model = model_shared_ptr;
+        //             }
+        //         }
+        //     }
+        // }
 
         geometry_factory.SetCube();
 
@@ -244,6 +244,40 @@ namespace Meow
             auto transform_ptr =
                 TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
             transform_ptr->position = glm::vec3(0.0f, -10.0f, 10.0f);
+            transform_ptr->scale    = glm::vec3(20.0f, 20.0f, 20.0f);
+
+            auto current_gameobject_model_component =
+                TryAddComponent(current_gameobject, "ModelComponent", std::make_shared<ModelComponent>());
+            auto model_shared_ptr =
+                std::make_shared<Model>(plane_vertices, plane_indices, m_render_pass_ptr->input_vertex_attributes);
+
+            // TODO: hard code render pass cast
+            current_gameobject_model_component->material_id = m_forward_pass.GetForwardMatID();
+
+            if (model_shared_ptr)
+            {
+                g_runtime_context.resource_system->Register(model_shared_ptr);
+                current_gameobject_model_component->model = model_shared_ptr;
+            }
+        }
+
+        {
+            std::vector<float> plane_vertices =
+                geometry_factory.GetVertices(m_render_pass_ptr->input_vertex_attributes);
+            std::vector<uint32_t> plane_indices = geometry_factory.GetIndices();
+
+            UUID                        uuid               = level->CreateObject();
+            std::shared_ptr<GameObject> current_gameobject = level->GetGameObjectByID(uuid).lock();
+
+            opaque_objects.push_back(current_gameobject);
+
+            if (!current_gameobject)
+                MEOW_ERROR("GameObject is invalid!");
+
+            current_gameobject->SetName("Plane for test");
+            auto transform_ptr =
+                TryAddComponent(current_gameobject, "Transform3DComponent", std::make_shared<Transform3DComponent>());
+            transform_ptr->position = glm::vec3(0.0f, 0.0f, 0.0f);
             transform_ptr->scale    = glm::vec3(20.0f, 20.0f, 20.0f);
 
             auto current_gameobject_model_component =

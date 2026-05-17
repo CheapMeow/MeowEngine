@@ -70,16 +70,20 @@ namespace Meow
             float dx = g_runtime_context.input_system->GetAxis("MouseX")->GetAmount();
             float dy = g_runtime_context.input_system->GetAxis("MouseY")->GetAmount();
 
-            auto      transform_component = m_transform.lock();
-            glm::vec3 temp_right          = transform_component->rotation * glm::vec3(1.0f, 0.0f, 0.0f);
+            auto transform_component = m_transform.lock();
 
-            float yaw_angle   = dx * camera_rotate_velocity;
-            float pitch_angle = dy * camera_rotate_velocity;
+            glm::vec3 euler = glm::eulerAngles(transform_component->rotation);
+            float     yaw   = euler.y;
+            float     pitch = euler.x;
 
-            glm::quat dyaw   = Math::QuaternionFromAngleAxis(yaw_angle, glm::vec3(0.0f, 1.0f, 0.0f));
-            glm::quat dpitch = Math::QuaternionFromAngleAxis(pitch_angle, temp_right);
+            // don't need to multiply dt here
+            // because dx, dy has been integrated
+            yaw += dx * camera_rotate_velocity;
+            pitch += dy * camera_rotate_velocity;
+            pitch = glm::clamp(pitch, glm::radians(-89.0f), glm::radians(89.0f));
 
-            rotation_delta = dyaw * dpitch;
+            glm::quat target_rotation = glm::quat(glm::vec3(pitch, yaw, 0.0f));
+            rotation_delta            = target_rotation * glm::inverse(transform_component->rotation);
         }
 
         // Calculate movement direction vectors

@@ -39,7 +39,7 @@ namespace Meow
         // Camera speed parameters
 
         [[reflectable_field()]]
-        float camera_rotate_velocity = 0.003f;
+        float camera_rotate_velocity = 0.03f;
 
         [[reflectable_field()]]
         float camera_move_velocity = 20.0f;
