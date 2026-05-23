@@ -71,13 +71,17 @@ namespace Meow
         std::shared_ptr<GameObject> main_camera = GetGameObjectByID(m_main_camera_id).lock();
 
         if (!main_camera)
+        {
+            MEOW_ERROR("no main camera found!");
             return;
+        }
 
         std::shared_ptr<Camera3DComponent> main_camera_component =
             main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
         if (!main_camera_component)
         {
+            MEOW_ERROR("no Camera3DComponent found in main camera!");
             return;
         }
 
@@ -93,6 +97,7 @@ namespace Meow
 
             if (!current_gameobject_model_component)
             {
+                MEOW_ERROR("no ModelComponent found in current gameobject!");
                 continue;
             }
 
@@ -100,6 +105,7 @@ namespace Meow
                 current_gameobject_model_component->material_id);
             if (!material)
             {
+                MEOW_ERROR("no Material found in current gameobject ModelComponent!");
                 continue;
             }
 

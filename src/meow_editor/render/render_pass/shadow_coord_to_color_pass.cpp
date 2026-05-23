@@ -225,20 +225,33 @@ namespace Meow
         std::shared_ptr<Level> level = g_runtime_context.level_system->GetCurrentActiveLevel().lock();
 
         if (!level)
-            MEOW_ERROR("shared ptr is invalid!");
+        {
+            MEOW_ERROR("no level found!");
+            return;
+        }
 
-        std::shared_ptr<GameObject>           main_camera = level->GetGameObjectByID(level->GetMainCameraID()).lock();
+        std::shared_ptr<GameObject> main_camera = level->GetGameObjectByID(level->GetMainCameraID()).lock();
+        if (!main_camera)
+        {
+            MEOW_ERROR("no main camera found!");
+            return;
+        }
+
         std::shared_ptr<Transform3DComponent> main_camera_transfrom_component =
             main_camera->TryGetComponent<Transform3DComponent>("Transform3DComponent");
         std::shared_ptr<Camera3DComponent> main_camera_component =
             main_camera->TryGetComponent<Camera3DComponent>("Camera3DComponent");
 
-        if (!main_camera)
-            MEOW_ERROR("shared ptr is invalid!");
         if (!main_camera_transfrom_component)
-            MEOW_ERROR("shared ptr is invalid!");
+        {
+            MEOW_ERROR("no Transform3DComponent found in main camera!");
+            return;
+        }
         if (!main_camera_component)
-            MEOW_ERROR("shared ptr is invalid!");
+        {
+            MEOW_ERROR("no Camera3DComponent found in main camera!");
+            return;
+        }
 
         glm::ivec2 window_size = g_runtime_context.window_system->GetCurrentFocusWindow()->GetSize();
 
