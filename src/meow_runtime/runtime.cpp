@@ -7,10 +7,6 @@
 #include "function/global/runtime_context.h"
 #include "generated/register_all.h"
 
-#include "function/js/js_engine.h"
-
-#include <iostream>
-
 namespace Meow
 {
     bool MeowRuntime::Init()
@@ -26,10 +22,7 @@ namespace Meow
         g_runtime_context.input_system    = std::make_shared<InputSystem>();
         g_runtime_context.level_system    = std::make_shared<LevelSystem>();
         g_runtime_context.particle_system = std::make_shared<ParticleSystem>();
-
-        JSEngine js_engine;
-        // js_engine.test_cpp_call_js();
-        // js_engine.test_js_call_cpp();
+        g_runtime_context.js_system       = std::make_shared<JSSystem>();
 
         return true;
     }
@@ -44,6 +37,7 @@ namespace Meow
         g_runtime_context.window_system->Start();
         g_runtime_context.input_system->Start();
         g_runtime_context.particle_system->Start();
+        g_runtime_context.js_system->Start();
 
         return true;
     }
@@ -58,13 +52,14 @@ namespace Meow
         g_runtime_context.render_system->Tick(dt);
         g_runtime_context.level_system->Tick(dt);
         g_runtime_context.particle_system->Tick(dt);
+        g_runtime_context.js_system->Tick(dt);
 
         TimerSingleton::Get().Clear();
     }
 
-    void MeowRuntime::ShutDown()
+    void MeowRuntime::Shutdown()
     {
-        // TODO: ShutDown Dependencies graph
+        // TODO: Shutdown Dependencies graph
 
         g_runtime_context.render_system->Shutdown();
 

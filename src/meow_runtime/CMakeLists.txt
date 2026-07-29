@@ -1,6 +1,9 @@
 file(GLOB_RECURSE RUNTIME_HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
 file(GLOB_RECURSE RUNTIME_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
+# generated files are not yet present at configure time on first build
+list(APPEND RUNTIME_SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/generated/register_js_binding.cpp")
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${RUNTIME_HEADER_FILES}
                                                       ${RUNTIME_SOURCE_FILES})
 
@@ -79,3 +82,7 @@ target_link_libraries(${RUNTIME_NAME} PUBLIC imgui)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
 
 target_link_libraries(${RUNTIME_NAME} PUBLIC qjs)
+
+# QuickJS debugger (embedded DAP server). Pulls in the instrumented `qjs`
+# transitively and exposes DAPServer.h / Debugger.h for JSSystem.
+target_link_libraries(${RUNTIME_NAME} PUBLIC quickjs_debugger)

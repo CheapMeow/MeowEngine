@@ -56,11 +56,9 @@ target_include_directories(imguizmo
 target_link_libraries(imguizmo PUBLIC imgui)
 target_include_directories(imguizmo PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
 
-include(FetchContent)
-
-option(QJS_BUILD_LIBC "" ON)
-
-FetchContent_Declare(quickjs
-                     GIT_REPOSITORY https://github.com/quickjs-ng/quickjs)
-
-FetchContent_MakeAvailable(quickjs)
+# Instrumented QuickJS: the quickjs-ng "debugger" fork shipped inside the
+# quickjs-debugger submodule. It builds both the `qjs` target (with the
+# interrupt-handler / SuspendVM hooks the debugger relies on) and the
+# `quickjs_debugger` static library (Debugger + DAPServer + TCPServer).
+# This replaces the previous upstream quickjs-ng FetchContent dependency.
+add_subdirectory(quickjs-debugger)
