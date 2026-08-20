@@ -15,13 +15,13 @@ namespace Meow
         std::weak_ptr<Model> model;
         UUID                 material_id;
 
-        [[reflectable_method()]]
+        [[reflectable_method(JSBinding)]]
         void foo1()
         {
             std::cout << "uuid = " << uuid << std::endl;
         }
 
-        [[reflectable_method()]]
+        [[reflectable_method(JSBinding)]]
         void foo2() override
         {
             std::cout << "derived class uuid = " << uuid << std::endl;

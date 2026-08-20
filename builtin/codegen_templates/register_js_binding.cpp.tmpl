@@ -1,0 +1,19 @@
+#include "register_js_binding.h"
+#include "bridge/js_type_converter.h"
+#include <quickjs.h>
+{{INCLUDES}}
+
+namespace Meow
+{
+
+{{FUNCTIONS}}
+
+void RegisterJSBindingFunctions(JSContext* ctx)
+{
+    JSValue global = JS_GetGlobalObject(ctx);
+
+{{REGISTRATIONS}}
+    JS_FreeValue(ctx, global);
+}
+
+} // namespace Meow

@@ -2,6 +2,7 @@
 
 #include "function/file/file_system.h"
 #include "function/input/input_system.h"
+#include "function/js/js_system.h"
 #include "function/level/level_system.h"
 #include "function/particle/particle_system.h"
 #include "function/render/render_system.h"
@@ -25,6 +26,7 @@ namespace Meow
         std::shared_ptr<RenderSystem>   render_system   = nullptr;
         std::shared_ptr<LevelSystem>    level_system    = nullptr;
         std::shared_ptr<ParticleSystem> particle_system = nullptr;
+        std::shared_ptr<JSSystem>       js_system       = nullptr;
     };
 
     extern RuntimeGlobalContext g_runtime_context;

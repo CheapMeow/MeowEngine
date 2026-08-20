@@ -21,16 +21,18 @@ namespace Meow
                       const std::vector<ClassParseResult>& class_results,
                       const std::vector<EnumParseResult>&  enum_results);
 
+        void GenerateJSBindingCpp(const std::vector<std::string>&      include_relative_paths,
+                                  const std::vector<ClassParseResult>& class_results);
+
+        void GenerateJSTypesJS(const std::vector<ClassParseResult>& class_results);
+
         void End();
 
     private:
         void GenerateEnumReflHeaderFile(const EnumParseResult& enum_result);
 
-        bool              is_recording = false;
-        fs::path          src_path;
-        fs::path          output_path;
-        std::ofstream     output_source_file;
-        std::stringstream register_stream;
-        std::stringstream enum_stream;
+        bool     is_recording = false;
+        fs::path src_path;
+        fs::path output_path;
     };
 } // namespace Meow

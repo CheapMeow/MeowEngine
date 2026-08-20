@@ -115,6 +115,32 @@ namespace Meow
         }
     }
 
+    std::string CodeGenUtils::read_template(const std::string& template_name)
+    {
+        std::string   tmpl_path = std::string(ENGINE_ROOT_DIR) + "/builtin/codegen_templates/" + template_name;
+        std::ifstream in(tmpl_path);
+        if (!in)
+        {
+            std::cerr << "[CodeGenerator] Failed to open template: " << tmpl_path << std::endl;
+            return "";
+        }
+        std::ostringstream sin;
+        sin << in.rdbuf();
+        return sin.str();
+    }
+
+    void CodeGenUtils::replace_all_inplace(std::string& str, const std::string& from, const std::string& to)
+    {
+        if (from.empty())
+            return;
+        size_t pos = 0;
+        while ((pos = str.find(from, pos)) != std::string::npos)
+        {
+            str.replace(pos, from.length(), to);
+            pos += to.length();
+        }
+    }
+
     std::ostream& operator<<(std::ostream& stream, const CXString& str)
     {
         stream << clang_getCString(str);

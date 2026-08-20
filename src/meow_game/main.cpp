@@ -18,5 +18,5 @@ int main()
         MeowGame::Get().Tick(g_runtime_context.time_system->GetDeltaTime());
     }
 
-    MeowGame::Get().ShutDown();
+    MeowGame::Get().Shutdown();
 }

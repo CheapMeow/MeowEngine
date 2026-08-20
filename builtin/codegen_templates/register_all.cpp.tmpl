@@ -1,0 +1,14 @@
+#include "register_all.h"
+
+#include "core/reflect/type_descriptor_builder.hpp"
+{{INCLUDES}}
+
+namespace Meow
+{
+    void RegisterAll()
+    {
+{{CLASS_REGISTRATIONS}}
+    }
+
+{{ENUM_CONVERTERS}}
+} // namespace Meow

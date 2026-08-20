@@ -10,13 +10,13 @@ namespace Meow
     class [[reflectable_class()]] Transform3DComponent : public Component
     {
     public:
-        [[reflectable_field()]]
+        [[reflectable_field(JSBinding)]]
         glm::vec3 position = glm::vec3(0.0f);
 
-        [[reflectable_field()]]
+        [[reflectable_field(JSBinding)]]
         glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
-        [[reflectable_field()]]
+        [[reflectable_field(JSBinding)]]
         glm::vec3 scale = glm::vec3(1.0f);
 
         /**

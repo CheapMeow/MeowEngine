@@ -18,5 +18,5 @@ int main()
         MeowEditor::Get().Tick(g_runtime_context.time_system->GetDeltaTime());
     }
 
-    MeowEditor::Get().ShutDown();
+    MeowEditor::Get().Shutdown();
 }

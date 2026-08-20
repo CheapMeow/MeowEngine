@@ -145,6 +145,17 @@ namespace Meow
                     if (annotations.size() == 0)
                         return CXChildVisit_Recurse;
 
+                    // check if any annotation tag requests JS binding
+                    bool has_js_binding = false;
+                    for (size_t i = 1; i < annotations.size(); i++)
+                    {
+                        if (annotations[i] == "JSBinding")
+                        {
+                            has_js_binding = true;
+                            break;
+                        }
+                    }
+
                     if (annotations[0] == "reflectable_field")
                     {
                         if (clang_getCursorKind(parent) == CXCursor_FieldDecl)
@@ -157,8 +168,9 @@ namespace Meow
 
                             std::string field_name = CodeGenUtils::to_string(clang_getCursorSpelling(parent));
 
-                            class_result->field_results.emplace_back(
+                            auto& f = class_result->field_results.emplace_back(
                                 field_type_name, is_array, inner_type_name, field_name);
+                            f.has_js_binding = has_js_binding;
                         }
                     }
                     else if (annotations[0] == "reflectable_method")
@@ -166,7 +178,8 @@ namespace Meow
                         if (clang_getCursorKind(parent) == CXCursor_CXXMethod)
                         {
                             std::string method_name = CodeGenUtils::to_string(clang_getCursorSpelling(parent));
-                            class_result->method_results.emplace_back(method_name);
+                            auto&       m           = class_result->method_results.emplace_back(method_name);
+                            m.has_js_binding        = has_js_binding;
                         }
                     }
                 }
@@ -242,9 +255,17 @@ namespace Meow
         {
             ss << "Class: " << res.class_name << "\n";
             for (const auto& f : res.field_results)
-                ss << "  Field: " << f.field_type_name << " " << f.field_name << "\n";
+            {
+                ss << "  Field: " << f.field_type_name << " " << f.field_name;
+                if (f.has_js_binding) ss << " [JSBinding]";
+                ss << "\n";
+            }
             for (const auto& m : res.method_results)
-                ss << "  Method: " << m.method_name << "()\n";
+            {
+                ss << "  Method: " << m.method_name << "()";
+                if (m.has_js_binding) ss << " [JSBinding]";
+                ss << "\n";
+            }
             ss << "\n";
         }
 

@@ -54,3 +54,5 @@ vsxmake2022/
 
 # imgui
 imgui.ini
+
+src/meow_runtime/generated/

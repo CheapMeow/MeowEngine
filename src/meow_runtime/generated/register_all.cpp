@@ -5,10 +5,11 @@
 #include "function/components/light/directional_light_component.h"
 #include "function/components/model/model_component.h"
 
+
 namespace Meow
 {
-	void RegisterAll()
-	{
+    void RegisterAll()
+    {
 		reflect::AddClass<Component>("Component")
 			.AddMethod("foo2", &Component::foo2);
 
@@ -36,7 +37,8 @@ namespace Meow
 		reflect::AddClass<ModelComponent>("ModelComponent")
 			.AddMethod("foo1", &ModelComponent::foo1)
 			.AddMethod("foo2", &ModelComponent::foo2);
-	}
+
+    }
 
 	VertexAttributeBit to_enum(const std::string& str)
 	{
@@ -128,5 +130,6 @@ namespace Meow
 				return "Unknown";
 		}
 	}
+
 
 } // namespace Meow

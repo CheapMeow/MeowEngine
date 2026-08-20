@@ -134,6 +134,8 @@ int main(int argc, char* argv[])
     CodeGenerator generator;
     generator.Begin(src_path, output_path);
     generator.Generate(parser.GetInlcudeRelativePaths(), parser.GetClassResults(), parser.GetEnumResults());
+    generator.GenerateJSBindingCpp(parser.GetInlcudeRelativePaths(), parser.GetClassResults());
+    generator.GenerateJSTypesJS(parser.GetClassResults());
     generator.End();
 
     return 0;

@@ -30,6 +30,10 @@ namespace Meow
             std::make_shared<EditorWindow>(0, g_runtime_context.window_system->GetCurrentFocusGLFWWindow()));
         g_runtime_context.input_system->BindDefault(g_runtime_context.window_system->GetCurrentFocusWindow());
 
+        // run JS scene init script (needs window's render pass to be ready)
+        if (g_runtime_context.js_system)
+            g_runtime_context.js_system->LoadScript(ENGINE_ROOT_DIR "/scripts/init_scene.js");
+
         return true;
     }
 
@@ -40,11 +44,11 @@ namespace Meow
         g_editor_context.profile_system->Tick(dt);
     }
 
-    void MeowEditor::ShutDown()
+    void MeowEditor::Shutdown()
     {
         g_editor_context.profile_system = nullptr;
 
-        MeowRuntime::Get().ShutDown();
+        MeowRuntime::Get().Shutdown();
     }
 
     bool MeowEditor::IsRunning() { return m_running && MeowRuntime::Get().IsRunning(); }

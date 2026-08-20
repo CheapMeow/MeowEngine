@@ -30,6 +30,9 @@ target_link_libraries(${CODE_GENERATOR_NAME}
                       PUBLIC $ENV{LLVM_DIR}/lib/libclang.lib)
 target_include_directories(${CODE_GENERATOR_NAME} PUBLIC $ENV{LLVM_DIR}/include)
 
+target_compile_definitions(${CODE_GENERATOR_NAME}
+                           PRIVATE ENGINE_ROOT_DIR="${ENGINE_ROOT_DIR}")
+
 set(INCLUDE_DIRS)
 list(APPEND INCLUDE_DIRS "-I${CMAKE_CURRENT_SOURCE_DIR}")
 list(APPEND INCLUDE_DIRS "-I${RUNTIME_DIR}")
@@ -52,11 +55,16 @@ list(APPEND INCLUDE_DIRS "-I$ENV{LLVM_DIR}/lib/clang/19/include") # for
                                                                   # diagnostic
                                                                   # error
 
+set(GENERATED_OUTPUTS
+    ${RUNTIME_DIR}/generated/register_all.cpp
+    ${RUNTIME_DIR}/generated/register_js_binding.cpp
+    ${RUNTIME_DIR}/generated/js_types.js)
+
 add_custom_command(
-  OUTPUT ${RUNTIME_DIR}/generated/register_all.cpp
+  OUTPUT ${GENERATED_OUTPUTS}
   COMMAND ${CODE_GENERATOR_NAME} ${INCLUDE_DIRS} "-S${RUNTIME_DIR}"
           "-O${RUNTIME_DIR}/generated" "-D${CMAKE_CURRENT_BINARY_DIR}/code_gen_cache.txt"
   DEPENDS ${FILES_DEPEND}
-  COMMENT "Generating register_all.cpp")
+  COMMENT "Generating reflection and JS binding files")
 add_custom_target(${GENERATED_FILE_TARGET_NAME}
-                  DEPENDS ${RUNTIME_DIR}/generated/register_all.cpp)
+                  DEPENDS ${GENERATED_OUTPUTS})

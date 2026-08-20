@@ -33,7 +33,7 @@ Batch scripts `build_debug.bat`, `build_release.bat`, `build_debug_memory.bat` w
 - `meow_editor` — editor executable (startup project), links runtime + ImGuizmo
 - `meow_game` — standalone game executable, links runtime only
 
-**Engine lifecycle**: `MeowRuntime::Init()` → `Start()` → `Tick(dt)` loop → `ShutDown()`. All subsystems are `shared_ptr<System>` stored in `g_runtime_context` (a global `RuntimeGlobalContext` struct). System order in tick matters but is currently hardcoded.
+**Engine lifecycle**: `MeowRuntime::Init()` → `Start()` → `Tick(dt)` loop → `Shutdown()`. All subsystems are `shared_ptr<System>` stored in `g_runtime_context` (a global `RuntimeGlobalContext` struct). System order in tick matters but is currently hardcoded.
 
 **Static reflection build step**: `CodeGenerator` runs as a custom CMake command during build. It uses `libclang` to parse all runtime/editor headers, looking for `[[reflectable_class()]]`, `[[reflectable_field()]]`, `[[reflectable_method()]]` attributes (defined in `core/reflect/macros.h`). It generates `src/meow_runtime/generated/register_all.cpp`, which registers types with `TypeDescriptor` for runtime string-based type/field/method access. This file is compiled into `MeowRuntime` — changing any reflected header triggers regeneration and relinking.
 

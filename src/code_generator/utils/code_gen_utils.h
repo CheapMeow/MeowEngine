@@ -20,7 +20,7 @@ namespace Meow
         static std::string to_string(CXString cxStr);
 
         static std::string get_relative_path(const fs::path& path, const fs::path& src_path);
-        
+
         static std::vector<std::string> split(const std::string& text, char delim);
 
         static void print_diagnostics(CXTranslationUnit TU);
@@ -30,6 +30,10 @@ namespace Meow
         static std::string camel_case_to_under_score(const std::string& camel_case_str);
 
         static std::string get_name_without_container(std::string name);
+
+        static std::string read_template(const std::string& template_name);
+
+        static void replace_all_inplace(std::string& str, const std::string& from, const std::string& to);
     };
 
     std::ostream& operator<<(std::ostream& stream, const CXString& str);

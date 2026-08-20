@@ -10,5 +10,6 @@ namespace Meow
         bool        is_array;
         std::string inner_type_name;
         std::string field_name;
+        bool        has_js_binding = false;
     };
 } // namespace Meow

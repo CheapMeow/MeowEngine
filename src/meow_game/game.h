@@ -16,7 +16,7 @@ namespace Meow
         bool Init();
         bool Start();
         void Tick(float dt);
-        void ShutDown();
+        void Shutdown();
 
         static MeowGame& Get()
         {

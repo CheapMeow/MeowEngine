@@ -28,15 +28,9 @@ namespace Meow
         return true;
     }
 
-    void MeowGame::Tick(float dt)
-    {
-        MeowRuntime::Get().Tick(dt);
-    }
+    void MeowGame::Tick(float dt) { MeowRuntime::Get().Tick(dt); }
 
-    void MeowGame::ShutDown()
-    {
-        MeowRuntime::Get().ShutDown();
-    }
+    void MeowGame::Shutdown() { MeowRuntime::Get().Shutdown(); }
 
     bool MeowGame::IsRunning() { return m_running && MeowRuntime::Get().IsRunning(); }
     void MeowGame::SetRunning(bool running) { m_running = running; }
