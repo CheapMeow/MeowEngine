@@ -23,6 +23,7 @@
 [submodule "src/3rdparty/ImGuizmo"]
 	path = src/3rdparty/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
-[submodule "src/3rdparty/quickjs-debugger"]
-	path = src/3rdparty/quickjs-debugger
-	url = https://github.com/CheapMeow/quickjs-debugger.git
+[submodule "src/3rdparty/quickjs-ng"]
+	path = src/3rdparty/quickjs-ng
+	url = https://github.com/CheapMeow/quickjs-ng
+	branch = debugger
