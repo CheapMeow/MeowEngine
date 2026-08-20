@@ -81,8 +81,13 @@ target_include_directories(${RUNTIME_NAME}
 target_link_libraries(${RUNTIME_NAME} PUBLIC imgui)
 target_include_directories(${RUNTIME_NAME} PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
 
-target_link_libraries(${RUNTIME_NAME} PUBLIC qjs)
-
-# QuickJS debugger (embedded DAP server). Pulls in the instrumented `qjs`
-# transitively and exposes DAPServer.h / Debugger.h for JSSystem.
-target_link_libraries(${RUNTIME_NAME} PUBLIC quickjs_debugger)
+# QuickJS-NG (debugger branch): the JS engine `qjs` already contains the
+# native Debug Adapter Protocol server. Exposed to VS Code over TCP by
+# JSSystem. The DAP server uses Winsock, so link ws2_32 as well.
+target_link_libraries(${RUNTIME_NAME} PUBLIC
+                       "${MEOW_QUICKJS_NG_QJS_LIB}"
+                       "${MEOW_QUICKJS_NG_QJS_LIBC_LIB}"
+                       ws2_32)
+# Headers (quickjs.h / quickjs-debugger-server.h / quickjs-debugger.h) live in
+# the quickjs-ng source root.
+target_include_directories(${RUNTIME_NAME} PUBLIC ${MEOW_QUICKJS_NG_DIR})

@@ -56,9 +56,27 @@ target_include_directories(imguizmo
 target_link_libraries(imguizmo PUBLIC imgui)
 target_include_directories(imguizmo PUBLIC ${3RD_PARTY_ROOT_DIR}/imgui)
 
-# Instrumented QuickJS: the quickjs-ng "debugger" fork shipped inside the
-# quickjs-debugger submodule. It builds both the `qjs` target (with the
-# interrupt-handler / SuspendVM hooks the debugger relies on) and the
-# `quickjs_debugger` static library (Debugger + DAPServer + TCPServer).
-# This replaces the previous upstream quickjs-ng FetchContent dependency.
-add_subdirectory(quickjs-debugger)
+# ---------------------------------------------------------------------------
+# QuickJS-NG (debugger branch) — the single source of both the JS engine and
+# the native Debug Adapter Protocol server (the latter is compiled into `qjs`).
+# MeowEngine uses this repository's debugger branch directly. Point
+# MEOW_QUICKJS_NG_DIR at your quickjs-ng checkout (must be on the `debugger`
+# branch) and MEOW_QUICKJS_NG_LIB_DIR at the directory holding its static
+# libraries. We link the prebuilt `qjs.lib` / `qjs-libc.lib` rather than
+# add_subdirectory()'ing the whole project, so quickjs-ng's extra executables
+# (qjs-debug, run-test262, ...) stay out of MeowEngine's default build.
+# (In a clean checkout these would be a submodule plus its build output.)
+# ---------------------------------------------------------------------------
+set(MEOW_QUICKJS_NG_DIR "E:/repo/quickjs-ng" CACHE PATH "Source root of quickjs-ng (debugger branch)")
+set(MEOW_QUICKJS_NG_LIB_DIR "${MEOW_QUICKJS_NG_DIR}/build-ninja"
+    CACHE PATH "Directory containing qjs.lib / qjs-libc.lib")
+
+# Link the prebuilt static libraries by their full path. We intentionally avoid
+# an IMPORTED target here: the Visual Studio multi-config generator resolves
+# IMPORTED_LOCATION oddly and ends up passing the target name (e.g. "qjs_ng.lib")
+# to the linker instead of the actual file path. These are CACHE variables so
+# they are visible from sibling subdirectories (e.g. meow_runtime).
+set(MEOW_QUICKJS_NG_QJS_LIB "${MEOW_QUICKJS_NG_LIB_DIR}/qjs.lib"
+    CACHE PATH "Prebuilt qjs.lib (quickjs-ng debugger branch)")
+set(MEOW_QUICKJS_NG_QJS_LIBC_LIB "${MEOW_QUICKJS_NG_LIB_DIR}/qjs-libc.lib"
+    CACHE PATH "Prebuilt qjs-libc.lib (quickjs-ng debugger branch)")

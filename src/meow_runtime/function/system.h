@@ -21,5 +21,9 @@ namespace Meow
          * to solve the destruction dependency problem between systems.
          */
         virtual void Shutdown() {}
+
+        // Polymorphic base: a virtual destructor lets derived systems be
+        // destroyed correctly through a System pointer/reference.
+        virtual ~System() = default;
     };
 } // namespace Meow
