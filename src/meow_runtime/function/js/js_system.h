@@ -57,6 +57,33 @@ namespace Meow
 
         void JSThreadMain();
         JSCommand WaitForCommand();
+        // Clear the busy flag and wake the engine thread waiting in
+        // WaitForJSIdle(). Called on the JS thread after each command.
+        void FinishCommand();
+
+        // --- JS-thread-only helpers (must not be called from other threads) ---
+
+        // Evaluate `code` immediately on the calling (JS) thread. Used both by
+        // the command loop and to bootstrap the generated type bindings before
+        // any queued script runs.
+        void EvalOnJSThread(const std::string& code, const std::string& filename);
+        // Log the pending exception (message + stack) and clear it.
+        void LogJSException(const std::string& where);
+
+        // Unblock a JS thread that is parked in JS_DebugServerAttach()'s
+        // accept(). The DAP server exposes no cancellation API, so we nudge it
+        // with a throw-away loopback connection. Safe to call from any thread.
+        void WakeDebugServerAccept();
+
+        // Block the calling (engine) thread until the JS thread has drained
+        // every queued command. Must be called with `lock` held on m_cmdMutex.
+        //
+        // JS bridge callbacks mutate live engine state (levels, game objects,
+        // resources) straight from the JS thread, so JS execution and the
+        // engine's own frame work must never overlap. Handing each command over
+        // synchronously keeps exactly one of the two threads inside engine data
+        // at any time.
+        void WaitForJSIdle(std::unique_lock<std::mutex>& lock);
 
         JSRuntime*     m_rt  = nullptr;
         JSContext*     m_ctx = nullptr;
@@ -65,12 +92,16 @@ namespace Meow
         std::thread m_jsThread;
 
         std::mutex              m_cmdMutex;
-        std::condition_variable m_cmdCv;
+        std::condition_variable m_cmdCv;   // engine -> JS thread (work queued)
+        std::condition_variable m_doneCv;  // JS thread -> engine (work finished)
         std::queue<JSCommand>   m_cmdQueue;
+        bool                    m_busy = false;  // guarded by m_cmdMutex
+
 
         std::atomic<bool> m_shutdown{false};
         std::atomic<bool> m_jsThreadDone{false};
         std::atomic<bool> m_hasUpdate{false};     // a global `update(dt)` exists
-        std::atomic<bool> m_updatePending{false}; // an update() call is in flight
+        std::atomic<bool> m_dapWaiting{false};    // JS thread parked in accept()
+        std::atomic<int>  m_dapPort{0};           // port the DAP server listens on
     };
 } // namespace Meow

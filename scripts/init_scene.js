@@ -1,4 +1,7 @@
 // Scene initialization — replaces the hardcoded setup in EditorWindow constructor.
+//
+// UUIDs are passed between C++ and JS as { hi: uint32, lo: uint32 } pairs so
+// that the full 64-bit value survives the bridge without double-precision loss.
 
 // ---- helpers ----
 
@@ -16,12 +19,12 @@ function eulerToQuat(x, y, z) {
 
 let M = MeowNative;
 let vAttrs = M.getDefaultVertexAttributes();
-let matID  = M.getDefaultMaterialID();
+let matID  = M.getDefaultMaterialID();   // { hi, lo }
 
 // ---- Camera ----
-let camObj = M.createObject();
+let camObj = M.createObject();           // { uuid: {hi,lo}, ptr }
 M.setName(camObj.ptr, "Camera");
-M.setMainCameraID(camObj.uuid);
+M.setMainCameraID(camObj.uuid);          // pass the { hi, lo } object directly
 
 let camT = M.addComponent(camObj.ptr, "Transform3DComponent");
 let camTp = new Transform3DComponent(camT.ptr);

@@ -1,3 +1,13 @@
+// Winsock must be pulled in before anything can include <windows.h> (pch.h
+// does), otherwise the legacy <winsock.h> gets included first and clashes with
+// winsock2. Needed by WakeDebugServerAccept() to unblock the DAP accept().
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <winsock2.h>
+#endif
+
 #include "js_system.h"
 
 #include "bridge/js_type_converter.h"
@@ -22,10 +32,19 @@
 #include <string>
 #include <thread>
 
+#if !defined(_WIN32)
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#endif
+
 namespace Meow
 {
     // ---- bridge helpers ----
 
+    // Pointers are still passed as double (Win64 heap pointers are < 2^48, so
+    // they fit losslessly in a 53-bit mantissa).
     static void* ptr_from_js(JSContext* ctx, JSValue v)
     {
         double d;
@@ -36,6 +55,32 @@ namespace Meow
     static JSValue ptr_to_js(JSContext* ctx, void* ptr)
     {
         return JS_NewFloat64(ctx, static_cast<double>(reinterpret_cast<uint64_t>(ptr)));
+    }
+
+    // UUIDs are 64-bit values that exceed double's 53-bit mantissa.
+    // We split them into two safe 32-bit integers: { hi, lo }.
+    // JS side reconstructs with:  (hi * 0x100000000 + lo)  — but since JS
+    // numbers still lose precision there, the bridge functions below treat the
+    // pair as an opaque handle and always receive { hi, lo } back unchanged.
+    static JSValue uuid_to_js(JSContext* ctx, uint64_t id)
+    {
+        JSValue obj = JS_NewObject(ctx);
+        JS_SetPropertyStr(ctx, obj, "hi", JS_NewInt32(ctx, static_cast<int32_t>(id >> 32)));
+        JS_SetPropertyStr(ctx, obj, "lo", JS_NewInt32(ctx, static_cast<int32_t>(id & 0xFFFFFFFFu)));
+        return obj;
+    }
+
+    static uint64_t uuid_from_js(JSContext* ctx, JSValue v)
+    {
+        uint32_t hi = 0, lo = 0;
+        JSValue jhi = JS_GetPropertyStr(ctx, v, "hi");
+        JSValue jlo = JS_GetPropertyStr(ctx, v, "lo");
+        int32_t tmp;
+        if (!JS_IsException(jhi)) { JS_ToInt32(ctx, &tmp, jhi); hi = static_cast<uint32_t>(tmp); }
+        if (!JS_IsException(jlo)) { JS_ToInt32(ctx, &tmp, jlo); lo = static_cast<uint32_t>(tmp); }
+        JS_FreeValue(ctx, jhi);
+        JS_FreeValue(ctx, jlo);
+        return (static_cast<uint64_t>(hi) << 32) | lo;
     }
 
     // ---- native bridge functions ----
@@ -52,7 +97,7 @@ namespace Meow
             return JS_ThrowTypeError(ctx, "Failed to create object");
 
         JSValue obj = JS_NewObject(ctx);
-        JS_SetPropertyStr(ctx, obj, "uuid", JS_NewFloat64(ctx, static_cast<double>(static_cast<uint64_t>(go_id))));
+        JS_SetPropertyStr(ctx, obj, "uuid", uuid_to_js(ctx, static_cast<uint64_t>(go_id)));
         JS_SetPropertyStr(ctx, obj, "ptr", ptr_to_js(ctx, go.get()));
         return obj;
     }
@@ -106,9 +151,7 @@ namespace Meow
         if (!level)
             return JS_ThrowTypeError(ctx, "No active level");
 
-        double uuid_val;
-        JS_ToFloat64(ctx, &uuid_val, argv[0]);
-        level->SetMainCameraID(UUID(static_cast<uint64_t>(uuid_val)));
+        level->SetMainCameraID(UUID(uuid_from_js(ctx, argv[0])));
         return JS_UNDEFINED;
     }
 
@@ -262,7 +305,7 @@ namespace Meow
 
         JSValue obj = JS_NewObject(ctx);
         JS_SetPropertyStr(ctx, obj, "ptr", ptr_to_js(ctx, model.get()));
-        JS_SetPropertyStr(ctx, obj, "uuid", JS_NewFloat64(ctx, static_cast<double>(static_cast<uint64_t>(model_id))));
+        JS_SetPropertyStr(ctx, obj, "uuid", uuid_to_js(ctx, static_cast<uint64_t>(model_id)));
         return obj;
     }
 
@@ -275,9 +318,7 @@ namespace Meow
         auto shared   = g_runtime_context.resource_system->GetResource<Model>(model_id);
         comp->model   = shared;
 
-        double mat_id;
-        JS_ToFloat64(ctx, &mat_id, argv[2]);
-        comp->material_id = UUID(static_cast<uint64_t>(mat_id));
+        comp->material_id = UUID(uuid_from_js(ctx, argv[2]));
 
         return JS_UNDEFINED;
     }
@@ -295,17 +336,14 @@ namespace Meow
     static JSValue js_getDefaultMaterialID(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv)
     {
         // This will be set by EditorWindow after render pass creation.
-        // For now, return a flag that the caller can override.
-        // Actually, we'll store this in a static that EditorWindow updates.
+        // Stored as two 32-bit halves to avoid double precision loss with 64-bit UUIDs.
         static uint64_t s_default_mat_id = 0;
         if (argc == 1)
         {
-            double v;
-            JS_ToFloat64(ctx, &v, argv[0]);
-            s_default_mat_id = static_cast<uint64_t>(v);
+            s_default_mat_id = uuid_from_js(ctx, argv[0]);
             return JS_UNDEFINED;
         }
-        return JS_NewFloat64(ctx, static_cast<double>(s_default_mat_id));
+        return uuid_to_js(ctx, s_default_mat_id);
     }
 
     static JSValue js_print(JSContext* ctx, JSValueConst this_val, int argc, JSValueConst* argv)
@@ -377,24 +415,38 @@ namespace Meow
         m_jsThread = std::thread(&JSSystem::JSThreadMain, this);
     }
 
+    void JSSystem::WaitForJSIdle(std::unique_lock<std::mutex>& lock)
+    {
+        m_doneCv.wait(lock, [this] {
+            return (m_cmdQueue.empty() && !m_busy) || m_jsThreadDone.load();
+        });
+    }
+
     void JSSystem::Tick(float dt)
     {
         // Drive the JS thread once per engine frame. If the loaded scripts
         // define a global `update(dt)`, call it. This is what makes the JS
         // thread's Tick "triggered by the engine process's Tick".
-        if (m_hasUpdate && !m_updatePending && !m_shutdown)
-        {
-            JSCommand cmd;
-            cmd.type = JSCommandType::Call;
-            cmd.func = "update";
-            cmd.arg  = static_cast<double>(dt);
-            {
-                std::unique_lock<std::mutex> lock(m_cmdMutex);
-                m_cmdQueue.push(cmd);
-                m_updatePending = true;
-            }
-            m_cmdCv.notify_one();
-        }
+        //
+        // The call is handed over synchronously: script code reaches into live
+        // engine state through the MeowNative bridge, so the engine thread must
+        // stay out of that state until the JS thread is done. While execution
+        // is suspended at a breakpoint this therefore blocks the engine too,
+        // which is the usual (and safe) debugger behaviour.
+        if (!m_hasUpdate || m_shutdown)
+            return;
+
+        JSCommand cmd;
+        cmd.type = JSCommandType::Call;
+        cmd.func = "update";
+        cmd.arg  = static_cast<double>(dt);
+
+        std::unique_lock<std::mutex> lock(m_cmdMutex);
+        if (m_jsThreadDone)
+            return;
+        m_cmdQueue.push(std::move(cmd));
+        m_cmdCv.notify_one();
+        WaitForJSIdle(lock);
     }
 
     void JSSystem::LoadScript(const std::string& file_path)
@@ -409,11 +461,13 @@ namespace Meow
         cmd.type     = JSCommandType::Eval;
         cmd.code     = std::move(code);
         cmd.filename = file_path;
-        {
-            std::unique_lock<std::mutex> lock(m_cmdMutex);
-            m_cmdQueue.push(cmd);
-        }
+
+        std::unique_lock<std::mutex> lock(m_cmdMutex);
+        if (m_shutdown || m_jsThreadDone)
+            return;
+        m_cmdQueue.push(std::move(cmd));
         m_cmdCv.notify_one();
+        WaitForJSIdle(lock);
     }
 
     JSSystem::JSCommand JSSystem::WaitForCommand()
@@ -424,7 +478,62 @@ namespace Meow
             return JSCommand{JSCommandType::Shutdown, {}, {}, {}, 0.0};
         JSCommand cmd = std::move(m_cmdQueue.front());
         m_cmdQueue.pop();
+        m_busy = true;  // cleared once the command has been executed
         return cmd;
+    }
+
+    void JSSystem::FinishCommand()
+    {
+        {
+            std::lock_guard<std::mutex> lock(m_cmdMutex);
+            m_busy = false;
+        }
+        m_doneCv.notify_all();
+    }
+
+    void JSSystem::LogJSException(const std::string& where)
+    {
+        JSValue exc = JS_GetException(m_ctx);
+
+        JSValue     msg = JS_ToString(m_ctx, exc);
+        const char* str = JS_ToCString(m_ctx, msg);
+        MEOW_ERROR("JSSystem: JS error in {}: {}", where, str ? str : "(no message)");
+        if (str)
+            JS_FreeCString(m_ctx, str);
+        JS_FreeValue(m_ctx, msg);
+
+        // The stack lives on the exception object, so it must be read *before*
+        // `exc` is released (reading it afterwards is a use-after-free).
+        if (JS_IsObject(exc))
+        {
+            JSValue stack = JS_GetPropertyStr(m_ctx, exc, "stack");
+            if (!JS_IsException(stack) && !JS_IsUndefined(stack))
+            {
+                if (const char* stack_str = JS_ToCString(m_ctx, stack))
+                {
+                    std::cerr << stack_str << std::endl;
+                    JS_FreeCString(m_ctx, stack_str);
+                }
+            }
+            JS_FreeValue(m_ctx, stack);
+        }
+
+        JS_FreeValue(m_ctx, exc);
+    }
+
+    void JSSystem::EvalOnJSThread(const std::string& code, const std::string& filename)
+    {
+        JSValue result = JS_Eval(m_ctx, code.c_str(), code.size(), filename.c_str(), JS_EVAL_TYPE_GLOBAL);
+        if (JS_IsException(result))
+            LogJSException(filename);
+        JS_FreeValue(m_ctx, result);
+
+        // Track whether a global `update(dt)` is now available.
+        JSValue g   = JS_GetGlobalObject(m_ctx);
+        JSValue fn  = JS_GetPropertyStr(m_ctx, g, "update");
+        m_hasUpdate = JS_IsFunction(m_ctx, fn);
+        JS_FreeValue(m_ctx, fn);
+        JS_FreeValue(m_ctx, g);
     }
 
     void JSSystem::JSThreadMain()
@@ -443,23 +552,52 @@ namespace Meow
                                    sizeof(js_meow_native_funcs) / sizeof(js_meow_native_funcs[0]));
         JS_FreeValue(m_ctx, global);
 
-        // Load the generated type bindings first so game scripts can use them.
-        // Enqueued on the JS thread's own queue; processed by the eval loop
-        // below (after the optional debugger handshake).
-        LoadScript(ENGINE_ROOT_DIR "/src/meow_runtime/generated/js_types.js");
+        // Load the generated type bindings synchronously, before the command
+        // loop starts. Enqueueing them would race with scripts queued by the
+        // engine thread (e.g. editor.cpp's init_scene.js), which could then run
+        // before the bindings exist.
+        {
+            std::string bootstrap;
+            const std::string bootstrap_path = ENGINE_ROOT_DIR "/src/meow_runtime/generated/js_types.js";
+            if (ReadFile(bootstrap_path, bootstrap))
+                EvalOnJSThread(bootstrap, bootstrap_path);
+            else
+                MEOW_ERROR("JSSystem: failed to read script: {}", bootstrap_path);
+        }
 
         // Optional embedded DAP server (compiled into quickjs-ng's `qjs`).
         // Block until a DAP client (VS Code) connects and finishes the
         // handshake, then run scripts under the debugger.
-        if (DebugEnabled())
+        if (DebugEnabled() && !m_shutdown)
         {
             const int port = DebugPort();
             m_dapServer     = JS_DebugServerInit(m_rt, m_ctx, "127.0.0.1", port);
             if (m_dapServer)
             {
-                std::printf("MeowEngine JS debugger listening on 127.0.0.1:%d\n", port);
+                m_dapPort = port;
+                std::printf("MeowEngine JS debugger listening on 127.0.0.1:%d (waiting for attach)\n", port);
                 std::fflush(stdout);
-                JS_DebugServerAttach(m_dapServer);  // blocks for handshake
+
+                // accept() below is uninterruptible; publish the fact that we
+                // are parked in it so Shutdown() can nudge us out.
+                m_dapWaiting = true;
+                const int attached = JS_DebugServerAttach(m_dapServer);  // blocks for handshake
+                m_dapWaiting = false;
+
+                if (attached == 0)
+                {
+                    // We drive JS_Eval/JS_Call ourselves instead of handing a
+                    // single script to JS_DebugServerRun, so the server has to
+                    // be told the VM is live — otherwise its interrupt handler
+                    // returns early and no breakpoint ever fires.
+                    JS_DebugServerSetRunning(m_dapServer, true);
+                    std::printf("MeowEngine JS debugger attached\n");
+                    std::fflush(stdout);
+                }
+                else if (!m_shutdown)
+                {
+                    MEOW_ERROR("JSSystem: DAP handshake failed; continuing without a debugger");
+                }
             }
             else
             {
@@ -479,39 +617,7 @@ namespace Meow
 
             if (cmd.type == JSCommandType::Eval)
             {
-                JSValue result = JS_Eval(m_ctx, cmd.code.c_str(), cmd.code.size(),
-                                         cmd.filename.c_str(), JS_EVAL_TYPE_GLOBAL);
-                if (JS_IsException(result))
-                {
-                    JSValue exc = JS_GetException(m_ctx);
-                    JSValue msg = JS_ToString(m_ctx, exc);
-                    const char* str = JS_ToCString(m_ctx, msg);
-                    MEOW_ERROR("JSSystem: JS error in {}: {}", cmd.filename, str ? str : "(no message)");
-                    if (str) JS_FreeCString(m_ctx, str);
-                    JS_FreeValue(m_ctx, msg);
-                    JS_FreeValue(m_ctx, exc);
-
-                    // print stack if available
-                    JSValue stack = JS_GetPropertyStr(m_ctx, exc, "stack");
-                    if (!JS_IsException(stack))
-                    {
-                        const char* stack_str = JS_ToCString(m_ctx, stack);
-                        if (stack_str)
-                        {
-                            std::cerr << stack_str << std::endl;
-                            JS_FreeCString(m_ctx, stack_str);
-                        }
-                    }
-                    JS_FreeValue(m_ctx, stack);
-                }
-                JS_FreeValue(m_ctx, result);
-
-                // Track whether a global `update(dt)` is now available.
-                JSValue g  = JS_GetGlobalObject(m_ctx);
-                JSValue fn = JS_GetPropertyStr(m_ctx, g, "update");
-                m_hasUpdate = JS_IsFunction(m_ctx, fn);
-                JS_FreeValue(m_ctx, fn);
-                JS_FreeValue(m_ctx, g);
+                EvalOnJSThread(cmd.code, cmd.filename);
             }
             else if (cmd.type == JSCommandType::Call)
             {
@@ -522,22 +628,15 @@ namespace Meow
                     JSValue arg    = JS_NewFloat64(m_ctx, cmd.arg);
                     JSValue result = JS_Call(m_ctx, fn, JS_UNDEFINED, 1, &arg);
                     if (JS_IsException(result))
-                    {
-                        JSValue exc = JS_GetException(m_ctx);
-                        JSValue msg = JS_ToString(m_ctx, exc);
-                        const char* str = JS_ToCString(m_ctx, msg);
-                        MEOW_ERROR("JSSystem: JS error in {}(): {}", cmd.func, str ? str : "(no message)");
-                        if (str) JS_FreeCString(m_ctx, str);
-                        JS_FreeValue(m_ctx, msg);
-                        JS_FreeValue(m_ctx, exc);
-                    }
+                        LogJSException(cmd.func + "()");
                     JS_FreeValue(m_ctx, result);
                     JS_FreeValue(m_ctx, arg);
                 }
                 JS_FreeValue(m_ctx, fn);
                 JS_FreeValue(m_ctx, global);
-                m_updatePending = false;  // allow the next per-frame call
             }
+
+            FinishCommand();
         }
 
         if (m_dapServer)
@@ -549,7 +648,54 @@ namespace Meow
         JS_FreeRuntime(m_rt);
         m_ctx = nullptr;
         m_rt  = nullptr;
-        m_jsThreadDone = true;
+
+        // Release anyone blocked in WaitForJSIdle(): no further commands will
+        // ever be executed once this thread is gone.
+        {
+            std::lock_guard<std::mutex> lock(m_cmdMutex);
+            m_busy = false;
+            m_jsThreadDone = true;
+        }
+        m_doneCv.notify_all();
+    }
+
+    void JSSystem::WakeDebugServerAccept()
+    {
+        const int port = m_dapPort.load();
+        if (port <= 0)
+            return;
+
+        // A throw-away loopback connection makes the pending accept() return.
+        // The subsequent DAP handshake sees an immediate EOF and fails, which
+        // is exactly what we want: the JS thread falls through to its command
+        // loop, observes m_shutdown and exits cleanly.
+#if defined(_WIN32)
+        WSADATA wsa_data;
+        const bool wsa_ok = (WSAStartup(MAKEWORD(2, 2), &wsa_data) == 0);
+        SOCKET     sock   = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (sock != INVALID_SOCKET)
+        {
+            sockaddr_in addr {};
+            addr.sin_family      = AF_INET;
+            addr.sin_port        = htons(static_cast<u_short>(port));
+            addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            ::connect(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+            ::closesocket(sock);
+        }
+        if (wsa_ok)
+            WSACleanup();
+#else
+        int sock = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (sock >= 0)
+        {
+            sockaddr_in addr {};
+            addr.sin_family      = AF_INET;
+            addr.sin_port        = htons(static_cast<uint16_t>(port));
+            addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            ::connect(sock, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+            ::close(sock);
+        }
+#endif
     }
 
     void JSSystem::Shutdown()
@@ -561,6 +707,13 @@ namespace Meow
             m_cmdQueue.push(JSCommand{JSCommandType::Shutdown, {}, {}, {}, 0.0});
         }
         m_cmdCv.notify_one();
+
+        // If the JS thread never got a debugger attached it is stuck inside
+        // accept(), where neither the shutdown flag nor the condition variable
+        // can reach it. Nudge it so join() below cannot hang forever.
+        if (m_dapWaiting)
+            WakeDebugServerAccept();
+
         if (m_jsThread.joinable())
             m_jsThread.join();
     }
